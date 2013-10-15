@@ -1,0 +1,18 @@
+#
+#test the ability to have comments
+#
+sister	william	rachel
+sister	william	sarah
+sister	william	lottie
+
+#also, blank lines
+
+spouse	william	susan
+
+child	lottie	charlotte
+child	lottie	lucas
+child	sarah	poppy
+child	rachel	caroline
+child	rachel	elizabeth
+
+spouse	susan	william

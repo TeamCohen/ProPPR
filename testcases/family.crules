@@ -1,0 +1,7 @@
+sim,-1,-1 # base # X
+sim,-1,-2 & sister,-1,-3 & sim,-3,-2 # sister # X,Y,Z
+sim,-1,-2 & child,-1,-3 & sim,-3,-2 # child # X,Y,Z
+rel,-1,-2 & sister,-1,-2 # id,testcases/sim.rules_04 # X,Y
+rel,-1,-2 & child,-1,-2 # id,testcases/sim.rules_05 # X,Y
+rel,-1,-2 & spouse,-1,-2 # id,testcases/sim.rules_06 # X,Y
+rel2,-1,-2 & rel,-1,-3 & rel,-3,-2 # id,testcases/sim.rules_07 # X,Y,Z

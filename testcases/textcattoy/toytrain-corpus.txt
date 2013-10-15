@@ -1,0 +1,11 @@
+dh	pos	a	pricy	doll	house
+ft	pos	a	little	red	fire	truck
+rw	pos	a	red	wagon
+sc	pos	a	pricy	red	sports	car
+bk	pos	punk	queen	barbie	and	ken
+rb	pos	a	little	red	bike
+mv	neg	a	big	7-seater	minivan	with	an	automatic	transmission
+hs	neg	a	big	house	in	the	suburbs	with	a	crushing	mortgage
+ji	neg	a	job	for	life	at	IBM
+tf	neg	a	huge	pile	of	tax	forms	due	yesterday
+jm	neg	huge	pile	of	junk	mail	bills	and	catalogs

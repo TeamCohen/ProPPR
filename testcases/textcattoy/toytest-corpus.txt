@@ -1,0 +1,8 @@
+pb	pos	a	pricy	barbie	doll
+yc	pos	a	little	yellow	toy	car
+rb2	pos	a	red	10	speed	bike
+rp	pos	a	red	convertible	porshe
+bp	neg	a	big	pile	of	paperwork
+he	neg	a	huge	backlog	of	email
+wt	neg	a	life	of	woe	and	trouble
+
