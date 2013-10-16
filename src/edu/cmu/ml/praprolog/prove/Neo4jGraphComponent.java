@@ -1,10 +1,16 @@
 package edu.cmu.ml.praprolog.prove;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -16,9 +22,9 @@ import org.neo4j.graphdb.index.RelationshipIndex;
 
 public class Neo4jGraphComponent extends GraphlikeComponent {
 	private static final Logger log = Logger.getLogger(Neo4jGraphComponent.class);
-	private static enum RelTypes implements RelationshipType {
-	    FUNCTOR
-	}
+//	private static enum RelTypes implements RelationshipType {
+//	    FUNCTOR
+//	}
 	private static final String NODENAME_KEY = "name";
 	private static final String FUNCTOR_KEY = "name";
 	
@@ -43,16 +49,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		Transaction tx = graphDb.beginTx();
 		try
 		{
-			Node firstNode = graphDb.createNode();
-			firstNode.setProperty( NODENAME_KEY, src.getName() );
-	        nodeIndex.add( firstNode, NODENAME_KEY, src.getName() );
-			Node secondNode = graphDb.createNode();
-			secondNode.setProperty( NODENAME_KEY, dst.getName() );
-	        nodeIndex.add( secondNode, NODENAME_KEY, src.getName() );
-			 
-			Relationship relationship = firstNode.createRelationshipTo( secondNode, RelTypes.FUNCTOR );
-			relationship.setProperty( FUNCTOR_KEY, functor );
-			relIndex.add( relationship, FUNCTOR_KEY, functor);
+			this._tx_indexAppend(functor, src, dst);
 		    tx.success();
 		}
 		finally
@@ -60,6 +57,18 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		    tx.finish();
 		}
 	}
+	 private void _tx_indexAppend(String functor, Argument src, Argument dst) {
+		 Node firstNode = graphDb.createNode();
+			firstNode.setProperty( NODENAME_KEY, src.getName() );
+	        nodeIndex.add( firstNode, NODENAME_KEY, src.getName() );
+			Node secondNode = graphDb.createNode();
+			secondNode.setProperty( NODENAME_KEY, dst.getName() );
+	        nodeIndex.add( secondNode, NODENAME_KEY, src.getName() );
+			 
+			Relationship relationship = firstNode.createRelationshipTo( secondNode, DynamicRelationshipType.withName(functor) );
+			relationship.setProperty( FUNCTOR_KEY, functor );
+			relIndex.add( relationship, FUNCTOR_KEY, functor);
+	 }
 
 	@Override
 	protected boolean _indexContains(String functor) {
@@ -69,12 +78,19 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 	@Override
 	protected List<Argument> _indexGet(String functor, Argument srcConst) {
         Node srcNode = nodeIndex.get( NODENAME_KEY, srcConst.getName() ).getSingle();
-        srcNode.getRelationships(Direction.OUTGOING);
+        ArrayList<Argument> ret = new ArrayList<Argument>();
+        for (Relationship r : srcNode.getRelationships(DynamicRelationshipType.withName(functor), Direction.OUTGOING)) {
+        	ret.add(new ConstantArgument((String) r.getEndNode().getProperty(NODENAME_KEY)));
+        }
+        return ret;
 	}
 
 	@Override
 	protected int _indexGetDegree(String functor, Argument srcConst) {
         Node srcNode = nodeIndex.get( NODENAME_KEY, srcConst.getName() ).getSingle();
+        int count=0;
+        for (Relationship r : srcNode.getRelationships(DynamicRelationshipType.withName(functor), Direction.OUTGOING)) count++;
+        return count;
 	}
 
 	@Override
@@ -84,10 +100,79 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 	}
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		if (args.length < 4) {
+			System.err.println("Usage:\n\tdbPath graphFile functor arg1\n");
+			System.exit(0);
+		}
+		
+		String dbPath = args[0],
+				graphFile = args[1],
+				functor = args[2],
+				arg1 = args[3];
+		long t0 = System.currentTimeMillis();
+		Neo4jGraphComponent nc = new Neo4jGraphComponent(dbPath);
+		long t1 = System.currentTimeMillis();
+		System.out.println("open "+dbPath+" "+(t1-t0));
+		t1 = System.currentTimeMillis();
+		nc.load(nc, graphFile);
+		long t2 = System.currentTimeMillis();
+		System.out.println("load "+graphFile+" "+(t2-t1));
+		t2 = System.currentTimeMillis();
+		for (Argument a : nc._indexGet(functor, new ConstantArgument(arg1))) {
+			System.out.println("next item "+(System.currentTimeMillis()-t2));
+			System.out.println(a);
+			t2 = System.currentTimeMillis();
+		}
+		
 	}
 
+	/**
+	 * Load a Neo4jGraphComponent with data from
+        a file.  The format of the file is that each line is a tab-separated 
+        triple of edgelabel, sourceNode, destNode.
+	 * @param result
+	 * @param graphFile
+	 * @return
+	 */
+	public static Neo4jGraphComponent load(Neo4jGraphComponent result, String graphFile) {
+		Transaction tx = graphDb.beginTx();
+		try {
+			LineNumberReader reader = new LineNumberReader(new FileReader(graphFile));
+			
+			
+			String line;
+			long last = System.currentTimeMillis(), now = System.currentTimeMillis(), first = last;
+			while ((line=reader.readLine())!= null) {
+				if(reader.getLineNumber() % 10000 == 0) { tx.success(); tx.finish(); tx = graphDb.beginTx(); }
+				if( (now = System.currentTimeMillis()) - last > 2000)  {
+					log.info("Read "+reader.getLineNumber()+" lines ("+((double) reader.getLineNumber() / (now-first) * 1000)+" lps)");
+					last = now;
+				}
+				line=line.trim();
+				if (line.startsWith("#") || line.length()==0) continue;
+				String[] parts = line.split("\t");
+				if (parts.length != 3) throw new IllegalStateException("Bad line "+reader.getLineNumber()+" (must be $edge\t$src\t$dst): "+line);
+				String edgeLabel = parts[0].trim();
+				String src = parts[1].trim();
+				String dst = parts[2].trim();
+				result._tx_indexAppend(edgeLabel, Argument.fromString(src), Argument.fromString(dst));
+			}
+			reader.close();
+		    tx.success();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally
+		{
+		    tx.finish();
+		}
+		return result;
+	}
+	
 	
     private static void registerShutdownHook( final GraphDatabaseService graphDb )
     {
