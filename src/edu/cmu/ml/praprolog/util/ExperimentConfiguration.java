@@ -9,6 +9,7 @@ import org.apache.commons.cli.Options;
 import edu.cmu.ml.praprolog.ExampleCooker;
 import edu.cmu.ml.praprolog.ModularMultiExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
+import edu.cmu.ml.praprolog.MultithreadedTester;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
 import edu.cmu.ml.praprolog.Tester;
@@ -67,6 +68,17 @@ public class ExperimentConfiguration extends Configuration {
 							+"trove.t\n"
 							+"trove.mt[:threads] (default threads=3)\n"
 							+"trove.mrr[:threads] (default threads=3)")
+					.create());
+		options.addOption(
+				OptionBuilder
+					.withLongOpt("tester")
+					.withArgName("class[:arg]")
+					.hasArgs()
+					.withValueSeparator(':')
+					.withDescription("Default: t\n"
+						+"Available options:\n"
+						+"t\n"
+						+"mt[:threads] (default threads=3)")
 					.create());
 	}
 	@Override
@@ -129,7 +141,22 @@ public class ExperimentConfiguration extends Configuration {
 		}
 		
 //		if (line.hasOption("tester")) 
-		this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+//		this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+		
+		threads = 3;
+		if(line.hasOption("threads")) threads = this.nthreads;
+		if (line.hasOption("tester")) {
+			String[] values = line.getOptionValues("tester");
+			if (values[0].equals("t")) {
+				this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+			} else {
+				if (values.length > 1) threads = Integer.parseInt(values[1]);
+				if (values[0].equals("mt")) {
+					this.tester = new MultithreadedTester(this.prover, this.cooker.getMasterProgram(),threads);
+				}
+			}
+		} else this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+		
 		
 	}
 

@@ -61,13 +61,6 @@ public class Tester extends ExampleThawing {
 //					log.debug("Calling "+k+" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
 //				}
 				
-//		        for rawX in self.rawTestIterator():
-//		            t,e,ap = self.testRawExample(rawX,trace=trace)
-//		            pairTotal += t
-//		            pairErrors += e
-//		            apTotal += ap
-//		            numAP += 1
-//		        print 'pairTotal',pairTotal,'pairErrors',pairErrors,'errorRate',pairErrors/pairTotal,'map',apTotal/numAP
 				ExampleSolutionScore x = testExample(rawX, this.masterProgram);
 				pairTotal+=x.numPairs;
 				pairErrors+=x.numErrors;
