@@ -107,29 +107,54 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		return null;
 	}
 
+	private static void usage() {
+
+		System.err.println("Usage:\n\tload dbPath graphFile\n\tquery dbPath");
+		System.exit(0);
+	}
 	public static void main(String[] args) {
-		if (args.length < 4) {
-			System.err.println("Usage:\n\tdbPath graphFile functor arg1\n");
-			System.exit(0);
+		if (args.length < 2) {
+			usage();
 		}
 
-		String dbPath = args[0],
-				graphFile = args[1],
-				functor = args[2],
-				arg1 = args[3];
-		long t0 = System.currentTimeMillis();
-		Neo4jGraphComponent nc = new Neo4jGraphComponent(dbPath);
-		long t1 = System.currentTimeMillis();
-		System.out.println("open "+dbPath+" "+(t1-t0));
-		t1 = System.currentTimeMillis();
-		nc.load(nc, graphFile);
-		long t2 = System.currentTimeMillis();
-		System.out.println("load "+graphFile+" "+(t2-t1));
-		t2 = System.currentTimeMillis();
-		for (Argument a : nc._indexGet(functor, new ConstantArgument(arg1))) {
-			System.out.println("next item "+(System.currentTimeMillis()-t2));
-			System.out.println(a);
-			t2 = System.currentTimeMillis();
+		String cmd=args[0], dbPath = args[1];
+		if ("load".equals(cmd)) {
+
+			String graphFile = args[2];
+			long t0 = System.currentTimeMillis();
+			Neo4jGraphComponent nc = new Neo4jGraphComponent(dbPath);
+			long t1 = System.currentTimeMillis();
+			System.out.println("open "+dbPath+" "+(t1-t0));
+			t1 = System.currentTimeMillis();
+			Neo4jGraphComponent.load(nc, graphFile);
+			long t2 = System.currentTimeMillis();
+			System.out.println("load "+graphFile+" "+(t2-t1));
+
+		} else if ("query".equals(cmd)) {
+			long t0 = System.currentTimeMillis();
+			Neo4jGraphComponent nc = new Neo4jGraphComponent(dbPath);
+			long t1 = System.currentTimeMillis();
+			System.out.println("open "+dbPath+" "+(t1-t0));
+
+			while( !"quit".equals(cmd=System.console().readLine(" > "))) {
+				String[] parts = cmd.split(" ");
+				String functor = parts[0],arg1=parts[1];
+				t1 = System.currentTimeMillis();
+				List<Argument> result = nc._indexGet(functor, new ConstantArgument(arg1));
+				long t2 = System.currentTimeMillis();
+				System.out.println(result.size()+" results ("+(t2-t1)+")");
+				if (parts.length > 2 && "print".equals(parts[2])) {
+					t1 = System.currentTimeMillis();
+					for (Argument a : result) {
+						t2 = System.currentTimeMillis();
+						System.out.println("\t"+a+" ("+(t2-t1)+")");
+						t1 = System.currentTimeMillis();
+					}
+				}
+			}
+		} else {
+			System.err.println("No command '"+cmd+"'");
+			usage();
 		}
 
 	}
