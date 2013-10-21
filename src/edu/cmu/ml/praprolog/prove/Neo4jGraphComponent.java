@@ -117,7 +117,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 			usage();
 		}
 
-		String cmd=args[0], dbPath = args[1];
+		String cmd=args[0], dbPath = args[1]; 
 		if ("load".equals(cmd)) {
 
 			String graphFile = args[2];
@@ -174,7 +174,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 
 			String line;
 			long last = System.currentTimeMillis(), now = last, first = last;
-			log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+			log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
 			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 			while ((line=reader.readLine())!= null) {
 				if(reader.getLineNumber() % 10000 == 0) { tx.success(); tx.finish(); tx = graphDb.beginTx(); }
@@ -194,7 +194,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 			}
 			now = System.currentTimeMillis();
 			log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
-			log.debug("mem "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 
 			reader.close();
 			tx.success();
