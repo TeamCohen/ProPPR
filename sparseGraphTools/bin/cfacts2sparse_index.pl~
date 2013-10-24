@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+
+my $facts = shift;
+my $head = split(".",$facts)[0];
+my ($functor,$arg1type, $arg2type) = split("_",$head);
+
+open(my $fa1,"<$arg1type.txt") or die "Couldn't open index file '$arg1type.txt' for reading arg1 of $facts:\n$!\n";
+open(my $fo,">tmp") or die "Couldn't open tmp file for writing:\n$!\n";
+open(my $ff,"<$facts") or die "Couldn't open facts file '$facts' for reading:\n$!\n";
+my %arg,$i=0;
+while(<$fa1>) {
+    chomp;
+    $arg{$_}=$i;
+    $i++;
+}
+close($fa1);
+
+while(<$ff>) {
+    chomp;
+    my ($functor, $src, $dst) = split;
+    print $fo "$arg{$src}\t$dst\n";
+}
+close($ff);
+close($fo);
+
+%arg=();
+$i=0;
+open(my $fa2,"<$arg2type.txt") or die "Couldn't open index file '$arg2type.txt' for reading arg2 of $facts:\n$!\n";
+while(<$fa2>) {
+    chomp;
+    $arg{$_}=$i;
+    $i++;
+}
+close($fa2);
+open($ff,"<tmp") or die "Couldn't open tmp file for reading:\n$!\n";
+open($fo,"| sort >$head.indexed") or die "Couldn't open $head.indexed for writing:\n$!\n";
+while(<$ff>) {
+    chomp;
+    my ($src,$dst) = split;
+    print $fo "$src\t$arg{$dst}\n";
+}
+close($ff);
+close($fo);
+print "Done.\n";
