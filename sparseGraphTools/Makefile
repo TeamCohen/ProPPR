@@ -1,6 +1,6 @@
 PROPPR=/home/krivard/workspace/ProPPR-git
 
-SOURCES=knows_person_person.cfacts eats_person_food.cfacts
+SOURCES=f2n_cid_nid.cfacts
 NAME=output
 
 # TYPES definition:
@@ -22,7 +22,7 @@ all: $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt
 	mv $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt $(NAME)
 
 clean:
-	rm -f *.i *.index *.rowOffset *.colIndex *.rce
+	rm -f *.i *.index *.rowOffset *.colIndex *.rce sparseIndex.txt
 
 sparseIndex.txt:
 	for k in $(subst .cfacts,,$(SOURCES)) ; \
@@ -43,7 +43,7 @@ sparseIndex.txt:
 
 %.index: %.cfacts $(TYPES) bin/cfacts2sparse_index.pl
 	bin/cfacts2sparse_index.pl $<
-	sort $@ -o $@
+	sort -n $@ -o $@
 
 %.rowOffset %.colIndex: %.index
 	bin/index2sparse.pl $<
