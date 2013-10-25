@@ -1,6 +1,7 @@
 PROPPR=/home/krivard/workspace/ProPPR-git
 
 SOURCES=knows_person_person.cfacts eats_person_food.cfacts
+NAME=output
 
 # TYPES definition:
 # drop .cfacts from SOURCES
@@ -17,6 +18,8 @@ ROWOFFSET=$(SOURCES:.cfacts=.rowOffset)
 COLINDEX=$(SOURCES:.cfacts=.colIndex)
 
 all: $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt
+	mkdir $(NAME)
+	mv $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt $(NAME)
 
 clean:
 	rm -f *.i *.index *.rowOffset *.colIndex *.rce
