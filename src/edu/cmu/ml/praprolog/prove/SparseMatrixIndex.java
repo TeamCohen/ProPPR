@@ -10,21 +10,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.la4j.matrix.sparse.CRSMatrix;
-import org.la4j.vector.functor.VectorProcedure;
 
 /**
  * Reads in 5 files to produce a CRS-type sparse matrix:
- *  - *.rce: [int]\t[int]\t[int] for the matrix dimensions: rows, columns, entries
- *  - *.arg1: Sorted in lex order. The ith line stores the name of row i.
- *  - *.arg2: The jth line stores the name of column j.
- *  - *.colIndices: [int]-per-line, in row order. The kth line stores the column index (j) of the kth value.
- *  - *.rowOffsets: [int]-per-line. The ith line stores the line number (k) in colIndices where row i begins.
+ *  - [functor]_[arg1type]_[arg2type].rce: [int]\n[int]\n[int] for the matrix dimensions: rows, columns, entries
+ *  - [functor]_[arg1type]_[arg2type].colIndes: [int]-per-line, in row order. The kth line stores the column index (j) of the kth value.
+ *  - [functor]_[arg1type]_[arg2type].rowOffset: [int]-per-line. The ith line stores the line number (k) in colIndices where row i begins.
+ *  - [arg1type].i: Sorted in lex order. The ith line stores the name of row i.
+ *  - [arg2type].i: The jth line stores the name of column j.
  * All nonzero matrix values are set to 1.0.
  * 
  * The lengths of files are thus constrained:
- *  - *.arg1 has #rows lines
- *  - *.arg2 has #columns lines
  *  - *.rowOffsets has #rows lines
  *  - *.colIndex has #entries lines
  * @author wcohen,krivard
@@ -33,32 +29,31 @@ public class SparseMatrixIndex {
 	// counts of each
 	int rows, cols, entries;
 	// names of rows, cols
-//	ConstantArgument[] arg1, arg2;
 	ConstantArgument[] arg2;
 	HashMap<String,Integer> arg1;
-	CRSMatrix mat;
+	int[] rowOffsets, colIndices;
+	float[] values;
 
 	public SparseMatrixIndex() {}
-	public SparseMatrixIndex(String dir, String prefix) throws IOException {
-		this.load(dir,prefix);
+	public SparseMatrixIndex(String dir, String functor_arg1type_arg2type, final HashMap<String,Integer> arg1, final ConstantArgument[] arg2) throws IOException {
+		this.arg1=arg1;
+		this.arg2=arg2;
+		this.load(dir,functor_arg1type_arg2type);
 	}
-	public void load(String dir, String prefix) throws IOException {
+	public void load(String dir, String functor_arg1type_arg2type) throws IOException {
 		/* Read the number of rows, columns, and entries - entry is a triple (i,j,m[i,j])
 		 * except I don't store m[i,j] since it's always 1.0 for me. */
-		BufferedReader reader = new LineNumberReader(new FileReader(new File(dir,prefix+".rce")));
-		for(String line; (line=reader.readLine()) != null; ){
-			String[] parts = line.trim().split("\t");
-			this.rows = Integer.parseInt(parts[0]);
-			this.cols = Integer.parseInt(parts[1]);
-			this.entries = Integer.parseInt(parts[2]);
-//			System.out.println(dirName + " sizes " + this.rows + " " + this.cols + " " + this.entries);
-			break;
+		BufferedReader reader = new LineNumberReader(new FileReader(new File(dir,functor_arg1type_arg2type+".rce")));
+		{
+			String line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 1 must list #rows");
+			this.rows = Integer.parseInt(line.trim());
+			line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 2 must list #cols");
+			this.cols = Integer.parseInt(line.trim());
+			line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 1 must list #entries");
+			this.entries = Integer.parseInt(line.trim());
+			reader.close();
 		}
-		reader.close();
-		this.arg1 = new HashMap<String,Integer>();    /* For the strings with indices i=0,1,.... */
-		this.arg2 = new ConstantArgument[cols];    /* and with indices j=0,1,.... */
-		loadArgs(this.arg1,new File(dir,prefix+".arg1"));
-		loadArgs(this.arg2,new File(dir,prefix+".arg2"));
+		
 		/* Data is stored like this: colIndices[] is one long
 		 * array, and values is a parallel array.  rowsOffsets is another array so that 
 		 * rowOffsets[i] is where the column indices for row i start. Thus
@@ -72,47 +67,29 @@ public class SparseMatrixIndex {
 		 *
 		 */
 		ArrayList<Integer> rowsOffsets = new ArrayList<Integer>();
-		int[] colIndices = new int[entries];
-		double[] values = new double[entries];
+		this.colIndices = new int[entries];
+		this.values = new float[entries];
 
-		reader = new LineNumberReader(new FileReader(new File(dir,prefix+".rowOffsets")));
+		reader = new LineNumberReader(new FileReader(new File(dir,functor_arg1type_arg2type+".rowOffset")));
 		int lineNum = 0;
 		for(String line; (line=reader.readLine()) != null; lineNum++) {
 			rowsOffsets.add(Integer.parseInt(line.trim()));
 		}
 		reader.close();
-		reader = new LineNumberReader(new FileReader(new File(dir,prefix+".colIndices")));
+		reader = new LineNumberReader(new FileReader(new File(dir,functor_arg1type_arg2type+".colIndex")));
 		lineNum = 0;
 		for(String line; (line=reader.readLine()) != null; lineNum++) {
 			colIndices[lineNum] = Integer.parseInt(line.trim());
-			values[lineNum] = 1.0;
+			values[lineNum] = (float) 1.0;
 		}
 		reader.close();
-		int[] rowOffsetsArr = new int[rowsOffsets.size()+1];
+		this.rowOffsets = new int[rowsOffsets.size()+1];
 		for (int i=0; i<rowsOffsets.size(); i++) {
-			rowOffsetsArr[i] = rowsOffsets.get(i);
+			rowOffsets[i] = rowsOffsets.get(i);
 		}
-		rowOffsetsArr[rowsOffsets.size()] = entries;
-		/* Create the data sparse matrix */
-		this.mat = new CRSMatrix(this.rows, this.cols, entries, values, colIndices, rowOffsetsArr);
+		rowOffsets[rowsOffsets.size()] = entries;
 	}
-	/** subroutine - populates an array of strings from a file **/
-	private void loadArgs(ConstantArgument[] args,File file) throws IOException {
-		BufferedReader reader = new LineNumberReader(new FileReader(file));
-		int lineNum = 0;
-		for(String line; (line=reader.readLine()) != null; lineNum++) {
-			args[lineNum] = new ConstantArgument(line.trim());
-		}
-		reader.close();
-	}
-	private void loadArgs(HashMap<String,Integer> args,File file) throws IOException {
-		BufferedReader reader = new LineNumberReader(new FileReader(file));
-		int lineNum = 0;
-		for(String line; (line=reader.readLine()) != null; lineNum++) {
-			args.put((line.trim()),lineNum);
-		}
-		reader.close();
-	}
+
 
 	/** Given string key='a' such that arg1[i] = key, find all strings
 	 * 'b' such that m[i,j] != 0 and arg2[j]==b.
@@ -123,14 +100,11 @@ public class SparseMatrixIndex {
 			return null;
 		}
 		else {
-			final ArrayList<Argument> accumForClosure = new ArrayList<Argument>();
-			final ConstantArgument[] arg2PtrForClosure = this.arg2;
-			this.mat.getRow(r).eachNonZero(new VectorProcedure() {
-				public void apply(int c,double val) {
-					accumForClosure.add(arg2PtrForClosure[c]);
-				}
-			});
-			return accumForClosure;
+			ArrayList<Argument> ret = new ArrayList<Argument>();
+			for (int k=this.rowOffsets[r]; k<this.rowOffsets[r+1]; k++) {
+				ret.add(this.arg2[this.colIndices[k]]);
+			}
+			return ret;
 		}
 	}
 	/**
@@ -149,12 +123,12 @@ public class SparseMatrixIndex {
 	 * @return
 	 */
 	public int degree(Argument key) {
-		Integer r = this.arg1.get(key.getName());//Arrays.binarySearch(this.arg1,key);
-		if (r!=null) {//(r<0) {
+		Integer r = this.arg1.get(key.getName());
+		if (r!=null) {
 			return 0;
 		}
 		else {
-			return (int) Math.floor(this.mat.getRow(r).sum());
+			return this.rowOffsets[r+1]-this.rowOffsets[r];
 		}
 	}
 }
