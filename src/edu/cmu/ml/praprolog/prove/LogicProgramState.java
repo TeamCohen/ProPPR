@@ -223,4 +223,10 @@ public class LogicProgramState extends Component {
 	public Goal[] getQueryGoals() {
 		return this.queryGoals;
 	}
+	public Goal[] getGoals() {
+		return this.goals;
+	}
+	public Goal[] getOriginalGoals() {
+		return this.originalQueryGoals;
+	}
 }
