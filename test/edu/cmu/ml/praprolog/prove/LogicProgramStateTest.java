@@ -11,15 +11,15 @@ public class LogicProgramStateTest {
 	LogicProgramState s1, r1, r2;
 
 	private void setupFunctorStates() {
-		s1 = new LogicProgramState(new Goal("apples"));
+		s1 = new ProPPRLogicProgramState(new Goal("apples"));
 		r1 = s1.restart();
-		r2 = new LogicProgramState(new Goal("apples"));
+		r2 = new ProPPRLogicProgramState(new Goal("apples"));
 	}
 	
 	private void setup1varStates() {
-		s1 = new LogicProgramState(new Goal("food","X"));
+		s1 = new ProPPRLogicProgramState(new Goal("food","X"));
 		r1 = s1.restart();
-		r2 = new LogicProgramState(new Goal("food","X"));
+		r2 = new ProPPRLogicProgramState(new Goal("food","X"));
 	}
 	
 	@Test
@@ -52,8 +52,8 @@ public class LogicProgramStateTest {
 	}
 	
 	private void doHashContainmentTests() {
-		HashSet<LogicProgramState> set = new HashSet<LogicProgramState>();
-		set.add(s1);
+		HashSet<ProPPRLogicProgramState> set = new HashSet<ProPPRLogicProgramState>();
+		set.add((ProPPRLogicProgramState)s1);
 		assertTrue("from reset",set.contains(r1));
 		assertTrue("from independent duplicate",set.contains(r2));
 	}

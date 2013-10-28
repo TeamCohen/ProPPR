@@ -129,11 +129,10 @@ public class ExampleCooker extends ExampleThawing {
 		List<String> negIds = new ArrayList<String>();
 		for (Map.Entry<LogicProgramState,Double> soln : ans.entrySet()) {
 			if (soln.getKey().isSolution()) {
-				Goal[] groundGoals = soln.getKey().getQueryGoals();
-				if (groundGoals.length != 1) throw new IllegalStateException("1 ground goal expected; found "+groundGoals.length);
+				Goal groundGoal = soln.getKey().getGroundGoal();
 				// FIXME: slow?
-				if (Arrays.binarySearch(x.getPosSet(), groundGoals[0]) >= 0) posIds.add(writer.getId(soln.getKey()));
-				if (Arrays.binarySearch(x.getNegSet(), groundGoals[0]) >= 0) negIds.add(writer.getId(soln.getKey()));
+				if (Arrays.binarySearch(x.getPosSet(), groundGoal) >= 0) posIds.add(writer.getId(soln.getKey()));
+				if (Arrays.binarySearch(x.getNegSet(), groundGoal) >= 0) negIds.add(writer.getId(soln.getKey()));
 			}
 		}
 		Map<String,Double> queryVector = new HashMap<String,Double>();

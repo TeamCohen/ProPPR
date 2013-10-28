@@ -13,6 +13,7 @@ import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.LogicProgramState;
+import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.prove.RawPosNegExample;
 import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
@@ -55,7 +56,7 @@ public class ExampleThawing {
 		}
 		Arrays.sort(negSet);
 		
-		return new ThawedPosNegExample(new LogicProgramState(rawX.getQuery()),posSet,negSet);
+		return new ThawedPosNegExample(new ProPPRLogicProgramState(rawX.getQuery()),posSet,negSet);
 	}
 
 	public LogicProgram getMasterProgram() {

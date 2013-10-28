@@ -30,7 +30,7 @@ public class TestCompareGraphlikes {
 			reader = new LineNumberReader(new FileReader(args[3]));
 			int i=0;
 			for(String line=""; (line=reader.readLine()) != null && i<states.length; ) {
-				states[i++] = new LogicProgramState(Goal.decompile(line.trim()));
+				states[i++] = new ProPPRLogicProgramState(Goal.decompile(line.trim()));
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {

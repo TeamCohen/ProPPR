@@ -44,7 +44,7 @@ public abstract class GraphlikeComponent extends Component {
 
 		@Override
 		public boolean claim(LogicProgramState state) {
-			return !state.isSolution() && this.contains(state.getGoal(0));
+			return !state.isSolution() && this.contains(state.getHeadGoal());
 		}
 
 		protected boolean contains(Goal goal) {
@@ -52,8 +52,11 @@ public abstract class GraphlikeComponent extends Component {
 		}
 		
 		@Override
-		public List<Outlink> outlinks(LogicProgramState state) {
-			Goal g = state.getGoal(0);
+		public List<Outlink> outlinks(LogicProgramState state0) {
+			if (! (state0 instanceof ProPPRLogicProgramState))
+				throw new UnsupportedOperationException("GraphComponents can't handle prolog states yet");
+			ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
+			Goal g = state.getHeadGoal();
 			Argument srcConst = convertConst(0,state);
 			Argument dstVar   = convertVar(1,state);
 			
@@ -72,15 +75,15 @@ public abstract class GraphlikeComponent extends Component {
 		}
 		
 		protected Argument convertConst(int i, LogicProgramState state) {
-			Argument result = state.getGoal(0).getArg(i);
-			if (!result.isConstant()) throw new IllegalStateException("Argument "+(i+1)+" of "+state.getGoal(0)+" should be bound in theta; was "+result);
+			Argument result = state.getHeadGoal().getArg(i);
+			if (!result.isConstant()) throw new IllegalStateException("Argument "+(i+1)+" of "+state.getHeadGoal()+" should be bound in theta; was "+result);
 			return result;
 		}
 		
 		protected Argument convertVar(int i, LogicProgramState state) {
-			Argument result = state.getGoal(0).getArg(i);
+			Argument result = state.getHeadGoal().getArg(i);
 			if (!result.isVariable()) 
-				throw new IllegalStateException("Argument "+(i+1)+" of "+state.getGoal(0)+" should be unbound in theta; was "+result);
+				throw new IllegalStateException("Argument "+(i+1)+" of "+state.getHeadGoal()+" should be unbound in theta; was "+result);
 			return result;
 		}
 
@@ -97,7 +100,7 @@ public abstract class GraphlikeComponent extends Component {
 		@Override
 		public int degree(LogicProgramState state) {
 			if (state.isSolution()) return 0;
-			Goal g = state.getGoal(0);
+			Goal g = state.getHeadGoal();
 			Argument srcConst = convertConst(0,state);
 			Argument dstVar   = convertVar(1,state); // unused but necessary to check binding
 			return this._indexGetDegree(g.getFunctor(), srcConst);

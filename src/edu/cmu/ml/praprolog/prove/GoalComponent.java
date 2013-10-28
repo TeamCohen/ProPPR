@@ -78,12 +78,15 @@ public class GoalComponent extends Component {
 	}
 
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state) {
+	public List<Outlink> outlinks(LogicProgramState state0) {
+		if (! (state0 instanceof ProPPRLogicProgramState)) 
+			throw new UnsupportedOperationException("Can't handle tuprolog states yet in rulecomponent");
+		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
 		List<RenamingSubstitution> matches = new ArrayList<RenamingSubstitution>();
-		for (Goal g : this.goalsMatching(state.getGoal(0))) {
+		for (Goal g : this.goalsMatching(state.getHeadGoal())) {
 			RenamingSubstitution theta1 = 
 					RenamingSubstitution.unify(g, 
-					state.getGoal(0), 
+					state.getHeadGoal(), 
 					0, 
 					RenamingSubstitution.NOT_RENAMED, 
 					RenamingSubstitution.NOT_RENAMED);
@@ -105,7 +108,10 @@ public class GoalComponent extends Component {
 				Collections.<Goal> emptyList());
 	}
 	@Override
-	public boolean claim(LogicProgramState state) {
+	public boolean claim(LogicProgramState state0) {
+		if (! (state0 instanceof ProPPRLogicProgramState)) 
+			throw new UnsupportedOperationException("Can't handle tuprolog states yet in rulecomponent");
+		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
 		// FIXME -- only works b/c we know isSolution is true iff #goals == 0
 		return !state.isSolution() && this.contains(state.getGoal(0));
 	}

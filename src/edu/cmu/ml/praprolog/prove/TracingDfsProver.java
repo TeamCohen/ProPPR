@@ -63,7 +63,10 @@ public class TracingDfsProver extends Prover {
 		return dfs(lp,state0,gw,1.0);
 	}
 	protected List<WeightedLogicProgramState> dfs(LogicProgram lp,
-			LogicProgramState state0, GraphWriter gw, double incomingEdgeWeight) {
+			LogicProgramState state00, GraphWriter gw, double incomingEdgeWeight) {
+		if (! (state00 instanceof ProPPRLogicProgramState))
+			throw new UnsupportedOperationException("TracingDfsProver can't handle prolog states yet");
+		ProPPRLogicProgramState state0 = (ProPPRLogicProgramState) state00;
 		List<WeightedLogicProgramState> result = new ArrayList<WeightedLogicProgramState>();
 		result.add(new WeightedLogicProgramState(state0, incomingEdgeWeight));
 		if (!state0.isSolution() && state0.getDepth() < this.maxDepth) {
@@ -77,9 +80,9 @@ public class TracingDfsProver extends Prover {
 	}
 	
 	private class WeightedLogicProgramState {
-		LogicProgramState s;
+		ProPPRLogicProgramState s;
 		double w;
-		public WeightedLogicProgramState(LogicProgramState state, double weight) {
+		public WeightedLogicProgramState(ProPPRLogicProgramState state, double weight) {
 			this.s = state;
 			this.w = weight;
 		}

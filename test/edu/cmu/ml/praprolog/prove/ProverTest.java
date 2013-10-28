@@ -58,9 +58,9 @@ public class ProverTest {
 		Map<LogicProgramState,Double> dist = prover.proveState(lpMilk,Prover.parseQuery("isa","elsie","X"));
 
 		for(Map.Entry<LogicProgramState, Double> s : dist.entrySet()) {
-			if (s.getKey().getGoal(0).getFunctor().equals("givesMilk")) {
+			if (s.getKey().getHeadGoal().getFunctor().equals("givesMilk")) {
 				assertEquals(proveStateAnswers[0], s.getValue(), 1e-5);
-			} else if (s.getKey().getGoal(0).getFunctor().equals("isa")){
+			} else if (s.getKey().getHeadGoal().getFunctor().equals("isa")){
 				assertEquals(proveStateAnswers[2], s.getValue(), 1e-5);
 			} else {
 				assertEquals(proveStateAnswers[1], s.getValue(), 1e-5);

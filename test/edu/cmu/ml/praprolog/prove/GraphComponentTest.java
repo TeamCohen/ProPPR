@@ -15,7 +15,7 @@ public class GraphComponentTest {
 		g.compile(new SymbolTable());
 		assertTrue(g.getArg(0).isConstant());
 		assertTrue(g.getArg(1).isVariable());
-		LogicProgramState state = new LogicProgramState(g);
+		LogicProgramState state = new ProPPRLogicProgramState(g);
 		new GraphComponent().convertConst(0, state);
 		new GraphComponent().convertVar(1, state);
 	}

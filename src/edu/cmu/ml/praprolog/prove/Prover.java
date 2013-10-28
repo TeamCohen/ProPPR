@@ -35,7 +35,7 @@ public abstract class Prover {
 		}
 		Goal g = new Goal(goal, a);
 		Goal[] goals = {g};
-		LogicProgramState result = new LogicProgramState(goals);
+		LogicProgramState result = new ProPPRLogicProgramState(goals);
 		return result;
 	}
 

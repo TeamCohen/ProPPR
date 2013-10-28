@@ -104,9 +104,8 @@ public class Tester extends ExampleThawing {
 		double last=0.0;int diffcount=-1,solcount=0;
 		for (Map.Entry<LogicProgramState,Double> soln : ans.entrySet()) {
 			if (soln.getKey().isSolution()) {
-				Goal[] groundGoals = soln.getKey().getQueryGoals();
-				if (groundGoals.length != 1) throw new IllegalStateException("1 ground goal expected; found "+groundGoals.length);
-				solnScore.put(groundGoals[0], soln.getValue());
+				Goal groundGoal = soln.getKey().getGroundGoal();
+				solnScore.put(groundGoal, soln.getValue());
 				if (soln.getValue() != last) diffcount++;
 				last = soln.getValue();
 				if (log.isDebugEnabled()) log.debug("Solution: ("+soln.getValue()+") "+soln.getKey());

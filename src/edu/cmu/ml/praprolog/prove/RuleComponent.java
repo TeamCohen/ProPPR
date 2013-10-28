@@ -28,7 +28,7 @@ public class RuleComponent extends Component {
 	@Override
 	public boolean claim(LogicProgramState state) {
 		// FIXME -- only works b/c we know isSolution is true iff #goals == 0
-		return (!state.isSolution() && this.index.containsKey(key(state.getGoal(0))));
+		return (!state.isSolution() && this.index.containsKey(key(state.getHeadGoal())));
 	}
 	protected List<Rule> rulesFor(Goal goal) {
 		return this.index.get(this.key(goal));
@@ -42,27 +42,34 @@ public class RuleComponent extends Component {
 		if (state.isSolution()) return 0;
 		return getSubstitutions(state).size();
 	}
-	
-	protected List<RuleSubstitutionPair> getSubstitutions(LogicProgramState state) {
+
+	protected List<RuleSubstitutionPair> getSubstitutions(LogicProgramState state0) {
+		if (! (state0 instanceof ProPPRLogicProgramState)) 
+			throw new UnsupportedOperationException("Can't handle tuprolog states yet in rulecomponent");
+		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
 		LinkedList<RuleSubstitutionPair> matches = new LinkedList<RuleSubstitutionPair>();
 		int offsetToStandardizeApart = state.getVarSketchSize();
-		for (Rule r : this.rulesFor(state.getGoal(0))) {
-		    // print 'trying rule',r,'on',state.goals[0],"with offset",offsetToStandardizeApart
-			if (log.isDebugEnabled()) log.debug("trying rule "+r+" on "+state.getGoal(0)+" with offset "+offsetToStandardizeApart);
+		for (Rule r : this.rulesFor(state.getHeadGoal())) {
+			// print 'trying rule',r,'on',state.goals[0],"with offset",offsetToStandardizeApart
+			if (log.isDebugEnabled()) log.debug("trying rule "+r+" on "+state.getHeadGoal()+" with offset "+offsetToStandardizeApart);
 			RenamingSubstitution theta = 
-					RenamingSubstitution.unify(r.lhs, state.getGoal(0), 
+					RenamingSubstitution.unify(r.lhs, state.getHeadGoal(), 
 							offsetToStandardizeApart, 
 							RenamingSubstitution.RENAMED, RenamingSubstitution.NOT_RENAMED);
 			if (theta != null) {
 				if (log.isDebugEnabled()) log.debug("succeeds "+theta);
-			    matches.add(new RuleSubstitutionPair(theta, r));
+				matches.add(new RuleSubstitutionPair(theta, r));
 			}
 		}
 		return matches;
+		
 	}
-	
+
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state) {
+	public List<Outlink> outlinks(LogicProgramState state0) {
+		if (! (state0 instanceof ProPPRLogicProgramState)) 
+			throw new UnsupportedOperationException("Can't handle tuprolog states yet in rulecomponent");
+		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
 		List<RuleSubstitutionPair> matches = getSubstitutions(state);
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (RuleSubstitutionPair r : matches) {
@@ -90,13 +97,13 @@ public class RuleComponent extends Component {
 		}
 	}
 	public String toString() {
-            StringBuilder sb = new StringBuilder("ruleComponent:");
-	    for(List<Rule> el : this.index.values()) {
-                for (Rule r : el) sb.append("\n\t").append(r);
-            }
-	    return sb.toString();
+		StringBuilder sb = new StringBuilder("ruleComponent:");
+		for(List<Rule> el : this.index.values()) {
+			for (Rule r : el) sb.append("\n\t").append(r);
+		}
+		return sb.toString();
 	}
-	
+
 	/**
 	 * Load a rulebase in the format produced by the rulecompiler.
 	 * @param fileName
@@ -114,7 +121,7 @@ public class RuleComponent extends Component {
 					throw new IllegalArgumentException("Line "+reader.getLineNumber()+" of "+filename+" needs 3 #-delimited fields; found "+parts.length+":\n"+line);
 				}
 				String[] variableList = parts[2].trim().split(",");
-				
+
 				String[] ruleGoalStrings =  parts[0].trim().split("&");
 				Goal lhs;
 				Goal[] rhs = new Goal[ruleGoalStrings.length-1];
@@ -122,18 +129,18 @@ public class RuleComponent extends Component {
 				for (int i=1; i<ruleGoalStrings.length; i++) {
 					rhs[i-1] = Goal.decompile(ruleGoalStrings[i]);
 				}
-				
+
 				String[] featureGoalStrings = parts[1].trim().split("&");
 				Goal[] featureGoals = new Goal[featureGoalStrings.length];
 				for (int i=0; i<featureGoalStrings.length; i++) {
 					featureGoals[i] = Goal.decompile(featureGoalStrings[i]);
 				}
-				
+
 				result.add(new Rule(lhs,rhs,featureGoals)); // FIXME fishy! python has 
 				// r = rule(ruleGoals[0],ruleGoals[1:],'',featureGoals)
 				// where constructor is
 				// rule(lhs,rhs,features=tuple(),variableList=string.ascii_uppercase)
-				
+
 			}
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException(e);
@@ -142,7 +149,7 @@ public class RuleComponent extends Component {
 		}
 		return result;
 	}
-	
+
 	@Override
 	public String listing() {
 		StringBuilder sb= new StringBuilder();

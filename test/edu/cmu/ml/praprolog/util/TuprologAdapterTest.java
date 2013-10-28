@@ -22,7 +22,9 @@ import edu.cmu.ml.praprolog.prove.Argument;
 import edu.cmu.ml.praprolog.prove.ConstantArgument;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.LogicProgramState;
+import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.VariableArgument;
+import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
 
 public class TuprologAdapterTest {
 
@@ -61,7 +63,7 @@ public class TuprologAdapterTest {
 	@Test
 	public void testLpStateToTerm() {
 		Goal g = Goal.decompile("writes,william,-1");
-		LogicProgramState state = new LogicProgramState(g);
+		LogicProgramState state = new ProPPRLogicProgramState(g);
 		Term ts = TuprologAdapter.lpStateToTerm(state);
 		assertTrue(ts instanceof Struct);
 		Struct sts = (Struct) ts;
@@ -84,7 +86,7 @@ public class TuprologAdapterTest {
 		engine.addTheory(new Theory(new FileInputStream("outlinks.2p")));
 		SolveInfo info = engine.solve("startState(writes(william,X),S).");
 		Term t = info.getVarValue("S");
-		Term tp = TuprologAdapter.lpStateToTerm(new LogicProgramState(Goal.decompile("writes,william,-1")));
+		Term tp = TuprologAdapter.lpStateToTerm(new ProPPRLogicProgramState(Goal.decompile("writes,william,-1")));
 		System.out.println(t);
 		System.out.println(tp);
 //		assertTrue(t.isEqual(tp)); // :(

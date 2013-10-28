@@ -155,7 +155,7 @@ public class SparseGraphComponent extends GraphlikeComponent {
 				String[] parts = cmd.split(" ");
 				
 				Goal from = Goal.decompile(parts[1]);
-				LogicProgramState lpState = new LogicProgramState(from);
+				LogicProgramState lpState = new ProPPRLogicProgramState(from);
 				for (Outlink o : g.outlinks(lpState)) {
 					System.out.println(o.getState());
 				}

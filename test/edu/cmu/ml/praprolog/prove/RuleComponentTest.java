@@ -24,7 +24,7 @@ public class RuleComponentTest {
         List<Outlink> outlinks = r.outlinks(Prover.parseQuery("mem", "X","l_de"));
         for (Outlink o : outlinks) {
             LogicProgramState s = o.getState();
-            Goal g = s.getGoal(0);
+            Goal g = s.getHeadGoal();
             log.debug(s);
             assertEquals("parts",g.getFunctor());
             assertEquals(3,g.getArgs().length);
