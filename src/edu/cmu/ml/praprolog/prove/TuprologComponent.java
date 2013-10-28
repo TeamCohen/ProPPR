@@ -3,16 +3,18 @@ package edu.cmu.ml.praprolog.prove;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import alice.tuprolog.InvalidTheoryException;
 import alice.tuprolog.Prolog;
+import alice.tuprolog.SolveInfo;
 import alice.tuprolog.Struct;
 import alice.tuprolog.Term;
 import alice.tuprolog.Theory;
 import alice.tuprolog.Var;
-
 import edu.cmu.ml.praprolog.util.SymbolTable;
+import edu.cmu.ml.praprolog.util.TuprologAdapter;
 
 public class TuprologComponent extends Component {
 	private Prolog engine;
@@ -40,9 +42,13 @@ public class TuprologComponent extends Component {
 
 	@Override
 	public List<Outlink> outlinks(LogicProgramState state) {
-		
-		// TODO Auto-generated method stub
-		return null;
+		Term tustate = TuprologAdapter.lpStateToTerm(state);
+		Term query = new Struct("outlinks",tustate,new Var("S1"),new Var("F1"));
+		ArrayList<Outlink> ret = new ArrayList<Outlink>();
+		for (SolveInfo info : new SolutionIterator(this.engine.solve(query))) {
+			Term solution = info.getVarValue("S1");
+			Term features = info.getVarValue("F1");
+		}
 	}
 	
 

@@ -43,7 +43,7 @@ public class TuprologAdapter {
 	}
 	public static Term argToTerm(Argument a) {
 		if (a.isConstant()) return new Struct(a.getName());
-		else if (a.isVariable()) return new Var("_"+(-a.getValue()));
+		else if (a.isVariable()) return new Var("X"+(-a.getValue()));
 		else throw new IllegalArgumentException("Arguments must be constant or variable; is neither: "+a);
 	}
 }
