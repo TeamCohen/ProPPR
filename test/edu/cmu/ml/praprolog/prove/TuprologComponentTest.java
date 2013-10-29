@@ -3,6 +3,7 @@ package edu.cmu.ml.praprolog.prove;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -56,8 +57,16 @@ public class TuprologComponentTest {
 		
 //		LogicProgramState state1 = gcOut.get(0).getState();
 //		rcOut = rc.outlinks(state1);
-		
-
+	}
+	
+	@Test
+	public void inProgram() {
+		LogicProgram lp = new LogicProgram(GoalComponent.loadCompiled("testcases/family-more.cfacts"), new TuprologComponent("testcases/prolog/family.pl"));
+		Prover p = new DprProver();
+		Map<LogicProgramState,Double> result = p.proveState(lp, new ProPPRLogicProgramState(Goal.decompile("rel2,katie,-1")));
+		for (Map.Entry<LogicProgramState,Double> e : result.entrySet()) {
+			System.out.println(e.getValue()+"\t"+e.getKey());
+		}
 	}
 
 }

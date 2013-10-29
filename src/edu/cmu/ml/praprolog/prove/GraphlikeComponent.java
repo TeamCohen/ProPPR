@@ -53,9 +53,7 @@ public abstract class GraphlikeComponent extends Component {
 		
 		@Override
 		public List<Outlink> outlinks(LogicProgramState state0) {
-			if (! (state0 instanceof ProPPRLogicProgramState))
-				throw new UnsupportedOperationException("GraphComponents can't handle prolog states yet");
-			ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
+			ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
 			Goal g = state.getHeadGoal();
 			Argument srcConst = convertConst(0,state);
 			Argument dstVar   = convertVar(1,state);

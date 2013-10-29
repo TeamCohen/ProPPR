@@ -9,6 +9,12 @@ import alice.tuprolog.Var;
 public class TuprologLogicProgramState extends LogicProgramState {
 	protected Struct goals, queryGoals, originalGoals;
 	
+	public TuprologLogicProgramState() {}
+	public TuprologLogicProgramState(Struct qg, Struct g, Struct og) {
+		this.queryGoals = qg;
+		this.goals = g;
+		this.originalGoals = og;
+	}
 	public static TuprologLogicProgramState fromStartgoals(Struct startgoals) {
 		TuprologLogicProgramState t = new TuprologLogicProgramState();
 		t.queryGoals = startgoals;
@@ -68,5 +74,17 @@ public class TuprologLogicProgramState extends LogicProgramState {
 		sb.append(" ... ");
 		sb.append(this.goals.toString());//,sb," ");
 		return sb.toString();
+	}
+	
+	protected LogicProgramState proppr;
+	@Override
+	public LogicProgramState asProPPR() {
+		if (this.proppr == null) {
+			this.proppr = TuprologAdapter.tuprologToProppr(this);
+		}
+		return this.proppr;
+	}
+	public Term asTerm() {
+		return new Struct("state",queryGoals, goals, originalGoals);
 	}
 }

@@ -22,6 +22,13 @@ import edu.cmu.ml.praprolog.util.SymbolTable;
  */
 public abstract class LogicProgramState extends Component {
 	private static final Logger log = Logger.getLogger(LogicProgramState.class);
+	
+	public LogicProgramState asProPPR() {
+		return this;
+	}
+	public LogicProgramState asTuprolog() {
+		return this;
+	}
 
 	/**
 	 * Return true iff this state is a solution state - ie, a complete refutation.

@@ -17,7 +17,6 @@ import alice.tuprolog.Struct;
 import alice.tuprolog.Term;
 import alice.tuprolog.Theory;
 import alice.tuprolog.Var;
-
 import edu.cmu.ml.praprolog.prove.Argument;
 import edu.cmu.ml.praprolog.prove.ConstantArgument;
 import edu.cmu.ml.praprolog.prove.Goal;
@@ -83,7 +82,7 @@ public class TuprologAdapterTest {
 	@Test
 	public void testLogicProgramState() throws InvalidTheoryException, FileNotFoundException, IOException, MalformedGoalException, NoSolutionException {
 		Prolog engine = new Prolog();
-		engine.addTheory(new Theory(new FileInputStream("outlinks.2p")));
+		engine.addTheory(new Theory(ClassLoader.getSystemResourceAsStream("outlinks.2p")));
 		SolveInfo info = engine.solve("startState(writes(william,X),S).");
 		Term t = info.getVarValue("S");
 		Term tp = TuprologAdapter.lpStateToTerm(new ProPPRLogicProgramState(Goal.decompile("writes,william,-1")));

@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.prove.Component.Outlink;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
+import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
 
 public class ProPPRLogicProgramState extends LogicProgramState {
 	private static final Logger log = Logger.getLogger(ProPPRLogicProgramState.class);
@@ -20,6 +21,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	protected int depth;
 	protected int hash=0;
 	
+	/** primary constructor for programmer use */
 	public ProPPRLogicProgramState(Goal ... goals) {
 		this.init(
 				Arrays.copyOf(goals, goals.length),
@@ -28,7 +30,8 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 				new RenamingSubstitution(0),
 				0); // FIXME
 	}
-	private ProPPRLogicProgramState(Goal[] originalQueryGoals, Goal[] queryGoals, Goal[] goals, RenamingSubstitution theta, int depth) {
+	/** special constructor for internal use only */
+	public ProPPRLogicProgramState(Goal[] originalQueryGoals, Goal[] queryGoals, Goal[] goals, RenamingSubstitution theta, int depth) {
 		this.init(originalQueryGoals,queryGoals,goals,theta,depth);
 	}
 	private void init(Goal[] originalQueryGoals, Goal[] queryGoals, Goal[] goals, RenamingSubstitution theta, int depth) {
@@ -213,5 +216,12 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	public Goal getGroundGoal() {
 		if (queryGoals.length != 1) throw new IllegalStateException("1 ground goal expected; found "+queryGoals.length);
 		return queryGoals[0];
+	}
+	
+	protected LogicProgramState tuprolog;
+	@Override
+	public LogicProgramState asTuprolog() {
+		if (this.tuprolog == null) this.tuprolog = TuprologAdapter.propprToTuprolog(this);
+		return this.tuprolog;
 	}
 }

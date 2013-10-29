@@ -1,0 +1,140 @@
+% differences from SWI-Prolog: clause/3 isn't supported, can't use {X | P(X)} notation
+
+:- op(1125,xfy,'#').
+:- op(1150,fx,'propprDB').
+:- op(1150,fx,'propprRule').
+:- op(1100,xfy,'suchThat').
+:- op(1100,xfy,'st').
+
+% simple dfs facility - finds the first solution available via DFS,
+% and then others on backtracking.
+
+dfs(Goal) :-
+	dfs(Goal,5).
+
+dfs(Goal,MaxDepth) :-
+	startState(Goal,S0),
+	dfs(S0,[],0,MaxDepth).
+
+dfs(state(Goal,[],_),Features,D,MaxDepth) :-
+	D < MaxDepth,
+	tabTo(D),
+	write('-'),write(Features),write('-> '),write(Goal),write('... []'),nl.
+dfs(state(Goal,GoalList,ResetGoal),Features,D,MaxDepth) :-
+	D < MaxDepth,
+	tabTo(D),
+	write('-'),write(Features),write('-> '),write(Goal),write('...'),write(GoalList),nl,
+	outlinks(state(Goal,GoalList,ResetGoal),S1,Fs1),
+	D1 is D+1,
+	dfs(S1,Fs1,D1,MaxDepth).
+
+tabTo(I) :- I =< 0.
+tabTo(I) :- I > 0, write('|  '),I1 is I-1,tabTo(I1).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% lpState functionality
+
+% create the start state for a goal
+
+startState(Goal,state(GoalList,GoalList,GoalListCopy)) :-
+	conjunctionToList(Goal,GoalList),
+	copy_term(GoalList,GoalListCopy).
+
+% is the state a solution state?
+
+isSolution(state(_,[],_)) :- !.
+
+% asks if the solution is a start state and binds the goal to that goallist
+
+isSolution(OriginalGoal,state(GoalList,[],_)) :- 
+	conjunctionToList(OriginalGoal,GoalList).
+
+% find a restart state and its features
+
+restart( state(_,_,GoalCopy), state(GoalCopy,GoalCopy,GoalCopy1)) :-
+	copy_term(GoalCopy,GoalCopy1).
+
+restartFeatures(_, [restart=1]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% lp component functionality
+
+claim( state(_,[Subgoal|_], _) ) :-
+	edbPredicate(Subgoal).
+
+% find the children of a state
+
+outlinks( state(Goal,[Subgoal|Subgoals],GoalCopy), state(Goal,Subgoals1,GoalCopy), Features) :-
+	annotatedClause(Subgoal,Body,Features0),
+	evalFeatures(Features0,Features),
+	checkFeaturesAreGround(Features),
+	append(Body,Subgoals,Subgoals1).
+
+checkFeaturesAreGround(Features) :-
+	ground(Features), 
+	!.
+checkFeaturesAreGround(Features) :-
+	!, 
+	writeln('warning: non-ground features'=Features), nl.
+
+evalFeatures([],[]).
+evalFeatures([F=C|Fs],[F=C|EFs]) :- 
+	evalFeatures(Fs,EFs).
+evalFeatures([F|Fs],EFs) :-
+	setGeneratorFeature(F,Var,PredAboutVar),
+	call(findall(Var,PredAboutVar,List)),
+	evalFeatures(List,EFs1),
+	evalFeatures(Fs,EFs2),
+	append(EFs1,EFs2,EFs).
+evalFeatures([F|Fs],[F=1|EFs]) :-
+	\+ F=(_ = _),
+	\+ setGeneratorFeature(F,_,_), 
+	evalFeatures(Fs,EFs).
+
+% syntax for suchThat constructs
+setGeneratorFeature({Var suchThat PredAboutVar},Var,PredAboutVar).
+setGeneratorFeature({Var st PredAboutVar},Var,PredAboutVar).
+
+% find a clause Head, Body, Features, where Body and Features are lists
+
+annotatedClause(Head,Body,Features) :-
+	edbPredicate(Head),
+	clause(Head,BodyFeatures),
+	extractFeaturesFromBody(BodyFeatures,Body,Features).
+annotatedClause(Head,[],[Functor/Arity]) :-
+	idbPredicate(Head),
+	clause(Head,true),
+	functor(Head,Functor,Arity).
+	
+% interpret propprRule and propprDB declarations
+
+edbPredicate(Head) :- propprRule(Heads),conjunctionMember(Head,Heads).
+
+idbPredicate(Head) :- propprDB(Heads),conjunctionMember(Head,Heads).
+
+% convert prolog's notion of the clause body to a list version of the
+% clause body and a list version of the features.
+
+extractFeaturesFromBody((Body0 # Features0),Body,Features) :- !,
+	conjunctionToList(Features0,Features),
+	conjunctionToList(Body0,Body).
+extractFeaturesFromBody(Body0,Body,[clauseWithMissingFeatures]) :- !,
+	\+ Body0=(_ # _),
+	write(['warning: clause features should always be explicit in body',Body0]),nl,
+	conjunctionToList(Body0,Body).
+
+% convert a conjunction to a prolog list
+
+conjunctionToList(true,[]).
+conjunctionToList(X,[X]) :- \+ X=(_,_), \+ X=true.
+conjunctionToList((X,Y),List) :- 
+	conjunctionToList(X,XList),
+	conjunctionToList(Y,YList),
+	append(XList,YList,List).
+
+% find members of a conjunction, interpreted as a list
+
+conjunctionMember(Z,(X,_)) :- conjunctionMember(Z,X).
+conjunctionMember(Z,(_,Y)) :- conjunctionMember(Z,Y).
+conjunctionMember(X,X) :- \+ X=true, \+ X=(_,_), !.
+

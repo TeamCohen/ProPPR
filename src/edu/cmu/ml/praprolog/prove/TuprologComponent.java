@@ -23,7 +23,7 @@ public class TuprologComponent extends Component {
 	public TuprologComponent() {		
 		engine = new Prolog();
 		try {
-			engine.addTheory(new Theory(new FileInputStream("outlinks.2p")));
+			engine.addTheory(new Theory(ClassLoader.getSystemResourceAsStream("outlinks.2p")));
 		} catch (InvalidTheoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -34,6 +34,10 @@ public class TuprologComponent extends Component {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	public TuprologComponent(String ... files) {
+		this();
+		for (String f : files) this.addTheory(f);
 	}
 	public void addTheory(String filename) {
 		try {
@@ -52,13 +56,14 @@ public class TuprologComponent extends Component {
 
 	@Override
 	public boolean claim(LogicProgramState state) {
-		// TODO Auto-generated method stub
-		return false;
+		Term tustate = ((TuprologLogicProgramState) state.asTuprolog()).asTerm();
+		Term query = new Struct("claim",tustate);
+		return this.engine.solve(query).isSuccess();
 	}
 
 	@Override
 	public List<Outlink> outlinks(LogicProgramState state) {
-		Term tustate = TuprologAdapter.lpStateToTerm(state);
+		Term tustate = ((TuprologLogicProgramState) state.asTuprolog()).asTerm();
 		Term query = new Struct("outlinks",tustate,new Var("S1"),new Var("F1"));
 		ArrayList<Outlink> ret = new ArrayList<Outlink>();
 		for (SolveInfo info : new SolutionIterator(this.engine, query)) {
@@ -72,8 +77,6 @@ public class TuprologComponent extends Component {
 		}
 		return ret;
 	}
-	
-
 
 	@Override
 	public void compile() {
