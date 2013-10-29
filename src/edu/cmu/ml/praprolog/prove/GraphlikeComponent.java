@@ -44,21 +44,12 @@ public abstract class GraphlikeComponent extends Component {
 
 		@Override
 		public boolean claim(LogicProgramState state) {
-			return !state.isSolution() && this.contains(state.getHeadGoal());
-		}
-
-		protected boolean contains(Goal goal) {
-			return goal.getArity()==2 && this._indexContains(goal.getFunctor());
+			return !state.isSolution() && state.isHeadEdge() && this._indexContains(state.getHeadFunctor());
 		}
 		
 		@Override
-		public List<Outlink> outlinks(LogicProgramState state0) {
-			ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
-			Goal g = state.getHeadGoal();
-			Argument srcConst = convertConst(0,state);
-			Argument dstVar   = convertVar(1,state);
-			
-			List<Argument> values = this._indexGet(g.getFunctor(), srcConst);
+		public List<Outlink> outlinks(LogicProgramState state) {
+			List<Argument> values = this._indexGet(state.getHeadFunctor(), state.getHeadArg1());
 			
 			List<Outlink> result = new ArrayList<Outlink>();
 			if (values.size() > 0) {
@@ -66,24 +57,12 @@ public abstract class GraphlikeComponent extends Component {
 				for (Argument v : values) {
 					RenamingSubstitution thnew = new RenamingSubstitution(state.getTheta().offset);
 					thnew.put(dstVar,v); 
-					result.add(new Outlink(this.getFeatureDict(), state.child(new Goal[0],thnew)));
+					result.add(new Outlink(this.getFeatureDict(), state.child(thnew)));
 				}
 			}
 			return result;
 		}
 		
-		protected Argument convertConst(int i, LogicProgramState state) {
-			Argument result = state.getHeadGoal().getArg(i);
-			if (!result.isConstant()) throw new IllegalStateException("Argument "+(i+1)+" of "+state.getHeadGoal()+" should be bound in theta; was "+result);
-			return result;
-		}
-		
-		protected Argument convertVar(int i, LogicProgramState state) {
-			Argument result = state.getHeadGoal().getArg(i);
-			if (!result.isVariable()) 
-				throw new IllegalStateException("Argument "+(i+1)+" of "+state.getHeadGoal()+" should be unbound in theta; was "+result);
-			return result;
-		}
 
 		@Override
 		public void compile() { 
@@ -98,10 +77,7 @@ public abstract class GraphlikeComponent extends Component {
 		@Override
 		public int degree(LogicProgramState state) {
 			if (state.isSolution()) return 0;
-			Goal g = state.getHeadGoal();
-			Argument srcConst = convertConst(0,state);
-			Argument dstVar   = convertVar(1,state); // unused but necessary to check binding
-			return this._indexGetDegree(g.getFunctor(), srcConst);
+			return this._indexGetDegree(state.getHeadFunctor(), state.getHeadArg1());
 		}
 		
 }

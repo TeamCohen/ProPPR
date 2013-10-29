@@ -22,7 +22,7 @@ import edu.cmu.ml.praprolog.util.SymbolTable;
  * @author wcohen,krivard
  *
  */
-public class GraphComponent extends Component {
+public class GraphComponent extends GraphlikeComponent {
 	private static final Logger log = Logger.getLogger(GraphComponent.class);
 
 	public static final String FILE_EXTENSION = "graph";
@@ -31,7 +31,7 @@ public class GraphComponent extends Component {
 	// ewww
 	protected Map<String,Map<Argument,List<Argument>>> index;
 	protected Map<Goal, Double> featureDict;
-	
+
 
 	public GraphComponent() {
 		this("graphEDB");
@@ -42,78 +42,31 @@ public class GraphComponent extends Component {
 		this.featureDict = new HashMap<Goal,Double>();
 		this.featureDict.put(new Goal("id",label),1.0);
 	}
-	/**
-	 * An an arc to a graph-based EDB.
-	 * @param functor
-	 * @param src
-	 * @param dst
-	 */
-	protected void addEdge(String functor, Argument src, Argument dst) {
+	@Override
+	protected void _indexAppend(String functor, Argument src, Argument dst) {
 		Dictionary.safeAppend(this.index,functor,src,dst);
 	}
-
 	@Override
-	public boolean claim(LogicProgramState state) {
-		return !state.isSolution() && this.contains(state.getHeadGoal());
+	protected boolean _indexContains(String functor) {
+		// TODO Auto-generated method stub
+		return this.index.containsKey(functor);
 	}
-
-	protected boolean contains(Goal goal) {
-		return goal.getArity()==2 && this.index.containsKey(goal.getFunctor());// && goal.getArg(1).isVariable();
-	}
-	
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state0) {
-		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
-		Goal g = state.getHeadGoal();
-		Argument srcConst = convertConst(0,state);
-		Argument dstVar   = convertVar(1,state);
-		
-		List<Argument> values = Dictionary.safeGet(this.index, g.getFunctor(),srcConst,DEFAULT_INDEX);
-		
-		List<Outlink> result = new ArrayList<Outlink>();
-		if (values.size() > 0) {
-			double w = 1.0/values.size();
-			for (Argument v : values) {
-				RenamingSubstitution thnew = new RenamingSubstitution(state.getTheta().offset);//state.getTheta().copy();
-				thnew.put(dstVar,v); 
-				result.add(new Outlink(this.featureDict, state.child(new Goal[0],thnew)));
-			}
-		}
-		return result;
+	protected List<Argument> _indexGet(String functor, Argument srcConst) {
+		// TODO Auto-generated method stub
+		return Dictionary.safeGet(this.index, functor,srcConst,DEFAULT_INDEX);
 	}
-	
-	protected Argument convertConst(int i, LogicProgramState state) {
-		Argument result = state.getHeadGoal().getArg(i);//state.getTheta().valueOf(state.getHeadGoal().getArg(i).getRenamed(state.getVarSketchSize()));
-		if (!result.isConstant()) throw new IllegalStateException("Argument "+(i+1)+" of "+state.getHeadGoal()+" should be bound in theta; was "+result);
-		return result;
+	@Override
+	protected int _indexGetDegree(String functor, Argument srcConst) {
+		// TODO Auto-generated method stub
+		return Dictionary.safeGet(this.index, functor, srcConst, DEFAULT_INDEX).size();
 	}
-	
-	protected Argument convertVar(int i, LogicProgramState state) {
-		Argument result = state.getHeadGoal().getArg(i);//state.getTheta().valueOf(state.getHeadGoal().getArg(i).getRenamed(state.getVarSketchSize()));
-		if (!result.isVariable()) 
-			throw new IllegalStateException("Argument "+(i+1)+" of "+state.getHeadGoal()+" should be unbound in theta; was "+result);
-		return result;
+	@Override
+	protected Map<Goal, Double> getFeatureDict() {
+		// TODO Auto-generated method stub
+		return this.featureDict;
 	}
 
-	@Override
-	public void compile() { 
-		// pass
-	}
-
-	@Override
-	public void compile(SymbolTable variableSymTab) {
-		// pass
-	}
-
-	@Override
-	public int degree(LogicProgramState state) {
-		if (state.isSolution()) return 0;
-		Goal g = state.getHeadGoal();
-		Argument srcConst = convertConst(0,state);
-		Argument dstVar   = convertVar(1,state);
-		return Dictionary.safeGet(this.index, g.getFunctor(), srcConst, DEFAULT_INDEX).size();
-	}
-	
 	/**
 	 * Return a simpleGraphComponent with all the components loaded from
         a file.  The format of the file is that each line is a tab-separated 

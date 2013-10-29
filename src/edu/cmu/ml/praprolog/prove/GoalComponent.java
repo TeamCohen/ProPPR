@@ -78,13 +78,12 @@ public class GoalComponent extends Component {
 	}
 
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state0) {
-		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
+	public List<Outlink> outlinks(LogicProgramState state) {
 		List<RenamingSubstitution> matches = new ArrayList<RenamingSubstitution>();
-		for (Goal g : this.goalsMatching(state.getHeadGoal())) {
+		for (Goal g : this.goalsMatching(state.getHeadFunctor(), state.getHeadArity(), state.getHeadArg1())) {
 			RenamingSubstitution theta1 = 
 					RenamingSubstitution.unify(g, 
-					state.getHeadGoal(), 
+					state.getGoal(0), // FIXME: proppr-specific
 					0, 
 					RenamingSubstitution.NOT_RENAMED, 
 					RenamingSubstitution.NOT_RENAMED);
@@ -92,7 +91,7 @@ public class GoalComponent extends Component {
 		}
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (RenamingSubstitution theta : matches) {
-			result.add(new Outlink(this.featureDict,state.child(new Goal[0], theta)));
+			result.add(new Outlink(this.featureDict,state.child(theta)));
 		}
 		return result;
 	}
@@ -105,15 +104,27 @@ public class GoalComponent extends Component {
 				new FunctorArityArgKey(goal.getFunctor(), goal.getArity(), goal.getArg(0)),
 				Collections.<Goal> emptyList());
 	}
+	private Iterable<Goal> goalsMatching(String functor, int arity, Argument arg1) {
+		if (arity == 0 || arg1.isVariable()) 
+			return Dictionary.safeGet(this.indexF,
+					new FunctorArityKey(functor, arity),
+					Collections.<Goal> emptyList());
+		return Dictionary.safeGet(this.indexFA1, 
+				new FunctorArityArgKey(functor, arity, arg1),
+				Collections.<Goal> emptyList());
+	}
 	@Override
-	public boolean claim(LogicProgramState state0) {
-		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
+	public boolean claim(LogicProgramState state) {
 		// FIXME -- only works b/c we know isSolution is true iff #goals == 0
-		return !state.isSolution() && this.contains(state.getGoal(0));
+		return !state.isSolution() && this.contains(state.getHeadFunctor(), state.getHeadArity());
 	}
 	protected boolean contains(Goal goal) {
 		// TODO: this is likely slow
 		return this.indexF.containsKey(new FunctorArityKey(goal.getFunctor(),goal.getArity()));
+	}
+	protected boolean contains(String functor, int arity) {
+		// TODO: this is likely slow
+		return this.indexF.containsKey(new FunctorArityKey(functor,arity));
 	}
 	
 	public void compile() {

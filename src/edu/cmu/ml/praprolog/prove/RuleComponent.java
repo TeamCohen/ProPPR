@@ -28,13 +28,16 @@ public class RuleComponent extends Component {
 	@Override
 	public boolean claim(LogicProgramState state) {
 		// FIXME -- only works b/c we know isSolution is true iff #goals == 0
-		return (!state.isSolution() && this.index.containsKey(key(state.getHeadGoal())));
+		return (!state.isSolution() && this.index.containsKey(key(state.getHeadFunctor(), state.getHeadArity())));
 	}
 	protected List<Rule> rulesFor(Goal goal) {
 		return this.index.get(this.key(goal));
 	}
 	protected String key(Goal goal) {
 		return goal.getFunctor()+goal.getArity();//String.format("%s/%d",goal.getFunctor(),goal.getArity());
+	}
+	protected String key(String functor, int arity) {
+		return functor+arity;//String.format("%s/%d",goal.getFunctor(),goal.getArity());
 	}
 
 	@Override
@@ -44,9 +47,7 @@ public class RuleComponent extends Component {
 	}
 
 	protected List<RuleSubstitutionPair> getSubstitutions(LogicProgramState state0) {
-		if (! (state0 instanceof ProPPRLogicProgramState)) 
-			throw new UnsupportedOperationException("Can't handle tuprolog states yet in rulecomponent");
-		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
+		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
 		LinkedList<RuleSubstitutionPair> matches = new LinkedList<RuleSubstitutionPair>();
 		int offsetToStandardizeApart = state.getVarSketchSize();
 		for (Rule r : this.rulesFor(state.getHeadGoal())) {

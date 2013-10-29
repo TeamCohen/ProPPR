@@ -76,8 +76,14 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		else throw new IllegalArgumentException("Can't get goal "+i+"; only has "+goals.length+" goals");
 	}
 	@Override
-	public Goal getHeadGoal() {
-		return this.getGoal(0);
+	public String getHeadFunctor() {
+		if (this.goals.length==0) return null;
+		return this.getGoal(0).getFunctor();
+	}
+	@Override
+	public Argument getHeadArg1() {
+		if (this.goals.length==0) return null;
+		return this.getGoal(0).getArg(0);
 	}
 	/**
 	 * Return true iff this state is a solution state - ie, a complete refutation.
@@ -90,7 +96,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	 * Construct a state that restarts the original query.
 	 * @return
 	 */
-	public LogicProgramState restart() {
+	public ProPPRLogicProgramState restart() {
 		return new ProPPRLogicProgramState(this.originalQueryGoals);
 	}
 
@@ -223,5 +229,12 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	public LogicProgramState asTuprolog() {
 		if (this.tuprolog == null) this.tuprolog = TuprologAdapter.propprToTuprolog(this);
 		return this.tuprolog;
+	}
+	@Override
+	public boolean isHeadEdge() {
+		if (this.goals.length==0) return false;
+		return this.goals[0].getArity()==2 
+				&& this.goals[0].getArg(0).isConstant()
+				&& this.goals[0].getArg(1).isVariable();
 	}
 }

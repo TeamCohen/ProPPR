@@ -91,7 +91,7 @@ public class LogicProgram {
 					return result;
 				}
 			}
-			throw new IllegalStateException("No definition for "+state.getHeadGoal());
+			throw new IllegalStateException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
 		}
 	}
 
@@ -158,7 +158,7 @@ public class LogicProgram {
                 }
             }
         }
-        throw new IllegalStateException("No definition for "+state.getHeadGoal());
+        throw new IllegalStateException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
     }
     /**
      * The weight that would be assigned to the restart from this
@@ -178,7 +178,7 @@ public class LogicProgram {
                 }
             }
         }
-        throw new IllegalStateException("No definition for "+state.getHeadGoal());
+        throw new IllegalStateException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
     }
     /**
      * Convert the featureDict to a numeric weight, and possibly

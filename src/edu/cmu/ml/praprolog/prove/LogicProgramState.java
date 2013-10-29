@@ -39,7 +39,19 @@ public abstract class LogicProgramState extends Component {
 	 * Construct a state that restarts the original query.
 	 * @return
 	 */
-	public abstract LogicProgramState restart();
+	public abstract ProPPRLogicProgramState restart();
+	/**
+	 * Return a string describing the solution found, relative to the original query.
+	 * @return
+	 */
+	public abstract String description();
+	
+	public abstract String getHeadFunctor();
+	public abstract int getHeadArity();
+	public abstract Argument getHeadArg1();
+	public abstract boolean isHeadEdge();
+	public abstract Goal getGroundGoal();
+	public abstract LogicProgramState child(RenamingSubstitution bindings);
 
 	@Override
 	public List<Outlink> outlinks(LogicProgramState state) {
@@ -55,15 +67,7 @@ public abstract class LogicProgramState extends Component {
 		// does nothing
 	}
 	@Override
-	public void compile(SymbolTable varialeSymTab) {
+	public void compile(SymbolTable variableSymTab) {
 		// does  nothing		
 	}
-	/**
-	 * Return a string describing the solution found, relative to the original query.
-	 * @return
-	 */
-	public abstract String description();
-	
-	public abstract Goal getHeadGoal();
-	public abstract Goal getGroundGoal();
 }
