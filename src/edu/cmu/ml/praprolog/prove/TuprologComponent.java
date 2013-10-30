@@ -62,15 +62,16 @@ public class TuprologComponent extends Component {
 	}
 
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state) {
-		Term tustate = ((TuprologLogicProgramState) state.asTuprolog()).asTerm();
+	public List<Outlink> outlinks(LogicProgramState state0) {
+		TuprologLogicProgramState state = (TuprologLogicProgramState) state0.asTuprolog();
+		Term tustate = state.asTerm();
 		Term query = new Struct("outlinks",tustate,new Var("S1"),new Var("F1"));
 		ArrayList<Outlink> ret = new ArrayList<Outlink>();
 		for (SolveInfo info : new SolutionIterator(this.engine, query)) {
 			try {
 				Term solution = info.getVarValue("S1");
 				Term features = info.getVarValue("F1");
-				ret.add(TuprologAdapter.termsToOutlink(solution,features,state.restart()));
+				ret.add(TuprologAdapter.termsToOutlink(solution,features,state));
 			} catch (NoSolutionException e) {
 				e.printStackTrace();
 			}

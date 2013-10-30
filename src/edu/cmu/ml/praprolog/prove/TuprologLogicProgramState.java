@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
+import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter.VarData;
 import alice.tuprolog.Struct;
 import alice.tuprolog.Term;
 import alice.tuprolog.Var;
@@ -14,6 +15,7 @@ public class TuprologLogicProgramState extends LogicProgramState {
 	private static final Logger log = Logger.getLogger(TuprologLogicProgramState.class);
 	protected Struct goals, queryGoals;
 	protected ProPPRLogicProgramState restartState;
+	protected int depth=0;
 	
 	public TuprologLogicProgramState(Goal... goals) {
 		this.queryGoals = TuprologAdapter.goalArrayToTerm(goals);
@@ -25,20 +27,14 @@ public class TuprologLogicProgramState extends LogicProgramState {
 		this.goals = g;
 		this.restartState = restart;
 	}
-//	public static TuprologLogicProgramState fromStartgoals(Struct startgoals) {
-//		TuprologLogicProgramState t = new TuprologLogicProgramState();
-//		t.queryGoals = startgoals;
-//		t.goals = startgoals;
-//		t.originalGoals = (Struct) TuprologAdapter.copy(startgoals);
-//		return t;
-//	}
-	public static TuprologLogicProgramState fromState(Term stateterm, ProPPRLogicProgramState restartState) {
+	public static TuprologLogicProgramState fromState(Term stateterm, TuprologLogicProgramState parent) { //ProPPRLogicProgramState restartState) {
 		if (! (stateterm instanceof Struct)) throw new IllegalArgumentException("State term not a Struct: "+stateterm);
 		Struct state = (Struct) stateterm;
 		TuprologLogicProgramState t = new TuprologLogicProgramState();
 		t.queryGoals = (Struct) state.getArg(0).getTerm();
 		t.goals = (Struct) state.getArg(1).getTerm();
-		t.restartState = restartState;
+		t.restartState = parent.restartState;
+		t.depth = parent.depth+1;
 		return t;
 	}
 
@@ -83,10 +79,15 @@ public class TuprologLogicProgramState extends LogicProgramState {
 	}
 	
 	protected LogicProgramState proppr;
+	protected VarData varData;
+	protected VarData getVarData() {
+		if (this.varData == null) { this.varData = TuprologAdapter.tuprolog_index(this, new VarData()); }
+		return this.varData;
+	}
 	@Override
 	public LogicProgramState asProPPR() {
 		if (this.proppr == null) {
-			this.proppr = TuprologAdapter.tuprologToProppr(this);
+			this.proppr = TuprologAdapter.tuprologToProppr(this, this.getVarData());
 		}
 		return this.proppr;
 	}
@@ -125,7 +126,7 @@ public class TuprologLogicProgramState extends LogicProgramState {
 	@Override
 	public Goal getHeadGoal() {
 		if (this.goals.listSize() == 0) return null;
-		return TuprologAdapter.termToGoal(this.goals.listHead());
+		return TuprologAdapter.termToGoal(this.goals.listHead(), this.getVarData());
 	}
 	
 	@Override

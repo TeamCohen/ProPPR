@@ -28,9 +28,11 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 public class TuprologAdapter {
 	private static final Logger log = Logger.getLogger(TuprologAdapter.class);
 	private static final String VARSTART = "X";
-	public static RenamingSubstitution translateBindings(Struct q, Struct rs) {
-		return null;
-	}
+	/**
+	 * Use the prolog expression copy_term to generate a copy of the expression with anonymous variables.
+	 * @param t
+	 * @return
+	 */
 	public static Term copy(Term t) {
 		Prolog engine = new Prolog();
 		SolveInfo info = engine.solve(new Struct("copy_term",t,new Var("S")));
@@ -43,6 +45,11 @@ public class TuprologAdapter {
 		} 
 		return null;
 	}
+	/**
+	 * Convert ProPPR lpState to the tuProlog equivalent.
+	 * @param s
+	 * @return
+	 */
 	public static LogicProgramState propprToTuprolog(ProPPRLogicProgramState s) {
 		Struct queryGoals, goals;
 		ProPPRLogicProgramState restart = new ProPPRLogicProgramState(s.getOriginalGoals());
@@ -50,7 +57,21 @@ public class TuprologAdapter {
 		goals = goalArrayToTerm(s.getGoals());
 		return new TuprologLogicProgramState(queryGoals,goals,restart);
 	}
+	/**
+	 * Convert a tuProlog lpState to the ProPPR equivalent, filling an anonymous variable index.
+	 * @param state
+	 * @return
+	 */
 	public static LogicProgramState tuprologToProppr(TuprologLogicProgramState state) {
+		return tuprologToProppr_index(state,new VarData());
+	}
+	/** 
+	 * Convert a tuProlog lpState to the ProPPR equivalent, filling the specified index.
+	 * @param state
+	 * @param data
+	 * @return
+	 */
+	public static LogicProgramState tuprologToProppr_index(TuprologLogicProgramState state, VarData data) {
 //		Goal[] queryGoals, goals, origGoals;
 //		queryGoals = termToGoalArray(tuprologLogicProgramState.getQueryGoals());
 //		goals = termToGoalArray(tuprologLogicProgramState.getGoals());
@@ -60,21 +81,40 @@ public class TuprologAdapter {
 		log.debug("tu -> proppr");
 		log.debug(state.getQueryGoals());
 		log.debug(state.getGoals());
-		
-		Struct queryGoals=state.getQueryGoals(), goals=state.getGoals();
-		VarData data = new VarData();
-		collectVariables(queryGoals, data);
-		collectVariables(goals, data);
+		tuprolog_index(state, data);
+
 		log.debug((data.maxVar-1)+" vars");
 		log.debug(data.maxArg+" args");
-		Goal[] queryGoalsArr = termToGoalArray(queryGoals, data);
-		Goal[] goalsArr = termToGoalArray(goals, data);
+		return tuprologToProppr(state, data);
+		//new ProPPRLogicProgramState(origGoals, queryGoals, goals, new RenamingSubstitution(0), 0); // FIXME  ???
+	}
+	/**
+	 * Fill the specified index according to the tuProlog lpState.
+	 * @param state
+	 * @param data
+	 * @return
+	 */
+	public static VarData tuprolog_index(TuprologLogicProgramState state, VarData data) {
+		Struct queryGoals=state.getQueryGoals(), goals=state.getGoals();
+		collectVariables(queryGoals, data);
+		collectVariables(goals, data);
+		return data;
+	}
+	/**
+	 * Convert a tuProlog lpState to the ProPPR equivalent, using a pre-filled index.
+	 * @param state
+	 * @param data
+	 * @return
+	 */
+	public static LogicProgramState tuprologToProppr(TuprologLogicProgramState state, VarData data) {
+		Goal[] queryGoalsArr = termToGoalArray(state.getQueryGoals(), data);
+		Goal[] goalsArr = termToGoalArray(state.getGoals(), data);
 		ProPPRLogicProgramState ret = new ProPPRLogicProgramState(state.getOriginalGoals(), queryGoalsArr, goalsArr, new RenamingSubstitution(0), -1);
 		// FIXME *depth*
 		log.debug(state);
 		log.debug(ret);
 		log.debug(Dictionary.buildString(ret.getOriginalGoals(), new StringBuilder(), ", ").toString());
-		return ret;//new ProPPRLogicProgramState(origGoals, queryGoals, goals, new RenamingSubstitution(0), 0); // FIXME  ???
+		return ret;
 	}
 	protected static void collectVariables(Struct goalList, VarData data) {
 		for(Iterator<? extends Term> it = goalList.listIterator(); it.hasNext(); ) {
@@ -89,11 +129,11 @@ public class TuprologAdapter {
 			}
 		}
 	}
-	protected static class VarData {
-		int maxVar, maxArg;
-		HashMap<Var,Integer> index;
-		VarData(int maxVar, int maxArg) { this.maxVar = maxVar; this.maxArg = maxArg; this.index = new HashMap<Var,Integer>(); }
-		VarData() { this(1,0); }
+	public static class VarData {
+		public int maxVar, maxArg;
+		public HashMap<Var,Integer> index;
+		public VarData(int maxVar, int maxArg) { this.maxVar = maxVar; this.maxArg = maxArg; this.index = new HashMap<Var,Integer>(); }
+		public VarData() { this(1,0); }
 	}
 	
 	// gross. can't java be clever about this?
@@ -186,7 +226,7 @@ public class TuprologAdapter {
 		ret.put(new Goal(s2.getName()),1.0);
 		return ret;
 	}
-	public static Outlink termsToOutlink(Term solution, Term features, ProPPRLogicProgramState restart) {
-		return new Outlink(termToFeatures(features), TuprologLogicProgramState.fromState(solution, restart));
+	public static Outlink termsToOutlink(Term solution, Term features, TuprologLogicProgramState parent) {
+		return new Outlink(termToFeatures(features), TuprologLogicProgramState.fromState(solution, parent));
 	}
 }
