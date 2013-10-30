@@ -61,7 +61,8 @@ public class TuprologComponentTest {
 	
 	@Test
 	public void inProgram() {
-		LogicProgram lp = new LogicProgram(GoalComponent.loadCompiled("testcases/family-more.cfacts"), new TuprologComponent("testcases/prolog/family.pl"));
+		LogicProgram lp = new LogicProgram(
+				GoalComponent.loadCompiled("testcases/family-more.cfacts"), new TuprologComponent("testcases/prolog/family.pl"));
 		Prover p = new DprProver();
 		Map<LogicProgramState,Double> result = p.proveState(lp, new ProPPRLogicProgramState(Goal.decompile("rel2,katie,-1")));
 		for (Map.Entry<LogicProgramState,Double> e : result.entrySet()) {

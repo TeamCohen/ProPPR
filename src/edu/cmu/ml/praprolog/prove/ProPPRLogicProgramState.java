@@ -237,4 +237,19 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 				&& this.goals[0].getArg(0).isConstant()
 				&& this.goals[0].getArg(1).isVariable();
 	}
+	@Override
+	public int getHeadArity() {
+		if (this.goals.length == 0) return -1;
+		return this.goals[0].getArity();
+	}
+	@Override
+	public LogicProgramState child(RenamingSubstitution bindings) {
+		// TODO Auto-generated method stub
+		return this.child(new Goal[0], bindings);
+	}
+	@Override
+	public Goal getHeadGoal() {
+		if (this.goals.length == 0) return null;
+		return this.goals[0];
+	}
 }

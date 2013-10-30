@@ -1,8 +1,12 @@
 package edu.cmu.ml.praprolog.util.tuprolog;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.apache.log4j.Logger;
 
 import alice.tuprolog.NoSolutionException;
 import alice.tuprolog.Prolog;
@@ -21,7 +25,11 @@ import edu.cmu.ml.praprolog.prove.TuprologLogicProgramState;
 import edu.cmu.ml.praprolog.prove.VariableArgument;
 
 public class TuprologAdapter {
+	private static final Logger log = Logger.getLogger(TuprologAdapter.class);
 	private static final String VARSTART = "X";
+	public static RenamingSubstitution translateBindings(Struct q, Struct rs) {
+		return null;
+	}
 	public static Term copy(Term t) {
 		Prolog engine = new Prolog();
 		SolveInfo info = engine.solve(new Struct("copy_term",t,new Var("S")));
@@ -35,22 +43,52 @@ public class TuprologAdapter {
 		return null;
 	}
 	public static LogicProgramState propprToTuprolog(ProPPRLogicProgramState s) {
-		Struct queryGoals, goals, origGoals;
+		Struct queryGoals, goals;
+		ProPPRLogicProgramState restart = new ProPPRLogicProgramState(s.getOriginalGoals());
 		queryGoals = goalArrayToTerm(s.getQueryGoals());
 		goals = goalArrayToTerm(s.getGoals());
-		origGoals = goalArrayToTerm(s.getOriginalGoals());
-		Struct copy = (Struct) copy(origGoals);
-		if (copy != null) return new TuprologLogicProgramState(queryGoals,goals,copy);
-		throw new IllegalStateException("Couldn't copy goals :(");
+		return new TuprologLogicProgramState(queryGoals,goals,restart);
 	}
-	public static LogicProgramState tuprologToProppr(TuprologLogicProgramState tuprologLogicProgramState) {
-		Goal[] queryGoals, goals, origGoals;
-		queryGoals = termToGoalArray(tuprologLogicProgramState.getQueryGoals());
-		goals = termToGoalArray(tuprologLogicProgramState.getGoals());
-		origGoals = termToGoalArray(tuprologLogicProgramState.getOriginalGoals());
+	public static LogicProgramState tuprologToProppr(TuprologLogicProgramState state) {
+//		Goal[] queryGoals, goals, origGoals;
+//		queryGoals = termToGoalArray(tuprologLogicProgramState.getQueryGoals());
+//		goals = termToGoalArray(tuprologLogicProgramState.getGoals());
+//		origGoals = tuprologLogicProgramState.getOriginalGoals();
 		
-		return new ProPPRLogicProgramState(origGoals, queryGoals, goals, new RenamingSubstitution(0), 0); // FIXME  ???
+		RenamingSubstitution theta = new RenamingSubstitution(0);
+		log.debug("tu -> proppr");
+		log.debug(state.getQueryGoals());
+		log.debug(state.getGoals());
+		
+		Struct queryGoals=state.getQueryGoals(), goals=state.getGoals();
+		HashMap<Var,Integer> vars = new HashMap<Var,Integer>();
+		VarData dat=collectVariables(queryGoals, 1, 0, vars);
+		dat=collectVariables(goals, dat.maxVar, dat.maxArg, vars);
+		log.debug((dat.maxVar-1)+" vars");
+		log.debug(dat.maxArg+" args");
+		
+		return null;//new ProPPRLogicProgramState(origGoals, queryGoals, goals, new RenamingSubstitution(0), 0); // FIXME  ???
 	}
+	protected static VarData collectVariables(Struct goalList, int nextVarID, int maxArg, HashMap<Var,Integer> index) {
+		VarData dat = new VarData(nextVarID, maxArg);
+		for(Iterator<? extends Term> it = goalList.listIterator(); it.hasNext(); ) {
+			Term t = it.next();
+			if (!(t instanceof Struct)) throw new IllegalStateException("not a list of structs! "+t.toString());
+			Struct g = (Struct) t;
+			for (int i=0; i<g.getArity(); i++) {
+				Term t_ai = g.getArg(i).getTerm();
+				Argument ai = termToArg(t_ai);
+				if (ai==null) { Var v = (Var) t_ai; if (!index.containsKey(v)) index.put(v,dat.maxVar++); }
+				else if (ai.isVariable()) { dat.maxArg = Math.max(dat.maxArg, -ai.getValue()); }
+			}
+		}
+		return dat;
+	}
+	protected static class VarData {
+		int maxVar, maxArg;
+		VarData(int maxVar, int maxArg) { this.maxVar = maxVar; this.maxArg = maxArg; }
+	}
+	
 	// gross. can't java be clever about this?
 	public static Term lpStateToTerm(LogicProgramState s) {
 		if (s instanceof ProPPRLogicProgramState) return lpStateToTerm((ProPPRLogicProgramState) s);
@@ -67,7 +105,7 @@ public class TuprologAdapter {
 		throw new IllegalStateException("Couldn't copy goals :(");
 	}
 	public static Struct lpStateToTerm(TuprologLogicProgramState s) {
-		return new Struct("state",s.getQueryGoals(), s.getGoals(), s.getOriginalGoals());
+		return new Struct("state",s.getQueryGoals(), s.getGoals(), goalArrayToTerm(s.getOriginalGoals()));
 	}
 	public static Struct goalArrayToTerm(Goal[] gs) {
 		Term[] args = new Term[gs.length];
@@ -116,10 +154,10 @@ public class TuprologAdapter {
 			if (argTerm.getTerm() == argTerm) {
 				String name = ((Var)argTerm).getName();
 				if (name.startsWith(VARSTART)) // X1
-					return new VariableArgument(Integer.parseInt( name.substring(1) ));
+					return new VariableArgument(-Integer.parseInt( name.substring(1) ));
 				else { // _24897234
 					// well, nuts. Need a new variable here.
-					return new VariableArgument( 1000 ); //FIXME
+					return null; //FIXME
 				}
 			} else // v[c[]]
 				return termToArg(argTerm.getTerm());
@@ -136,7 +174,7 @@ public class TuprologAdapter {
 		ret.put(new Goal(s2.getName()),1.0);
 		return ret;
 	}
-	public static Outlink termsToOutlink(Term solution, Term features) {
-		return new Outlink(termToFeatures(features), TuprologLogicProgramState.fromState(solution));
+	public static Outlink termsToOutlink(Term solution, Term features, ProPPRLogicProgramState restart) {
+		return new Outlink(termToFeatures(features), TuprologLogicProgramState.fromState(solution, restart));
 	}
 }

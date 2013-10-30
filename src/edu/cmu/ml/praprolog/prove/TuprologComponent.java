@@ -70,7 +70,7 @@ public class TuprologComponent extends Component {
 			try {
 				Term solution = info.getVarValue("S1");
 				Term features = info.getVarValue("F1");
-				ret.add(TuprologAdapter.termsToOutlink(solution,features));
+				ret.add(TuprologAdapter.termsToOutlink(solution,features,state.restart()));
 			} catch (NoSolutionException e) {
 				e.printStackTrace();
 			}

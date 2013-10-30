@@ -15,11 +15,11 @@ public class TuprologLogicProgramState extends LogicProgramState {
 		this.goals = TuprologAdapter.goalArrayToTerm(goals);
 		this.restartState = new ProPPRLogicProgramState(goals);
 	}
-//	public TuprologLogicProgramState(Struct qg, Struct g, Struct og) {
-//		this.queryGoals = qg;
-//		this.goals = g;
-//		this.originalGoals = og;
-//	}
+	public TuprologLogicProgramState(Struct qg, Struct g, ProPPRLogicProgramState restart) {
+		this.queryGoals = qg;
+		this.goals = g;
+		this.restartState = restart;
+	}
 //	public static TuprologLogicProgramState fromStartgoals(Struct startgoals) {
 //		TuprologLogicProgramState t = new TuprologLogicProgramState();
 //		t.queryGoals = startgoals;
@@ -53,15 +53,15 @@ public class TuprologLogicProgramState extends LogicProgramState {
 		return null;
 	}
 
-	public Term getQueryGoals() {
+	public Struct getQueryGoals() {
 		return this.queryGoals;
 	}
-	public Term getGoals() {
+	public Struct getGoals() {
 		return this.goals;
 	}
-//	public Term getOriginalGoals() {
-//		return this.originalGoals;
-//	}
+	public Goal[] getOriginalGoals() {
+		return this.restartState.originalQueryGoals;
+	}
 	@Override
 	public Goal getGroundGoal() {
 		if (queryGoals.listSize() != 1) throw new IllegalStateException("1 ground goal expected; found "+queryGoals.listSize());
@@ -85,7 +85,7 @@ public class TuprologLogicProgramState extends LogicProgramState {
 		}
 		return this.proppr;
 	}
-	public Term asTerm() {
+	public Struct asTerm() {
 		return new Struct("state",queryGoals, goals, TuprologAdapter.goalArrayToTerm(this.restartState.originalQueryGoals));
 	}
 	@Override
@@ -105,5 +105,20 @@ public class TuprologLogicProgramState extends LogicProgramState {
 		return head.getArity() == 2
 				&& head.getArg(0).getTerm() instanceof Struct
 				&& head.getArg(1).getTerm() instanceof Var;
+	}
+	@Override
+	public int getHeadArity() {
+		if (this.goals.listSize()==0) return -1;
+		return ((Struct) this.goals.listHead()).getArity();
+	}
+	@Override
+	public LogicProgramState child(RenamingSubstitution bindings) {
+		Struct newGoals = this.goals.listTail();
+		return null;
+	}
+	@Override
+	public Goal getHeadGoal() {
+		if (this.goals.listSize() == 0) return null;
+		return TuprologAdapter.termToGoal(this.goals.listHead());
 	}
 }

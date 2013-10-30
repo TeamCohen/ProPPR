@@ -37,10 +37,10 @@ public class GoalComponent extends Component {
 		for (Argument a : goal.getArgs()) {
 			if (!a.isConstant()) throw new IllegalArgumentException("Goal arguments must all be constant for goal "+goal.toString());
 		}
-		
+
 		FunctorArityKey keyf = new FunctorArityKey(goal.getFunctor(), goal.getArity());
 		FunctorArityArgKey keyfa1 = new FunctorArityArgKey(goal.getFunctor(), goal.getArity(), goal.getArg(0));
-		
+
 		Dictionary.safeAppend(this.indexF, keyf, goal);
 		Dictionary.safeAppend(this.indexFA1, keyfa1, goal);
 	}
@@ -53,15 +53,15 @@ public class GoalComponent extends Component {
 			this.arity = arity;
 		}
 		public int hashCode() {
-		    return functor.hashCode() << 16 + arity;
+			return functor.hashCode() << 16 + arity;
 		}
 		public boolean equals(Object o) {
-		    if (!(o instanceof FunctorArityKey)) return false;
-		    FunctorArityKey k = (FunctorArityKey) o;
-		    return this.functor.equals(k.functor) && this.arity == k.arity;
+			if (!(o instanceof FunctorArityKey)) return false;
+			FunctorArityKey k = (FunctorArityKey) o;
+			return this.functor.equals(k.functor) && this.arity == k.arity;
 		}
 	}
-	
+
 	public static class FunctorArityArgKey extends FunctorArityKey {
 		public final Argument arg;
 		public FunctorArityArgKey(String functor, int arity, Argument arg) {
@@ -69,24 +69,25 @@ public class GoalComponent extends Component {
 			this.arg = arg;
 		}
 
-                public int hashCode() {
-                    return super.hashCode() ^ arg.hashCode();
-                }
-                public boolean equals(Object o) {
-                    return super.equals(o) && ((FunctorArityArgKey)o).arg.equals(this.arg);
-                }
+		public int hashCode() {
+			return super.hashCode() ^ arg.hashCode();
+		}
+		public boolean equals(Object o) {
+			return super.equals(o) && ((FunctorArityArgKey)o).arg.equals(this.arg);
+		}
 	}
 
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state) {
+	public List<Outlink> outlinks(LogicProgramState state0) {
+		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
 		List<RenamingSubstitution> matches = new ArrayList<RenamingSubstitution>();
 		for (Goal g : this.goalsMatching(state.getHeadFunctor(), state.getHeadArity(), state.getHeadArg1())) {
 			RenamingSubstitution theta1 = 
 					RenamingSubstitution.unify(g, 
-					state.getGoal(0), // FIXME: proppr-specific
-					0, 
-					RenamingSubstitution.NOT_RENAMED, 
-					RenamingSubstitution.NOT_RENAMED);
+							state.getHeadGoal(), 
+							0, 
+							RenamingSubstitution.NOT_RENAMED, 
+							RenamingSubstitution.NOT_RENAMED);
 			if (theta1 != null) matches.add(theta1);
 		}
 		List<Outlink> result = new ArrayList<Outlink>();
@@ -116,7 +117,7 @@ public class GoalComponent extends Component {
 	@Override
 	public boolean claim(LogicProgramState state) {
 		// FIXME -- only works b/c we know isSolution is true iff #goals == 0
-		return !state.isSolution() && this.contains(state.getHeadFunctor(), state.getHeadArity());
+				return !state.isSolution() && this.contains(state.getHeadFunctor(), state.getHeadArity());
 	}
 	protected boolean contains(Goal goal) {
 		// TODO: this is likely slow
@@ -126,7 +127,7 @@ public class GoalComponent extends Component {
 		// TODO: this is likely slow
 		return this.indexF.containsKey(new FunctorArityKey(functor,arity));
 	}
-	
+
 	public void compile() {
 		this.compile(new SymbolTable());
 	}
@@ -138,15 +139,22 @@ public class GoalComponent extends Component {
 		}
 	}
 	public String toString() {
-	    StringBuilder sb = new StringBuilder("goalComponent:");
-            for (List<Goal> el : this.indexF.values()) {
-                for (Goal g : el) {
-                    sb.append("\n\t").append(g);
-                }
-            }
-            return sb.toString();
+		StringBuilder sb = new StringBuilder("goalComponent:");
+//		for (List<Goal> el : this.indexF.values()) {
+//			for (Goal g : el) {
+//				sb.append("\n\t").append(g);
+//			}
+//		}
+
+		for (FunctorArityArgKey k : this.indexFA1.keySet()) {
+			//			for (Goal g : G) {
+			//				sb.append("\n").append(g);
+			//			}
+			sb.append("\n\t").append(k.functor).append("/").append(k.arity).append(":").append(k.arg);
+		}
+		return sb.toString();
 	}
-	
+
 	/**
 	 * Returns a goal component loaded from a file, where each line contains
         a single ground goal, stored as functor <TAB> arg1 <TAB> .....
@@ -159,9 +167,9 @@ public class GoalComponent extends Component {
 			reader = new LineNumberReader(new FileReader(filename));
 			String line;
 			while ((line=reader.readLine()) != null) { line = line.trim();
-				if (line.isEmpty() || line.startsWith("#")) continue;
-//				String[] functor_args = line.split("\t",2);
-				result.addFact(Goal.parseGoal(line,"\t"));//new Goal(functor_args[0],functor_args[1].split("\t")));
+			if (line.isEmpty() || line.startsWith("#")) continue;
+			//				String[] functor_args = line.split("\t",2);
+			result.addFact(Goal.parseGoal(line,"\t"));//new Goal(functor_args[0],functor_args[1].split("\t")));
 			}
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException(e);
@@ -183,14 +191,15 @@ public class GoalComponent extends Component {
         return result
 		 */
 	}
-	
+
 	@Override
 	public String listing() {
 		StringBuilder sb = new StringBuilder("%% from goalComponent ").append(this.label).append(":");
 		for (List<Goal> G : this.indexF.values()) {
-			for (Goal g : G) {
-				sb.append("\n").append(g);
-			}
+						for (Goal g : G) {
+							sb.append("\n").append(g);
+						}
+//			sb.append("\n").append(k.functor).append("/").append(k.arity).append(":").append(k.arg);
 		}
 		return sb.toString();
 	}

@@ -46,6 +46,7 @@ public abstract class LogicProgramState extends Component {
 	 */
 	public abstract String description();
 	
+	public abstract Goal getHeadGoal();
 	public abstract String getHeadFunctor();
 	public abstract int getHeadArity();
 	public abstract Argument getHeadArg1();
