@@ -48,17 +48,17 @@ public abstract class GraphlikeComponent extends Component {
 		}
 		
 		@Override
-		public List<Outlink> outlinks(LogicProgramState state0) {
-			ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
+		public List<Outlink> outlinks(LogicProgramState state) {
 			List<Argument> values = this._indexGet(state.getHeadFunctor(), state.getHeadArg1());
 			Argument dstVar = state.getHeadGoal().getArg(1);
 			List<Outlink> result = new ArrayList<Outlink>();
 			if (values.size() > 0) {
+				ProPPRLogicProgramState stateP = (ProPPRLogicProgramState) state.asProPPR();
 				double w = 1.0/values.size();
 				for (Argument v : values) {
-					RenamingSubstitution thnew = new RenamingSubstitution(state.getTheta().offset);
+					RenamingSubstitution thnew = new RenamingSubstitution(stateP.getTheta().offset);
 					thnew.put(dstVar,v); 
-					result.add(new Outlink(this.getFeatureDict(), state.child(thnew)));
+					result.add(new Outlink(this.getFeatureDict(), stateP.child(thnew)));
 				}
 			}
 			return result;

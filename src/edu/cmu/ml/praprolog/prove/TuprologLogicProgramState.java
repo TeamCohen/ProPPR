@@ -1,5 +1,9 @@
 package edu.cmu.ml.praprolog.prove;
 
+import java.util.Iterator;
+
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
 import alice.tuprolog.Struct;
@@ -7,6 +11,7 @@ import alice.tuprolog.Term;
 import alice.tuprolog.Var;
 
 public class TuprologLogicProgramState extends LogicProgramState {
+	private static final Logger log = Logger.getLogger(TuprologLogicProgramState.class);
 	protected Struct goals, queryGoals;
 	protected ProPPRLogicProgramState restartState;
 	
@@ -113,12 +118,34 @@ public class TuprologLogicProgramState extends LogicProgramState {
 	}
 	@Override
 	public LogicProgramState child(RenamingSubstitution bindings) {
-		Struct newGoals = this.goals.listTail();
-		return null;
+//		log.debug("child of "+this.toString()+" with "+bindings);
+//		Struct newGoals = this.goals.listTail();
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 	@Override
 	public Goal getHeadGoal() {
 		if (this.goals.listSize() == 0) return null;
 		return TuprologAdapter.termToGoal(this.goals.listHead());
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.toString().hashCode();
+	}
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof TuprologLogicProgramState)) return false; // debatable
+		TuprologLogicProgramState s = (TuprologLogicProgramState) o;
+		if (this.queryGoals.listSize() != s.queryGoals.listSize()) return false;
+		if (this.goals.listSize() != s.goals.listSize()) return false;
+		for (Iterator<? extends Term> it=this.queryGoals.listIterator(), ito=s.queryGoals.listIterator();
+				it.hasNext() && ito.hasNext();) {
+			if (!it.next().equals(ito.next())) return false;
+		}		
+		for (Iterator<? extends Term> it=this.goals.listIterator(), ito=s.goals.listIterator();
+				it.hasNext() && ito.hasNext();) {
+			if (!it.next().equals(ito.next())) return false;
+		}
+		return true;
 	}
 }

@@ -16,6 +16,8 @@ sim(X,Y) :- child(X,Z), sim(Z,Y) # child.
 rel(X,Y) :- sister(X,Y).
 rel(X,Y) :- child(X,Y).
 rel(X,Y) :- spouse(X,Y).
+% added 30 oct 2013:
+rel(X,Y) :- child(Y,X).
 
 rel2(X,Y) :- rel(X,Z), rel(Z,Y).
 

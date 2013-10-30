@@ -78,8 +78,7 @@ public class GoalComponent extends Component {
 	}
 
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state0) {
-		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0.asProPPR();
+	public List<Outlink> outlinks(LogicProgramState state) {
 		List<RenamingSubstitution> matches = new ArrayList<RenamingSubstitution>();
 		for (Goal g : this.goalsMatching(state.getHeadFunctor(), state.getHeadArity(), state.getHeadArg1())) {
 			RenamingSubstitution theta1 = 
@@ -91,8 +90,10 @@ public class GoalComponent extends Component {
 			if (theta1 != null) matches.add(theta1);
 		}
 		List<Outlink> result = new ArrayList<Outlink>();
+		if (matches.isEmpty()) return result;
+		ProPPRLogicProgramState stateP = (ProPPRLogicProgramState) state.asProPPR();
 		for (RenamingSubstitution theta : matches) {
-			result.add(new Outlink(this.featureDict,state.child(theta)));
+			result.add(new Outlink(this.featureDict,stateP.child(theta)));
 		}
 		return result;
 	}

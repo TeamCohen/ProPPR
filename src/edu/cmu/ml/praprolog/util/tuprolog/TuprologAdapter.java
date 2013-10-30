@@ -23,6 +23,7 @@ import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.RenamingSubstitution;
 import edu.cmu.ml.praprolog.prove.TuprologLogicProgramState;
 import edu.cmu.ml.praprolog.prove.VariableArgument;
+import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class TuprologAdapter {
 	private static final Logger log = Logger.getLogger(TuprologAdapter.class);
@@ -61,16 +62,21 @@ public class TuprologAdapter {
 		log.debug(state.getGoals());
 		
 		Struct queryGoals=state.getQueryGoals(), goals=state.getGoals();
-		HashMap<Var,Integer> vars = new HashMap<Var,Integer>();
-		VarData dat=collectVariables(queryGoals, 1, 0, vars);
-		dat=collectVariables(goals, dat.maxVar, dat.maxArg, vars);
-		log.debug((dat.maxVar-1)+" vars");
-		log.debug(dat.maxArg+" args");
-		
-		return null;//new ProPPRLogicProgramState(origGoals, queryGoals, goals, new RenamingSubstitution(0), 0); // FIXME  ???
+		VarData data = new VarData();
+		collectVariables(queryGoals, data);
+		collectVariables(goals, data);
+		log.debug((data.maxVar-1)+" vars");
+		log.debug(data.maxArg+" args");
+		Goal[] queryGoalsArr = termToGoalArray(queryGoals, data);
+		Goal[] goalsArr = termToGoalArray(goals, data);
+		ProPPRLogicProgramState ret = new ProPPRLogicProgramState(state.getOriginalGoals(), queryGoalsArr, goalsArr, new RenamingSubstitution(0), -1);
+		// FIXME *depth*
+		log.debug(state);
+		log.debug(ret);
+		log.debug(Dictionary.buildString(ret.getOriginalGoals(), new StringBuilder(), ", ").toString());
+		return ret;//new ProPPRLogicProgramState(origGoals, queryGoals, goals, new RenamingSubstitution(0), 0); // FIXME  ???
 	}
-	protected static VarData collectVariables(Struct goalList, int nextVarID, int maxArg, HashMap<Var,Integer> index) {
-		VarData dat = new VarData(nextVarID, maxArg);
+	protected static void collectVariables(Struct goalList, VarData data) {
 		for(Iterator<? extends Term> it = goalList.listIterator(); it.hasNext(); ) {
 			Term t = it.next();
 			if (!(t instanceof Struct)) throw new IllegalStateException("not a list of structs! "+t.toString());
@@ -78,15 +84,16 @@ public class TuprologAdapter {
 			for (int i=0; i<g.getArity(); i++) {
 				Term t_ai = g.getArg(i).getTerm();
 				Argument ai = termToArg(t_ai);
-				if (ai==null) { Var v = (Var) t_ai; if (!index.containsKey(v)) index.put(v,dat.maxVar++); }
-				else if (ai.isVariable()) { dat.maxArg = Math.max(dat.maxArg, -ai.getValue()); }
+				if (ai==null) { Var v = (Var) t_ai; if (!data.index.containsKey(v)) data.index.put(v,data.maxVar++); }
+				else if (ai.isVariable()) { data.maxArg = Math.max(data.maxArg, -ai.getValue()); }
 			}
 		}
-		return dat;
 	}
 	protected static class VarData {
 		int maxVar, maxArg;
-		VarData(int maxVar, int maxArg) { this.maxVar = maxVar; this.maxArg = maxArg; }
+		HashMap<Var,Integer> index;
+		VarData(int maxVar, int maxArg) { this.maxVar = maxVar; this.maxArg = maxArg; this.index = new HashMap<Var,Integer>(); }
+		VarData() { this(1,0); }
 	}
 	
 	// gross. can't java be clever about this?
@@ -114,7 +121,8 @@ public class TuprologAdapter {
 		}
 		return new Struct(args);
 	}
-	public static Goal[] termToGoalArray(Term t) {
+	public static Goal[] termToGoalArray(Term t) { return termToGoalArray(t,null); }
+	public static Goal[] termToGoalArray(Term t,VarData data) {
 		if (! (t instanceof Struct)) throw new IllegalArgumentException("Term must be a list");
 		Struct s = (Struct) t;
 		if (!s.isList()) throw new IllegalArgumentException("Struct must be a list");
@@ -122,7 +130,7 @@ public class TuprologAdapter {
 		int i=0;
 		for (Iterator<? extends Term> it = s.listIterator(); it.hasNext(); i++) {
 			Term gi = it.next();
-			ret[i] = termToGoal(gi);
+			ret[i] = termToGoal(gi,data);
 		}
 		return ret;
 	}
@@ -133,14 +141,16 @@ public class TuprologAdapter {
 		}
 		return new Struct(g.getFunctor(),args);
 	}
-	public static Goal termToGoal(Term term) {
+	public static Goal termToGoal(Term term) { return termToGoal(term,null); }
+	public static Goal termToGoal(Term term, VarData data) {
 		if (! (term instanceof Struct)) throw new IllegalStateException("Term not a Struct: "+term);
 		Struct struct = (Struct) term;
 		String functor = struct.getName();
 		Argument[] args = new Argument[struct.getArity()];
 		for (int i=0; i<args.length; i++) {
 			Term argTerm = struct.getArg(i);
-			args[i] = termToArg(argTerm);
+			args[i] = termToArg(argTerm, data);
+			if (args[i] == null) throw new IllegalStateException("Couldn't convert term to goal without bindings: "+term);
 		}
 		return new Goal(functor,args);
 	}
@@ -149,7 +159,8 @@ public class TuprologAdapter {
 		else if (a.isVariable()) return new Var(VARSTART+(-a.getValue()));
 		else throw new IllegalArgumentException("Arguments must be constant or variable; is neither: "+a);
 	}
-	public static Argument termToArg(Term argTerm) {
+	public static Argument termToArg(Term argTerm) { return termToArg(argTerm,null); }
+	public static Argument termToArg(Term argTerm, VarData data) {
 		if (argTerm instanceof Var) {
 			if (argTerm.getTerm() == argTerm) {
 				String name = ((Var)argTerm).getName();
@@ -157,10 +168,11 @@ public class TuprologAdapter {
 					return new VariableArgument(-Integer.parseInt( name.substring(1) ));
 				else { // _24897234
 					// well, nuts. Need a new variable here.
-					return null; //FIXME
+					if (data == null) return null;
+					return new VariableArgument( -(data.maxArg+data.index.get(argTerm)) );
 				}
 			} else // v[c[]]
-				return termToArg(argTerm.getTerm());
+				return termToArg(argTerm.getTerm(), data);
 		} else if (argTerm instanceof Struct) {
 			return new ConstantArgument( ((Struct)argTerm).getName() );
 		} else throw new IllegalStateException("Argument neither Var nor Struct: "+argTerm);

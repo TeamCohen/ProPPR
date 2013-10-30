@@ -64,9 +64,9 @@ public class TuprologComponentTest {
 		LogicProgram lp = new LogicProgram(
 				GoalComponent.loadCompiled("testcases/family-more.cfacts"), new TuprologComponent("testcases/prolog/family.pl"));
 		Prover p = new DprProver();
-		Map<LogicProgramState,Double> result = p.proveState(lp, new ProPPRLogicProgramState(Goal.decompile("rel2,katie,-1")));
+		Map<LogicProgramState,Double> result = p.proveState(lp, new ProPPRLogicProgramState(Goal.decompile("sim,katie,-1")));
 		for (Map.Entry<LogicProgramState,Double> e : result.entrySet()) {
-			System.out.println(e.getValue()+"\t"+e.getKey());
+			if (e.getKey().isSolution()) System.out.println(e.getValue()+"\t"+e.getKey());
 		}
 	}
 
