@@ -3,6 +3,7 @@ package edu.cmu.ml.praprolog.prove;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -93,4 +94,15 @@ public class RuleComponentTest {
         return p;
 
     }
+    
+	@Test
+	public void inProgram() {
+		LogicProgram lp = new LogicProgram(
+				GoalComponent.loadCompiled("testcases/family-more.cfacts"), RuleComponent.loadCompiled("testcases/family.crules"));
+		Prover p = new DprProver();
+		Map<LogicProgramState,Double> result = p.proveState(lp, new ProPPRLogicProgramState(Goal.decompile("sim,katie,-1")));
+		for (Map.Entry<LogicProgramState,Double> e : result.entrySet()) {
+			if (e.getKey().isSolution()) System.out.println(e.getValue()+"\t"+e.getKey());
+		}
+	}
 }

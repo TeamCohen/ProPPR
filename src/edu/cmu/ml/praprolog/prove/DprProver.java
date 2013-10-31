@@ -44,7 +44,7 @@ public class DprProver extends Prover {
         	if (treeId.containsKey(child) && !child.isSolution()) {
         		int[] pch = treeId.get(child);
         		for (int i=0; i<par.length; i++) {
-        			if (pch[i] != par[i]) {
+        			if (i >= pch.length || pch[i] != par[i]) {
         				throw new IllegalStateException("State "+getTreeId(child)+" already added. New parent: "+getTreeId(parent));
         			}
         		}
