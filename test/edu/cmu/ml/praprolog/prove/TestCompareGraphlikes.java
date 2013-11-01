@@ -9,6 +9,13 @@ import java.util.List;
 
 import edu.cmu.ml.praprolog.prove.Component.Outlink;
 
+/**
+ * Runs N outlinks queries from a file on a GraphComponent and a SparseGraphComponent
+ * and checks that their outputs match.
+ * 
+ * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+ *
+ */
 public class TestCompareGraphlikes {
 
 	public TestCompareGraphlikes() {
