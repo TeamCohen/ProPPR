@@ -19,6 +19,7 @@ import edu.cmu.ml.praprolog.util.tuprolog.SolutionIterator;
 import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
 
 public class TuprologComponent extends Component {
+	public static final String FILE_EXTENSION = "pl";
 	private Prolog engine;
 	public TuprologComponent() {		
 		engine = new Prolog();
@@ -91,4 +92,7 @@ public class TuprologComponent extends Component {
 
 	}
 
+	public static TuprologComponent load(String filename) {
+		return new TuprologComponent(filename);
+	}
 }
