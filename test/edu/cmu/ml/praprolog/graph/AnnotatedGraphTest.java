@@ -66,25 +66,26 @@ public class AnnotatedGraphTest {
 		
 	}
 	
-	@Test //@Ignore
+	@Test @Ignore
 	public void testFromStringParts() throws GraphFormatException {
 		String testGraph = "16	39	w(a,pos):id(trueLoopRestart):id(trueLoop):w(a,neg):w(pricy,neg):w(pricy,pos):id(demo/textcat/toylabels.facts):w(house,neg):alphaBooster:w(doll,pos):r:w(doll,neg):w(house,pos):id(defaultRestart):id(demo/textcat/toywords.graph)"
-				+"	11->1:13	11->9:4"
-				+"	10->1:1	10->10:2"
-				+"	13->1:13	13->9:11"
-				+"	12->1:13	12->10:5"
-				+"	15->1:13	15->9:7"
-				+"	14->1:13	14->10:9"
-				+"	16->1:13	16->10:12"
 				+"	1->1:13	1->2:10"
-				+"	3->1:13	3->8:6	3->7:6"
-				+"	2->1:13,8	2->3:14	2->5:14	2->4:14	2->6:14"
-				+"	5->1:13	5->13:6	5->14:6"
-				+"	4->1:13	4->11:6	4->12:6"
-				+"	7->1:13	7->9:3"
-				+"	6->1:13	6->15:6	6->16:6"
+				+"	2->1:13,8	2->3:14	2->4:14	2->5:14	2->6:14"
+				+"	3->1:13	3->7:6	3->8:6"
 				+"	9->1:1	9->9:2"
-				+"	8->1:13	8->10:0";
+				+"	8->1:13	8->10:0"
+				+"	4->1:13	4->11:6	4->12:6"
+				+"	5->1:13	5->13:6	5->14:6"
+				+"	6->1:13	6->15:6	6->16:6"
+				+"	7->1:13	7->9:3"
+				+"	10->1:1	10->10:2"
+				+"	11->1:13	11->9:4"
+				+"	12->1:13	12->10:5"
+				+"	13->1:13	13->9:11"
+				+"	14->1:13	14->10:9"
+				+"	15->1:13	15->9:7"
+				+"	16->1:13	16->10:12"
+				;
 		g = AnnotatedGraph.fromStringParts(testGraph, g);
 		assertEquals("node count",16,g.getNodes().size());
 		assertEquals("near 11",2,g.near("11").size());

@@ -2,10 +2,19 @@ package edu.cmu.ml.praprolog.prove;
 
 import static org.junit.Assert.*;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 public class LogicProgramTest {
 
+	
+	@Before
+	public void setup() {
+		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+	}
 	@Test
 	public void testCompilationGuarantee() {
 		Goal isaduck = new Goal("isa","X","duck"),

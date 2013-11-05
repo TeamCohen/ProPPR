@@ -48,8 +48,8 @@ public class SRWTest extends RedBlueGraph {
 			nextVec = new TreeMap<String,Double>();
 			int k=-1;
 			for (String u : vec.keySet()) { k++;
-				int z = g.near(u).size();
-				for (String v : g.near(u).keySet()) {
+				int z = g.nearNative(u).size();
+				for (String v : g.nearNative(u).keySet()) {
 					double inc = vec.get(u) / z;
 					Dictionary.increment(nextVec, v, inc);
 					log.debug("Incremented "+u+", "+v+" by "+inc);

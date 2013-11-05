@@ -2,7 +2,7 @@ package edu.cmu.ml.praprolog.prove;
 
 import org.junit.Test;
 
-public class DprProverTest extends ProverTest {
+public class DprProverTest extends ProverTestTemplate {
 	@Override
 	public void setup() {
 		super.setup();
@@ -23,9 +23,9 @@ public class DprProverTest extends ProverTest {
 	
 	@Override
 	public void setProveStateAnswers() {
-		proveStateAnswers[0] = 0.07142;
-		proveStateAnswers[1] = 0.03571;
-		proveStateAnswers[2] = 0.53564;
+		proveStateAnswers[0] = 0.07142; // milk
+		proveStateAnswers[1] = 0.03571; // most
+		proveStateAnswers[2] = 0.53564; // start
 	}
 
 }

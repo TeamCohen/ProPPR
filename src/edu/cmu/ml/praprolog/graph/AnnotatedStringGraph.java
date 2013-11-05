@@ -33,7 +33,7 @@ public class AnnotatedStringGraph extends AnnotatedGraph<String> {
 	@Override
 	public String idToKey(String id) {
 		// TODO Auto-generated method stub
-		return null;
+		return id;
 	}
 
 	@Override

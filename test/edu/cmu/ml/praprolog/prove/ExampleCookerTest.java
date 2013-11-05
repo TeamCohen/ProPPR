@@ -5,6 +5,10 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.ExampleCooker;
@@ -13,6 +17,11 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class ExampleCookerTest {
 
+	
+	@Before
+	public void setup() {
+		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+	}
 	@Test
 	public void testCookExample() {
 		// python newexamplecooker.py 

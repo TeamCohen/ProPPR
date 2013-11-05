@@ -137,13 +137,17 @@ public abstract class AnyKeyGraph<K> {
 		}
 		return nextVec;
 	}
+	
+	public Map<K,Double> near(String u) {
+		return nearNative(keyToId(u));
+	}
 
 	/**
 	 * Get the weighted set of outgoing connections from node u.
 	 * @param u Start node
 	 * @return String->Double map of weighted nodes connected to u
 	 */
-	public Map<K,Double> near(K u) {
+	public Map<K,Double> nearNative(K u) {
 		Map<K,Double> ret = near.get(u);
 		if (ret==null) return Collections.emptyMap();
 		return ret;

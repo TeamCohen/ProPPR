@@ -72,64 +72,18 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 	}
 	
 	public void testTextCatLoadInnerLoop(String u, PosNegRWExample<String> ex) {
-		Map<String,Double> near = ex.getGraph().near(u); 
+		Map<String,Double> near = ex.getGraph().nearNative(u); 
 		if (near==null) assertTrue("near:"+u+":"+ex.toString(),false);
 		for (String v : near.keySet()) {
 			List<Feature> phi = ex.getGraph().phi(u, v);
 			assertFalse(u+":"+v,phi.isEmpty());
 		}
 	}
-	@Test @Ignore
-	public void testTextCatLoad() {
-		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
-		Trainer<String> trainer = new MultithreadedTrainer<String>(srw,1);
-		Collection<PosNegRWExample<String>> ret = trainer.importCookedExamples("textcat.cooked.190.168", new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING));
-		int i=0;
-		for(PosNegRWExample<String> ex : ret) {
-//			for (String u : ex.getQueryVec().keySet()) {
-//				testTextCatLoadInnerLoop(u, ex);
-//			}
-//			for (String u : ex.getPosList()) {
-//				testTextCatLoadInnerLoop(u, ex);
-//			}
-//			for (String u : ex.getNegList()) {
-//				testTextCatLoadInnerLoop(u, ex);
-//			}
-			for (String u : ex.getGraph().getNodesAsStrings()) {
-				testTextCatLoadInnerLoop(u, ex);
-			}
-			
-//			String u = "197";
-//			AnnotatedGraph g = ex.getGraph();
-//			if (g.getNodes().contains(u)) {
-//				System.err.println(ex.toString());
-//				for (String v : g.near(u).keySet()) {
-//					System.err.println(v);
-//					for (Feature f : g.phi(u, v)) {
-//						System.err.println(String.format("\t%s:%f@g",f.featureName,f.weight));
-//					}
-//				}
-//			}
-		i++;}
-	}
-	
-	@Test @Ignore
-	public void testMultithreadedExperiment() {
-		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
-		Trainer<String> trainer = new MultithreadedTrainer<String>(srw,4);
-		int epochs = 5;
-		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-				trainer.importCookedExamples("textcat.cooked", new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
-				epochs,
-				true); // traceLosses
-		nonNull(paramVec);
-	}
-	
 	
 	public void nonNull(Map<String,Double> params) {
 		for (String k : params.keySet()) {
-			assertFalse(k,params.get(k).isNaN());
 			System.err.println(k+" "+params.get(k));
+			assertFalse(k,params.get(k).isNaN());
 		}
 	}
 	
@@ -140,7 +94,7 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 		L2PosNegLossTrainedSRW<String> srwQ = new L2PosNegLossTrainedSRW<String>();
 		Trainer<String> trainerQ = new MultithreadedTrainer<String>(srwQ,4);
 		Map<String,Double> paramVecQ = trainerQ.trainParametersOnCookedIterator(
-				trainerQ.importCookedExamples("toy.cooked", 
+				trainerQ.importCookedExamples("testcases/toy.cooked", 
 						new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
 				epochs,
 				false);//tracelosses
@@ -148,7 +102,7 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 		L2PosNegLossTrainedSRW<String> srwRR = new L2PosNegLossTrainedSRW<String>();
 		Trainer<String> trainerRR = new MultithreadedRRTrainer<String>(srwRR,4);
 		Map<String,Double> paramVecRR = trainerRR.trainParametersOnCookedIterator(
-				trainerRR.importCookedExamples("toy.cooked", 
+				trainerRR.importCookedExamples("testcases/toy.cooked", 
 						new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
 				epochs,
 				false);//tracelosses

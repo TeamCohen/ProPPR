@@ -76,7 +76,7 @@ public class SRW<E extends RWExample> {
 	 */
 	public <T> double totalEdgeWeight(AnnotatedGraph<T> g, T u,  Map<String,Double> p) {
 		double sum = 0.0;
-		for (T v : g.near(u).keySet()) {
+		for (T v : g.nearNative(u).keySet()) {
 			double ew = edgeWeight(g,u,v,p); 
 			sum+=ew;
 		}
@@ -113,7 +113,7 @@ public class SRW<E extends RWExample> {
 				log.info("0 total edge weight at u="+u+"; skipping");
 				continue;
 			}
-			for (Map.Entry<T, Double> e : g.near(u.getKey()).entrySet()) {
+			for (Map.Entry<T, Double> e : g.nearNative(u.getKey()).entrySet()) {
 				T v = e.getKey();
 				double ew = edgeWeight(g,u.getKey(),v,paramVec);
 				double inc = u.getValue() * ew / z;
@@ -145,7 +145,7 @@ public class SRW<E extends RWExample> {
 			// dNext[u] is the vector deriv of the weight vector at u
 			Map<T,Map<String,Double>> dNext = new TreeMap<T,Map<String,Double>>();
 			for (T j : pNext.keySet()) {
-				for (T u : graph.near(j).keySet()) {
+				for (T u : graph.nearNative(j).keySet()) {
 					Map<String,Double> dWP_ju = derivWalkProbByParams(graph,j,u,paramVec);
 					for (String f : trainableFeatures(graph.phi(j,u))) {
 						Dictionary.increment(dNext, u, f, 

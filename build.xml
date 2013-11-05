@@ -4,47 +4,82 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
+	<property name="build" value="ant-bin"/>
+	<property name="junit.results" value="test-results"/>
+	<property name="ant.junit.failureCollector" value="${junit.results}/FailedTests"/>
+	
     <path id="ProPPR.classpath">
-        <pathelement location="bin"/>
-        <pathelement location="lib/log4j-1.2.16.jar"/>
-        <pathelement location="lib/trove-3.0.3.jar"/>
         <pathelement location="lib/bsh-2.0b4.jar"/>
         <pathelement location="lib/commons-cli-1.2.jar"/>
+        <pathelement location="lib/concurrentlinkedhashmap-lru-1.3.1.jar"/>
+        <pathelement location="lib/geronimo-jta_1.1_spec-1.1.1.jar"/>
+    	<pathelement location="lib/la4j-0.4.5.jar"/>
+        <pathelement location="lib/log4j-1.2.16.jar"/>
+		<pathelement location="lib/lucene-core-3.6.2.jar"/>
+		<pathelement location="lib/neo4j-cypher-1.9.4.jar"/>
+		<pathelement location="lib/neo4j-graph-algo-1.9.4.jar"/>
+		<pathelement location="lib/neo4j-graph-matching-1.9.4.jar"/>
+		<pathelement location="lib/neo4j-jmx-1.9.4.jar"/>
+		<pathelement location="lib/neo4j-kernel-1.9.4.jar"/>
+		<pathelement location="lib/neo4j-lucene-index-1.9.4.jar"/>
+		<pathelement location="lib/neo4j-shell-1.9.4.jar"/>
+		<pathelement location="lib/neo4j-udc-1.9.4.jar"/>
+    	<pathelement location="lib/org.apache.servicemix.bundles.jline-0.9.94_1.jar"/>
+    	<pathelement location="lib/scala-library-2.10.0.jar"/>
+        <pathelement location="lib/trove-3.0.3.jar"/>
+    	<pathelement location="lib/tuprolog.jar"/>
     </path>
+	<path id="ProPPRTests.classpath">
+		<path refid="ProPPR.classpath"/>
+		<pathelement location="lib/junit-4.11-SNAPSHOT.jar"/>
+		<pathelement location="lib/junit-dep-4.11-SNAPSHOT.jar"/>
+	</path>
     <target name="init">
-        <mkdir dir="bin"/>
+        <mkdir dir="${build}"/>
     </target>
     <target name="clean">
-        <delete dir="bin"/>
+        <delete dir="${build}"/>
     </target>
     <target depends="clean" name="cleanall"/>
     <target depends="build-subprojects,build-project" name="build"/>
     <target name="build-subprojects"/>
+	
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}" includeantruntime="false">
+        <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
             <src path="src"/>
             <classpath refid="ProPPR.classpath"/>
         </javac>
+    	<copy todir="${build}">
+    		<fileset dir="src">
+    			<exclude name="**/*.java"/>
+    		</fileset>
+    	</copy>
     </target>
-    <!-- <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/> -->
-    <!-- <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler"> -->
-    <!--     <copy todir="${ant.library.dir}"> -->
-    <!--         <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/> -->
-    <!--     </copy> -->
-    <!--     <unzip dest="${ant.library.dir}"> -->
-    <!--         <patternset includes="jdtCompilerAdapter.jar"/> -->
-    <!--         <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/> -->
-    <!--     </unzip> -->
-    <!-- </target> -->
-    <!-- <target description="compile project with Eclipse compiler" name="build-eclipse-compiler"> -->
-    <!--     <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/> -->
-    <!--     <antcall target="build"/> -->
-    <!-- </target> -->
-    <!-- <target name="ExampleCooker (1)"> -->
-    <!--     <java classname="edu.cmu.ml.praprolog.prove.ExampleCooker" failonerror="true" fork="yes"> -->
-    <!--         <arg line="__programFiles /home/krivard/afs/python/praprolog/demo/textcat/textcat.crules:/home/krivard/afs/python/praprolog/demo/textcat/labels.cfacts:/home/krivard/afs/python/praprolog/demo/textcat/words.graph __data /home/krivard/afs/python/praprolog/demo/textcat/train.data __prover dpr:.00001 __output /home/krivard/afs/python/praprolog/scripts/results/textcat.mjava.4.cooked __threads 4"/> -->
-    <!--         <classpath refid="ProPPR.classpath"/> -->
-    <!--     </java> -->
-    <!-- </target> -->
+	
+    <target depends="init" name="build-tests">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
+            <src path="test"/>
+            <classpath refid="ProPPRTests.classpath"/>
+        </javac>
+    </target>
+	
+	<target name="test" depends="build,build-tests" description="Run unit tests">
+		<delete dir="${junit.results}"/>
+		<mkdir dir="${junit.results}"/>
+		<junit fork="no" errorProperty="test.failed" failureProperty="test.failed" >
+			<classpath>
+				<path refid="ProPPRTests.classpath" />
+				<path location="${build}" />
+			</classpath>
+			<formatter type="failure" usefile="false"/>
+			<formatter type="xml"/>
+			<batchtest todir="${junit.results}">
+				<fileset dir="${build}" includes="**/*Test.class"/>
+			</batchtest>
+		</junit>
+		<fail message="Tests failed. Please see test reports" if="test.failed" />
+		<echo message="All tests passed."/>
+	</target>
 </project>

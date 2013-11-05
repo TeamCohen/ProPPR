@@ -11,12 +11,20 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.junit.Before;
 
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.AnnotatedStringGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
 
+/**
+ * Test template (graph scaffolding)
+ * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+ *
+ */
 public class RedBlueGraph {
 
 	protected List<AnnotatedGraph<String>> brGraphs;
@@ -30,6 +38,8 @@ public class RedBlueGraph {
 
 	@Before
 	public void setup() {
+			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+
 			brGraphs = new ArrayList<AnnotatedGraph<String>>();
 			Collections.addAll(brGraphs, new AnnotatedStringGraph(), new AnnotatedStringGraph(), new AnnotatedStringGraph());
 			

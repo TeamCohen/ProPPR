@@ -5,13 +5,21 @@ import static org.junit.Assert.*;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.prove.Component.Outlink;
 
 public class RuleComponentTest {
     private static final Logger log = Logger.getLogger(RuleComponentTest.class);
+    
+    @Before
+    public void setup() {
+		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+    }
 
     @Test
     public void testLoadCompiled() {

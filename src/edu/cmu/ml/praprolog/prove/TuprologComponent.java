@@ -3,6 +3,7 @@ package edu.cmu.ml.praprolog.prove;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,12 +20,14 @@ import edu.cmu.ml.praprolog.util.tuprolog.SolutionIterator;
 import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
 
 public class TuprologComponent extends Component {
+	private static final String OUTLINKS_RULES = "outlinks.2p";
 	public static final String FILE_EXTENSION = "pl";
 	private Prolog engine;
 	public TuprologComponent() {		
 		engine = new Prolog();
 		try {
-			engine.addTheory(new Theory(ClassLoader.getSystemResourceAsStream("outlinks.2p")));
+			InputStream is = TuprologComponent.class.getClassLoader().getResourceAsStream(OUTLINKS_RULES);
+			engine.addTheory(new Theory(is));
 		} catch (InvalidTheoryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

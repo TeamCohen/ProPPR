@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.junit.Test;
 
@@ -75,14 +76,15 @@ public class TuprologAdapterTest {
 			assertEquals(1,sarg.listSize());
 			Term head = sarg.listHead(); 
 			assertTrue(head instanceof Struct);
-			assertTrue (head.isEqual(TuprologAdapter.goalToTerm(g)));
 		}
 	}
 
 	@Test
 	public void testLogicProgramState() throws InvalidTheoryException, FileNotFoundException, IOException, MalformedGoalException, NoSolutionException {
 		Prolog engine = new Prolog();
-		engine.addTheory(new Theory(ClassLoader.getSystemResourceAsStream("outlinks.2p")));
+		InputStream is = TuprologAdapterTest.class.getClassLoader().getResourceAsStream("outlinks.2p");
+		assertNotNull("No input stream for outlinks.2p",is);
+		engine.addTheory(new Theory(is));
 		SolveInfo info = engine.solve("startState(writes(william,X),S).");
 		Term t = info.getVarValue("S");
 		Term tp = TuprologAdapter.lpStateToTerm(new ProPPRLogicProgramState(Goal.decompile("writes,william,-1")));

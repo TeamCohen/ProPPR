@@ -9,7 +9,7 @@ import java.util.TreeSet;
 public class AnnotatedIntGraph extends AnnotatedGraph<Integer> {
 	protected Map<String,Integer> keyToId=new TreeMap<String,Integer>();
 	protected Map<Integer,String> idToKey=new TreeMap<Integer,String>();
-	private static Integer nextKey=0;
+	private static Integer nextKey=1;
 	
 	public AnnotatedIntGraph() {
 		features = new HashMap<Edge<Integer>,List<Feature>>();//new TreeMap<Edge,List<Feature>>(); //
@@ -22,6 +22,7 @@ public class AnnotatedIntGraph extends AnnotatedGraph<Integer> {
 		if (!keyToId.containsKey(key)) {
 			synchronized(nextKey) {
 				keyToId.put(key, nextKey);
+				idToKey.put(nextKey, key);
 				nextKey++;
 			}
 		}
@@ -29,8 +30,7 @@ public class AnnotatedIntGraph extends AnnotatedGraph<Integer> {
 	}
 	@Override
 	public String idToKey(Integer id) {
-		// TODO Auto-generated method stub
-		return null;
+		return idToKey.get(id);
 	}
 	@Override
 	public Integer[] keyArray(int length) {

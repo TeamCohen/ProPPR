@@ -5,12 +5,20 @@ import static org.junit.Assert.*;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.prove.Component.Outlink;
 
 public class TuprologLogicProgramStateTest {
-
+    
+    @Before
+    public void setup() {
+		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+    }
 	@Test
 	public void testEquals() {
 		TuprologLogicProgramState s1 = new TuprologLogicProgramState(Goal.decompile("sim,katie,-1"));
