@@ -49,7 +49,7 @@ public class TestComponentPerformance {
 		long gstart = System.currentTimeMillis();
 		Component[] cs = Component.loadComponents(cstring, Component.ALPHA_DEFAULT);
 		long gend = System.currentTimeMillis();
-		System.out.println(new StringBuilder("ms load ")
+		System.out.println(new StringBuilder("dat ms load ")
 		.append(name).append(" ")
 		.append(TIMES).append(" 0 ")
 		.append(gend-gstart).toString());
@@ -58,43 +58,64 @@ public class TestComponentPerformance {
 		freeload = Runtime.getRuntime().freeMemory();
 
 		int n=0;
+		long t = 0;
 		System.out.println("Outlinks...");
 		if (cs.length == 1) {
 			Component c = cs[0];
 			gstart = System.currentTimeMillis();
-			for(int i=0;i<TIMES;i++) n+=c.outlinks(states[i]).size();
+			for(int i=0;i<TIMES;i++) {
+				n+=c.outlinks(states[i]).size();
+				gend = System.currentTimeMillis();
+				t += gend-gstart;
+				if (i % 100 == 0) 
+					System.out.println(new StringBuilder("dat ms outlinks ")
+					.append(name).append(" ")
+					.append(i).append(" ")
+					.append(n).append(" ")
+					.append(t).toString());
+				gstart = System.currentTimeMillis();
+			}
 			gend = System.currentTimeMillis();
 		} else {
 			LogicProgram lp = new LogicProgram(cs);
 			gstart = System.currentTimeMillis();
-			for(int i=0;i<TIMES;i++) 
+			for(int i=0;i<TIMES;i++) {
 				n+=lp.lpOutlinks(states[i],LogicProgram.DEFAULT_TRUELOOP, LogicProgram.DEFAULT_RESTART).size();
-			gend = System.currentTimeMillis();
+				gend = System.currentTimeMillis();
+				t += gend-gstart;
+				if (i % 100 == 0) 
+					System.out.println(new StringBuilder("dat ms outlinks ")
+					.append(name).append(" ")
+					.append(i).append(" ")
+					.append(n).append(" ")
+					.append(t).toString());
+				gstart = System.currentTimeMillis();
+			}
 		}
 
-		System.out.println(new StringBuilder("ms outlinks ")
+		System.out.println(new StringBuilder("dat ms outlinks ")
 		.append(name).append(" ")
 		.append(TIMES).append(" ")
 		.append(n).append(" ")
-		.append(gend-gstart).toString());
+		.append(t).toString());
 
 		totaloutlinks = Runtime.getRuntime().totalMemory();
 		freeoutlinks = Runtime.getRuntime().freeMemory();
 
 		System.out.println(
-				new StringBuilder("mb start ")
+				new StringBuilder("dat mb start ")
 				.append(name).append(" ")
 				.append(totalstart).append(" ")
 				.append(freestart).append(" ")
 				.append(totalstart-freestart).toString());
 		System.out.println(
-				new StringBuilder("mb load ")
+				new StringBuilder("dat mb load ")
 				.append(name).append(" ")
 				.append(totalload).append(" ")
 				.append(freeload).append(" ")
 				.append(totalload-freeload).toString());
 		System.out.println(
-				new StringBuilder("mb outlinks ")
+				new StringBuilder("dat mb outlinks ")
 				.append(name).append(" ")
 				.append(totaloutlinks).append(" ")
 				.append(freeoutlinks).append(" ")
