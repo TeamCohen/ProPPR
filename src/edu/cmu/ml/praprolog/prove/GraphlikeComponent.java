@@ -52,7 +52,7 @@ public abstract class GraphlikeComponent extends Component {
 			List<Argument> values = this._indexGet(state.getHeadFunctor(), state.getHeadArg1());
 			Argument dstVar = state.getHeadGoal().getArg(1);
 			List<Outlink> result = new ArrayList<Outlink>();
-			if (values.size() > 0) {
+			if (values != null && values.size() > 0) {
 				ProPPRLogicProgramState stateP = (ProPPRLogicProgramState) state.asProPPR();
 				double w = 1.0/values.size();
 				for (Argument v : values) {

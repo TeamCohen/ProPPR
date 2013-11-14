@@ -104,7 +104,9 @@ public class SparseGraphComponent extends GraphlikeComponent {
 
 	@Override
 	protected List<Argument> _indexGet(String functor, Argument srcConst) {
-		return index.get(functor).near(srcConst);
+		List<Argument> ret = index.get(functor).near(srcConst);
+		if (ret == null) log.error("No argument "+srcConst+" in this sparsegraph for functor "+functor);
+		return ret;
 	}
 
 	@Override

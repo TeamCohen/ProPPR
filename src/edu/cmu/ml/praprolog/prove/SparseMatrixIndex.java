@@ -49,7 +49,7 @@ public class SparseMatrixIndex {
 			this.rows = Integer.parseInt(line.trim());
 			line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 2 must list #cols");
 			this.cols = Integer.parseInt(line.trim());
-			line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 1 must list #entries");
+			line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 3 must list #entries");
 			this.entries = Integer.parseInt(line.trim());
 			reader.close();
 		}
