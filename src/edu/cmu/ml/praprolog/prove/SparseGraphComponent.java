@@ -83,7 +83,7 @@ public class SparseGraphComponent extends GraphlikeComponent {
 			}
 			try {
 				index.put(parts[0], new SparseMatrixIndex(matrixDir,matrix,arg1s.get(parts[1]),arg2s.get(parts[2])));
-			} catch (IOException e) {
+			} catch (Exception e) {
 				log.error("Problem reading sparse matrix "+matrix+".* in "+matrixDir,e);
 				throw new RuntimeException(e);
 			}
