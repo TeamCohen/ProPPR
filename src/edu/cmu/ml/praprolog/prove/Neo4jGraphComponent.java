@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,12 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.RelationshipIndex;
+import org.neo4j.helpers.collection.MapUtil;
+import org.neo4j.index.lucene.unsafe.batchinsert.LuceneBatchInserterIndexProvider;
+import org.neo4j.unsafe.batchinsert.BatchInserterIndex;
+import org.neo4j.unsafe.batchinsert.BatchInserterIndexProvider;
+import org.neo4j.unsafe.batchinsert.BatchInserters;
+import org.neo4j.unsafe.batchinsert.BatchInserter;
 
 public class Neo4jGraphComponent extends GraphlikeComponent {
 	private static final Logger log = Logger.getLogger(Neo4jGraphComponent.class);
@@ -31,6 +38,9 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 	//	}
 	private static final String NODENAME_KEY = "name";
 	private static final String FUNCTOR_KEY = "name";
+	private static final int DEFAULT_CACHE = 100000;
+	private static final String NODEINDEX = "nodes";
+	private static final String RELINDEX = "relationships";
 
 	private static GraphDatabaseService graphDb;
 	private static Index<Node> nodeIndex;
@@ -40,24 +50,24 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		if (graphDb != null) return;
 		if (new File("neo4j.properties").exists())
 			graphDb = new GraphDatabaseFactory()
-				.newEmbeddedDatabaseBuilder( dbPath )
-				.loadPropertiesFromFile("neo4j.properties")
-				.newGraphDatabase();
+		.newEmbeddedDatabaseBuilder( dbPath )
+		.loadPropertiesFromFile("neo4j.properties")
+		.newGraphDatabase();
 		else {
 			Map<String,String> config = new TreeMap<String,String>();
 			config.put("keep_logical_logs","false");
 			graphDb = new GraphDatabaseFactory()
-				.newEmbeddedDatabaseBuilder( dbPath )
-				.setConfig(config)
-				.newGraphDatabase();	
+			.newEmbeddedDatabaseBuilder( dbPath )
+			.setConfig(config)
+			.newGraphDatabase();	
 		}
-		nodeIndex = graphDb.index().forNodes( "nodes" );
-		relIndex = graphDb.index().forRelationships( "relationships" );
+		nodeIndex = graphDb.index().forNodes( NODEINDEX );
+		relIndex = graphDb.index().forRelationships( RELINDEX );
 		registerShutdownHook( graphDb );
 	}
 
 	protected Map<Goal, Double> featureDict;
-	
+
 	public Neo4jGraphComponent(String dbPath) {
 		init(dbPath);
 		this.featureDict = new HashMap<Goal,Double>();
@@ -127,7 +137,10 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 
 	private static void usage() {
 
-		System.err.println("Usage:\n\tload dbPath graphFile1 graphFile2 ...\n\tquery dbPath");
+		System.err.println("Usage:\n\tload-nodes dbPath file1.i file2.i ... \n"+
+				"\tload-edges dbPath nodeCacheSize file1.cfacts file2.cfacts ... \n"+
+				"\tload-tx dbPath graphFile1 graphFile2 ...\n"+
+				"\tquery dbPath");
 		System.exit(0);
 	}
 	public static void main(String[] args) {
@@ -136,7 +149,8 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		}
 
 		String cmd=args[0], dbPath = args[1]; 
-		if ("load".equals(cmd)) {
+		if ("load-tx".equals(cmd)) {
+			if (args.length < 3) usage();
 
 			long t0 = System.currentTimeMillis();
 			Neo4jGraphComponent nc = new Neo4jGraphComponent(dbPath);
@@ -153,6 +167,12 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 			t1 = System.currentTimeMillis();
 			System.out.println("load all "+(t1-t0));
 
+		} else if ("load-nodes".equals(cmd)) {
+			if (args.length < 3) usage();
+			loadBatchNodes(dbPath,Arrays.copyOfRange(args, 2, args.length));
+		} else if ("load-edges".equals(cmd)) {
+			if (args.length < 4) usage();
+			loadBatchRelationships(dbPath, Integer.parseInt(args[2]), Arrays.copyOfRange(args,3,args.length));
 		} else if ("query".equals(cmd)) {
 			long t0 = System.currentTimeMillis();
 			Neo4jGraphComponent nc = new Neo4jGraphComponent(dbPath);
@@ -182,6 +202,127 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 
 	}
 
+	public static void loadBatchRelationships(String dbDir, int cache, String ... files) {
+		if (files.length == 0) return;
+
+		BatchInserter inserter = BatchInserters.inserter(dbDir);
+
+		BatchInserterIndexProvider indexProvider =
+				new LuceneBatchInserterIndexProvider( inserter );
+		BatchInserterIndex nodes =
+				indexProvider.nodeIndex( NODEINDEX, MapUtil.stringMap( "type", "exact" ) );
+		nodes.setCacheCapacity( NODENAME_KEY, cache );
+
+		BatchInserterIndex relationships = 
+				indexProvider.relationshipIndex( RELINDEX, MapUtil.stringMap( "type", "exact" ) );
+
+		// then load a pile of relationships
+		LineNumberReader reader=null;
+		for (String file : files) {
+			if (!file.endsWith(GoalComponent.FILE_EXTENSION)) {
+				log.error("Skipping file "+file+" (needs "+GoalComponent.FILE_EXTENSION+")");
+				continue;
+			}
+			try {
+				reader = new LineNumberReader(new FileReader(file));
+				long last = System.currentTimeMillis(), now = last, first = last;
+				log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
+				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+				
+				for (String line; (line=reader.readLine())!= null;) {
+					if( (now = System.currentTimeMillis()) - last > 2000)  {
+						log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+						last = now;
+						log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+					}
+					line = line.trim();
+					String[] parts = line.split("\t");
+					if (parts.length < 3) {
+						log.error("Bad format of "+file+" line "+reader.getLineNumber()+" (needs functor/targ1/targ2):" + line);
+						continue;
+					}
+
+					long fromnode = nodes.get(NODENAME_KEY, parts[1]).getSingle();
+					long tonode = nodes.get(NODENAME_KEY, parts[2]).getSingle();
+					long rel = inserter.createRelationship( fromnode, tonode, DynamicRelationshipType.withName(parts[0]), null );
+					relationships.add(rel, null);
+
+				}
+				now = System.currentTimeMillis();
+				log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+
+			} catch (FileNotFoundException e) { log.error("Couldn't find file "+file+";",e);
+			} catch (IOException e) { log.error("Trouble reading file "+file+";",e);
+			} finally {
+				if (reader!=null)
+					try {
+						reader.close();
+					} catch (IOException e) { log.error("Trouble closing file "+file+";",e); }
+			}
+		}
+
+		relationships.flush();
+		inserter.shutdown();
+		indexProvider.shutdown();
+	}
+	public static void loadBatchNodes(String dbDir, String ... files) {
+		if (files.length == 0) return;
+
+		BatchInserter inserter = BatchInserters.inserter(dbDir);
+		Map<String, Object> properties = new HashMap<String, Object>();
+
+		BatchInserterIndexProvider indexProvider =
+				new LuceneBatchInserterIndexProvider( inserter );
+		BatchInserterIndex nodes =
+				indexProvider.nodeIndex( "nodes", MapUtil.stringMap( "type", "exact" ) );
+		nodes.setCacheCapacity( NODENAME_KEY, DEFAULT_CACHE );
+
+		// then load a pile of nodes
+		LineNumberReader reader=null;
+		for (String file : files) {
+			if (!file.endsWith(SparseGraphComponent.INDEX_EXTENSION)) {
+				log.error("Skipping file "+file+" (needs "+SparseGraphComponent.INDEX_EXTENSION+")");
+				continue;
+			}
+			try {
+				reader = new LineNumberReader(new FileReader(file));
+				long last = System.currentTimeMillis(), now = last, first = last;
+				log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
+				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+				
+				for (String line; (line=reader.readLine())!= null;) {
+					if( (now = System.currentTimeMillis()) - last > 2000)  {
+						log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+						last = now;
+						log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+					}
+					line = line.trim();
+
+					properties.put( NODENAME_KEY, line );
+					long node = inserter.createNode( properties );
+					nodes.add(node, properties);
+
+				}
+				now = System.currentTimeMillis();
+				log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+
+			} catch (FileNotFoundException e) { log.error("Couldn't find file "+file+";",e);
+			} catch (IOException e) { log.error("Trouble reading file "+file+";",e);
+			} finally {
+				if (reader!=null)
+					try {
+						reader.close();
+					} catch (IOException e) { log.error("Trouble closing file "+file+";",e); }
+			}
+		}
+
+		nodes.flush();
+		inserter.shutdown();
+		indexProvider.shutdown();
+	}
+
 	/**
 	 * Load a Neo4jGraphComponent with data from
         a file.  The format of the file is that each line is a tab-separated 
@@ -192,15 +333,16 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 	 */
 	public static Neo4jGraphComponent load(Neo4jGraphComponent result, String graphFile) {
 		Transaction tx = graphDb.beginTx();
+		LineNumberReader reader=null;
 		try {
-			LineNumberReader reader = new LineNumberReader(new FileReader(graphFile));
+			reader = new LineNumberReader(new FileReader(graphFile));
 
 			String line;
 			long last = System.currentTimeMillis(), now = last, first = last;
 			log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
 			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 			while ((line=reader.readLine())!= null) {
-				if(reader.getLineNumber() % 50000 == 0) { tx.success(); tx.finish(); tx = graphDb.beginTx(); }
+				if(reader.getLineNumber() % 20000 == 0) { tx.success(); tx.finish(); tx = graphDb.beginTx(); }
 				if( (now = System.currentTimeMillis()) - last > 2000)  {
 					log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
 					last = now;
@@ -231,6 +373,13 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		finally
 		{
 			tx.finish();
+			if (reader!=null)
+				try {
+					reader.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		}
 		return result;
 	}

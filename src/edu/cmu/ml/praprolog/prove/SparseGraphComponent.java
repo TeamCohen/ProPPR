@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 public class SparseGraphComponent extends GraphlikeComponent {
 	private static final Logger log = Logger.getLogger(SparseGraphComponent.class);
 	public static final String FILE_EXTENSION = "sparse"; 
+	public static final String INDEX_EXTENSION = ".i";
 	public static final String MANIFEST="sparseIndex.txt";
 
 	protected Map<Goal, Double> featureDict;
@@ -54,9 +55,9 @@ public class SparseGraphComponent extends GraphlikeComponent {
 			if (!arg1s.containsKey(parts[1])) { // read arg1.i 
 				arg1s.put(parts[1], new HashMap<String,Integer>());
 				try {
-					loadArgs(arg1s.get(parts[1]),new File(matrixDir,parts[1]+".i"));
+					loadArgs(arg1s.get(parts[1]),new File(matrixDir,parts[1]+INDEX_EXTENSION));
 				} catch (IOException e) {
-					log.error("Problem reading arg1 file "+parts[1]+".i in "+matrixDir,e);
+					log.error("Problem reading arg1 file "+parts[1]+INDEX_EXTENSION+" in "+matrixDir,e);
 					throw new RuntimeException(e);
 				}
 			}
@@ -75,9 +76,9 @@ public class SparseGraphComponent extends GraphlikeComponent {
 				arg2s.put(parts[2], new ConstantArgument[ncols]);
 
 				try {
-					loadArgs(arg2s.get(parts[2]),new File(matrixDir,parts[2]+".i"));
+					loadArgs(arg2s.get(parts[2]),new File(matrixDir,parts[2]+INDEX_EXTENSION));
 				} catch (IOException e) {
-					log.error("Problem reading arg2 file "+parts[2]+".i in "+matrixDir,e);
+					log.error("Problem reading arg2 file "+parts[2]+INDEX_EXTENSION+" in "+matrixDir,e);
 					throw new RuntimeException(e);
 				}
 			}
