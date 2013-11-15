@@ -1,12 +1,15 @@
 package edu.cmu.ml.praprolog.prove;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.neo4j.graphdb.Direction;
@@ -35,14 +38,30 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 
 	private static void init(String dbPath) {
 		if (graphDb != null) return;
-		graphDb = new GraphDatabaseFactory().newEmbeddedDatabase( dbPath );
+		if (new File("neo4j.properties").exists())
+			graphDb = new GraphDatabaseFactory()
+				.newEmbeddedDatabaseBuilder( dbPath )
+				.loadPropertiesFromFile("neo4j.properties")
+				.newGraphDatabase();
+		else {
+			Map<String,String> config = new TreeMap<String,String>();
+			config.put("keep_logical_logs","false");
+			graphDb = new GraphDatabaseFactory()
+				.newEmbeddedDatabaseBuilder( dbPath )
+				.setConfig(config)
+				.newGraphDatabase();	
+		}
 		nodeIndex = graphDb.index().forNodes( "nodes" );
 		relIndex = graphDb.index().forRelationships( "relationships" );
 		registerShutdownHook( graphDb );
 	}
 
+	protected Map<Goal, Double> featureDict;
+	
 	public Neo4jGraphComponent(String dbPath) {
 		init(dbPath);
+		this.featureDict = new HashMap<Goal,Double>();
+		this.featureDict.put(new Goal("id",dbPath),1.0);
 	}
 
 	@Override
@@ -103,13 +122,12 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 
 	@Override
 	protected Map<Goal, Double> getFeatureDict() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.featureDict;
 	}
 
 	private static void usage() {
 
-		System.err.println("Usage:\n\tload dbPath graphFile\n\tquery dbPath");
+		System.err.println("Usage:\n\tload dbPath graphFile1 graphFile2 ...\n\tquery dbPath");
 		System.exit(0);
 	}
 	public static void main(String[] args) {
@@ -120,15 +138,20 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		String cmd=args[0], dbPath = args[1]; 
 		if ("load".equals(cmd)) {
 
-			String graphFile = args[2];
 			long t0 = System.currentTimeMillis();
 			Neo4jGraphComponent nc = new Neo4jGraphComponent(dbPath);
 			long t1 = System.currentTimeMillis();
 			System.out.println("open "+dbPath+" "+(t1-t0));
+			t1 = t0 = System.currentTimeMillis();
+			for (int i=2; i<args.length; i++) {
+				String graphFile = args[i];
+				Neo4jGraphComponent.load(nc, graphFile);
+				long t2 = System.currentTimeMillis();
+				System.out.println("load "+graphFile+" "+(t2-t1));
+				t1 = t2;
+			}
 			t1 = System.currentTimeMillis();
-			Neo4jGraphComponent.load(nc, graphFile);
-			long t2 = System.currentTimeMillis();
-			System.out.println("load "+graphFile+" "+(t2-t1));
+			System.out.println("load all "+(t1-t0));
 
 		} else if ("query".equals(cmd)) {
 			long t0 = System.currentTimeMillis();
@@ -177,7 +200,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 			log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
 			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 			while ((line=reader.readLine())!= null) {
-				if(reader.getLineNumber() % 10000 == 0) { tx.success(); tx.finish(); tx = graphDb.beginTx(); }
+				if(reader.getLineNumber() % 50000 == 0) { tx.success(); tx.finish(); tx = graphDb.beginTx(); }
 				if( (now = System.currentTimeMillis()) - last > 2000)  {
 					log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
 					last = now;
