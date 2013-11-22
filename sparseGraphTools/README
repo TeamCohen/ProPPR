@@ -1,0 +1,39 @@
+sparseGraphTools - converting from .cfacts to sparseMatrix format
+Katie Mazaitis (krivard@cs.cmu.edu)
+31 October 2013
+
+
+(1) Set up .cfacts files
+
+Each file should contain only one functor.
+
+The only functors valid for sparse matrix format express an edge between two nodes. This means arity 2, with both variables grounded.
+
+Naming convention: [functor]_[arg1type]_[arg2type].cfacts
+
+
+(2) Set up Makefile
+
+Edit the SOURCES definition in the Makefile to include all the cfacts files you wish to include in your sparseGraphComponent, separated by spaces.
+
+You can also set the name of the folder they'll be dropped in, if you wish (NAME). Make sure the folder name ends in .sparse so that it will be recognized by the component builder.
+
+
+(3) Run
+
+$ make
+
+
+(4) Test
+
+Run SparseGraphComponent to make sure it works. Run some outlinks queries, expressing the goal query in compiled format (comma-delimited, using negative integers as variable names).
+
+$ java -cp bin/:lib/*.jar:conf/ edu.cmu.ml.praprolog.prove.SparseGraphComponent $(NAME)
+> outlinks some_functor,some_arg1,-1
+goal(some_functor,c[some_arg1],v[-1]) ... goal(some_functor,c[some_arg1],c[some_value])
+
+
+(5) Use
+
+Put the folder anywhere you like. Include the path to it in the --programFiles argument, as you would for any other component.
+

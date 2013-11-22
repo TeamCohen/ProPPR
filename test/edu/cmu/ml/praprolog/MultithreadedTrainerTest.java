@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -19,10 +20,10 @@ import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class MultithreadedTrainerTest extends RedBlueGraph {
-	
 	@Test
 	public void testTrainParametersOnCookedIterator_smoke() {
 		MultithreadedTrainer<String> trainer = 
@@ -89,6 +90,9 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 	
 	@Test
 	public void test_queuevsrr() {
+		System.out.println("\n\nWARNING: This test will occasionally give a false negative (fail in spite of correct behavior).\n"+
+				"Multithreading introduces randomness that cannot be seeded. Try re-running before investigating issues.\n");
+		SRW.seed(0);
 		int epochs = 20;
 		
 		L2PosNegLossTrainedSRW<String> srwQ = new L2PosNegLossTrainedSRW<String>();
@@ -116,8 +120,8 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 			assertFalse(f+" rr inf",paramVecRR.get(f).isInfinite());
 			assertFalse(f+" q nan",paramVecQ.get(f).isNaN());
 			assertFalse(f+" q inf",paramVecQ.get(f).isInfinite());
-			// accurate to 1% since most param values ~=1
-			assertEquals(f,paramVecRR.get(f),paramVecQ.get(f),0.01);
+			// accurate to 2% since most param values ~=1
+			assertEquals(f,paramVecRR.get(f),paramVecQ.get(f),0.02);
 		}
 	}
 }

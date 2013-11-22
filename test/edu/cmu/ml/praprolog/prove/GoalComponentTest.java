@@ -41,9 +41,8 @@ public class GoalComponentTest {
     
     @Test
     public void testLoadCompiled() {
-//    	GoalComponent g = GoalComponent.loadCompiled("testcases/toy.cfacts");
-    	GoalComponent g = GoalComponent.loadCompiled("testcases/classify.cfacts");
+    	GoalComponent g = GoalComponent.loadCompiled("testcases/toy.cfacts");
     	assertEquals("functors",2,g.indexF.size());
-    	assertEquals("functor+arg1",8,g.indexFA1.size());//5
+    	assertEquals("functor+arg1",5,g.indexFA1.size());
     }
 }

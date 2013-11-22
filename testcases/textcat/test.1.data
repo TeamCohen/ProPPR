@@ -1,0 +1,1 @@
+predict(r10172,Y)	+predict(r10172,grain)	+predict(r10172,corn)	+predict(r10172,wheat)	-predict(r10172,sugar)

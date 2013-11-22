@@ -13,13 +13,13 @@ sim(X,Y) :- sister(X,Z), sim(Z,Y) # sister.
 sim(X,Y) :- child(X,Z), sim(Z,Y) # child.
 % sim(X,Y) :- spouse(X,Z), sim(Z,Y) # spouse(X).
 
-rel(X,Y) :- sister(X,Y).
-rel(X,Y) :- child(X,Y).
-rel(X,Y) :- spouse(X,Y).
+rel(X,Y) :- sister(X,Y) # f.
+rel(X,Y) :- child(X,Y) # f.
+rel(X,Y) :- spouse(X,Y) # f.
 % added 30 oct 2013:
-rel(X,Y) :- child(Y,X).
+rel(X,Y) :- child(Y,X) # f.
 
-rel2(X,Y) :- rel(X,Z), rel(Z,Y).
+rel2(X,Y) :- rel(X,Z), rel(Z,Y) # f.
 
 % a database
 

@@ -1,4 +1,71 @@
-% differences from SWI-Prolog: clause/3 isn't supported, can't use {X | P(X)} notation
+% optimized version of outlinks.2p
+%
+% usage:
+% 
+% 1) load outlinksx.2p, and the theory "theory.2p" you want to use, in the usual format:
+% eg 
+% ----------------------------------------
+% | propprDB sister(_,_).
+% | propprDB spouse(_,_),child(_,_).
+% | propprRule sim(_,_),rel(_,_),rel2(_,_).
+% | sim(X,X) :- true # base.
+% | sim(X,Y) :- sister(X,Z), sim(Z,Y) # sister.
+% | sim(X,Y) :- child(X,Z), sim(Z,Y) # child.
+% | sim(X,Y) :- spouse(X,Z), sim(Z,Y) # spouse(X).
+% | sister(william,rachel).
+% | sister(william,sarah).
+% | sister(william,lottie).
+% | spouse(william,susan).
+% | spouse(susan,william).
+% | child(lottie,charlotte).
+% | child(lottie,lucas).
+% | child(sarah,poppy).
+% | child(rachel,caroline).
+% | child(rachel,elizabeth).
+% | propprDB str(_,_),charIn(_,_),class(_).
+% | propprRule predict(_,_).
+% | propprRule xRelY(_,_).
+% | predict(Str,Y) :- class(Y), xRelY(Str,Y) # pred1.
+% | xRelY(Str,Y) :- true # {f(Ch,Y)=1 suchThat member(Ch,Str)}, {firstCh(Ch,Y)=2 st Str=[Ch|_]}.
+% | class(pos).
+% | class(neg).
+% ----------------------------------------
+%
+% 2) execute expandAllClauses('theoryx.2p'), which will 'expand' these
+% to a simpler format and save it into a file 'theoryx.2p', in which
+% the clauses are stored in a simpler format, in which the body
+% predicates have been pre-expanded into lists, and the features have
+% been pre-to processed to be lists of f=c pairs, or special
+% 'delayedFindall' terms, which are still evaluated when a rule is
+% applied.
+%
+% ----------------------------------------
+% | sim(_105987312_e7,_105987312_e7) :- [] # ['='(base,1)].
+% | sim(_1152392515_e119,_105987312_e122) :- [sister(_1152392515_e119,Z_e121),sim(Z_e121,_105987312_e122)] # ['='(sister,1)].
+% | sim(_1152392515_e206,_105987312_e209) :- [child(_1152392515_e206,Z_e208),sim(Z_e208,_105987312_e209)] # ['='(child,1)].
+% | sim(_1152392515_e293,_105987312_e296) :- [spouse(_1152392515_e293,Z_e295),sim(Z_e295,_105987312_e296)] # ['='(spouse(_1152392515_e293),1)].
+% | sister(william,rachel) :- [] # ['='('/'(sister,2),1)].
+% | sister(william,sarah) :- [] # ['='('/'(sister,2),1)].
+% | sister(william,lottie) :- [] # ['='('/'(sister,2),1)].
+% | spouse(william,susan) :- [] # ['='('/'(spouse,2),1)].
+% | spouse(susan,william) :- [] # ['='('/'(spouse,2),1)].
+% | child(lottie,charlotte) :- [] # ['='('/'(child,2),1)].
+% | child(lottie,lucas) :- [] # ['='('/'(child,2),1)].
+% | child(sarah,poppy) :- [] # ['='('/'(child,2),1)].
+% | child(rachel,caroline) :- [] # ['='('/'(child,2),1)].
+% | child(rachel,elizabeth) :- [] # ['='('/'(child,2),1)].
+% |
+% | predict(_202077946_e57,_1152392515_e58) :- [class(_1152392515_e58),xRelY(_202077946_e57,_1152392515_e58)] # ['='(pred1,1)].
+% | xRelY(_105987312_e159,_1064809421_e158) :- [] # 
+% |      [delayedFindall('='(f(Ch_e160,_1064809421_e158),1),member(Ch_e160,_105987312_e159)),
+% |       delayedFindall('='(firstCh(Ch_e160,_1064809421_e158),2),'='(_105987312_e159,[Ch_e160|_1270708296_e161]))].
+% | class(pos) :- [] # ['='('/'(class,1),1)].
+% | class(neg) :- [] # ['='('/'(class,1),1)].
+% ----------------------------------------
+%
+% 3) clear the old theory or restart tuProlog, and then
+% load outlinksx.2p and the expanded theory 'theoryx.2p'.
+
 
 :- op(1125,xfy,'#').
 :- op(1150,fx,'propprDB').
@@ -6,6 +73,7 @@
 :- op(1100,xfy,'suchThat').
 :- op(1100,xfy,'st').
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % simple dfs facility - finds the first solution available via DFS,
 % and then others on backtracking.
 
@@ -19,17 +87,34 @@ dfs(Goal,MaxDepth) :-
 dfs(state(Goal,[],_),Features,D,MaxDepth) :-
 	D < MaxDepth,
 	tabTo(D),
-	write('-'),write(Features),write('-> '),write(Goal),write('... []'),nl.
+	print('-'),print(Features),print('-> '),print(Goal),print('... []'),nl.
 dfs(state(Goal,GoalList,ResetGoal),Features,D,MaxDepth) :-
 	D < MaxDepth,
 	tabTo(D),
-	write('-'),write(Features),write('-> '),write(Goal),write('...'),write(GoalList),nl,
+	print('-'),print(Features),print('-> '),print(Goal),print('...'),print(GoalList),nl,
 	outlinks(state(Goal,GoalList,ResetGoal),S1,Fs1),
 	D1 is D+1,
 	dfs(S1,Fs1,D1,MaxDepth).
 
 tabTo(I) :- I =< 0.
-tabTo(I) :- I > 0, write('|  '),I1 is I-1,tabTo(I1).
+tabTo(I) :- I > 0, print('|  '),I1 is I-1,tabTo(I1).
+
+answers(Goal,MaxDepth) :-
+	startState(Goal,S0),
+	answers(S0,[],0,MaxDepth).
+
+answers(state(Goal,[],_),Features,D,MaxDepth) :-
+	D < MaxDepth,
+	ground(Goal),
+	tabTo(D),
+	print('-'),print(Features),print('-> '),print(Goal),print('... []'),nl.
+answers(state(Goal,GoalList,ResetGoal),_Features,D,MaxDepth) :-
+	D < MaxDepth,
+	%tabTo(D),
+	%print('-'),print(Features),print('-> '),print(Goal),print('...'),print(GoalList),nl,
+	outlinks(state(Goal,GoalList,ResetGoal),S1,Fs1),
+	D1 is D+1,
+	answers(S1,Fs1,D1,MaxDepth).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lpState functionality
@@ -37,7 +122,7 @@ tabTo(I) :- I > 0, write('|  '),I1 is I-1,tabTo(I1).
 % create the start state for a goal
 
 startState(Goal,state(GoalList,GoalList,GoalListCopy)) :-
-	conjunctionToList(Goal,GoalList),
+	conjunctionToList(Goal,GoalList), !,
 	copy_term(GoalList,GoalListCopy).
 
 % is the state a solution state?
@@ -47,28 +132,32 @@ isSolution(state(_,[],_)) :- !.
 % asks if the solution is a start state and binds the goal to that goallist
 
 isSolution(OriginalGoal,state(GoalList,[],_)) :- 
-	conjunctionToList(OriginalGoal,GoalList).
+	conjunctionToList(OriginalGoal,GoalList), !.
 
 % find a restart state and its features
 
 restart( state(_,_,GoalCopy), state(GoalCopy,GoalCopy,GoalCopy1)) :-
-	copy_term(GoalCopy,GoalCopy1).
+	copy_term(GoalCopy,GoalCopy1), !.
 
-restartFeatures(_, [restart=1]).
+restartFeatures(_, [restart=1]) :- !.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% lp component functionality
+% lp component functionality 
 
 claim( state(_,[Subgoal|_], _) ) :-
-	edbPredicate(Subgoal).
+	expandedAnnotatedClause(Subgoal,_,_), !.
 
 % find the children of a state
 
 outlinks( state(Goal,[Subgoal|Subgoals],GoalCopy), state(Goal,Subgoals1,GoalCopy), Features) :-
-	annotatedClause(Subgoal,Body,Features0),
-	evalFeatures(Features0,Features),
-	checkFeaturesAreGround(Features),
+	expandedAnnotatedClause(Subgoal,Body,Features0), %backtrack here, no cut!
+	evalFeatures(Features0,Features), 
+	%checkFeaturesAreGround(Features),
 	append(Body,Subgoals,Subgoals1).
+
+% assumes we've expanded predicate definitions
+expandedAnnotatedClause(Subgoal,Body,Features) :-
+	clause(Subgoal, (Body # Features)).
 
 checkFeaturesAreGround(Features) :-
 	ground(Features), 
@@ -79,29 +168,43 @@ checkFeaturesAreGround(Features) :-
 
 evalFeatures([],[]).
 evalFeatures([F=C|Fs],[F=C|EFs]) :- 
+	!,
 	evalFeatures(Fs,EFs).
-evalFeatures([F|Fs],EFs) :-
-	setGeneratorFeature(F,Var,PredAboutVar),
-	call(findall(Var,PredAboutVar,List)),
-	evalFeatures(List,EFs1),
-	evalFeatures(Fs,EFs2),
-	append(EFs1,EFs2,EFs).
-evalFeatures([F|Fs],[F=1|EFs]) :-
-	\+ F=(_ = _),
-	\+ setGeneratorFeature(F,_,_), 
-	evalFeatures(Fs,EFs).
+evalFeatures([delayedFindall(Var,PredAboutVar)|Fs],EFs) :-
+	call(findall(Var,PredAboutVar,List)),!,
+	addDefaultFeatureValues(List,List1),!,
+	evalFeatures(Fs,EFs1),!,
+	append(List1,EFs1,EFs),!.
 
-% syntax for suchThat constructs
-setGeneratorFeature({Var suchThat PredAboutVar},Var,PredAboutVar).
-setGeneratorFeature({Var st PredAboutVar},Var,PredAboutVar).
+addDefaultFeatureValues([],[]) :- !.
+addDefaultFeatureValues([F=C|Fs],[F=C|Fs1]) :- 
+	addDefaultFeatureValues(Fs,Fs1), !.
+addDefaultFeatureValues([F|Fs],[F=1|Fs1]) :- 
+	\+ F=(_ = _),!,
+	addDefaultFeatureValues(Fs,Fs1),!.
 
-% find a clause Head, Body, Features, where Body and Features are lists
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% preprocessor
+
+expandAllClauses(OutputFile) :-
+	tell(OutputFile),
+	expandAllClauses,
+	told.
+
+expandAllClauses :-
+	annotatedClause(Head,Body,Features),
+	%numbervars((Head,Body,Features),0,_),
+	print(Head),print(' :- '),print(Body),print(' # '),print(Features), print('.'), nl,
+	fail.
+expandAllClauses.
 
 annotatedClause(Head,Body,Features) :-
 	edbPredicate(Head),
 	clause(Head,BodyFeatures),
-	extractFeaturesFromBody(BodyFeatures,Body,Features).
-annotatedClause(Head,[],[Functor/Arity]) :-
+	extractFeaturesFromBody(BodyFeatures,Body,Features0),
+	expandFeatures(Features0,Features).
+annotatedClause(Head,[],[(Functor/Arity)=1]) :-
 	idbPredicate(Head),
 	clause(Head,true),
 	functor(Head,Functor,Arity).
@@ -120,13 +223,29 @@ extractFeaturesFromBody((Body0 # Features0),Body,Features) :- !,
 	conjunctionToList(Body0,Body).
 extractFeaturesFromBody(Body0,Body,[clauseWithMissingFeatures]) :- !,
 	\+ Body0=(_ # _),
-	write(['warning: clause features should always be explicit in body',Body0]),nl,
+	write('%% warning: clause features should always be explicit in body'),write(Body0),nl,
 	conjunctionToList(Body0,Body).
+
+expandFeatures([],[]).
+expandFeatures([F=C|Fs],[F=C|EFs]) :- 
+	expandFeatures(Fs,EFs).
+expandFeatures([F|Fs],[delayedFindall(Var,PredAboutVar)|EFs]) :-
+	setGeneratorFeature(F,Var,PredAboutVar),
+	expandFeatures(Fs,EFs).
+expandFeatures([F|Fs],[F=1|EFs]) :-
+	\+ F=(_ = _),
+	\+ setGeneratorFeature(F,_,_), 
+	expandFeatures(Fs,EFs).
+
+% syntax for suchThat constructs
+setGeneratorFeature({Var suchThat PredAboutVar},Var,PredAboutVar).
+setGeneratorFeature({Var st PredAboutVar},Var,PredAboutVar).
 
 % convert a conjunction to a prolog list
 
 conjunctionToList(true,[]).
-conjunctionToList(X,[X]) :- \+ X=(_,_), \+ X=true.
+conjunctionToList(X,[X]) :- 
+	\+ X=(_,_), \+ X=true.
 conjunctionToList((X,Y),List) :- 
 	conjunctionToList(X,XList),
 	conjunctionToList(Y,YList),
@@ -137,4 +256,6 @@ conjunctionToList((X,Y),List) :-
 conjunctionMember(Z,(X,_)) :- conjunctionMember(Z,X).
 conjunctionMember(Z,(_,Y)) :- conjunctionMember(Z,Y).
 conjunctionMember(X,X) :- \+ X=true, \+ X=(_,_), !.
+
+
 

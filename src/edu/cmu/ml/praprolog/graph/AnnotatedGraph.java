@@ -9,6 +9,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph.GraphFormatException;
+
 /**
  * A Graph that supports edge features.
  * @author krivard
@@ -72,6 +74,9 @@ public abstract class AnnotatedGraph<K> extends AnyKeyGraph<K> {
 	
 	public static <K> AnnotatedGraph<K> fromStringParts(String string, AnnotatedGraph<K> g) throws GraphFormatException {
 		String[] parts = string.split("\t",4);
+		if (parts.length != 4) {
+			throw new GraphFormatException("Only "+parts.length+" tsv fields in graph; need 4 distinct parts:"+string);
+		}
 //		AnnotatedGraph g = new AnnotatedGraph();
 		
 //		int numNodes = Integer.parseInt(parts[0]);

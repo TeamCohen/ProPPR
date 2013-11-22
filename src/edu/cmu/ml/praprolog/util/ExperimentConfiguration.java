@@ -10,6 +10,7 @@ import edu.cmu.ml.praprolog.ExampleCooker;
 import edu.cmu.ml.praprolog.ModularMultiExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
+import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
 import edu.cmu.ml.praprolog.Tester;
@@ -80,6 +81,23 @@ public class ExperimentConfiguration extends Configuration {
 						+"t\n"
 						+"mt[:threads] (default threads=3)")
 					.create());
+		options.addOption(
+				OptionBuilder
+					.withLongOpt("seed")
+					.withArgName("s")
+					.hasArg()
+					.withDescription("Seed the SRW random number generator")
+					.create());
+	}
+	private void vanillaSeed(CommandLine line) {
+		if (!line.hasOption("seed")) return;
+		long seed = Long.parseLong(line.getOptionValue("seed"));
+		edu.cmu.ml.praprolog.learn.SRW.seed(seed);
+	}
+	private void troveSeed(CommandLine line) {
+		if (!line.hasOption("seed")) return;
+		long seed = Long.parseLong(line.getOptionValue("seed"));
+		edu.cmu.ml.praprolog.trove.learn.SRW.seed(seed);
 	}
 	@Override
 	protected void retrieveSettings(CommandLine line, int flags, Options options) {
@@ -113,10 +131,12 @@ public class ExperimentConfiguration extends Configuration {
 			String[] values = line.getOptionValues("trainer");
 			if (values[0].startsWith("trove")) {
 				this.trove = true;
-				this.srw = new L2PosNegLossTrainedSRW();
+				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW();
+				troveSeed(line);
 			} else {
 				this.trove = false;
 				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>();
+				vanillaSeed(line);
 			}
 			if (values.length > 1) {
 				threads = Integer.parseInt(values[1]);
@@ -136,12 +156,10 @@ public class ExperimentConfiguration extends Configuration {
 			}
 		} else {
 			this.trove = true;
-			this.srw = new L2PosNegLossTrainedSRW();
+			this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW();
+			troveSeed(line);
 			this.trainer = new MultithreadedRRTrainer( (L2PosNegLossTrainedSRW) this.srw, threads);	
 		}
-		
-//		if (line.hasOption("tester")) 
-//		this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
 		
 		threads = 3;
 		if(line.hasOption("threads")) threads = this.nthreads;
@@ -156,8 +174,6 @@ public class ExperimentConfiguration extends Configuration {
 				}
 			}
 		} else this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
-		
-		
 	}
 
 	@Override

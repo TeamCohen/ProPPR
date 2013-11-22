@@ -42,9 +42,9 @@ public class TesterTest {
 	public void testTestExamples_textcat() {
 		// predict(r10172,Y)	+predict(r10172,grain)	+predict(r10172,corn)	+predict(r10172,wheat)	-predict(r10172,sugar)
 		LogicProgram textcat = new LogicProgram(
-				Component.loadComponents("textcat/textcat.crules:textcat/labels.cfacts:textcat/words.graph".split(":"), DprProver.MINALPH_DEFAULT+DprProver.EPS_DEFAULT));
+				Component.loadComponents("testcases/textcat/textcat.crules:testcases/textcat/labels.cfacts:testcases/textcat/words.graph".split(":"), DprProver.MINALPH_DEFAULT+DprProver.EPS_DEFAULT));
 		Tester tee = new Tester(new DprProver(), textcat);
-		TestResults results = tee.testExamples("textcat/test.1.data");
+		TestResults results = tee.testExamples("testcases/textcat/test.1.data");
 		System.out.println("pairs "+results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 	}
 

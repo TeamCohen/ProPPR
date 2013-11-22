@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog.trove.learn;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -31,6 +32,8 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
  */
 public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
+	private static Random random = new Random();
+	public static void seed(long seed) { random.setSeed(seed); }
 	protected static final int NUM_EPOCHS = 5;
 	protected double mu;
 	protected int maxT;
@@ -56,7 +59,7 @@ public class SRW<E extends RWExample> {
 		
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
-				p.put(f,1.0+0.01*Math.random());
+				p.put(f,1.0+0.01*random.nextDouble());
 			}
 		}
 	}
