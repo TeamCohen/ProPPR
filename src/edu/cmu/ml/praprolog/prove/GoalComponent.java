@@ -15,7 +15,7 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 
 public class GoalComponent extends Component {
-	public static final String FILE_EXTENSION="cfacts";
+	public static final String FILE_EXTENSION=".cfacts";
 	protected Map<Goal,Double> featureDict = new HashMap<Goal,Double>();
 	protected Map<FunctorArityKey,List<Goal>> indexF = new HashMap<FunctorArityKey,List<Goal>>();
 	protected Map<FunctorArityArgKey,List<Goal>> indexFA1 = new HashMap<FunctorArityArgKey,List<Goal>>();

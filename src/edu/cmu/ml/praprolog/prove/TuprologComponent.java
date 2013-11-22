@@ -21,7 +21,7 @@ import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
 
 public class TuprologComponent extends Component {
 	private static final String OUTLINKS_RULES = "outlinks.2p";
-	public static final String FILE_EXTENSION = "pl";
+	public static final String FILE_EXTENSION = ".pl";
 	private Prolog engine;
 	public TuprologComponent() {		
 		engine = new Prolog();

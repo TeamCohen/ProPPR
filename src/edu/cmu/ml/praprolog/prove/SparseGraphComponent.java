@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
  */
 public class SparseGraphComponent extends GraphlikeComponent {
 	private static final Logger log = Logger.getLogger(SparseGraphComponent.class);
-	public static final String FILE_EXTENSION = "sparse"; 
+	public static final String FILE_EXTENSION = ".sparse"; 
 	public static final String INDEX_EXTENSION = ".i";
 	public static final String MANIFEST="sparseIndex.txt";
 

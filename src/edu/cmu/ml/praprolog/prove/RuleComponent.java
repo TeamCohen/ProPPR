@@ -18,7 +18,7 @@ import edu.cmu.ml.praprolog.util.SymbolTable;
 
 public class RuleComponent extends Component {
 	private static final Logger log = Logger.getLogger(RuleComponent.class);
-	public static final String FILE_EXTENSION="crules";
+	public static final String FILE_EXTENSION=".crules";
 	protected Map<String,List<Rule>> index = new HashMap<String,List<Rule>>();
 	public void add(Rule rule) {
 		String key = key(rule.lhs);

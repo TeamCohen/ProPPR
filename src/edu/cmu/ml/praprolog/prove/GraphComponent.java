@@ -25,7 +25,7 @@ import edu.cmu.ml.praprolog.util.SymbolTable;
 public class GraphComponent extends GraphlikeComponent {
 	private static final Logger log = Logger.getLogger(GraphComponent.class);
 
-	public static final String FILE_EXTENSION = "graph";
+	public static final String FILE_EXTENSION = ".graph";
 	private static final List<Argument> DEFAULT_INDEX = Collections.emptyList();
 
 	// ewww
