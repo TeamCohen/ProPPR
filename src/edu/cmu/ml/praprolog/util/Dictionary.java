@@ -19,9 +19,11 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -385,7 +387,7 @@ public class Dictionary {
         return map;
     }
 	public static Map<String, Double> load(String filename) {
-		LineNumberReader reader;
+		LineNumberReader reader=null;
 		try {
 			reader = new LineNumberReader(new FileReader(filename));
 			Map<String,Double> map = new HashMap<String,Double>();
@@ -403,8 +405,31 @@ public class Dictionary {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			if (reader != null)
+				try {
+					reader.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		}
 		return null;
 	}
 
+	/**
+	 * Given a weighted set, return a list of the elements in descending order.
+	 * @param map
+	 * @return
+	 */
+	public static <K> List<Map.Entry<K, Double>> sort(Map<K,Double> map) {
+		List<Map.Entry<K, Double>> ret = new ArrayList<Map.Entry<K,Double>>();
+		ret.addAll(map.entrySet());
+		Collections.sort(ret, new Comparator<Map.Entry<K,Double>>() {
+			@Override
+			public int compare(Entry<K, Double> arg0, Entry<K, Double> arg1) {
+				return arg1.getValue().compareTo(arg0.getValue());
+			}});
+		return ret;
+	}
 }

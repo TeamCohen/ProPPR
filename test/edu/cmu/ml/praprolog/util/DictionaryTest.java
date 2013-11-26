@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog.util;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -42,4 +43,10 @@ public class DictionaryTest {
 		assertEquals(1.0,Dictionary.safeGetGet(mapmap,"b","one"),EPSILON);
 	}
 
+	@Test
+	public void testSort() {
+		List<Map.Entry<String,Double>> items = Dictionary.sort(map);
+		assertEquals("one",items.get(0).getKey());
+		assertEquals("zero",items.get(1).getKey());
+	}
 }
