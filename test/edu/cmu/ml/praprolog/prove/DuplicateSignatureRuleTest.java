@@ -16,31 +16,37 @@ public class DuplicateSignatureRuleTest {
 	@Test
 	public void test() {
 		RuleComponent r = new RuleComponent();
-		// dressedIn(X,Y) :- wearing(X,Y), owns(X,Y) # covering .
-		// owns(X,Y) :- # closet .
+		/*
+		 * canExit(Player,Room) :- location(Player,Room),hasKey(Player,Room) .
+hasKey(Player,Room) :- class(Player,wizard) .
+hasKey(Player,Room) :- doorPuzzle(Room,Puzzle),solved(Player,Puzzle) .
+		 */
 		r.add(new Rule(
-				new Goal("dressedIn","X","Y"),
-				new Goal("covering"),
-				new Goal("wearing","X","Y"),
-				new Goal("has","X","Y")));
+				new Goal("canExit","X","Y"),
+				new Goal("ability"),
+				new Goal("location","X","Y"),
+				new Goal("hasKey","X","Y")));
 		r.add(new Rule(
-				new Goal("has","X","Y"),
-				new Goal("closet"),
-				new Goal("owns","X","Y")));
+				new Goal("hasKey","P","Q"),
+				new Goal("unlock0"),
+				new Goal("class","P","wizard")));
 		r.add(new Rule(
-				new Goal("has","X","Y"),
-				new Goal("closet"),
-				new Goal("borrowed","X","Y")));
+				new Goal("hasKey","M","N"),
+				new Goal("unlock1"),
+				new Goal("doorPuzzle","N","K"),
+				new Goal("solved","M","K")));
 		r.compile();
 		
 		GoalComponent g = new GoalComponent();
-		g.addFact(new Goal("wearing","steve","pants"));
-		g.addFact(new Goal("owns","steve","pants"));
-		g.addFact(new Goal("borrowed","steve","hat"));
+		g.addFact(new Goal("doorPuzzle","kitchen","puzzle_kitchen"));
+		g.addFact(new Goal("doorPuzzle","parlor","puzzle_parlor"));
+		g.addFact(new Goal("class","steve","wizard"));
+		g.addFact(new Goal("location","steve","kitchen"));
+		g.addFact(new Goal("solved","steve","puzzle_parlor"));
 		
 		LogicProgram lp = new LogicProgram(new Component[] {r,g});
 		
-		ProPPRLogicProgramState state = new ProPPRLogicProgramState(Goal.decompile("dressedIn,steve,-1"));
+		ProPPRLogicProgramState state = new ProPPRLogicProgramState(Goal.decompile("canExit,steve,-1"));
 		
 		Prover p = new TracingDfsProver();
 		Map<LogicProgramState,Double> result = p.proveState(lp, state);
@@ -48,8 +54,8 @@ public class DuplicateSignatureRuleTest {
 			System.out.println(e.getValue()+"\t"+e.getKey());
 			System.out.println("\t"+e.getKey().description());
 			if (e.getKey().isSolution()) {
-				assertEquals("Steve not allowed to wear "+e.getKey().description()+".\n",
-						"-1=c[pants]",e.getKey().description());
+				assertEquals("Steve not allowed to exit "+e.getKey().description()+".\n",
+						"-1=c[kitchen]",e.getKey().description());
 			}
 		}
 	}

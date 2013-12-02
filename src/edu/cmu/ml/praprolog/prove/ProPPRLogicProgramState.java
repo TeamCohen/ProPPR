@@ -69,6 +69,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		this.varSketch = new VarSketch();
 		this.varSketch.includeAll(this.queryGoals);
 		this.varSketch.includeAll(this.goals);
+		this.varSketch.include(this.theta);
 	}
 	public Goal getGoal(int i) {
 		if (i<goals.length)

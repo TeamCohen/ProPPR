@@ -19,6 +19,10 @@ public class VarSketch {
 			if (a.isVariable()) this.n = Math.max(n,-a.getValue());
 		}
 	}
+	
+	public void include(RenamingSubstitution theta) {
+		this.n = Math.max(n, theta.offset); //hack
+	}
 
 	public int size() {
 		return n;
