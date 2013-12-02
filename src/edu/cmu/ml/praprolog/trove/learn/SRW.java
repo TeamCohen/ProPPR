@@ -27,13 +27,13 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
  *  their LBG optimization scheme, and assuming that all restart links
  *  are explicitly represented in the graph.
  *  
- * @author wcohen,krivard
+ * @author wcohen,krivard,yww
  *
  */
 public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
-	private static Random random = new Random();
-	public static void seed(long seed) { random.setSeed(seed); }
+	private static Random random = new Random(); 
+ 	public static void seed(long seed) { random.setSeed(seed); } 	
 	protected static final int NUM_EPOCHS = 5;
 	protected double mu;
 	protected int maxT;
@@ -76,7 +76,7 @@ public class SRW<E extends RWExample> {
 		for (Feature f : g.phi(u, v)) {
 			sum += Dictionary.safeGet(p, f.featureName) * f.weight;
 		}
-		return sum;
+		return edgeWeightFunction(sum);
 	}
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
@@ -94,6 +94,17 @@ public class SRW<E extends RWExample> {
 		}
 		return sum;
 	}
+
+	/**
+	 * The function wraps the product of edge weight and feature.
+	 * @param p product of edge weight and feature.
+	 * @return 
+	 */
+	public double edgeWeightFunction(double product) {
+		return Math.exp(product);
+	}
+
+
 	/**
 	 * Random walk with restart from start vector using this.maxint iterations.
 	 * @param g
@@ -219,10 +230,21 @@ public class SRW<E extends RWExample> {
 			int v, Map<String, Double> paramVec) {
 		TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, f.weight);
+			result.put(f.featureName, derivEdgeWeightFunction(f.weight));
 		}
 		return result;
 	}
+
+	/**
+	 * The function wraps the derivative of edge weight.
+	 * @param weight: edge weight.
+	 * @return wrapped derivative of the edge weight.
+	 */
+	public double derivEdgeWeightFunction(double weight) {
+		return Math.exp(weight);
+	}
+
+
 	/**
 	 * Builds a set of features in the specified set that are not on the untrainedFeatures list.
 	 * @param candidates feature names
