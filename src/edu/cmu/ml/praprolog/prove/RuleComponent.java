@@ -73,8 +73,8 @@ public class RuleComponent extends Component {
 		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
 		List<RuleSubstitutionPair> matches = getSubstitutions(state);
 		List<Outlink> result = new ArrayList<Outlink>();
-		for (RuleSubstitutionPair r : matches) {
-			result.add(new Outlink(r.r.featuresAsDict(r.theta, RenamingSubstitution.RENAMED), state.child(r.r.rhs,r.theta)));
+		for (RuleSubstitutionPair rp : matches) {
+			result.add(new Outlink(rp.r.featuresAsDict(rp.theta, RenamingSubstitution.RENAMED), state.child(rp.r.rhs,rp.theta)));
 		}
 		return result;
 	}
@@ -165,4 +165,10 @@ public class RuleComponent extends Component {
 		}
 		return sb.toString();
 	}
+
+    // a little test case...
+    public static void main(String[] args)  {
+	RuleComponent rc = loadCompiled(args[0]);
+	System.out.println("listing of " + args[0] + ":\n" + rc.listing());
+    }
 }

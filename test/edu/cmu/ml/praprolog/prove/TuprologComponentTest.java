@@ -24,7 +24,7 @@ public class TuprologComponentTest {
 	@Test
 	public void test() {
 		TuprologComponent tc = new TuprologComponent();
-		tc.addTheory("testcases/prolog/family.pl");
+		tc.addTheory("testcases/prolog/familyx.pl");
 		
 		RuleComponent rc = RuleComponent.loadCompiled("testcases/family.crules");
 		GoalComponent gc = GoalComponent.loadCompiled("testcases/family.cfacts");
