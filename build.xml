@@ -4,7 +4,7 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
-	<property name="build" value="ant-bin"/>
+	<property name="build" value="bin"/>
 	<property name="junit.results" value="test-results"/>
 	<property name="ant.junit.failureCollector" value="${junit.results}/FailedTests"/>
 	
@@ -30,9 +30,9 @@
     	<pathelement location="lib/tuprolog.jar"/>
     </path>
 	<path id="ProPPRTests.classpath">
-		<path refid="ProPPR.classpath"/>
 		<pathelement location="lib/junit-4.11-SNAPSHOT.jar"/>
 		<pathelement location="lib/junit-dep-4.11-SNAPSHOT.jar"/>
+		<path refid="ProPPR.classpath"/>
 	</path>
     <target name="init">
         <mkdir dir="${build}"/>

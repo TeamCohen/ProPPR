@@ -30,6 +30,7 @@ public class Trainer {
 	public Trainer(SRW<PosNegRWExample> learner) {
 		this.learner = learner;
 
+        learner.untrainedFeatures().add("fixedWeight");
         learner.untrainedFeatures().add("id(trueLoop)");
         learner.untrainedFeatures().add("id(trueLoopRestart)");
         learner.untrainedFeatures().add("id(defaultRestart)");
