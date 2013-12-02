@@ -24,6 +24,11 @@ public class VarSketch {
 		return n;
 	}
 	
+	@Override
+	public String toString() {
+		return String.valueOf(n);
+	}
+	
 /*
  * class varSketch(object):
     """""" 

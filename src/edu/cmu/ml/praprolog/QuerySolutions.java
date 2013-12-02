@@ -18,6 +18,7 @@ import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.SymbolTable;
 
 public class QuerySolutions {
 	private static final Logger log = Logger.getLogger(QuerySolutions.class);
@@ -35,7 +36,8 @@ public class QuerySolutions {
 		try {
 			for (String line; (line=reader.readLine())!= null;) {
 				line = line.replaceAll("[(]", ",").replaceAll("\\)","").trim();
-				Goal query = Goal.decompile(line);
+				Goal query = Goal.parseGoal(line, ",");
+				query.compile(this.program.getSymbolTable());
 				log.info("Querying: "+query);
 				Map<LogicProgramState,Double> dist = prover.proveState(this.program, new ProPPRLogicProgramState(query));
 			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(Prover.filterSolutions(dist)));

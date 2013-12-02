@@ -179,7 +179,7 @@ public class RenamingSubstitution {
 
 	public String toString() {
 	    StringBuilder sb = new StringBuilder("theta{");
-	    Dictionary.buildString(this.dict,sb," ").append(" }");
+	    Dictionary.buildString(this.dict,sb," ").append(" }@").append(this.offset);
 	    return sb.toString();
 	}
 }
