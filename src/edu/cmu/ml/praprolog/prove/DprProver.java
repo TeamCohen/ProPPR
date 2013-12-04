@@ -156,8 +156,7 @@ public class DprProver extends Prover {
             }
             if (localAlpha < this.minAlpha) {
             	log.warn("max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
-                throw new IllegalStateException("minAlpha too high! Did you remember to set alpha in logic program components? "+
-                		"dpr minAlpha ="+minAlpha+" localAlpha="+localAlpha+" for state "+u);
+                throw new MinAlphaException(minAlpha,localAlpha,u);
             }
             Dictionary.increment(p,u,minAlpha * ru,"(elided)");
             r.put(u, r.get(u) * stayProbability * (1.0-minAlpha));
