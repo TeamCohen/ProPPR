@@ -9,6 +9,9 @@ import java.io.LineNumberReader;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.prove.Component;
@@ -20,22 +23,25 @@ import edu.cmu.ml.praprolog.prove.MinAlphaException;
 import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Configuration;
+import edu.cmu.ml.praprolog.util.CustomConfiguration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class DprMinAlphaTuner {
 	private static final Logger log = Logger.getLogger(DprMinAlphaTuner.class);
-	private static final int MAX_TRIES = 20;
+	private static final int MAX_TRIES = 50;
+	private static final double MIN_DELTA = 1e-10;
 	protected LogicProgram program;
 
 	public DprMinAlphaTuner(String[] programFiles, double alpha) {
 		this.program = new LogicProgram(Component.loadComponents(programFiles, alpha));
 	}
 	
-	public void tune(String queryFile) {
-		double minalpha=DprProver.MINALPH_DEFAULT, del=minalpha, ma=minalpha;
+	public void tune(String queryFile, double start) {
+		double minalpha=start, del=minalpha, ma=minalpha, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
 		int i;
+		boolean hasSuccess=false;
 		for (i=0;i<MAX_TRIES; i++) {
-			if(del<DprProver.EPS_DEFAULT) {
+			if(hasSuccess && del<MIN_DELTA) {
 				log.info("Minimum delta reached.");
 				break;
 			}
@@ -45,12 +51,13 @@ public class DprMinAlphaTuner {
 			}
 			ma=minalpha;
 			log.info("Trying minalpha = "+minalpha);
-			DprProver p = new DprProver(DprProver.EPS_DEFAULT, minalpha);
+			DprProver p = new DprProver(minalpha * rat, minalpha);
 			del = del/2;
 			try {
 				if (!query(p,queryFile)) break;
 				log.info("Succeeded. Increasing alpha...");
 				minalpha += del;
+				hasSuccess = true;
 			} catch (MinAlphaException e) {
 				log.info("Failed. Decreasing alpha...");
 				minalpha -= del;
@@ -101,9 +108,32 @@ public class DprMinAlphaTuner {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Configuration c = new Configuration(args, Configuration.USE_DEFAULTS | Configuration.USE_DATA & ~Configuration.USE_PROVER);
+		CustomConfiguration c = new CustomConfiguration(args, Configuration.USE_DEFAULTS | Configuration.USE_DATA & ~Configuration.USE_PROVER) {
+			public double startAlpha;
+			@Override
+			protected void addCustomOptions(Options options, int flags) {
+				options.addOption(
+						OptionBuilder
+						.withLongOpt("start")
+						.hasArg()
+						.withArgName("double")
+						.withDescription("Starting value for minAlpha (default "+DprProver.MINALPH_DEFAULT+")")
+						.create());
+				}
+			@Override
+			protected void retrieveCustomSettings(CommandLine line, int flags,
+					Options options) {
+				if (line.hasOption("start")) this.startAlpha=Double.parseDouble(line.getOptionValue("start"));
+				else startAlpha=DprProver.MINALPH_DEFAULT;
+			}
+			@Override
+			public Object getCustomSetting(String name) {
+				return startAlpha;
+			}
+		};
+		log.info("Tuning with initial alpha "+(Double) c.getCustomSetting(null));
 		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles,c.alpha);
-		t.tune(c.dataFile);
+		t.tune(c.dataFile,(Double) c.getCustomSetting(null));
 	}
 
 }
