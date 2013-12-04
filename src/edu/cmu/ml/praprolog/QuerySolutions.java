@@ -35,13 +35,13 @@ public class QuerySolutions {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {
 			for (String line; (line=reader.readLine())!= null;) {
-				line = line.replaceAll("[(]", ",").replaceAll("\\)","").trim();
-				Goal query = Goal.parseGoal(line, ",");
+				String queryString = line.split("\t")[0];
+				queryString = queryString.replaceAll("[(]", ",").replaceAll("\\)","").trim();
+				Goal query = Goal.parseGoal(queryString, ",");
 				query.compile(this.program.getSymbolTable());
 				log.info("Querying: "+query);
 				Map<LogicProgramState,Double> dist = prover.proveState(this.program, new ProPPRLogicProgramState(query));
 			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(Prover.filterSolutions(dist)));
-//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
 			    log.info("Writing "+solutionDist.size()+" solutions...");
 			    for (Map.Entry<String,Double> soln : solutionDist) {
 			    	writer.append(query.toSaveString())

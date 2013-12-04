@@ -37,6 +37,7 @@ public class PprProver extends Prover {
 		
 		for (int i=0; i<this.maxDepth; i++) {
 			vec = walkOnce(lp, vec, gw);
+			if (log.isInfoEnabled()) log.info("iteration/descent "+(i-1)+" complete");
 			if(log.isDebugEnabled()) log.debug("after iteration "+(i+1)+" :"+
 					Dictionary.buildString(vec,new StringBuilder(),"\n\t").toString());
 		}
@@ -47,10 +48,12 @@ public class PprProver extends Prover {
 			Map<LogicProgramState, Double> vec, GraphWriter gw) {
 		
 		Map<LogicProgramState, Double> nextVec = new HashMap<LogicProgramState, Double>();
+		int i=1,n=vec.size();
 		for (Map.Entry<LogicProgramState, Double> s : vec.entrySet()) {
+			log.info("state "+(i++)+" of "+n);
 			for (LogicProgramOutlink o : lp.lpNormalizedOutlinks(s.getKey(), TRUELOOP, RESTART)) {
 				if (gw != null) gw.writeEdge(s.getKey(), o.getState(), o.getFeatureList());
-				if (log.isDebugEnabled()) log.debug("walkonce normalizedOutlinks "+s.getKey()+" "+o.getWeight()+" "+o.getState());
+				if (log.isTraceEnabled()) log.trace("walkonce normalizedOutlinks "+s.getKey()+" "+o.getWeight()+" "+o.getState());
 				Dictionary.increment(nextVec, o.getState(), o.getWeight() * s.getValue(),"(elided)");
 			}
 		}

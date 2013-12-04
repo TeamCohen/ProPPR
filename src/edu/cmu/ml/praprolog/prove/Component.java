@@ -106,7 +106,9 @@ public abstract class Component {
 				result[i] = GraphComponent.load(fileName);
 			} else if (fileName.endsWith(SparseGraphComponent.FILE_EXTENSION)) {
 				result[i] = SparseGraphComponent.load(fileName);
-			} else if (fileName.endsWith(TuprologComponent.UNCOMPILED_EXTENSION)) {
+			} else if (fileName.endsWith(TuprologComponent.UNCOMPILED_EXTENSION)) { 
+				// catches both compiled and uncompiled files,
+				// which are separated inside the load method
 				result[i] = TuprologComponent.load(fileName);
 			} else {
 				throw new IllegalArgumentException("Unknown file type for "+fileName);

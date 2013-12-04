@@ -25,6 +25,7 @@ public class SparseGraphComponent extends GraphlikeComponent {
 	public static final String FILE_EXTENSION = ".sparse"; 
 	public static final String INDEX_EXTENSION = ".i";
 	public static final String MANIFEST="sparseIndex.txt";
+	private static final long LOGUPDATE_MS = 10000;
 
 	protected Map<Goal, Double> featureDict;
 	protected Map<String,SparseMatrixIndex> index;
@@ -32,6 +33,8 @@ public class SparseGraphComponent extends GraphlikeComponent {
 	protected Map<String,ConstantArgument[]> arg2s;
 
 	public SparseGraphComponent(String matrixDir) {
+		log.info("Loading sparse graph component "+matrixDir);
+		long start = System.currentTimeMillis();
 		arg1s = new HashMap<String,HashMap<String,Integer>>();
 		arg2s = new HashMap<String,ConstantArgument[]>();
 
@@ -91,6 +94,10 @@ public class SparseGraphComponent extends GraphlikeComponent {
 		}
 		this.featureDict = new HashMap<Goal,Double>();
 		this.featureDict.put(new Goal("id",matrixDir),1.0);
+		
+		long del = System.currentTimeMillis() - start;
+		if (del > LOGUPDATE_MS)
+			log.info("Finished loading sparse graph component "+matrixDir+" ("+(del/1000.)+" sec)");
 	}
 
 	@Override
@@ -126,6 +133,7 @@ public class SparseGraphComponent extends GraphlikeComponent {
 
 	/** subroutine - populates an array of strings from a file **/
 	private void loadArgs(ConstantArgument[] args,File file) throws IOException {
+		log.info("Loading args file "+file.getName()+" in ConstantArgument...");
 		BufferedReader reader = new LineNumberReader(new FileReader(file));
 		int lineNum = 0;
 		for(String line; (line=reader.readLine()) != null; lineNum++) {
@@ -134,6 +142,7 @@ public class SparseGraphComponent extends GraphlikeComponent {
 		reader.close();
 	}
 	private void loadArgs(HashMap<String,Integer> args,File file) throws IOException {
+		log.info("Loading args file "+file.getName()+" in String...");
 		BufferedReader reader = new LineNumberReader(new FileReader(file));
 		int lineNum = 0;
 		for(String line; (line=reader.readLine()) != null; lineNum++) {
