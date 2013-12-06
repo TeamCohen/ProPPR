@@ -1,0 +1,3 @@
+canExit(Player,Room) :- location(Player,Room),hasKey(Player,Room) .
+hasKey(Player,Room) :- class(Player,wizard) .
+hasKey(Player,Room) :- doorPuzzle(Room,Puzzle),solved(Player,Puzzle) .

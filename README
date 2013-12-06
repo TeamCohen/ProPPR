@@ -230,6 +230,41 @@ ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Tester \
 result= running time 113
 result= pairs 7.0 errors 0.0 errorRate 0.0 map 1.0
 
+2.5 RUN: ANSWERING QUERIES AGAINST A PROGRAM
+=================
+
+If you want to use a program to answer a series of queries, you can
+use the QueryAnswerer class.  If you are running this step you should
+already have a compiled program and a file containing a list of
+queries, one per line.  Each query is a single goal.
+
+ProPPR $ cat testcases/family.queries
+sim(william,X)
+sim(rachel,X)
+
+ProPPR $ java edu.cmu.ml.praprolog.QueryAnswerer \
+  --programFiles testcases/family.cfacts:testcases/family.crules \
+  --queries testcases/family.queries --output answers.txt
+ INFO [Component] Loading from file 'testcases/family.cfacts' with alpha=0.0 ...
+ INFO [Component] Loading from file 'testcases/family.crules' with alpha=0.0 ...
+
+ProPPR $ cat answers.txt
+# proved	sim(william,-1)	47 msec
+1	0.8838968104504825	-1=c[william]
+2	0.035512510088781264	-1=c[lottie]
+3	0.035512510088781264	-1=c[rachel]
+4	0.035512510088781264	-1=c[sarah]
+5	0.002391414820793351	-1=c[poppy]
+6	0.0017935611155950133	-1=c[lucas]
+7	0.0017935611155950133	-1=c[charlotte]
+8	0.0017935611155950133	-1=c[caroline]
+9	0.0017935611155950133	-1=c[elizabeth]
+# proved	sim(rachel,-1)	18 msec
+1	0.9094251636624519	-1=c[rachel]
+2	0.0452874181687741	-1=c[caroline]
+3	0.0452874181687741	-1=c[elizabeth]
+
+
 3. FILE FORMATS
 ===============
 

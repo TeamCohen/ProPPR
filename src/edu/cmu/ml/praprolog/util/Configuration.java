@@ -23,11 +23,13 @@ public class Configuration {
 	public static final int USE_TEST=0x40;
 	public static final int USE_TRAINTEST=0x60;
 	public static final int USE_LEARNINGSET=0x80;
+	public static final int USE_QUERIES=0x100;
 	public static final int USE_DEFAULTS=0x19;
 	
 	public Prover prover=null;
 	public String[] programFiles=null;
 	public String dataFile=null;
+	public String queryFile=null;
 	public String testFile=null;
 	public String outputFile=null;
 	public int nthreads=-1;
@@ -68,6 +70,7 @@ public class Configuration {
 	protected void retrieveSettings(CommandLine line, int flags, Options options) {
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
 		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = line.getOptionValue("data");
+		if (isOn(flags,USE_QUERIES) && line.hasOption("queries"))            this.queryFile = line.getOptionValue("queries");
 		if (isOn(flags,USE_OUTPUT | USE_TRAIN) && line.hasOption("output"))  this.outputFile = line.getOptionValue("output");
 		if (isOn(flags,USE_THREADS) && line.hasOption("threads"))            this.nthreads = Integer.parseInt(line.getOptionValue("threads"));
 		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("epochs"))         this.epochs = Integer.parseInt(line.getOptionValue("epochs"));
@@ -133,6 +136,14 @@ public class Configuration {
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Cooked training examples. Format: query\\tkeys,,\\tposList,,\\tnegList,,\\tgraph")
+					.create());
+		options.addOption(
+				OptionBuilder
+					.withLongOpt("queries")
+				        .isRequired(isOn(flags,USE_QUERIES))
+					.withArgName("file")
+					.hasArg()
+				        .withDescription("Queries.  Format f a a")
 					.create());
 		options.addOption(
 				OptionBuilder

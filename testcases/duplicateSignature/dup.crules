@@ -1,0 +1,3 @@
+canExit,-1,-2 & location,-1,-2 & hasKey,-1,-2 # id,/Users/katie/Documents/workspace/ProPPR/git/testcases/duplicateSignature/dup.rules_01 # Player,Room
+hasKey,-1,-2 & class,-1,wizard # id,/Users/katie/Documents/workspace/ProPPR/git/testcases/duplicateSignature/dup.rules_02 # Player,Room
+hasKey,-1,-2 & doorPuzzle,-2,-3 & solved,-1,-3 # id,/Users/katie/Documents/workspace/ProPPR/git/testcases/duplicateSignature/dup.rules_03 # Player,Room,Puzzle
