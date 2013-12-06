@@ -66,7 +66,7 @@ public abstract class Component {
 	 * Yield a pair (edgeFeatures,alpha) associated with the restart
         link for this state.  Weight alpha is a little different from
         other weights: the weight of the restart link will be alpha, 
-        and the weight of all other links nominally weighted a w will
+        and the weight of all other links nominally weighted w will
         be (1-alpha)*w
 	 * @param state
 	 * @return

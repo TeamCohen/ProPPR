@@ -37,7 +37,7 @@ public class DprMinAlphaTuner {
 	}
 	
 	public void tune(String queryFile, double start) {
-		double minalpha=start, del=minalpha, ma=minalpha, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
+		double minalpha=start, del=minalpha, ma=minalpha;//, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
 		int i;
 		boolean hasSuccess=false;
 		for (i=0;i<MAX_TRIES; i++) {
@@ -51,7 +51,9 @@ public class DprMinAlphaTuner {
 			}
 			ma=minalpha;
 			log.info("Trying minalpha = "+minalpha);
-			DprProver p = new DprProver(minalpha * rat, minalpha);
+//			DprProver p = new DprProver(minalpha * rat, minalpha);
+			DprProver p = new DprProver(DprProver.EPS_DEFAULT, minalpha);
+			this.program.setAlpha(minalpha+DprProver.EPS_DEFAULT);
 			del = del/2;
 			try {
 				if (!query(p,queryFile)) break;
