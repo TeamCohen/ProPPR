@@ -69,6 +69,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		this.varSketch = new VarSketch();
 		this.varSketch.includeAll(this.queryGoals);
 		this.varSketch.includeAll(this.goals);
+		this.varSketch.include(this.theta);
 	}
 	public Goal getGoal(int i) {
 		if (i<goals.length)
@@ -122,6 +123,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 
 		if (log.isDebugEnabled()) {
 			log.debug("child of "+this);
+			log.debug("under "+this.theta);
 			log.debug("plus "+Dictionary.buildString(additionalGoals, new StringBuilder(), " "));
 			log.debug("under "+additionalTheta);
 		}
@@ -137,7 +139,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		else tmpGoals2 = new Goal[0];
 		{ int i=0; for(;i<tmpGoals1.length;i++) tmpGoals[i] = tmpGoals1[i];
 		for (int j=0;j<tmpGoals2.length;j++) { tmpGoals[i] = tmpGoals2[j]; i++; }}
-		if (log.isDebugEnabled()) log.debug("tmpGoals:"+Dictionary.buildString(tmpGoals,new StringBuilder()," "));
+//		if (log.isDebugEnabled()) log.debug("tmpGoals:"+Dictionary.buildString(tmpGoals,new StringBuilder()," "));
 		Goal[] tmpQueryGoals = additionalTheta.applyToGoalList(this.queryGoals,RenamingSubstitution.NOT_RENAMED);
 
 		Goal[][] allGoals = {tmpQueryGoals, tmpGoals1, tmpGoals2};
@@ -157,12 +159,16 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 			tmpQueryGoals[i] = normalizeVariablesInGoal(tmpQueryGoals[i], variableSymTab);
 		}
 
-		LogicProgramState result = new ProPPRLogicProgramState(
+		ProPPRLogicProgramState result = new ProPPRLogicProgramState(
 				this.originalQueryGoals, // FIXME - defensive copy?
 				tmpQueryGoals, 
 				tmpGoals, 
 				this.theta.copy(additionalTheta),
 				this.depth+1);
+		if (log.isDebugEnabled()) {
+			log.debug("is "+(result.isSolution() ? "SOLUTION " : "") + result);
+			log.debug("with "+result.theta);
+		}
 		return result;
 	}
 	public int getVarSketchSize() {

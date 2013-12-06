@@ -26,9 +26,10 @@ import edu.cmu.ml.praprolog.util.tuprolog.SolutionIterator;
 import edu.cmu.ml.praprolog.util.tuprolog.TuprologAdapter;
 
 public class TuprologComponent extends Component {
+	private static final String COMPILED_EXTENSION = "x.pl";
 	private static final Logger log = Logger.getLogger(TuprologComponent.class);
 	private static final String OUTLINKS_RULES = "outlinks.2p";
-	public static final String FILE_EXTENSION = ".pl";
+	public static final String UNCOMPILED_EXTENSION = ".pl";
 	private Prolog engine;
 	private static void loadOutlinks(Prolog p) {
 		try {
@@ -54,14 +55,14 @@ public class TuprologComponent extends Component {
 		List<String> uncompiled = new ArrayList<String>();
 		List<String> compiled = new ArrayList<String>();
 		for (String f : files) {
-			if (f.endsWith("x.pl")) compiled.add(f);
+			if (f.endsWith(COMPILED_EXTENSION)) compiled.add(f);
 			else uncompiled.add(f);
 		}
 		if (!uncompiled.isEmpty()) compiled.add(compileTheories(uncompiled));
 		for (String f : compiled) this.addTheory(f);
 	}
 	public String compileTheories(Collection<String> filenames) {
-		return compileTheories(filenames,"compiled"+System.currentTimeMillis()+"x.pl");
+		return compileTheories(filenames,"compiled"+System.currentTimeMillis()+COMPILED_EXTENSION);
 	}
 	public String compileTheories(Collection<String> filenames, String compiledFile) {
 		Prolog compileEngine = new Prolog();
@@ -86,6 +87,9 @@ public class TuprologComponent extends Component {
 		return compiledFile;
 	}
 	public void addTheory(String filename) {
+		if (!filename.endsWith(COMPILED_EXTENSION)) {
+			log.warn("Prolog file "+filename+" may not have been compiled first. Did you run edu.cmu.ml.praprolog.prove.TuprologComponent on it?");
+		}
 		try {
 			engine.addTheory(new Theory(new FileInputStream(filename)));
 		} catch (InvalidTheoryException e) {

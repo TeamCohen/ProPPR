@@ -52,9 +52,13 @@ class parser(object):
 
 	@staticmethod
 	def _convertGoal(ptree):
-		if 'nested' in ptree:
-			ptree = ptree['nested']
-		return goalBuffer(ptree[0], ptree[2:-1])
+		isHard = False
+		# ptree could be a list like: [ '[' 'foo' '(' 'X' 'Y' ')' ']' ]
+		# which indicates a hard goal....
+		if ptree[0]=='[':
+			isHard =True
+			ptree = ptree[1:-1]
+		return goalBuffer(ptree[0], ptree[2:-1], isHard=isHard)
 
 	@staticmethod
 	def _convertRule(ptree,rid):
@@ -121,7 +125,8 @@ class varSketch(object):
 
 class goalBuffer(object):
 
-	def __init__(self,functor,args):
+	def __init__(self,functor,args,isHard):
+		self.isHard = isHard
 		self.orig_args = args
 		#super(goalBuffer,self).__init__(functor,args)
 		self.functor = functor
@@ -140,7 +145,7 @@ class goalBuffer(object):
 		return variableSymtab
 	
 	def __repr__(self):
-		return 'goalBuffer(' + repr(self.functor) + ',' + repr(self.args) + ')'
+		return 'goalBuffer(' + repr(self.functor) + ',' + repr(self.args) + 'hardOrSoft=' + self.isHard + ')'
 
 class ruleBuffer(object):
 	
@@ -212,7 +217,9 @@ def compileLPToFile(inputFile,outputFile):
 		fp.write("\n")
 			
 def compileGoalToIds(g,variableSymtab):
-	parts = [g.functor]
+	hardIndicator = ''
+	if g.isHard: hardIndicator = '+'
+	parts = [g.functor + hardIndicator]
 	parts.extend(compileArgs(g.args,variableSymtab))
 	return parts
 
@@ -220,7 +227,7 @@ def compileArgs(args,variableSymtab):
 	parts = []
 	for a in args:
 		k = a if parser.isConstant(a) else -variableSymtab.getId(a)
-		parts += [k]#str(k)]
+		parts += [k] #was: str(k)
 	return parts
 
 def compileState(state,variableSymtab = None):

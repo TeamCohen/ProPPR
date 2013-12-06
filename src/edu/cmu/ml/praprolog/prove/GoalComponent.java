@@ -10,11 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.praprolog.prove.Argument;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 
 public class GoalComponent extends Component {
+	private static final Logger log = Logger.getLogger(GoalComponent.class);
 	public static final String FILE_EXTENSION=".cfacts";
 	protected Map<Goal,Double> featureDict = new HashMap<Goal,Double>();
 	protected Map<FunctorArityKey,List<Goal>> indexF = new HashMap<FunctorArityKey,List<Goal>>();
@@ -81,13 +84,17 @@ public class GoalComponent extends Component {
 	public List<Outlink> outlinks(LogicProgramState state) {
 		List<RenamingSubstitution> matches = new ArrayList<RenamingSubstitution>();
 		for (Goal g : this.goalsMatching(state.getHeadFunctor(), state.getHeadArity(), state.getHeadArg1())) {
+			if (log.isDebugEnabled()) log.debug("trying goal "+g+" on "+state.getHeadGoal()+" with offset "+0);
 			RenamingSubstitution theta1 = 
 					RenamingSubstitution.unify(g, 
 							state.getHeadGoal(), 
 							0, 
 							RenamingSubstitution.NOT_RENAMED, 
 							RenamingSubstitution.NOT_RENAMED);
-			if (theta1 != null) matches.add(theta1);
+			if (theta1 != null) {
+				if (log.isDebugEnabled()) log.debug("succeeds "+theta1);
+				matches.add(theta1);
+			}
 		}
 		List<Outlink> result = new ArrayList<Outlink>();
 		if (matches.isEmpty()) return result;

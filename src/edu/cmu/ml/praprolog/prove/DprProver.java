@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.graph.GraphWriter;
@@ -24,6 +25,8 @@ public class DprProver extends Prover {
     private final double minAlpha;
     private final double stayProbability;
     private final double moveProbability;
+    private long start, last;
+    private boolean debugTree = false;
     
     private Map<LogicProgramState,int[]> treeId = new HashMap<LogicProgramState,int[]>();
     private Map<LogicProgramState,Integer> nchildren = new HashMap<LogicProgramState,Integer>();
@@ -87,6 +90,7 @@ public class DprProver extends Prover {
         Map<LogicProgramState,Double> p = new HashMap<LogicProgramState,Double>();
         Map<LogicProgramState,Double> r = new HashMap<LogicProgramState,Double>();
         if(log.isDebugEnabled()) {
+        	debugTree = true;
         	clearDebugTree();
         	addToDebugTree(null, state0);
         	log.debug("r = 1.0 "+getTreeId(state0));
@@ -96,22 +100,20 @@ public class DprProver extends Prover {
         boolean trueLoop=true, restart=false;
         int d = lp.lpDegree(state0,trueLoop,restart);
         deg.put(state0,d);
-        if(log.isDebugEnabled()) log.debug(String.format("deg = %d %s",d,getTreeId(state0)));
+        if(debugTree) log.debug(String.format("deg = %d %s",d,getTreeId(state0)));
         int numPushes = 0;
         int numIterations = 0;
         for(int pushCounter = 0; ;) {
-        	if(log.isDebugEnabled()) log.debug("new dfsPushes proveState "+getTreeId(state0));
+        	if(debugTree) log.debug("new dfsPushes proveState "+getTreeId(state0));
+            start = last = System.currentTimeMillis();
             pushCounter = this.dfsPushes(lp,p,r,deg,state0,gw,0);
             numIterations++;
-//            if(log.isDebugEnabled()) log.debug("- for iteration "+numIterations+" pushes "+pushCounter);
+            if(log.isInfoEnabled()) log.info("Iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size());
             if(pushCounter==0) break;
             numPushes+=pushCounter;
-//            if (numIterations > 94) {
-//            	log.debug("womp womp"); 
-//            }
         }
         if(log.isInfoEnabled()) log.info("total iterations "+numIterations+" total pushes "+numPushes);
-        if(log.isDebugEnabled()) log.debug("ans:"+Dictionary.buildString(p, new StringBuilder(), "\n").toString());
+        if(debugTree) log.debug("ans:"+Dictionary.buildString(p, new StringBuilder(), "\n").toString());
         return p;
     }
 
@@ -128,40 +130,54 @@ public class DprProver extends Prover {
 //        	log.debug(String.format("%s%s ru %.8f degu %d",sb.toString(),u.toString(),r.get(u),deg.get(u)));
 //        }
         if (r.get(u) / deg.get(u) > epsilon) {
-        	if (log.isDebugEnabled()) log.debug("push "+pushCounter+"->"+(pushCounter+1)+" "+getTreeId(u));
+        	if (debugTree) log.debug("push "+pushCounter+"->"+(pushCounter+1)+" "+getTreeId(u));
+        	else if (log.isInfoEnabled()) {
+        		long now = System.currentTimeMillis(); 
+        		if (now - last > 1000) {
+        			log.info("push "+pushCounter+"->"+(pushCounter+1)+" "+r.size()+" r-states u "+u);
+        			last = now;
+        		}
+//        		if (now - start > 10000) {
+//        			log.setLevel(Level.DEBUG);
+//        		}
+        	}
             pushCounter += 1;
             double ru = r.get(u);
             LogicProgramOutlink restart = lp.lpRestartWeight(u,true); // trueLoop
-            if (log.isDebugEnabled()) {
+            if (debugTree) {
             	addToDebugTree(u, restart.state, true);
             	log.debug("outlink "+restart.weight+" "+Dictionary.buildString(restart.featureList, new StringBuilder(), ",")+" "+getTreeId(restart.state));
-            }
+            } else if (log.isDebugEnabled()) log.debug("restart weight for pushlevel "+pushCounter);
             double unNormalizedAlpha = restart.getWeight();
             
             List<LogicProgramOutlink> outs = lp.lpOutlinks(u,true,false); // trueloop, restart
-            double z= unNormalizedAlpha; double m=0.0;
+            if (!debugTree && log.isDebugEnabled()) log.debug("outlinks for pushlevel "+pushCounter+": "+outs.size());
+            double z= unNormalizedAlpha; 
+            double m=0.0;
             for (LogicProgramOutlink o : outs) {
-            	if (log.isDebugEnabled()) {
+            	if (debugTree) {
             		addToDebugTree(u,o.state);
             		log.debug("outlink "+o.weight+" "+Dictionary.buildString(o.featureList, new StringBuilder(), ",")+" "+getTreeId(o.state));
             	}
             	z += o.getWeight();
             	m = Math.max(m,o.getWeight());
             }
+
             double localAlpha = unNormalizedAlpha / z;
-            if (log.isDebugEnabled()) {
+            
+            if (debugTree) {
             	String id= getTreeId(u);
             	log.debug("localAlpha = "+localAlpha+" "+id);
             	log.debug(String.format("p = %.8f %s ",p.get(u),id));
             }
             if (localAlpha < this.minAlpha) {
             	log.warn("max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
-                throw new IllegalStateException("minAlpha too high! Did you remember to set alpha in logic program components? "+
-                		"dpr minAlpha ="+minAlpha+" localAlpha="+localAlpha+" for state "+u);
+            	log.warn("ru="+ru+"; degu="+deg.get(u)+"; u="+u);
+                throw new MinAlphaException(minAlpha,localAlpha,u);
             }
             Dictionary.increment(p,u,minAlpha * ru,"(elided)");
             r.put(u, r.get(u) * stayProbability * (1.0-minAlpha));
-            if (log.isDebugEnabled()) {
+            if (debugTree) {
             	String id= getTreeId(u);
             	log.debug(String.format("p += (minalpha)(ru) = (%.8f)(%.8f) = %.8f %s ",this.minAlpha,ru,this.minAlpha*ru,id));
             	log.debug(String.format("p = %.8f %s ",p.get(u),id));
@@ -174,12 +190,12 @@ public class DprProver extends Prover {
             
 //            if(log.isDebugEnabled()) log.debug("including "+outs.size()+" outlinks");
             for (LogicProgramOutlink o : outs) {
-            	if (log.isDebugEnabled()) log.debug("include "+getTreeId(o.state));
+            	if (debugTree) log.debug("include "+getTreeId(o.state));
                 includeState(o,r,deg,z,ru,lp);
             }
             // include the reset state with weight (alph - minAlpha):
             restart.weight = z * (localAlpha - minAlpha);
-        	if (log.isDebugEnabled()) log.debug("include "+getTreeId(restart.state));
+        	if (debugTree) log.debug("include "+getTreeId(restart.state));
             includeState(restart,r,deg,z,ru,lp);
 
             if (gw!=null) gw.writeEdge(u, u.restart(), restart.getFeatureList());
@@ -187,13 +203,13 @@ public class DprProver extends Prover {
             	if (gw != null) gw.writeEdge(u, o.getState(), o.getFeatureList());
             	// current pushcounter is passed down, gets incremented and returned, and 
             	// on the next for loop iter is passed down again...
-            	if (log.isDebugEnabled()) {
+            	if (debugTree) {
             		log.debug("new dfsPushes dfsPushes "+getTreeId(o.state));
             	}
                 pushCounter = this.dfsPushes(lp,p,r,deg,o.getState(),gw,pushCounter);
             }
         }
-        if (log.isDebugEnabled()) log.debug("close dfsPushes "+pushCounter+" "+getTreeId(u));
+        if (debugTree) log.debug("close dfsPushes "+pushCounter+" "+getTreeId(u));
         return pushCounter;
     }
     private void includeState(LogicProgramOutlink o, Map<LogicProgramState, Double> r,
@@ -205,10 +221,10 @@ public class DprProver extends Prover {
 //        }
         Dictionary.increment(r, o.getState(), moveProbability * (o.getWeight() / z) * ru,"(elided)");
         if(followup) {
-        	if (log.isDebugEnabled()) log.debug("deg = "+lp.lpDegree(o.getState(),true,true)+" "+getTreeId(o.state));
+        	if (debugTree) log.debug("deg = "+lp.lpDegree(o.getState(),true,true)+" "+getTreeId(o.state));
         	deg.put(o.getState(),lp.lpDegree(o.getState(),true,true)); // trueloop, restart
         }
-        if (log.isDebugEnabled()) {
+        if (debugTree) {
 //        	log.trace(String.format("+=reset: %.8f from %.8f on %s",r.get(o.getState()),old,o.getState()));
         	log.debug(String.format("r += wt*ru/z = %.8f*%.8f/%.8f = %.8f %s ",o.getWeight(),ru,z,o.getWeight()*ru/z,getTreeId(o.state)));
         	log.debug(String.format("r = %.8f %s ",r.get(o.getState()),getTreeId(o.state)));

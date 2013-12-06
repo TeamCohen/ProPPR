@@ -1,5 +1,3 @@
-PROPPR=/home/krivard/workspace/ProPPR-git
-
 SOURCES=f2n_cid_nid.cfacts
 NAME=output
 

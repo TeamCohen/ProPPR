@@ -122,7 +122,8 @@ public class RenamingSubstitution {
 	 * @return
 	 */
 	public RenamingSubstitution copy(RenamingSubstitution overwrite) {
-		RenamingSubstitution result = new RenamingSubstitution(overwrite.offset);
+//		RenamingSubstitution result = new RenamingSubstitution(overwrite.offset);
+		RenamingSubstitution result = new RenamingSubstitution(Math.max(this.offset, overwrite.offset));
 		result.dict.putAll(this.dict);
 		if (overwrite != this) result.dict.putAll(overwrite.dict);
 		return result;
@@ -179,7 +180,7 @@ public class RenamingSubstitution {
 
 	public String toString() {
 	    StringBuilder sb = new StringBuilder("theta{");
-	    Dictionary.buildString(this.dict,sb," ").append(" }");
+	    Dictionary.buildString(this.dict,sb," ").append(" }@").append(this.offset);
 	    return sb.toString();
 	}
 }

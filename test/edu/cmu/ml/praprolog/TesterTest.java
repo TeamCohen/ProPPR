@@ -6,6 +6,10 @@ import java.util.HashMap;
 
 import junit.framework.TestResult;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.Tester.ExampleSolutionScore;
@@ -22,7 +26,11 @@ import edu.cmu.ml.praprolog.prove.RuleComponentTest;
 import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
 
 public class TesterTest {
-	
+
+	@Before
+	public void setup() {
+		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+	}
 	
 	@Test
 	public void testTestExample() {

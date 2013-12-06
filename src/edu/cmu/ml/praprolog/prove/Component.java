@@ -66,7 +66,7 @@ public abstract class Component {
 	 * Yield a pair (edgeFeatures,alpha) associated with the restart
         link for this state.  Weight alpha is a little different from
         other weights: the weight of the restart link will be alpha, 
-        and the weight of all other links nominally weighted a w will
+        and the weight of all other links nominally weighted w will
         be (1-alpha)*w
 	 * @param state
 	 * @return
@@ -106,7 +106,9 @@ public abstract class Component {
 				result[i] = GraphComponent.load(fileName);
 			} else if (fileName.endsWith(SparseGraphComponent.FILE_EXTENSION)) {
 				result[i] = SparseGraphComponent.load(fileName);
-			} else if (fileName.endsWith(TuprologComponent.FILE_EXTENSION)) {
+			} else if (fileName.endsWith(TuprologComponent.UNCOMPILED_EXTENSION)) { 
+				// catches both compiled and uncompiled files,
+				// which are separated inside the load method
 				result[i] = TuprologComponent.load(fileName);
 			} else {
 				throw new IllegalArgumentException("Unknown file type for "+fileName);

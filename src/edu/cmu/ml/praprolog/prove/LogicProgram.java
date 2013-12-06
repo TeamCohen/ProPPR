@@ -81,7 +81,7 @@ public class LogicProgram {
 		} else {
 			for (Component c : this.components) {
 				if (c.claim(state)) {
-					if (log.isDebugEnabled()) log.debug(state+"\n\tclaimed by "+c);
+					if (log.isInfoEnabled()) log.info(state+"\n\tclaimed by "+c);
 					for (Outlink o : c.outlinks(state)) {
 						result.add(this.weightEdge(o.getFeatureDict(),state,o.getState()));
 					}
@@ -202,5 +202,8 @@ public class LogicProgram {
 		for (Component c : this.components) sb.append("\n").append(c.listing());
 		sb.append("\n").append(this.weighter.listing());
 		return sb.toString();
+	}
+	public void setAlpha(double d) {
+		for (Component c : this.components) c.setAlpha(d);
 	}
 }

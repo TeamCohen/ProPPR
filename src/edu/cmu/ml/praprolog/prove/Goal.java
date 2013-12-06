@@ -1,3 +1,8 @@
+// status - this works but my encoding now doesn't allow for h or s to
+// be a constant first argument! I should use some other convention -
+// like using a special char as the final char of the predicate
+// symbol.
+
 package edu.cmu.ml.praprolog.prove;
 
 import java.util.Arrays;
@@ -8,14 +13,24 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 
 public class Goal implements Comparable<Goal> {
+
 	private static final Logger log = Logger.getLogger(Goal.class);
+	private static final String HARD_INDICATOR = "+";
 	protected String functor;
 	protected Argument[] args;
 	protected int hashcode;
 	protected String name="";
 	protected String argString;
+	protected boolean hardGoal = false;
+
+	/**
+	 * @param fnctr - if the fnctr ends with HARD_INDICATOR then
+	 * that substring will be stripped and the goal will be a 'hard goal',
+	 * which is treated differently in the prover.
+	 */
 	public Goal(String fnctr, String ... args) {
-		this.functor = fnctr;
+		this.hardGoal = indicatesHardGoal(fnctr);
+		this.functor = functorWithoutIndicator(fnctr);
 		this.args = new Argument[args.length];
 		for (int i=0; i<args.length; i++) {
 			this.args[i] = Argument.fromString(args[i]);
@@ -23,10 +38,23 @@ public class Goal implements Comparable<Goal> {
 		this.freeze();
 	}
 	public Goal(String fnctr, Argument[] args) {
-		this.functor = fnctr;
+		this.hardGoal = indicatesHardGoal(fnctr);
+		this.functor = functorWithoutIndicator(fnctr);
 		this.args = args; // TODO: may need defensive protection
 		this.freeze();
 	}
+
+	private boolean indicatesHardGoal(String fnctr) {
+	    return fnctr.endsWith(HARD_INDICATOR);
+	}
+	private String functorWithoutIndicator(String fnctr) {
+	    if (indicatesHardGoal(fnctr)) {
+		return fnctr.substring(0,fnctr.length()-HARD_INDICATOR.length());
+	    } else {
+		return fnctr;
+	    }
+	}
+
 	/** (internal) set up hashcode and argstring **/
 	protected void freeze() {
 		hashcode = functor.hashCode();
@@ -49,10 +77,19 @@ public class Goal implements Comparable<Goal> {
 	public Argument getArg(int i) {
 		return this.args[i];
 	}
+	public boolean isHard() {
+	    return this.hardGoal;
+	}
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("goal(").append(this.functor);
-		return Dictionary.buildString(this.args, sb, ",",false).append(")").toString();
+	    String pref = "";
+	    String suff = "";
+	    if (this.isHard()) {
+		pref = "[";
+		suff = "]";
+	    }
+	    StringBuilder sb = new StringBuilder(pref + "goal(").append(this.functor);
+	    return Dictionary.buildString(this.args, sb, ",",false).append(")").append(suff).toString();
 	}
 	
 	public String toSaveString() {
@@ -94,32 +131,46 @@ public class Goal implements Comparable<Goal> {
 	public int hashCode() { return hashcode; }
 	
 	/**
-	 * Retrieve a Goal object from the compiled string, in format e.g.
-	 *   predict,-1,-2
+	 * Create a Goal object from the compiled string, in format e.g.
+	 *
+	 *   predict,-1,-2 
+	 *
+	 * where predict is functor name,  a trailing '+' indicatng a hard goal, -1 -2 are arguments, negative numbers are variables,
+	 * positive numbers are constants.
 	 * @param string
 	 * @return
 	 */
+	
 	public static Goal decompile(String string) {
+
+
 		String[] functor_args = string.split(",",2);
 		if (functor_args.length == 0) throw new IllegalStateException("Couldn't locate functor in '"+string+"'");
 		//functor-only case
-		if (functor_args.length < 2) return new Goal(functor_args[0].trim());
+		if (functor_args.length == 1) return new Goal(functor_args[0].trim());
+
 		//otherwise parse the arguments
 		String[] argstrings = functor_args[1].split(",");
 		Argument[] args = new Argument[argstrings.length];
 		for (int i=0; i<argstrings.length; i++) {
-			argstrings[i] = argstrings[i].trim();
-			try { 
-				int a = Integer.parseInt(argstrings[i]);
-				if (a<0) {
-					args[i] = new VariableArgument(a);
-					continue;
-				}
-			} catch (NumberFormatException e) {}
+		    argstrings[i] = argstrings[i].trim();
+		    int a = 0;
+		    boolean ithArgStringIsANumber = false;
+		    try {
+			a = Integer.parseInt(argstrings[i]);
+			ithArgStringIsANumber = true;
+		    } catch (NumberFormatException e) {
+			;
+		    }
+		    if (ithArgStringIsANumber && a<0) {
+			args[i] = new VariableArgument(a);
+		    }  else {
 			args[i] = new ConstantArgument(argstrings[i]);
+		    }
 		}
 		return new Goal(functor_args[0].trim(),args);
 	}
+
 	/**
 	 * Create a goal from the string-delimited format
 	 * 	   functor arg1 arg2 arg3 ...

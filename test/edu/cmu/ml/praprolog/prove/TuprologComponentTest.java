@@ -24,7 +24,7 @@ public class TuprologComponentTest {
 	@Test
 	public void test() {
 		TuprologComponent tc = new TuprologComponent();
-		tc.addTheory("testcases/prolog/family.pl");
+		tc.addTheory("testcases/prolog/familyx.pl");
 		
 		RuleComponent rc = RuleComponent.loadCompiled("testcases/family.crules");
 		GoalComponent gc = GoalComponent.loadCompiled("testcases/family.cfacts");
@@ -46,7 +46,7 @@ public class TuprologComponentTest {
 			System.out.println("\t"+Dictionary.buildString(o.getFeatureDict(), new StringBuilder(), " ").toString());
 		}
 		
-		assertEquals("step 1 # of outlinks",rcOut.size(),tcOut.size());
+		assertEquals("step 1 # of outlinks\n",rcOut.size(),tcOut.size());
 		for (int i=0; i<rcOut.size(); i++) {
 			assertEquals(rcOut.get(i).getState(), tcOut.get(i).getState().asProPPR());
 		}

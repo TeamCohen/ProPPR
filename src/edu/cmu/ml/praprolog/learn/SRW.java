@@ -19,7 +19,7 @@ import edu.cmu.ml.praprolog.util.Dictionary;
  *  their LBG optimization scheme, and assuming that all restart links
  *  are explicitly represented in the graph.
  *  
- * @author wcohen,krivard
+ * @author wcohen,krivard,yww
  *
  */
 public class SRW<E extends RWExample> {
@@ -48,7 +48,6 @@ public class SRW<E extends RWExample> {
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 */
 	public static <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> p) {
-		
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
 				p.put(f,1.0+0.01*random.nextDouble());
@@ -68,8 +67,18 @@ public class SRW<E extends RWExample> {
 		for (Feature f : g.phi(u, v)) {
 			sum += Dictionary.safeGet(p, f.featureName) * f.weight;
 		}
-		return sum;
+		return edgeWeightFunction(sum);
 	}
+
+	/**
+	 * The function wraps the product of edge weight and feature.
+	 * @param p product of edge weight and feature.
+	 * @return 
+	 */
+	public double edgeWeightFunction(double product) {
+		return Math.exp(product);
+	}
+
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
 	 * @param g
@@ -193,8 +202,8 @@ public class SRW<E extends RWExample> {
 	}
 	/**
 	 * A dictionary d so that d[f] is the derivative of the
-     *  unnormalized edge weight between u and v wrt feature f.  This
-     *  assumes edge weights are linear in their feature sums.
+	 *  unnormalized edge weight between u and v wrt feature f.  This
+	 *  assumes edge weights are linear in their feature sums.
 	 * @param graph
 	 * @param u Start node
 	 * @param v End node 
@@ -205,10 +214,20 @@ public class SRW<E extends RWExample> {
 			T v, Map<String, Double> paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, f.weight);
+			result.put(f.featureName, derivEdgeWeightFunction(f.weight));
 		}
 		return result;
 	}
+
+	/**
+	 * The function wraps the derivative of edge weight.
+	 * @param weight: edge weight.
+	 * @return wrapped derivative of the edge weight.
+	 */
+	public double derivEdgeWeightFunction(double weight) {
+		return Math.exp(weight);
+	}
+
 	/**
 	 * Builds a set of features in the specified set that are not on the untrainedFeatures list.
 	 * @param candidates feature names
@@ -300,25 +319,23 @@ public class SRW<E extends RWExample> {
 	}
 	/**
 	 * Compute the local gradient of the parameters, associated
-     *  with a particular start vector and a particular desired
-     *  ranking as encoded in the example.
-     *  
+	 *  with a particular start vector and a particular desired
+	 *  ranking as encoded in the example.
+	 *  
 	 * @param paramVec
 	 * @param example
 	 * @return
 	 */
 	public Map<String,Double> gradient(Map<String,Double> paramVec, E example) {
-		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
+	    throw new UnsupportedOperationException("whoops");
 	}
+
 	/**
 	 * The empirical loss of the current ranking. [This method originally from PairwiseLossTrainedSRW]
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public double empiricalLoss(Map<String, Double> paramVec,
-			E example) {
-		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
+	public double empiricalLoss(Map<String, Double> paramVec, E example) {
+	    throw new UnsupportedOperationException("whoops");
 	}
-	
-	
 }
