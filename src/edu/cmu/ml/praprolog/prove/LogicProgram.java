@@ -203,4 +203,7 @@ public class LogicProgram {
 		sb.append("\n").append(this.weighter.listing());
 		return sb.toString();
 	}
+	public void setAlpha(double d) {
+		for (Component c : this.components) c.setAlpha(d);
+	}
 }

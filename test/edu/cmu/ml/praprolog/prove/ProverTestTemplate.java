@@ -75,7 +75,7 @@ public abstract class ProverTestTemplate {
 	public void testSolDelta() {
 
 		PprProver ppr = new PprProver(20);
-		DprProver dpr = new DprProver(0.00001, .03);
+		DprProver dpr = new DprProver(0.0000001, 0.03);
 	    
 		log.info("testSolDelta:mem(X,l_de)");
 	    assertEquals(0,maxSolDelta(dpr,ppr,lpMem,"mem","X","l_de"),0.05);

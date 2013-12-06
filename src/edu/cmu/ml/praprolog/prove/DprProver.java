@@ -137,9 +137,9 @@ public class DprProver extends Prover {
         			log.info("push "+pushCounter+"->"+(pushCounter+1)+" "+r.size()+" r-states u "+u);
         			last = now;
         		}
-        		if (now - start > 10000) {
-        			log.setLevel(Level.DEBUG);
-        		}
+//        		if (now - start > 10000) {
+//        			log.setLevel(Level.DEBUG);
+//        		}
         	}
             pushCounter += 1;
             double ru = r.get(u);
@@ -152,7 +152,8 @@ public class DprProver extends Prover {
             
             List<LogicProgramOutlink> outs = lp.lpOutlinks(u,true,false); // trueloop, restart
             if (!debugTree && log.isDebugEnabled()) log.debug("outlinks for pushlevel "+pushCounter+": "+outs.size());
-            double z= unNormalizedAlpha; double m=0.0;
+            double z= unNormalizedAlpha; 
+            double m=0.0;
             for (LogicProgramOutlink o : outs) {
             	if (debugTree) {
             		addToDebugTree(u,o.state);
@@ -161,7 +162,9 @@ public class DprProver extends Prover {
             	z += o.getWeight();
             	m = Math.max(m,o.getWeight());
             }
+
             double localAlpha = unNormalizedAlpha / z;
+            
             if (debugTree) {
             	String id= getTreeId(u);
             	log.debug("localAlpha = "+localAlpha+" "+id);
