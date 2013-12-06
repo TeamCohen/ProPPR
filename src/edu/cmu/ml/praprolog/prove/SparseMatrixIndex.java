@@ -152,7 +152,7 @@ public class SparseMatrixIndex {
 	 */
 	public int degree(Argument key) {
 		Integer r = this.arg1.get(key.getName());
-		if (r!=null) {
+		if (r==null) {
 			return 0;
 		}
 		else {
