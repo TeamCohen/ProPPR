@@ -124,7 +124,7 @@ public class SparseMatrixIndex {
 	 **/
 	public List<Argument> near(Argument key) {
 		Integer r = this.arg1.get(key.getName());
-		if (r==null) {
+		if (r==null || r >= rows) {
 			return null;
 		}
 		else {
@@ -152,7 +152,7 @@ public class SparseMatrixIndex {
 	 */
 	public int degree(Argument key) {
 		Integer r = this.arg1.get(key.getName());
-		if (r==null) {
+		if (r==null || r >= rows) {
 			return 0;
 		}
 		else {
