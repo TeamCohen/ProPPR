@@ -169,6 +169,7 @@ public class DprProver extends Prover {
             }
             if (localAlpha < this.minAlpha) {
             	log.warn("max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
+            	log.warn("ru="+ru+"; degu="+deg.get(u)+"; u="+u);
                 throw new MinAlphaException(minAlpha,localAlpha,u);
             }
             Dictionary.increment(p,u,minAlpha * ru,"(elided)");
