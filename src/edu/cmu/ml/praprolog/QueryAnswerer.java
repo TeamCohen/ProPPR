@@ -40,6 +40,7 @@ public class QueryAnswerer extends ExampleThawing {
 			program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(
 					Dictionary.load(c.paramsFile)));
 		QueryAnswerer q = new QueryAnswerer(c.prover,program);
+
 		q.findSolutions(c.queryFile, c.outputFile);
 	}
 
@@ -55,21 +56,24 @@ public class QueryAnswerer extends ExampleThawing {
 		LineNumberReader reader = new LineNumberReader(new FileReader(queryFile));
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {
+			int querynum=0;
 			for (String line; (line=reader.readLine())!= null;) {
+				querynum++;
 				String queryString = line.split("\t")[0];
 				queryString = queryString.replaceAll("[(]", ",").replaceAll("\\)","").trim();
 				Goal query = Goal.parseGoal(queryString, ",");
 				query.compile(this.masterProgram.getSymbolTable());
 				log.info("Querying: "+query);
 
-				
 				long start = System.currentTimeMillis();
 				Map<LogicProgramState,Double> dist = prover.proveState(this.masterProgram, new ProPPRLogicProgramState(query));
 				long end = System.currentTimeMillis();
 				List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(Prover.filterSolutions(dist)));
 				//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
 				log.info("Writing "+solutionDist.size()+" solutions...");
-				writer.append("# proved").append("\t").append(query.toSaveString()).append("\t").append((end-start) + " msec");
+
+				writer.append("# proved ").append(String.valueOf(querynum)).append("\t").append(query.toSaveString()).append("\t").append((end-start) + " msec");
+
 				writer.newLine();
 				int rank = 0;
 				for (Map.Entry<String,Double> soln : solutionDist) {
