@@ -48,7 +48,8 @@ public class DprProver extends Prover {
         		int[] pch = treeId.get(child);
         		for (int i=0; i<par.length; i++) {
         			if (i >= pch.length || pch[i] != par[i]) {
-        				throw new IllegalStateException("State "+getTreeId(child)+" already added. New parent: "+getTreeId(parent));
+//        				throw new IllegalStateException("State "+getTreeId(child)+" already added. New parent: "+getTreeId(parent));
+        				log.warn("State "+getTreeId(child)+" already added. New parent: "+getTreeId(parent));
         			}
         		}
         		return;
@@ -221,8 +222,9 @@ public class DprProver extends Prover {
 //        }
         Dictionary.increment(r, o.getState(), moveProbability * (o.getWeight() / z) * ru,"(elided)");
         if(followup) {
-        	if (debugTree) log.debug("deg = "+lp.lpDegree(o.getState(),true,true)+" "+getTreeId(o.state));
-        	deg.put(o.getState(),lp.lpDegree(o.getState(),true,true)); // trueloop, restart
+        	int degree = lp.lpDegree(o.getState(),true,true);
+        	if (debugTree) log.debug("deg = "+degree+" "+getTreeId(o.state));
+        	deg.put(o.getState(),degree); // trueloop, restart
         }
         if (debugTree) {
 //        	log.trace(String.format("+=reset: %.8f from %.8f on %s",r.get(o.getState()),old,o.getState()));
