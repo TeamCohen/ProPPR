@@ -14,6 +14,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
+	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 
 	/**
 	 * Compute the local gradient of the parameters, associated
@@ -73,10 +74,22 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
 		double loss = 0;
 		for (int x : example.getPosList()) 
-			loss -= Math.log(Dictionary.safeGet(p,x));
+		{
+			double prob = Dictionary.safeGet(p,x);
+			loss -= Math.log(checkProb(prob));
+		}
 		for (int x : example.getNegList()) 
 			loss -= Math.log(1.0-Dictionary.safeGet(p,x));
 		return loss;
+	}
+
+	public double checkProb(double prob)
+	{
+	     if(prob == 0)
+           {
+	      prob = bound;
+	    }
+	    return prob;
 	}
 
 	

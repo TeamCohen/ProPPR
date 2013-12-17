@@ -20,61 +20,6 @@ import edu.cmu.ml.praprolog.prove.VariableArgument;
 
 public class GraphWriterTest {
 
-	/*
-
-0	lpState(samebib(class_338,-1) ... samebib(class_338,-1)) 
-	{author: 1.0} 
-1	lpState(samebib(class_338,-1) ... author(class_338,-2),sameauthor(-2,-3),authorinverse(-3,-1))
-1	lpState(samebib(class_338,-1) ... author(class_338,-2),sameauthor(-2,-3),authorinverse(-3,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-2	lpState(samebib(class_338,-1) ... sameauthor(author_y_freund_,-2),authorinverse(-2,-1))
-2	lpState(samebib(class_338,-1) ... sameauthor(author_y_freund_,-2),authorinverse(-2,-1)) 
-	{authorword: 1.0} 
-3	lpState(samebib(class_338,-1) ... haswordauthor(author_y_freund_,-2),haswordauthorinverse(-2,-3),keyauthorword(-2),authorinverse(-3,-1))
-3	lpState(samebib(class_338,-1) ... haswordauthor(author_y_freund_,-2),haswordauthorinverse(-2,-3),keyauthorword(-2),authorinverse(-3,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-4	lpState(samebib(class_338,-1) ... haswordauthorinverse(word_freund,-2),keyauthorword(word_freund),authorinverse(-2,-1))
-4	lpState(samebib(class_338,-1) ... haswordauthorinverse(word_freund,-2),keyauthorword(word_freund),authorinverse(-2,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-5	lpState(samebib(class_338,-1) ... keyauthorword(word_freund),authorinverse(author_y_freund_,-1))
-5	lpState(samebib(class_338,-1) ... keyauthorword(word_freund),authorinverse(author_y_freund_,-1)) 
-	{kaw(word_freund): 1.0} 
-6	lpState(samebib(class_338,-1) ... authorinverse(author_y_freund_,-1))
-6	lpState(samebib(class_338,-1) ... authorinverse(author_y_freund_,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-7	lpState(samebib(class_338,class_338) ... )
-3	lpState(samebib(class_338,-1) ... haswordauthor(author_y_freund_,-2),haswordauthorinverse(-2,-3),keyauthorword(-2),authorinverse(-3,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-8	lpState(samebib(class_338,-1) ... haswordauthorinverse(word_y,-2),keyauthorword(word_y),authorinverse(-2,-1))
-8	lpState(samebib(class_338,-1) ... haswordauthorinverse(word_y,-2),keyauthorword(word_y),authorinverse(-2,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-9	lpState(samebib(class_338,-1) ... keyauthorword(word_y),authorinverse(author_y_freund_,-1))
-9	lpState(samebib(class_338,-1) ... keyauthorword(word_y),authorinverse(author_y_freund_,-1)) 
-	{kaw(word_y): 1.0} 
-10	lpState(samebib(class_338,-1) ... authorinverse(author_y_freund_,-1))
-10	lpState(samebib(class_338,-1) ... authorinverse(author_y_freund_,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-11	lpState(samebib(class_338,class_338) ... )	
-2	lpState(samebib(class_338,-1) ... sameauthor(author_y_freund_,-2),authorinverse(-2,-1)) 
-	{tcauthor: 1.0} 
-12	lpState(samebib(class_338,-1) ... sameauthor(author_y_freund_,-2),sameauthor(-2,-3),authorinverse(-3,-1))
-12	lpState(samebib(class_338,-1) ... sameauthor(author_y_freund_,-2),sameauthor(-2,-3),authorinverse(-3,-1)) 
-	{authorword: 1.0} 
-13	lpState(samebib(class_338,-1) ... haswordauthor(author_y_freund_,-2),haswordauthorinverse(-2,-3),keyauthorword(-2),sameauthor(-3,-4),authorinverse(-4,-1))
-13	lpState(samebib(class_338,-1) ... haswordauthor(author_y_freund_,-2),haswordauthorinverse(-2,-3),keyauthorword(-2),sameauthor(-3,-4),authorinverse(-4,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-14	lpState(samebib(class_338,-1) ... haswordauthorinverse(word_freund,-2),keyauthorword(word_freund),sameauthor(-2,-3),authorinverse(-3,-1))
-14	lpState(samebib(class_338,-1) ... haswordauthorinverse(word_freund,-2),keyauthorword(word_freund),sameauthor(-2,-3),authorinverse(-3,-1)) 
-	{id(cora_raw/train.1.graph): 1.0} 
-15	lpState(samebib(class_338,-1) ... keyauthorword(word_freund),sameauthor(author_y_freund_,-2),authorinverse(-2,-1))
-15	lpState(samebib(class_338,-1) ... keyauthorword(word_freund),sameauthor(author_y_freund_,-2),authorinverse(-2,-1)) 
-	{kaw(word_freund): 1.0} 
-16	lpState(samebib(class_338,-1) ... sameauthor(author_y_freund_,-2),authorinverse(-2,-1))
-16	lpState(samebib(class_338,-1) ... sameauthor(author_y_freund_,-2),authorinverse(-2,-1)) 
-	{authorword: 1.0} 
-17	lpState(samebib(class_338,-1) ... haswordauthor(author_y_freund_,-2),haswordauthorinverse(-2,-3),keyauthorword(-2),authorinverse(-3,-1))
-
-	 */
 	int i=0, j=0;
 	ProPPRLogicProgramState[] state = new ProPPRLogicProgramState[18];
 	
@@ -112,7 +57,7 @@ public class GraphWriterTest {
 	@Test
 	public void test() {
 		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
-		Logger.getLogger(GraphWriter.class).setLevel(Level.DEBUG);
+//		Logger.getLogger(GraphWriter.class).setLevel(Level.DEBUG);
 		
 		GraphWriter gw = new GraphWriter();
 		

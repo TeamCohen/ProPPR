@@ -17,6 +17,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -329,13 +330,16 @@ public class Dictionary {
 		BufferedWriter writer;
 		try {
 			writer = new BufferedWriter(new FileWriter(filename));
-			for (Map.Entry<K,Double>e : map.entrySet()) {
-				writer.write(String.format("%s\t%f\n", String.valueOf(e.getKey()),e.getValue()));
-			}
+			save(map,writer);
 			writer.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	public static <K> void save(Map<K,Double> map, Writer writer) throws IOException {
+		for (Map.Entry<K,Double>e : map.entrySet()) {
+			writer.write(String.format("%s\t%.6g\n", String.valueOf(e.getKey()),e.getValue()));
 		}
 	}
 	public static <K,L> boolean safeContains(Map<K, Map<L, Double>> map,
