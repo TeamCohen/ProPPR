@@ -21,9 +21,10 @@ public class Configuration {
 	public static final int USE_THREADS=0x10;
 	public static final int USE_TRAIN=0x20;
 	public static final int USE_TEST=0x40;
-	public static final int USE_TRAINTEST=0x60;
+	public static final int USE_TRAINTEST=0x260;
 	public static final int USE_LEARNINGSET=0x80;
 	public static final int USE_QUERIES=0x100;
+	public static final int USE_PARAMS = 0x200;
 	public static final int USE_DEFAULTS=0x19;
 	
 	public Prover prover=null;
@@ -77,7 +78,7 @@ public class Configuration {
 		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("traceLosses"))    this.traceLosses = true;
 		if (isOn(flags,USE_TEST) && line.hasOption("test"))                  this.testFile = line.getOptionValue("test");
 		if (isOn(flags,USE_TRAIN) && line.hasOption("train"))                this.dataFile = line.getOptionValue("train");
-		if (isOn(flags,USE_TRAINTEST) && line.hasOption("params"))           this.paramsFile = line.getOptionValue("params");
+		if (isOn(flags,USE_PARAMS) && line.hasOption("params"))              this.paramsFile = line.getOptionValue("params");
 		if (isOn(flags,USE_PROVER) && line.hasOption("prover")) {
 			String[] values = line.getOptionValues("prover");
 			if(values[0].startsWith("ppr")) {
@@ -182,7 +183,7 @@ public class Configuration {
 						.hasArg()
 						.withDescription("Testing examples. Format: f a a\\t{+|-}f a a\\t...")
 						.create());	
-		if (isOn(flags,USE_TRAINTEST))
+		if (isOn(flags,USE_PARAMS))
 			options.addOption(
 					OptionBuilder
 						.withLongOpt("params")
@@ -212,7 +213,7 @@ public class Configuration {
 		if (isOn(flags,USE_PROVER)) syntax.append(" [--prover { ppr[:depth] | dpr[:eps[:alph]] | tr[:depth] }]");
 		if (isOn(flags,USE_TRAIN)) syntax.append(" --train training.data");
 		if (isOn(flags,USE_TEST)) syntax.append(" --test testing.data");
-		if (isOn(flags,USE_TRAINTEST)) syntax.append("  [--params params.txt]");
+		if (isOn(flags,USE_PARAMS)) syntax.append("  [--params params.txt]");
 		if (isOn(flags,USE_LEARNINGSET)) syntax.append(" [--epochs <int>] [--traceLosses]");
 	}
 	protected void usageOptions(Options options,int flags) {
