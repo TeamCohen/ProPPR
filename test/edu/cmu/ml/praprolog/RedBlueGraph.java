@@ -19,7 +19,11 @@ import org.junit.Before;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.AnnotatedStringGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
-
+/**
+ * This is a template for a set of test cases that all use the same style of graph.
+ * @author katie
+ *
+ */
 /**
  * Test template (graph scaffolding)
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"

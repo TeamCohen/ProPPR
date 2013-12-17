@@ -9,13 +9,14 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
+	private static final double bound = 1.0e-15; //Prevent infinit log loss.
 
 	/**
 	 * Compute the local gradient of the parameters, associated
         with a particular start vector and pos/neg examples.
         
         loss function is F(w) = <regularization> + sum_{x in pos}[ -ln p[x]] + sum_{x in neg}[ -ln 1-p[x]]
-        d/df F(w) = <regularization> + sum_{x in pos}[ - 1/p[x] * d/df p[x] ] + sum_{x in neg}[ - 1/(1-p[x]) * d/df p[x] ]
+        d/df F(w) = <regularization> + sum_{x in pos}[ - 1/p[x] * d/df p[x] ] + sum_{x in neg}[ + 1/(1-p[x]) * d/df p[x] ]
 	 */
 	public Map<String, Double> gradient(Map<String, Double> paramVec, PosNegRWExample<T> example) {
 		
@@ -61,11 +62,23 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		Map<T,Double> p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
 		double loss = 0;
 		for (T x : example.getPosList()) 
-			loss -= Math.log(Dictionary.safeGet(p,x));
+		{
+			double prob = Dictionary.safeGet(p,x);
+			loss -= Math.log(checkProb(prob));
+		}
 		for (T x : example.getNegList()) 
 			loss -= Math.log(1.0-Dictionary.safeGet(p,x));
 		return loss;
 	}
+
+	public double checkProb(double prob)
+	{
+	     if(prob == 0)
+           {
+	      prob = bound;
+	    }
+	    return prob;
+	}	
 
 	
 }

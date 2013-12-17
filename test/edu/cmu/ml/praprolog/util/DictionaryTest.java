@@ -2,6 +2,8 @@ package edu.cmu.ml.praprolog.util;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -48,5 +50,18 @@ public class DictionaryTest {
 		List<Map.Entry<String,Double>> items = Dictionary.sort(map);
 		assertEquals("one",items.get(0).getKey());
 		assertEquals("zero",items.get(1).getKey());
+	}
+	
+	@Test
+	public void testSave() throws IOException {
+		StringWriter writer = new StringWriter();
+		TreeMap<String,Double> map = new TreeMap<String,Double>();
+		map.put("big", Double.MAX_VALUE);
+		map.put("small", Double.MIN_NORMAL);
+		map.put("typical",1.0);
+		map.put("typicalbig", 3141.59265358979);
+		map.put("typicalsmall", 0.0000000031415);
+		Dictionary.save(map,writer);
+		System.err.println(writer.toString());
 	}
 }
