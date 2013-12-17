@@ -24,7 +24,8 @@ public class Experiment {
 		if (c.pretest) {
 			log.info("Pre-test...");
 			TestResults results = c.tester.testExamples(c.testFile,c.strict);
-			System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+			if(!log.isInfoEnabled()) System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+			else log.info("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 		}
 		
 		// first cook the training data
@@ -58,7 +59,12 @@ public class Experiment {
 		log.info("Testing on "+c.testFile+"...");
 		c.cooker.getMasterProgram().setFeatureDictWeighter(InnerProductWeighter.fromParamVec(paramVec));
 		TestResults results = c.tester.testExamples(c.testFile,c.strict);
-		System.out.println("result= running time "+(System.currentTimeMillis() - start));
-		System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+		if(!log.isInfoEnabled())  {
+			System.out.println("result= running time "+(System.currentTimeMillis() - start));
+			System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+		} else {
+			log.info("result= running time "+(System.currentTimeMillis() - start));
+			log.info("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+		}
 	}
 }

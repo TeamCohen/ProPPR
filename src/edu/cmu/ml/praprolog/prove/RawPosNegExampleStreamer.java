@@ -51,6 +51,7 @@ public class RawPosNegExampleStreamer {
 			try {
 				reader = new LineNumberReader(new FileReader(f));
 				for(String line; (line=reader.readLine())!=null;) {
+					if (line.startsWith("#")) continue;
 					examples.add(exampleFromString(line,parsed));
 				}
 				reader.close();
@@ -103,6 +104,7 @@ public class RawPosNegExampleStreamer {
 		protected void peek() throws IOException {
 			nextLine = reader.readLine();
 			if (nextLine == null) nextFile();
+			else if (nextLine.startsWith("#")) peek();
 		}
 		
 		@Override
