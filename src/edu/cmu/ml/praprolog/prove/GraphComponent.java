@@ -92,11 +92,9 @@ public class GraphComponent extends GraphlikeComponent {
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new IllegalArgumentException(e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new IllegalArgumentException(e);
 		}
 		return result;
 	}

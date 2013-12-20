@@ -160,7 +160,7 @@ public class Tester extends ExampleThawing {
 	}
 	
 	public static void main(String[] args) {
-		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TEST;
+		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TEST | Configuration.USE_PARAMS;
 		log.info(String.format("flags: 0x%x",flags));
 		Configuration c = new Configuration(args,flags);
 		

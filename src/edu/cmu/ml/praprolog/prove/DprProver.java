@@ -109,7 +109,7 @@ public class DprProver extends Prover {
             start = last = System.currentTimeMillis();
             pushCounter = this.dfsPushes(lp,p,r,deg,state0,gw,0);
             numIterations++;
-            if(log.isInfoEnabled()) log.info("Iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size());
+            if(log.isInfoEnabled()) log.info("Iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
             if(pushCounter==0) break;
             numPushes+=pushCounter;
         }
