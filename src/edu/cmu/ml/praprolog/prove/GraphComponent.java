@@ -40,7 +40,7 @@ public class GraphComponent extends GraphlikeComponent {
 
 		this.index = new HashMap<String,Map<Argument,List<Argument>>>();
 		this.featureDict = new HashMap<Goal,Double>();
-		this.featureDict.put(new Goal("id",label),1.0);
+		this.featureDict.put(new Goal("id",Component.cleanLabel(label)),1.0);
 	}
 	@Override
 	protected void _indexAppend(String functor, Argument src, Argument dst) {

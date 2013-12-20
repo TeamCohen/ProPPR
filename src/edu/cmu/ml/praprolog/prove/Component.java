@@ -121,4 +121,8 @@ public abstract class Component {
 	public String listing() {
 		return "component <no string available>";
 	}
+	public static String cleanLabel(String label) {
+		if (!label.matches("[A-Za-z0-9_]*")) return "'"+label+"'";
+		return label;
+	}
 }

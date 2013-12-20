@@ -27,8 +27,7 @@ public class GoalComponent extends Component {
 		this("goalComponent");
 	}
 	public GoalComponent(String label) {
-
-		featureDict.put(new Goal("id",label), 1.0);
+		featureDict.put(new Goal("id",Component.cleanLabel(label)), 1.0);
 		this.label = label;
 	}
 	/**

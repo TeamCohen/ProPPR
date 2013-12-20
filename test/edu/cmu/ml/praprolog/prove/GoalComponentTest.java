@@ -45,4 +45,11 @@ public class GoalComponentTest {
     	assertEquals("functors",2,g.indexF.size());
     	assertEquals("functor+arg1",5,g.indexFA1.size());
     }
+    
+    @Test
+    public void testFeatureName() {
+    	String label = "testcases/textcattoy/toylabels.cfacts";
+		GoalComponent c = new GoalComponent(label);
+		assertEquals("'"+label+"'",c.label);
+    }
 }

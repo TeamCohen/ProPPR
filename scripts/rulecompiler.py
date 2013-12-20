@@ -65,7 +65,7 @@ class parser(object):
 		if 'rhs' in ptree: tmpRhs = map(parser._convertGoal, ptree['rhs'].asList())
 		else: tmpRhs = [ ]
 		if 'features' in ptree: tmpFeatures = map(parser._convertGoal,ptree['features'].asList())
-		else: tmpFeatures = [ goalBuffer('id',[rid]) ]
+		else: tmpFeatures = [ goalBuffer('id',[rid],False) ]
 		return ruleBuffer(parser._convertGoal(ptree['lhs']), tmpRhs,  tmpFeatures, rid) 
 
 	@staticmethod
@@ -97,7 +97,7 @@ class parser(object):
 			k = 0
 			for (ptree,lo,hi) in ruleNT.scanString(buf):
 				k += 1
-				r = parser._convertRule(ptree, "%s_%02d" % (file,k))
+				r = parser._convertRule(ptree, "'%s_%02d'" % (file,k))
 				programBuffer += [r]
 			return programBuffer
 		except KeyError:
