@@ -40,7 +40,7 @@ public class MultithreadedExampleCooker extends ExampleCooker {
 			futures.add(executor.submit(new CookerThread(rawX,this,nextId(),log)));
 		}
 		executor.shutdown();
-		int id=0;
+		int id=0, empty=0;
 		while(futures.size() > 0) {
 			Future<ExampleCookingResult> f = futures.pop();
 			ExampleCookingResult result;
@@ -48,14 +48,18 @@ public class MultithreadedExampleCooker extends ExampleCooker {
 				if (log.isDebugEnabled()) log.debug("Asking "+id+++" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
 				result = f.get(); // blocking call
 				if (log.isDebugEnabled()) log.debug("Got "+result.id+" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
-				writer.write(this.serializeCookedExample(result.rawX, result.cookedExample));
+				if (result.cookedExample.getGraph().getNumEdges() > 0) 
+					writer.write(this.serializeCookedExample(result.rawX, result.cookedExample));
+				else { log.warn("Empty graph for example "+id); empty++; }
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
 				e.printStackTrace();
 			}
 		}
-		if (log.isDebugEnabled()) log.info("Cooking-only "+(System.currentTimeMillis() - start));
+		if (log.isDebugEnabled()) log.debug("Cooking-only "+(System.currentTimeMillis() - start));
+
+		if (empty>0) log.info("Skipped "+empty+" of "+id+" examples due to empty graphs");
 	}
 	
 	protected static int nextId=0;

@@ -152,6 +152,7 @@ public class LogicProgram {
         } else {
             for (Component c : this.components) {
                 if (c.claim(state)) {
+                	if (log.isDebugEnabled()) log.debug("Claimed by "+c.getClass().getCanonicalName());
                     int d = c.degree(state);
                     if (restart) d++;
                     return d;

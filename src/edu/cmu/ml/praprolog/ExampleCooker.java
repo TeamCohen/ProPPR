@@ -52,7 +52,7 @@ public class ExampleCooker extends ExampleThawing {
 	}
 	
 	public void cookExamples(String dataFile, Writer writer) throws IOException {
-		int k=0;
+		int k=0, empty=0;
 		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).load()) {
 			k++;
 //			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
@@ -69,7 +69,8 @@ public class ExampleCooker extends ExampleThawing {
 					log.debug("Free Memory Got "+k+" "+Runtime.getRuntime().freeMemory()+" / "+Runtime.getRuntime().totalMemory()+" "+System.currentTimeMillis());
 					log.debug("Got "+k+" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
 				}
-				writer.write(serializeCookedExample(rawX, x));
+				if (x.getGraph().getNumEdges() > 0) writer.write(serializeCookedExample(rawX, x));
+				else { log.warn("Empty graph for example "+k); empty++; }
 				if (log.isDebugEnabled()) {
 					log.debug("Free Memory Wrote "+k+" "+Runtime.getRuntime().freeMemory()+" / "+Runtime.getRuntime().totalMemory()+" "+System.currentTimeMillis());
 					log.debug("Wrote "+k+" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
@@ -78,6 +79,7 @@ public class ExampleCooker extends ExampleThawing {
 				log.error("from example line "+k,e);
 			}
 		}
+		if (empty>0) log.info("Skipped "+empty+" of "+k+" examples due to empty graphs");
 	}
 	
 	long lastPrint = System.currentTimeMillis();

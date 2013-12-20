@@ -66,9 +66,10 @@ public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 		writer.close();
 	}
 	
-	static int finished=0;
-	protected synchronized static void finish() {
+	static int finished=0,empty=0;
+	protected synchronized static void finish(boolean mt) {
 		finished++;
+		if (mt) empty++;
 	}
 	
 	public class WriterThread implements Runnable {
@@ -98,9 +99,14 @@ public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 					if (id % 10 == 0) log.debug("Free Memory Got "+id+" "+Runtime.getRuntime().freeMemory()+" / "+Runtime.getRuntime().totalMemory()+" "+System.currentTimeMillis());
 					log.debug("Got "+id+":"+result.id+" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
 				}
-				writer.write(cooker.serializeCookedExample(result.rawX, result.cookedExample));
-				if (log.isDebugEnabled())log.debug("Wrote "+id+":"+result.id+" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
-				finish();
+				
+				if (result.cookedExample.getGraph().getNumEdges() > 0) {
+					writer.write(cooker.serializeCookedExample(result.rawX, result.cookedExample));
+					if (log.isDebugEnabled())log.debug("Wrote "+id+":"+result.id+" "+System.currentTimeMillis()+" "+Thread.currentThread().getName());
+					finish(false);
+				} else {
+					log.warn("Empty graph for example "+id); finish(true);
+				}
 			} catch (InterruptedException e) {
 				log.error(id,e);
 			} catch (ExecutionException e) {
