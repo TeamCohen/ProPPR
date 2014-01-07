@@ -159,7 +159,7 @@ public class Trainer<T> {
 	
 	////////////////////////// Run ////////////////////////////////////////
 	
-	private static final String USAGE = "Usage:\n\tcookedExampleFile outputParamFile [options]\n"
+	private static final String USAGE = "SINGLETHREADED TRAINING:\nUsage:\n\tcookedExampleFile outputParamFile [options]\n"
 			+"\t\t--epochs {int}\tNumber of epochs (default 5)\n"
 			+"\t\t--traceLosses\tTurn on traceLosses (default off)\n"
 			+"\t\t             \tNB: example count for losses is sum(x.length() for x in examples)\n"

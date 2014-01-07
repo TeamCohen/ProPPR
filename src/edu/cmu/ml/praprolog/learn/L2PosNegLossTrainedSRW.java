@@ -25,7 +25,9 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		
 		//introduce the regularizer
 		Map<String,Double> derivFparamVec = new TreeMap<String,Double>();
-		for (String f : paramVec.keySet()) derivFparamVec.put(f,derivRegularization(f,paramVec));
+		for (String f : paramVec.keySet()) {
+			derivFparamVec.put(f,derivRegularization(f,paramVec));
+		}
 		
 		//compute gradient
 		for (T x : example.getPosList()) {
@@ -43,7 +45,14 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 			}
 		}
 		for (String f : trainableFeatures(paramVec)) {
-			derivFparamVec.put(f, Dictionary.safeGet(derivFparamVec, f) / example.length());
+			double derivF = Dictionary.safeGet(derivFparamVec, f);
+			if (log.isDebugEnabled()) {
+				if (!example.graph.getFeatureSet().contains(f)) 
+					log.debug("derivF "+derivF+" out");
+				else
+					log.debug("derivF "+derivF+" in");
+			}
+			derivFparamVec.put(f,  derivF / example.length());
 		}
 		return derivFparamVec;
 	}

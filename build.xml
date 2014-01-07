@@ -28,6 +28,7 @@
     	<pathelement location="lib/scala-library-2.10.0.jar"/>
         <pathelement location="lib/trove-3.0.3.jar"/>
     	<pathelement location="lib/tuprolog.jar"/>
+    	<pathelement location="lib/java-bloomfilter.jar"/>
     </path>
 	<path id="ProPPRTests.classpath">
 		<pathelement location="lib/junit-4.11-SNAPSHOT.jar"/>
