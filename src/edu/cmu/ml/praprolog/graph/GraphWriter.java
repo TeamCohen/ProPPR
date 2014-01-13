@@ -49,9 +49,9 @@ private static final Logger log = Logger.getLogger(GraphWriter.class);
 	public void writeEdge(Object u, Object v, List<Feature> f) {
 		String uid = this.intern(u);
 		String vid = this.intern(v);
-		if (id == 348) {
-			u.equals(nodes.get(1));
-		}
+//		if (id == 348) {
+//			u.equals(nodes.get(1));
+//		}
 		this.graph.addDirectedEdge(uid,vid,f);
 		if(log.isDebugEnabled()) {
 			log.debug("id "+id);id++;
