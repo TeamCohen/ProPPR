@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.DprProver;
 import edu.cmu.ml.praprolog.prove.Goal;
+import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.MinAlphaException;
@@ -32,14 +33,21 @@ public class DprMinAlphaTuner {
 	private static final double MIN_DELTA = 1e-10;
 	protected LogicProgram program;
 
-	public DprMinAlphaTuner(String[] programFiles, double alpha) {
+	public DprMinAlphaTuner(String[] programFiles, double alpha, String paramsFile) {
 		this.program = new LogicProgram(Component.loadComponents(programFiles, alpha));
+		if (paramsFile != null) {
+			log.info("Using parameter weights from file "+paramsFile);
+			this.program.setFeatureDictWeighter(
+				InnerProductWeighter.fromParamVec(
+						Dictionary.load(paramsFile)));
+		}
 	}
 	
-	public void tune(String queryFile, double start) {
-		double minalpha=start, del=minalpha, ma=minalpha;//, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
+	public void tune(String queryFile, double start, double epsilon) {
+		double minalpha=start, del=minalpha;//, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
 		int i;
 		boolean hasSuccess=false;
+		double lastSuccess=-1;
 		for (i=0;i<MAX_TRIES; i++) {
 			if(hasSuccess && del<MIN_DELTA) {
 				log.info("Minimum delta reached.");
@@ -49,23 +57,27 @@ public class DprMinAlphaTuner {
 				log.info("MinAlpha exceeds maximum threshold.");
 				break;
 			}
-			ma=minalpha;
+			if (minalpha < epsilon) {
+				log.info("MinAlpha below epsilon (minimum threshold).");
+				break;
+			}
 			log.info("Trying minalpha = "+minalpha);
 //			DprProver p = new DprProver(minalpha * rat, minalpha);
-			DprProver p = new DprProver(DprProver.EPS_DEFAULT, minalpha);
-			this.program.setAlpha(minalpha+DprProver.EPS_DEFAULT);
+			DprProver p = new DprProver(epsilon, minalpha);
+			this.program.setAlpha(minalpha+epsilon);
 			del = del/2;
 			try {
 				if (!query(p,queryFile)) break;
+				hasSuccess = true;
+				lastSuccess = minalpha;
 				log.info("Succeeded. Increasing alpha...");
 				minalpha += del;
-				hasSuccess = true;
 			} catch (MinAlphaException e) {
 				log.info("Failed. Decreasing alpha...");
 				minalpha -= del;
 			}
 		}
-		log.info("Reached minalpha "+ma+" +/- "+del+" in "+i+" iterations");
+		log.info("Reached minalpha "+lastSuccess+" +/- "+del+" in "+i+" iterations");
 	}
 	
 	public boolean query(Prover prover, String queryFile) {
@@ -110,8 +122,10 @@ public class DprMinAlphaTuner {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		CustomConfiguration c = new CustomConfiguration(args, Configuration.USE_DEFAULTS | Configuration.USE_DATA & ~Configuration.USE_PROVER) {
+		CustomConfiguration c = new CustomConfiguration(args, 
+				(Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_PARAMS) & ~Configuration.USE_PROVER) {
 			public double startAlpha;
+			public double epsilon;
 			@Override
 			protected void addCustomOptions(Options options, int flags) {
 				options.addOption(
@@ -121,21 +135,34 @@ public class DprMinAlphaTuner {
 						.withArgName("double")
 						.withDescription("Starting value for minAlpha (default "+DprProver.MINALPH_DEFAULT+")")
 						.create());
+				options.addOption(
+						OptionBuilder
+						.withLongOpt("eps")
+						.hasArg()
+						.withArgName("double")
+						.withDescription("Epsilon value for the DprProver (default "+DprProver.EPS_DEFAULT+")")
+						.create());
 				}
 			@Override
 			protected void retrieveCustomSettings(CommandLine line, int flags,
 					Options options) {
 				if (line.hasOption("start")) this.startAlpha=Double.parseDouble(line.getOptionValue("start"));
 				else startAlpha=DprProver.MINALPH_DEFAULT;
+				if (line.hasOption("eps")) this.epsilon=Double.parseDouble(line.getOptionValue("eps"));
+				else epsilon=DprProver.EPS_DEFAULT;
 			}
 			@Override
 			public Object getCustomSetting(String name) {
-				return startAlpha;
+				if ("start".equals(name))
+					return startAlpha;
+				if ("epsilon".equals(name))
+					return epsilon;
+				return null;
 			}
 		};
 		log.info("Tuning with initial alpha "+(Double) c.getCustomSetting(null));
-		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles,c.alpha);
-		t.tune(c.dataFile,(Double) c.getCustomSetting(null));
+		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles,c.alpha, c.paramsFile);
+		t.tune(c.dataFile,(Double) c.getCustomSetting("start"),(Double) c.getCustomSetting("epsilon"));
 	}
 
 }

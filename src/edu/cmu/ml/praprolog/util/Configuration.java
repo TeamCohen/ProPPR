@@ -25,6 +25,7 @@ public class Configuration {
 	public static final int USE_LEARNINGSET=0x80;
 	public static final int USE_QUERIES=0x100;
 	public static final int USE_PARAMS = 0x200;
+	/** programFiles, prover, threads **/
 	public static final int USE_DEFAULTS=0x19;
 	
 	public Prover prover=null;
@@ -40,7 +41,7 @@ public class Configuration {
 	public String paramsFile=null;
 
 	static boolean isOn(int flags, int flag) {
-		return (flags & flag) != 0x0;
+		return (flags & flag) == flag;
 	}
 	
 	public Configuration(String[] args) { this(args, new PprProver()); }
