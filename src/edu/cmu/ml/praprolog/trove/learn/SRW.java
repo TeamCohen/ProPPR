@@ -279,6 +279,11 @@ public class SRW<E extends RWExample> {
 		return result;
 	}
 	
+	/** Allow subclasses to filter feature list **/
+	public Set<String> localFeatures(Map<String,Double> paramVec, E example) {
+		return paramVec.keySet();
+	}
+	
 	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
 	
 	/**

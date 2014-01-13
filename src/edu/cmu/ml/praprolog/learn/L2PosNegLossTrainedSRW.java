@@ -1,6 +1,7 @@
 package edu.cmu.ml.praprolog.learn;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
@@ -25,14 +26,16 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		
 		//introduce the regularizer
 		Map<String,Double> derivFparamVec = new TreeMap<String,Double>();
-		for (String f : paramVec.keySet()) {
+		for (String f : localFeatures(paramVec,example)) {
 			derivFparamVec.put(f,derivRegularization(f,paramVec));
 		}
+		
+		Set<String> trainableFeatures = trainableFeatures(localFeatures(paramVec,example));
 		
 		//compute gradient
 		for (T x : example.getPosList()) {
 			if (log.isDebugEnabled()) log.debug("pos example "+x);
-			for (String f : trainableFeatures(paramVec)) {
+			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
 					if (log.isDebugEnabled()) log.debug(String.format(" - delta %s is - %f * %f", f,d.get(x).get(f),1.0/p.get(x)));
 					Dictionary.increment(derivFparamVec, f, -d.get(x).get(f)/p.get(x));
@@ -40,18 +43,12 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 			}
 		}
 		for (T x : example.getNegList()) {
-			for (String f : trainableFeatures(paramVec)) {
+			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) Dictionary.increment(derivFparamVec, f, d.get(x).get(f)/(1-p.get(x)));
 			}
 		}
-		for (String f : trainableFeatures(paramVec)) {
+		for (String f : trainableFeatures) {
 			double derivF = Dictionary.safeGet(derivFparamVec, f);
-			if (log.isDebugEnabled()) {
-				if (!example.graph.getFeatureSet().contains(f)) 
-					log.debug("derivF "+derivF+" out");
-				else
-					log.debug("derivF "+derivF+" in");
-			}
 			derivFparamVec.put(f,  derivF / example.length());
 		}
 		return derivFparamVec;
