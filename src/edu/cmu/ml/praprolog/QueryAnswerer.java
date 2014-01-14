@@ -34,13 +34,15 @@ public class QueryAnswerer extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(QueryAnswerer.class);
 
 	public static void main(String[] args) throws IOException {
-		Configuration c = new Configuration(args, Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT | Configuration.USE_PARAMS);
+		Configuration c = new Configuration(args, 
+				Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT | Configuration.USE_PARAMS);
 		LogicProgram program = new LogicProgram(Component.loadComponents(c.programFiles,c.alpha));
 		if (c.paramsFile != null)
 			program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(
 					Dictionary.load(c.paramsFile)));
 		QueryAnswerer q = new QueryAnswerer(c.prover,program);
 
+		log.info("Running queries from "+c.queryFile+"; saving results to "+c.outputFile);
 		q.findSolutions(c.queryFile, c.outputFile);
 	}
 

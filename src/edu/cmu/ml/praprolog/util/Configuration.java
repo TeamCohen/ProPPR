@@ -73,7 +73,8 @@ public class Configuration {
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
 		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = line.getOptionValue("data");
 		if (isOn(flags,USE_QUERIES) && line.hasOption("queries"))            this.queryFile = line.getOptionValue("queries");
-		if (isOn(flags,USE_OUTPUT | USE_TRAIN) && line.hasOption("output"))  this.outputFile = line.getOptionValue("output");
+		if ((isOn(flags,USE_OUTPUT) || isOn(flags,USE_TRAIN)) 
+				&& line.hasOption("output"))                                 this.outputFile = line.getOptionValue("output");
 		if (isOn(flags,USE_THREADS) && line.hasOption("threads"))            this.nthreads = Integer.parseInt(line.getOptionValue("threads"));
 		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("epochs"))         this.epochs = Integer.parseInt(line.getOptionValue("epochs"));
 		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("traceLosses"))    this.traceLosses = true;
