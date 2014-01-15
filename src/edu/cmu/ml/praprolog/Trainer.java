@@ -130,6 +130,9 @@ public class Trainer<T> {
 				System.out.println("training loss "+(totalLossThisEpoch / numExamplesThisEpoch) + " on "+ numExamplesThisEpoch +" examples");
 				//if (this.testData)
 			}
+			if (log.isDebugEnabled()) {
+				log.debug("After epoch "+epoch+": "+Dictionary.buildString(paramVec, new StringBuilder(), "\n\t").toString());
+			}
 		}
 //		cleanUpEpochs();
 		return paramVec;

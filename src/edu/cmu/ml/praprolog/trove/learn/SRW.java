@@ -35,6 +35,7 @@ public class SRW<E extends RWExample> {
 	private static Random random = new Random(); 
  	public static void seed(long seed) { random.setSeed(seed); } 	
 	protected static final int NUM_EPOCHS = 5;
+	private static final double MAX_PARAM_VALUE = Math.log(Double.MAX_VALUE);
 	protected double mu;
 	protected int maxT;
 	protected double eta;
@@ -78,6 +79,16 @@ public class SRW<E extends RWExample> {
 		}
 		return edgeWeightFunction(sum);
 	}
+
+	/**
+	 * The function wraps the product of edge weight and feature.
+	 * @param p product of edge weight and feature.
+	 * @return 
+	 */
+	public double edgeWeightFunction(double product) {
+		return Math.exp(product);
+	}
+	
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
 	 * @param g
@@ -92,16 +103,8 @@ public class SRW<E extends RWExample> {
 			double ew = edgeWeight(g,u,v.key(),p); 
 			sum+=ew;
 		}
+		if (Double.isInfinite(sum)) return Double.MAX_VALUE;
 		return sum;
-	}
-
-	/**
-	 * The function wraps the product of edge weight and feature.
-	 * @param p product of edge weight and feature.
-	 * @return 
-	 */
-	public double edgeWeightFunction(double product) {
-		return Math.exp(product);
 	}
 
 
@@ -211,8 +214,14 @@ public class SRW<E extends RWExample> {
 		for (double w : derEdgeUV.values()) totDerEdgeUV += w;
 		TObjectDoubleHashMap<String> derWalk = new TObjectDoubleHashMap<String>();
 		for (String f : trainableFeatures(activeFeatures)) {
-			double val = derEdgeUV.get(f) * totEdgeWeightU - edgeUV * totDerEdgeUV;
-			derWalk.put(f, val / (totEdgeWeightU * totEdgeWeightU));
+//			double val = derEdgeUV.get(f) * totEdgeWeightU - edgeUV * totDerEdgeUV;
+//			derWalk.put(f, val / (totEdgeWeightU * totEdgeWeightU));
+			// above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
+			double term2 = (edgeUV / totEdgeWeightU) * totDerEdgeUV;
+			double val = derEdgeUV.get(f) - term2;
+			if ( Double.isNaN(val / totEdgeWeightU))
+				throw new IllegalStateException("No NaNs Allowed");
+			derWalk.put(f, val / totEdgeWeightU);
 		}
 		return derWalk;
 	}
@@ -305,11 +314,28 @@ public class SRW<E extends RWExample> {
 		// unfortunately, this means we need locked access to the paramVec, since if someone fusses with it
 		// between when we set the rate and when we apply it, we could end up pushing the paramVec too far.
 		// :(
-//		synchronized(paramVec) { 
+		synchronized(paramVec) { 
 			for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) { //String f = fEntry.getKey();
 				f.advance();
-				if (f.value() > 0) { 
-					rate = Math.min(rate, Dictionary.safeGet(paramVec,f.key()) / f.value());
+//				if (f.value() > 0) { 
+//					rate = Math.min(rate, Dictionary.safeGet(paramVec,f.key()) / f.value());
+//				}
+				if (Math.abs(f.value()) > 0) { 
+					double pf = Dictionary.safeGet(paramVec,f.key());
+					double smallEnough = pf / f.value();
+					double largeEnough = (pf - MAX_PARAM_VALUE) / f.value();
+					if (f.value() > 0) {
+						if (largeEnough > smallEnough) 
+							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
+						rate = Math.min(rate, smallEnough);
+						rate = Math.max(rate, largeEnough);
+					} else {
+						if (largeEnough < smallEnough) 
+							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
+						rate = Math.max(rate, smallEnough);
+						rate = Math.min(rate, largeEnough);
+					}
+					
 				}
 			}
 //			if (log.isDebugEnabled()) log.debug("adjusted rate "+rate);
@@ -317,11 +343,12 @@ public class SRW<E extends RWExample> {
 				f.advance();
 //				log.debug(String.format("%s %f %f [%f]", f,Dictionary.safeGet(paramVec,f),grad.get(f),rate*grad.get(f)));
 				Dictionary.increment(paramVec, f.key(), - rate * f.value());
-//				if (paramVec.get(f.key()) < 0) {
-//					throw new IllegalStateException("Parameter weight "+f.key()+" can't be negative");
-//				}
+				if (paramVec.get(f.key()) < 0) {
+					throw new IllegalStateException("Parameter weight "+f.key()+" can't be negative");
+				} else if (paramVec.get(f.key()) > MAX_PARAM_VALUE)
+					throw new IllegalStateException("Parameter weight "+f.key()+" can't trigger Infinity");
 			}
-//		}
+		}
 	}
 	
 	/**
