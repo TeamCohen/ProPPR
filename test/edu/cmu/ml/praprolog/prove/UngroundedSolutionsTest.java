@@ -1,3 +1,4 @@
+package edu.cmu.ml.praprolog.prove;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ import edu.cmu.ml.praprolog.prove.TracingDfsProver;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 
-public class TestUngroundedSolutions {
+public class UngroundedSolutionsTest {
 
 	@Test
 	public void test() throws IOException {
