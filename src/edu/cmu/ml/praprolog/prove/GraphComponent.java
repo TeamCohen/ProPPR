@@ -1,11 +1,5 @@
 package edu.cmu.ml.praprolog.prove;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +8,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.util.Dictionary;
-import edu.cmu.ml.praprolog.util.SymbolTable;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 /**
  * A 'extensional database' - restricted to be a labeled directed
@@ -76,26 +70,17 @@ public class GraphComponent extends GraphlikeComponent {
 	 */
 	public static GraphComponent load(String fileName) {
 		GraphComponent result = new GraphComponent(fileName);
-		try {
-			LineNumberReader reader = new LineNumberReader(new FileReader(fileName));
-			String line;
-			while ((line=reader.readLine())!= null) {
-				if(reader.getLineNumber() % 10000 == 0) log.info("Read "+reader.getLineNumber()+" lines");
-				line=line.trim();
-				if (line.startsWith("#") || line.length()==0) continue;
-				String[] parts = line.split("\t");
-				if (parts.length != 3) throw new IllegalStateException("Bad line "+reader.getLineNumber()+" (must be $edge\t$src\t$dst): "+line);
-				String edgeLabel = parts[0].trim();
-				String src = parts[1].trim();
-				String dst = parts[2].trim();
-				result.addEdge(edgeLabel, Argument.fromString(src), Argument.fromString(dst));
-			}
-			reader.close();
-		} catch (FileNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
+		ParsedFile file = new ParsedFile(fileName);
+		for (String line : file) {
+			if(file.getLineNumber() % 10000 == 0) log.info("Read "+file.getLineNumber()+" lines");
+			String[] parts = line.split("\t");
+			if (parts.length != 3) file.parseError("must be $edge\t$src\t$dst");
+			String edgeLabel = parts[0].trim();
+			String src = parts[1].trim();
+			String dst = parts[2].trim();
+			result.addEdge(edgeLabel, Argument.fromString(src), Argument.fromString(dst));
 		}
+		file.close();
 		return result;
 	}
 }

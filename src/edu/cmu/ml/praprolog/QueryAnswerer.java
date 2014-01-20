@@ -19,6 +19,7 @@ import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 
 /**
@@ -55,11 +56,11 @@ public class QueryAnswerer extends ExampleThawing {
 	}
 
 	public void findSolutions(String queryFile, String outputFile) throws IOException {
-		LineNumberReader reader = new LineNumberReader(new FileReader(queryFile));
+		ParsedFile reader = new ParsedFile(queryFile);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {
 			int querynum=0;
-			for (String line; (line=reader.readLine())!= null;) {
+			for (String line : reader) {
 				querynum++;
 				String queryString = line.split("\t")[0];
 				queryString = queryString.replaceAll("[(]", ",").replaceAll("\\)","").trim();

@@ -1,10 +1,5 @@
 package edu.cmu.ml.praprolog.trove;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -19,6 +14,7 @@ import edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class Trainer {
 	public static final String MAJOR_DELIM="\t";
@@ -26,17 +22,17 @@ public class Trainer {
 	protected SRW<PosNegRWExample> learner;
 	private int epoch;
 	private static final Logger log = Logger.getLogger(Trainer.class);
-	
+
 	public Trainer(SRW<PosNegRWExample> learner) {
 		this.learner = learner;
 
-        learner.untrainedFeatures().add("fixedWeight");
-        learner.untrainedFeatures().add("id(trueLoop)");
-        learner.untrainedFeatures().add("id(trueLoopRestart)");
-        learner.untrainedFeatures().add("id(defaultRestart)");
-        learner.untrainedFeatures().add("id(alphaBooster)");
+		learner.untrainedFeatures().add("fixedWeight");
+		learner.untrainedFeatures().add("id(trueLoop)");
+		learner.untrainedFeatures().add("id(trueLoopRestart)");
+		learner.untrainedFeatures().add("id(defaultRestart)");
+		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
-	
+
 	/**
 	 * Generate the cooked examples stored in this file.
 	 * @param cookedExamplesFile
@@ -45,50 +41,39 @@ public class Trainer {
 	public Collection<PosNegRWExample> importCookedExamples(String cookedExamplesFile) {
 		log.info("Importing cooked examples from "+cookedExamplesFile);
 		Collection<PosNegRWExample> result = null;
-		try {
-			result = importCookedExamples(new LineNumberReader(new FileReader(cookedExamplesFile)));
-			log.info("Imported "+result.size()+" examples");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		result = importCookedExamples(new ParsedFile(cookedExamplesFile));
+		log.info("Imported "+result.size()+" examples");
 		return result;
 	}
-	public Collection<PosNegRWExample> importCookedExamples(BufferedReader reader) {
+	public Collection<PosNegRWExample> importCookedExamples(ParsedFile file) {
 		ArrayList<PosNegRWExample> result = null;
-		try {
-			result = new ArrayList<PosNegRWExample>();
-			int linenum=0;
-			for(String line; (line=reader.readLine()) != null; linenum++){
-				log.debug("Imporing example from line "+linenum);
-				AnnotatedTroveGraph g = new AnnotatedTroveGraph();
-				
-				String[] parts = line.trim().split(MAJOR_DELIM,5);
-				
-				TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
-				for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(u, 1.0);
-				
-				String[] rawPosList = parts[2].split(MINOR_DELIM);
-				String[] rawNegList = parts[3].split(MINOR_DELIM);
-//				int[] posList = g.keyToId(rawPosList);
-//				int[] negList = g.keyToId(rawNegList);
-				try {
-					g = AnnotatedTroveGraph.fromStringParts(parts[4],g);
-					result.add(new PosNegRWExample(g,queryVec,rawPosList,rawNegList));
-				} catch (GraphFormatException e) {
-					throw new IllegalArgumentException("["+e.getMessage()+"] at line "+linenum);
-				}
-					
+		result = new ArrayList<PosNegRWExample>();
+		for(String line : file){
+			log.debug("Imporing example from line "+file.getLineNumber());
+			AnnotatedTroveGraph g = new AnnotatedTroveGraph();
+
+			String[] parts = line.trim().split(MAJOR_DELIM,5);
+
+			TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
+			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(u, 1.0);
+
+			String[] rawPosList = parts[2].split(MINOR_DELIM);
+			String[] rawNegList = parts[3].split(MINOR_DELIM);
+			//				int[] posList = g.keyToId(rawPosList);
+			//				int[] negList = g.keyToId(rawNegList);
+			try {
+				g = AnnotatedTroveGraph.fromStringParts(parts[4],g);
+				result.add(new PosNegRWExample(g,queryVec,rawPosList,rawNegList));
+			} catch (GraphFormatException e) {
+				file.parseError("["+e.getMessage()+"]");
 			}
-			reader.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
+		file.close();
 		log.debug(TroveGraph.nextIdPeek());
 		return result;
 	}
-	
+
 	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample> iteratorFactory) {
 		return this.trainParametersOnCookedIterator(iteratorFactory, false);
 	}
@@ -122,19 +107,19 @@ public class Trainer {
 					lasttime = System.currentTimeMillis();
 					log.info(k+" examples processed");
 				}
-//				SRW.addDefaultWeights(x.getGraph(), paramVec);
+				//				SRW.addDefaultWeights(x.getGraph(), paramVec);
 				doExample(k, x, paramVec, traceLosses);
 
 				k++;
 			}
 			cleanUpExamples(i);
-//			log.info(k+" examples processed");
+			//			log.info(k+" examples processed");
 			if(traceLosses) {
 				System.out.println("training loss "+(totalLossThisEpoch / numExamplesThisEpoch) + " on "+ numExamplesThisEpoch +" examples");
 				//if (this.testData)
 			}
 		}
-//		cleanUpEpochs();
+		//		cleanUpEpochs();
 		log.info("Finished in "+(System.currentTimeMillis() - start)+" ms");
 		return paramVec;
 	}
@@ -151,13 +136,13 @@ public class Trainer {
 			numExamplesThisEpoch += x.length();
 		}
 	}
-	
+
 	protected void setUpExamples(int epoch, Collection<PosNegRWExample> examples) {
 		totalLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
 	protected void cleanUpExamples(int epoch) {}
-	
+
 	protected void setUpEpochs(Map<String,Double> paramVec) {}
 
 	//////////////////////////// Running /////////////////////////////
@@ -174,7 +159,7 @@ public class Trainer {
 		if (args.length < 2) {
 			usage();
 		}
-		
+
 		String cookedExampleFile = args[0];
 		String outputParamFile   = args[1];
 		int epochs = 5;
@@ -189,7 +174,7 @@ public class Trainer {
 				} else usage();
 			}
 		}
-		
+
 		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
 		Trainer trainer = new Trainer(srw);
 		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(

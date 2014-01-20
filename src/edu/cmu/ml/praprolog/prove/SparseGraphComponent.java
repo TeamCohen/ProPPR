@@ -1,16 +1,15 @@
 package edu.cmu.ml.praprolog.prove;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 /**
  * GraphlikeComponent backed by a sparse matrix.
@@ -40,14 +39,9 @@ public class SparseGraphComponent extends GraphlikeComponent {
 
 		// TODO: Get list of functors from index file
 		ArrayList<String> matrices = new ArrayList<String>();
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader(new File(matrixDir,MANIFEST)));
-			for (String line; (line=reader.readLine())!= null;) { matrices.add(line.trim()); }
-			reader.close();
-		} catch (IOException e) {
-			log.error("Problem reading index file "+MANIFEST+" in "+matrixDir,e);
-			throw new RuntimeException(e);
-		}
+		ParsedFile file = new ParsedFile(new File(matrixDir,MANIFEST));
+		for (String line : file) { matrices.add(line); }
+		file.close();
 		// TODO: Initialize sparseMatrixIndex for each functor
 		index=new HashMap<String,SparseMatrixIndex>();
 		for(String matrix: matrices) {
@@ -57,33 +51,18 @@ public class SparseGraphComponent extends GraphlikeComponent {
 			}
 			if (!arg1s.containsKey(parts[1])) { // read arg1.i 
 				arg1s.put(parts[1], new HashMap<String,Integer>());
-				try {
-					loadArgs(arg1s.get(parts[1]),new File(matrixDir,parts[1]+INDEX_EXTENSION));
-				} catch (IOException e) {
-					log.error("Problem reading arg1 file "+parts[1]+INDEX_EXTENSION+" in "+matrixDir,e);
-					throw new RuntimeException(e);
-				}
+				loadArgs(arg1s.get(parts[1]),new File(matrixDir,parts[1]+INDEX_EXTENSION));
 			}
 			if (!arg2s.containsKey(parts[2])) {
-				String line;
-				try {
-					BufferedReader reader = new BufferedReader(new FileReader(new File(matrixDir,matrix+".rce")));
-					reader.readLine(); line = reader.readLine();
-					reader.close();
-				} catch (IOException e) {
-					log.error("Problem reading dimension file "+matrix+".rce in "+matrixDir,e);
-					throw new RuntimeException(e);
-				}
+				ParsedFile rce = new ParsedFile(new File(matrixDir,matrix+".rce"));
+				Iterator<String> rceit = rce.iterator(); rceit.next();
+				String line = rceit.next();
+				rce.close();
 				if (line==null) throw new IllegalArgumentException("Bad format for "+matrix+".rce: line 2 must list #cols");
 				int ncols = Integer.parseInt(line.trim());
 				arg2s.put(parts[2], new ConstantArgument[ncols]);
 
-				try {
-					loadArgs(arg2s.get(parts[2]),new File(matrixDir,parts[2]+INDEX_EXTENSION));
-				} catch (IOException e) {
-					log.error("Problem reading arg2 file "+parts[2]+INDEX_EXTENSION+" in "+matrixDir,e);
-					throw new RuntimeException(e);
-				}
+				loadArgs(arg2s.get(parts[2]),new File(matrixDir,parts[2]+INDEX_EXTENSION));
 			}
 			try {
 				index.put(parts[0], new SparseMatrixIndex(matrixDir,matrix,arg1s.get(parts[1]),arg2s.get(parts[2])));
@@ -132,23 +111,19 @@ public class SparseGraphComponent extends GraphlikeComponent {
 	}
 
 	/** subroutine - populates an array of strings from a file **/
-	private void loadArgs(ConstantArgument[] args,File file) throws IOException {
+	private void loadArgs(ConstantArgument[] args,File file) {
 		log.info("Loading args file "+file.getName()+" in ConstantArgument...");
-		BufferedReader reader = new LineNumberReader(new FileReader(file));
-		int lineNum = 0;
-		for(String line; (line=reader.readLine()) != null; lineNum++) {
-			args[lineNum] = new ConstantArgument(line.trim());
-		}
-		reader.close();
+		ParsedFile parsed = new ParsedFile(file);
+		for (String line : parsed)
+			args[parsed.getLineNumber()] = new ConstantArgument(line);
+		parsed.close();
 	}
-	private void loadArgs(HashMap<String,Integer> args,File file) throws IOException {
+	private void loadArgs(HashMap<String,Integer> args,File file) {
 		log.info("Loading args file "+file.getName()+" in String...");
-		BufferedReader reader = new LineNumberReader(new FileReader(file));
-		int lineNum = 0;
-		for(String line; (line=reader.readLine()) != null; lineNum++) {
-			args.put((line.trim()),lineNum);
-		}
-		reader.close();
+		ParsedFile parsed = new ParsedFile(file);
+		for (String line : parsed)
+			args.put((line.trim()),parsed.getLineNumber());
+		parsed.close();
 	}
 	
 	public static void main(String[] args) {
