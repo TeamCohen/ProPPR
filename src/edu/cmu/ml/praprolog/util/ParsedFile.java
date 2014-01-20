@@ -20,7 +20,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 	private String filename;
 	private LineNumberReader reader;
 	private String peek;
-	private int dataLine=-1;
+	private int dataLine=-2;
 	public ParsedFile(String filename) {
 		this.filename = filename;
 		try {
