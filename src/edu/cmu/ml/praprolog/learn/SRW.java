@@ -28,13 +28,16 @@ public class SRW<E extends RWExample> {
 	public static void seed(long seed) { random.setSeed(seed); }
 	protected static final int NUM_EPOCHS = 5;
 	private static final double MAX_PARAM_VALUE = Math.log(Double.MAX_VALUE);
+	public static final int DEFAULT_MAX_T=10;
+	public static final double DEFAULT_MU=.001;
+	public static final double DEFAULT_ETA=1.0;
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected int epoch;
 	protected Set<String> untrainedFeatures;
-	public SRW() { this(10); }
-	public SRW(int maxT) { this(maxT, 0.001, 1.0); }
+	public SRW() { this(DEFAULT_MAX_T); }
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA); }
 	public SRW(int maxT, double mu, double eta) {
 		this.maxT = maxT;
 		this.mu = mu;

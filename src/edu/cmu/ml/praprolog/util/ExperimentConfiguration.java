@@ -74,11 +74,14 @@ public class ExperimentConfiguration extends Configuration {
 				OptionBuilder
 					.withLongOpt("srw")
 					.withArgName("class")
-					.hasArg()
+					.hasArgs()
+					.withValueSeparator(':')
 					.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
+							+"Default mu=.001\n"
+							+"Default eta=1.0\n"
 							+"Available options:\n"
-							+"l2p (L2PosNegLossTrainedSRW)\n"
-							+"l2plocal (LocalL2PosNegLossTrainedSRW)")
+							+"l2p[:mu[:eta]] (L2PosNegLossTrainedSRW)\n"
+							+"l2plocal[:mu[:eta]] (LocalL2PosNegLossTrainedSRW)")
 					.create());
 		options.addOption(
 				OptionBuilder
@@ -187,29 +190,37 @@ public class ExperimentConfiguration extends Configuration {
 	}
 	
 	protected void setupSRW(CommandLine line, int flags, Options options) {
+		double mu = SRW.DEFAULT_MU;
+		double eta = SRW.DEFAULT_ETA;
 		if (line.hasOption("srw")) {
-			String value = line.getOptionValue("srw");
-			if (value.equals("l2p")) {
+			String[] values = line.getOptionValues("srw");
+			if (values.length > 1) {
+				mu = Double.parseDouble(values[1]);
+			}
+			if (values.length > 2) {
+				eta = Double.parseDouble(values[2]);
+			}
+			if (values[0].equals("l2p")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW();
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>();
+					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta);
 				}
-			} else if (value.equals("l2plocal")) {
+			} else if (values[0].equals("l2plocal")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW();
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>();
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta);
 				}
 			} else {
-				System.err.println("No srw definition for '"+value+"'");
+				System.err.println("No srw definition for '"+values+"'");
 			    usageOptions(options,flags);
 			}
 		} else {
 			if (this.trove) {
-				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW();
+				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta);
 			} else {
-				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>();
+				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta);
 			}
 		}
 	}
