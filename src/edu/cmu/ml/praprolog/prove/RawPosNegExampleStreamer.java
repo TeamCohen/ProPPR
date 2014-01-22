@@ -99,7 +99,10 @@ public class RawPosNegExampleStreamer {
 
 		protected void peek() throws IOException {
 			nextLine = reader.readLine();
-			if (nextLine == null) nextFile();
+			if (nextLine == null) {
+				nextFile();
+				return;
+			}
 			nextLine = nextLine.trim();
 			if (nextLine.isEmpty() || nextLine.startsWith("#")) peek();
 		}
