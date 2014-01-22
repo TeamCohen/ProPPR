@@ -94,8 +94,7 @@ public class Tester extends ExampleThawing {
 					+Dictionary.buildString(x.getNegSet(), new StringBuilder(), " -", false).toString()
 					+Dictionary.buildString(x.getPosSet(), new StringBuilder(), " +", false).toString());
 		else if (log.isDebugEnabled()) log.debug("Query: "+x.getQueryState());
-		GraphWriter writer = new GraphWriter();
-		Map<LogicProgramState,Double> ans = this.prover.proveState(program, x.getQueryState(), writer);
+		Map<LogicProgramState,Double> ans = getSolutions(x,program);
 		if (log.isTraceEnabled()) {
 			new TracingDfsProver().proveState(new LogicProgram(program), x.getQueryState());
 		}
@@ -121,6 +120,10 @@ public class Tester extends ExampleThawing {
 		}
 		s.averagePrecision = averagePrecision(solnScore,x.getPosSet());
 		return s;
+	}
+	
+	public Map<LogicProgramState,Double> getSolutions(ThawedPosNegExample x,LogicProgram program) {
+		return this.prover.proveState(program, x.getQueryState(), null);
 	}
 	
 	private int maxTraced=10;
@@ -175,5 +178,8 @@ public class Tester extends ExampleThawing {
 		System.out.println("result= running time "+(System.currentTimeMillis() - start));
 		System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 	
+	}
+	public void setParams(Map<String, Double> paramVec) {
+		this.masterProgram.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(paramVec));
 	}
 }
