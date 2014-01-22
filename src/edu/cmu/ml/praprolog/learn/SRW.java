@@ -80,8 +80,14 @@ public class SRW<E extends RWExample> {
 	 * @return 
 	 */
 	public double edgeWeightFunction(double product) {
-		return Math.exp(product);
+		//WW: We found exp to have the overflow issue, replace by sigmoid.
+		//return Math.exp(product);
+		return sigmoid(product);
 	}
+
+	public double sigmoid(double x){
+		return 1/(1 + Math.exp(-x));
+       }
 
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
@@ -236,8 +242,15 @@ public class SRW<E extends RWExample> {
 	 * @return wrapped derivative of the edge weight.
 	 */
 	public double derivEdgeWeightFunction(double weight) {
-		return Math.exp(weight);
+		
+		//WW: replace with sigmoid function's derivative.
+		//return Math.exp(weight);
+		return derivSigmoid(weight);
 	}
+
+	public double derivSigmoid(double value) {
+		return sigmoid(value) * (1 - sigmoid(value));
+       }
 
 	/**
 	 * Builds a set of features in the specified set that are not on the untrainedFeatures list.
