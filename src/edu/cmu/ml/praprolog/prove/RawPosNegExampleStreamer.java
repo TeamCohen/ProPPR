@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.cmu.ml.praprolog.util.ParsedFile;
+
 /**
  * Yields a RawPosNegExample for each line in a file. The format for each line is:
              queryGoal <TAB> +posGroundGoal <TAB> ... <TAB> -negGroundGoal
@@ -21,16 +23,16 @@ public class RawPosNegExampleStreamer {
 	public RawPosNegExampleStreamer(String ... files) {
 		this.files = files;
 	}
-	
+
 	public RawPosNegExample exampleFromString(String line, boolean parsed) {
 		if (!parsed) {
 			//hack
 			line = line.replaceAll("[(,)]", " ").replaceAll("\\)","");
 		}
 		String[] parts = line.trim().split("\t");
-		
+
 		Goal query = Goal.parseGoal(parts[0]);
-		
+
 		List<String> posList = new ArrayList<String>();
 		List<String> negList = new ArrayList<String>();
 		for (int i=1; i<parts.length; i++) {
@@ -42,34 +44,28 @@ public class RawPosNegExampleStreamer {
 		}
 		return new RawPosNegExample(query,posList,negList);
 	}
-	
+
 	public List<RawPosNegExample> load() {
 		List<RawPosNegExample> examples = new ArrayList<RawPosNegExample>();
 		for (String f : files) {
-			LineNumberReader reader;
 			boolean parsed = f.endsWith(".cdata");
-			try {
-				reader = new LineNumberReader(new FileReader(f));
-				for(String line; (line=reader.readLine())!=null;) {
-					if (line.startsWith("#")) continue;
-					examples.add(exampleFromString(line,parsed));
-				}
-				reader.close();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			ParsedFile file = new ParsedFile(f);
+			for(String line : file) {
+				examples.add(exampleFromString(line,parsed));
 			}
 		}
 		return examples;
 	}
-	
+
 	public Iterable<RawPosNegExample> stream() {
 		return new RawExampleIterator(files);
 	}
-	
+
+	/**
+	 * See Also ParsedFile for comment syntax
+	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+	 *
+	 */
 	public class RawExampleIterator implements Iterable<RawPosNegExample>, Iterator<RawPosNegExample> {
 		LineNumberReader reader=null;
 		String currentFile;
@@ -100,13 +96,17 @@ public class RawPosNegExampleStreamer {
 				throw new IllegalStateException(e);
 			}
 		}
-		
+
 		protected void peek() throws IOException {
 			nextLine = reader.readLine();
-			if (nextLine == null) nextFile();
-			else if (nextLine.startsWith("#")) peek();
+			if (nextLine == null) {
+				nextFile();
+				return;
+			}
+			nextLine = nextLine.trim();
+			if (nextLine.isEmpty() || nextLine.startsWith("#")) peek();
 		}
-		
+
 		@Override
 		public Iterator<RawPosNegExample> iterator() {
 			return this;
@@ -133,6 +133,6 @@ public class RawPosNegExampleStreamer {
 		public void remove() {
 			throw new UnsupportedOperationException("Can't remove from a file-backed iterator");
 		}
-		
+
 	}
 }

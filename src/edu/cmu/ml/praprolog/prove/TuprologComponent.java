@@ -36,14 +36,14 @@ public class TuprologComponent extends Component {
 			InputStream is = TuprologComponent.class.getClassLoader().getResourceAsStream(OUTLINKS_RULES);
 			p.addTheory(new Theory(is));
 		} catch (InvalidTheoryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e);
+			throw new IllegalArgumentException(e);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e);
+			throw new IllegalArgumentException(e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e);
+			throw new IllegalArgumentException(e);
 		}
 	}
 	public TuprologComponent() {		

@@ -1,13 +1,5 @@
 package edu.cmu.ml.praprolog.prove.tune;
 
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
@@ -19,13 +11,13 @@ import edu.cmu.ml.praprolog.prove.DprProver;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
-import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.MinAlphaException;
 import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.CustomConfiguration;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class DprMinAlphaTuner {
 	private static final Logger log = Logger.getLogger(DprMinAlphaTuner.class);
@@ -38,11 +30,11 @@ public class DprMinAlphaTuner {
 		if (paramsFile != null) {
 			log.info("Using parameter weights from file "+paramsFile);
 			this.program.setFeatureDictWeighter(
-				InnerProductWeighter.fromParamVec(
-						Dictionary.load(paramsFile)));
+					InnerProductWeighter.fromParamVec(
+							Dictionary.load(paramsFile)));
 		}
 	}
-	
+
 	public void tune(String queryFile, double start, double epsilon) {
 		double minalpha=start, del=minalpha;//, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
 		int i;
@@ -62,7 +54,7 @@ public class DprMinAlphaTuner {
 				break;
 			}
 			log.info("Trying minalpha = "+minalpha);
-//			DprProver p = new DprProver(minalpha * rat, minalpha);
+			//			DprProver p = new DprProver(minalpha * rat, minalpha);
 			DprProver p = new DprProver(epsilon, minalpha);
 			this.program.setAlpha(minalpha+epsilon);
 			del = del/2;
@@ -79,15 +71,15 @@ public class DprMinAlphaTuner {
 		}
 		log.info("Reached minalpha "+lastSuccess+" +/- "+del+" in "+i+" iterations");
 	}
-	
+
 	public boolean query(Prover prover, String queryFile) {
-		LineNumberReader reader=null;
 		boolean success = true;
 		MinAlphaException a = null;
+		ParsedFile reader = null;
 		try {
 			long start = System.currentTimeMillis();
-			reader = new LineNumberReader(new FileReader(queryFile));
-			for (String line; (line=reader.readLine())!= null;) {
+			reader = new ParsedFile(queryFile);
+			for (String line : reader) {
 				long now = System.currentTimeMillis();
 				if ( now-start > 5000) log.info(reader.getLineNumber()+" queries...");
 				String queryString = line.split("\t")[0];
@@ -98,21 +90,12 @@ public class DprMinAlphaTuner {
 					prover.proveState(this.program, new ProPPRLogicProgramState(query));
 				} catch (MinAlphaException e) { a = e;  break; }
 			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			success=false;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			success=false;
 		} finally {
 			if (reader != null)
-				try {
-					reader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				reader.close();
 		}
 		if (a != null) throw (a);
 		return success;
@@ -142,7 +125,7 @@ public class DprMinAlphaTuner {
 						.withArgName("double")
 						.withDescription("Epsilon value for the DprProver (default "+DprProver.EPS_DEFAULT+")")
 						.create());
-				}
+			}
 			@Override
 			protected void retrieveCustomSettings(CommandLine line, int flags,
 					Options options) {

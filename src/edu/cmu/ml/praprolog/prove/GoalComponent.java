@@ -1,9 +1,5 @@
 package edu.cmu.ml.praprolog.prove;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.prove.Argument;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 
 public class GoalComponent extends Component {
@@ -125,7 +122,7 @@ public class GoalComponent extends Component {
 	@Override
 	public boolean claim(LogicProgramState state) {
 		// FIXME -- only works b/c we know isSolution is true iff #goals == 0
-				return !state.isSolution() && this.contains(state.getHeadFunctor(), state.getHeadArity());
+		return !state.isSolution() && this.contains(state.getHeadFunctor(), state.getHeadArity());
 	}
 	protected boolean contains(Goal goal) {
 		// TODO: this is likely slow
@@ -148,11 +145,11 @@ public class GoalComponent extends Component {
 	}
 	public String toString() {
 		StringBuilder sb = new StringBuilder("goalComponent:");
-//		for (List<Goal> el : this.indexF.values()) {
-//			for (Goal g : el) {
-//				sb.append("\n\t").append(g);
-//			}
-//		}
+		//		for (List<Goal> el : this.indexF.values()) {
+		//			for (Goal g : el) {
+		//				sb.append("\n\t").append(g);
+		//			}
+		//		}
 
 		for (FunctorArityArgKey k : this.indexFA1.keySet()) {
 			//			for (Goal g : G) {
@@ -170,19 +167,9 @@ public class GoalComponent extends Component {
 	 */
 	public static GoalComponent loadCompiled(String filename) {
 		GoalComponent result = new GoalComponent(filename);
-		LineNumberReader reader;
-		try {
-			reader = new LineNumberReader(new FileReader(filename));
-			String line;
-			while ((line=reader.readLine()) != null) { line = line.trim();
-			if (line.isEmpty() || line.startsWith("#")) continue;
-			//				String[] functor_args = line.split("\t",2);
+		ParsedFile file = new ParsedFile(filename);
+		for (String line : file) {
 			result.addFact(Goal.parseGoal(line,"\t"));//new Goal(functor_args[0],functor_args[1].split("\t")));
-			}
-		} catch (FileNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
 		}
 		return result;
 		/*
@@ -204,10 +191,10 @@ public class GoalComponent extends Component {
 	public String listing() {
 		StringBuilder sb = new StringBuilder("%% from goalComponent ").append(this.label).append(":");
 		for (List<Goal> G : this.indexF.values()) {
-						for (Goal g : G) {
-							sb.append("\n").append(g);
-						}
-//			sb.append("\n").append(k.functor).append("/").append(k.arity).append(":").append(k.arg);
+			for (Goal g : G) {
+				sb.append("\n").append(g);
+			}
+			//			sb.append("\n").append(k.functor).append("/").append(k.arity).append(":").append(k.arg);
 		}
 		return sb.toString();
 	}

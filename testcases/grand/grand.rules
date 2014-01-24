@@ -1,0 +1,5 @@
+parent(X,Y) :- father(X,Y).
+parent(X,Y) :- mother(X,Y).
+grandparent(X,Y) :- parent(X,Z),parent(Z,Y).
+#paternal grandfather
+pgf(X,Y) :- father(X,Z),father(Z,Y).

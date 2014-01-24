@@ -3,6 +3,7 @@ package edu.cmu.ml.praprolog.prove;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	protected RenamingSubstitution theta;
 	protected int depth;
 	protected int hash=0;
-	
+
 	/** primary constructor for programmer use */
 	public ProPPRLogicProgramState(Goal ... goals) {
 		this.init(
@@ -61,11 +62,11 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	public int hashCode() {
 		return this.hash;
 	}
-	
+
 	protected void freeze() {
 		for (Goal g : this.queryGoals) hash = hash ^ g.hashCode();
 		for (Goal g : this.goals) hash = hash ^ g.hashCode();
-        //count the number of variables appearing in this state
+		//count the number of variables appearing in this state
 		this.varSketch = new VarSketch();
 		this.varSketch.includeAll(this.queryGoals);
 		this.varSketch.includeAll(this.goals);
@@ -139,7 +140,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		else tmpGoals2 = new Goal[0];
 		{ int i=0; for(;i<tmpGoals1.length;i++) tmpGoals[i] = tmpGoals1[i];
 		for (int j=0;j<tmpGoals2.length;j++) { tmpGoals[i] = tmpGoals2[j]; i++; }}
-//		if (log.isDebugEnabled()) log.debug("tmpGoals:"+Dictionary.buildString(tmpGoals,new StringBuilder()," "));
+		//		if (log.isDebugEnabled()) log.debug("tmpGoals:"+Dictionary.buildString(tmpGoals,new StringBuilder()," "));
 		Goal[] tmpQueryGoals = additionalTheta.applyToGoalList(this.queryGoals,RenamingSubstitution.NOT_RENAMED);
 
 		Goal[][] allGoals = {tmpQueryGoals, tmpGoals1, tmpGoals2};
@@ -188,6 +189,42 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	 */
 	@Override
 	public String description() {
+		if (!this.isSolution()) return "not a solution";
+		if (this.originalQueryGoals.length != this.queryGoals.length) {
+			throw new IllegalStateException("Original and grounded goal list must match in length");
+		}
+		HashMap<Argument,Argument> assignments = new HashMap<Argument,Argument>();
+		for (int i=0; i<this.originalQueryGoals.length; i++) {
+			if (this.originalQueryGoals[i].getArity() != this.queryGoals[i].getArity()) {
+				throw new IllegalStateException("Original and grounded goals must match in arity");
+			}
+			for (int j=0; j<this.originalQueryGoals[i].getArity(); j++) {
+				Argument queryArg = this.originalQueryGoals[i].getArg(j);
+				if (queryArg.isConstant()) continue;
+				Argument groundArg = this.queryGoals[i].getArg(j);
+				if (!assignments.containsKey(queryArg)) {
+					assignments.put(queryArg, this.queryGoals[i].getArg(j));
+				} else { // then the assignment should be the same
+					if (!this.queryGoals[i].getArg(j).equals(assignments.get(queryArg))) {
+						throw new IllegalStateException("One variable two assignments :(");
+					}
+				}
+			}
+		}
+		ArrayList<Argument> sorted = new ArrayList<Argument>();
+		sorted.addAll(assignments.keySet());
+		Collections.sort(sorted);
+
+		StringBuilder sb = new StringBuilder();
+		boolean first=true;
+		for (Argument a : sorted) {
+			if(first)first=false;
+			else sb.append(", ");
+			sb.append(a.getName()).append("=").append(assignments.get(a));
+		}
+		return sb.toString();
+	}
+	public String oldDescription() {
 		HashSet<Argument> queryVars = new HashSet<Argument>();
 		for (Goal g : this.originalQueryGoals) {
 			for (Argument a : g.getArgs()) {
@@ -229,7 +266,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		if (queryGoals.length != 1) throw new IllegalStateException("1 ground goal expected; found "+queryGoals.length);
 		return queryGoals[0];
 	}
-	
+
 	protected LogicProgramState tuprolog;
 	@Override
 	public LogicProgramState asTuprolog() {

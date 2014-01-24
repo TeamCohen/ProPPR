@@ -28,13 +28,16 @@ public class SRW<E extends RWExample> {
 	public static void seed(long seed) { random.setSeed(seed); }
 	protected static final int NUM_EPOCHS = 5;
 	private static final double MAX_PARAM_VALUE = Math.log(Double.MAX_VALUE);
+	public static final int DEFAULT_MAX_T=10;
+	public static final double DEFAULT_MU=.001;
+	public static final double DEFAULT_ETA=1.0;
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected int epoch;
 	protected Set<String> untrainedFeatures;
-	public SRW() { this(10); }
-	public SRW(int maxT) { this(maxT, 0.001, 1.0); }
+	public SRW() { this(DEFAULT_MAX_T); }
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA); }
 	public SRW(int maxT, double mu, double eta) {
 		this.maxT = maxT;
 		this.mu = mu;
@@ -77,8 +80,14 @@ public class SRW<E extends RWExample> {
 	 * @return 
 	 */
 	public double edgeWeightFunction(double product) {
-		return Math.exp(product);
+		//WW: We found exp to have the overflow issue, replace by sigmoid.
+		//return Math.exp(product);
+		return sigmoid(product);
 	}
+
+	public double sigmoid(double x){
+		return 1/(1 + Math.exp(-x));
+       }
 
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
@@ -233,8 +242,15 @@ public class SRW<E extends RWExample> {
 	 * @return wrapped derivative of the edge weight.
 	 */
 	public double derivEdgeWeightFunction(double weight) {
-		return Math.exp(weight);
+		
+		//WW: replace with sigmoid function's derivative.
+		//return Math.exp(weight);
+		return derivSigmoid(weight);
 	}
+
+	public double derivSigmoid(double value) {
+		return sigmoid(value) * (1 - sigmoid(value));
+       }
 
 	/**
 	 * Builds a set of features in the specified set that are not on the untrainedFeatures list.

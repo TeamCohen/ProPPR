@@ -1,10 +1,5 @@
 package edu.cmu.ml.praprolog;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -19,6 +14,7 @@ import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class Trainer<T> {
 	public static final String MAJOR_DELIM="\t";
@@ -26,17 +22,17 @@ public class Trainer<T> {
 	protected SRW<PosNegRWExample<T>> learner;
 	private int epoch;
 	private static final Logger log = Logger.getLogger(Trainer.class);
-	
+
 	public Trainer(SRW<PosNegRWExample<T>> learner) {
 		this.learner = learner;
 
-        learner.untrainedFeatures().add("fixedWeight");
-        learner.untrainedFeatures().add("id(trueLoop)");
-        learner.untrainedFeatures().add("id(trueLoopRestart)");
-        learner.untrainedFeatures().add("id(defaultRestart)");
-        learner.untrainedFeatures().add("id(alphaBooster)"); // ?
+		learner.untrainedFeatures().add("fixedWeight");
+		learner.untrainedFeatures().add("id(trueLoop)");
+		learner.untrainedFeatures().add("id(trueLoopRestart)");
+		learner.untrainedFeatures().add("id(defaultRestart)");
+		learner.untrainedFeatures().add("id(alphaBooster)"); // ?
 	}
-	
+
 	/**
 	 * Generate the cooked examples stored in this file.
 	 * @param cookedExamplesFile
@@ -45,48 +41,37 @@ public class Trainer<T> {
 	public Collection<PosNegRWExample<T>> importCookedExamples(String cookedExamplesFile, AnnotatedGraphFactory<T> factory) {
 		log.info("Importing cooked examples from "+cookedExamplesFile);
 		Collection<PosNegRWExample<T>> result = null;
-		try {
-			result = importCookedExamples(new LineNumberReader(new FileReader(cookedExamplesFile)), factory);
-			log.info("Imported "+result.size()+" examples");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		result = importCookedExamples(new ParsedFile(cookedExamplesFile), factory);
+		log.info("Imported "+result.size()+" examples");
 		return result;
 	}
-	public Collection<PosNegRWExample<T>> importCookedExamples(BufferedReader reader, AnnotatedGraphFactory<T> factory) {
+	public Collection<PosNegRWExample<T>> importCookedExamples(ParsedFile reader, AnnotatedGraphFactory<T> factory) {
 		ArrayList<PosNegRWExample<T>> result = null;
-		try {
-			result = new ArrayList<PosNegRWExample<T>>();
-			int linenum=0;
-			for(String line; (line=reader.readLine()) != null; linenum++){
-				AnnotatedGraph<T> g = factory.create();
-				
-				String[] parts = line.trim().split(MAJOR_DELIM,5);
-				
-				TreeMap<T, Double> queryVec = new TreeMap<T,Double>();
-				for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(g.keyToId(u), 1.0);
-				
-				String[] rawPosList = parts[2].split(MINOR_DELIM);
-				String[] rawNegList = parts[3].split(MINOR_DELIM);
-				T[] posList = g.keyToId(rawPosList);
-				T[] negList = g.keyToId(rawNegList);
-				try {
-					g = AnnotatedGraph.fromStringParts(parts[4],g);
-					result.add(new PosNegRWExample<T>(g,queryVec,posList,negList));
-				} catch (GraphFormatException e) {
-					throw new IllegalArgumentException("["+e.getMessage()+"] at line "+linenum);
-				}
-					
+		result = new ArrayList<PosNegRWExample<T>>();
+		for(String line : reader){
+			AnnotatedGraph<T> g = factory.create();
+
+			String[] parts = line.trim().split(MAJOR_DELIM,5);
+
+			TreeMap<T, Double> queryVec = new TreeMap<T,Double>();
+			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(g.keyToId(u), 1.0);
+
+			String[] rawPosList = parts[2].split(MINOR_DELIM);
+			String[] rawNegList = parts[3].split(MINOR_DELIM);
+			T[] posList = g.keyToId(rawPosList);
+			T[] negList = g.keyToId(rawNegList);
+			try {
+				g = AnnotatedGraph.fromStringParts(parts[4],g);
+				result.add(new PosNegRWExample<T>(g,queryVec,posList,negList));
+			} catch (GraphFormatException e) {
+				reader.parseError("["+e.getMessage()+"]");
 			}
-			reader.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
+		reader.close();
 		return result;
 	}
-	
+
 	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample<T>> iteratorFactory) {
 		return this.trainParametersOnCookedIterator(iteratorFactory, false);
 	}
@@ -119,7 +104,7 @@ public class Trainer<T> {
 					lasttime = System.currentTimeMillis();
 					log.info(k+" examples processed");
 				}
-//				SRW.addDefaultWeights(x.getGraph(), paramVec);
+				//				SRW.addDefaultWeights(x.getGraph(), paramVec);
 				doExample(k, x, paramVec, traceLosses);
 
 				k++;
@@ -134,7 +119,7 @@ public class Trainer<T> {
 				log.debug("After epoch "+epoch+": "+Dictionary.buildString(paramVec, new StringBuilder(), "\n\t").toString());
 			}
 		}
-//		cleanUpEpochs();
+		//		cleanUpEpochs();
 		return paramVec;
 	}
 
@@ -150,18 +135,18 @@ public class Trainer<T> {
 			numExamplesThisEpoch += x.length();
 		}
 	}
-	
+
 	protected void setUpExamples(int epoch, Collection<PosNegRWExample<T>> examples) {
 		totalLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
 	protected void cleanUpExamples(int epoch) {}
-	
+
 	protected void setUpEpochs(Map<String,Double> paramVec) {}
-//	protected void cleanUpEpochs() {}
-	
+	//	protected void cleanUpEpochs() {}
+
 	////////////////////////// Run ////////////////////////////////////////
-	
+
 	private static final String USAGE = "SINGLETHREADED TRAINING:\nUsage:\n\tcookedExampleFile outputParamFile [options]\n"
 			+"\t\t--epochs {int}\tNumber of epochs (default 5)\n"
 			+"\t\t--traceLosses\tTurn on traceLosses (default off)\n"
@@ -175,7 +160,7 @@ public class Trainer<T> {
 		if (args.length < 2) {
 			usage();
 		}
-		
+
 		String cookedExampleFile = args[0];
 		String outputParamFile   = args[1];
 		int epochs = 5;
@@ -190,7 +175,7 @@ public class Trainer<T> {
 				} else usage();
 			}
 		}
-		
+
 		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
 		Trainer<String> trainer = new Trainer<String>(srw);
 		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(

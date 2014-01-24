@@ -2,7 +2,6 @@ package edu.cmu.ml.praprolog;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,17 +10,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
-import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class MultithreadedTrainerTest extends RedBlueGraph {
 	@Test
@@ -66,7 +62,7 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 				+"\npredict(tf,Y)	1	13	14	28	71	w(due,pos):w(pile,pos):w(forms,neg):w(forms,pos):w(tax,neg):id(defaultRestart):id(trueLoopRestart):id(demo/textcat/toylabels.facts):w(tax,pos):w(yesterday,pos):w(huge,neg):w(a,pos):w(yesterday,neg):w(pile,neg):w(huge,pos):w(due,neg):id(trueLoop):w(a,neg):w(of,pos):w(of,neg):alphaBooster:r:id(demo/textcat/toywords.graph)	24->1:5	24->14:3	25->1:5	25->13:15	26->1:5	26->14:0	27->1:5	27->13:12	20->1:5	20->14:18	21->1:5	21->13:4	22->1:5	22->14:8	23->1:5	23->13:2	28->1:5	28->14:9	1->1:5	1->2:21	3->1:5	3->11:7	3->12:7	2->10:22	2->1:5,20	2->3:22	2->5:22	2->4:22	2->7:22	2->6:22	2->9:22	2->8:22	5->1:5	5->18:7	5->17:7	4->1:5	4->15:7	4->16:7	7->1:5	7->21:7	7->22:7	6->1:5	6->19:7	6->20:7	9->1:5	9->25:7	9->26:7	8->1:5	8->24:7	8->23:7	11->1:5	11->13:17	10->1:5	10->27:7	10->28:7	13->1:6	13->13:16	12->1:5	12->14:11	15->1:5	15->13:10	14->1:6	14->14:16	17->1:5	17->13:13	16->1:5	16->14:14	19->1:5	19->13:19	18->1:5	18->14:1"
 				+"\npredict(jm,Y)	1	13	14	28	71	w(bills,pos):w(pile,pos):w(mail,pos):w(and,pos):id(defaultRestart):alphaBooster:id(trueLoopRestart):id(demo/textcat/toylabels.facts):w(huge,neg):w(junk,neg):w(pile,neg):w(huge,pos):w(catalogs,neg):w(bills,neg):w(catalogs,pos):id(trueLoop):w(of,pos):w(of,neg):w(junk,pos):w(mail,neg):w(and,neg):r:id(demo/textcat/toywords.graph)	24->1:4	24->14:0	25->1:4	25->13:20	26->1:4	26->14:3	27->1:4	27->13:12	20->1:4	20->14:18	21->1:4	21->13:19	22->1:4	22->14:2	23->1:4	23->13:13	28->1:4	28->14:14	1->1:4	1->2:21	3->1:4	3->11:7	3->12:7	2->10:22	2->1:4,5	2->3:22	2->5:22	2->4:22	2->7:22	2->6:22	2->9:22	2->8:22	5->1:4	5->18:7	5->17:7	4->1:4	4->15:7	4->16:7	7->1:4	7->21:7	7->22:7	6->1:4	6->19:7	6->20:7	9->1:4	9->25:7	9->26:7	8->1:4	8->24:7	8->23:7	11->1:4	11->13:8	10->1:4	10->27:7	10->28:7	13->1:6	13->13:15	12->1:4	12->14:11	15->1:4	15->13:10	14->1:6	14->14:15	17->1:4	17->13:17	16->1:4	16->14:1	19->1:4	19->13:9	18->1:4	18->14:16";
 		Collection<PosNegRWExample<String>> examples = 
-				trainer.importCookedExamples(new BufferedReader(new StringReader(cookedExamples)), new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING));
+				trainer.importCookedExamples(new ParsedFile(new StringReader(cookedExamples)), new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING));
 
 		Map<String,Double> params = trainer.trainParametersOnCookedIterator(examples);
 		nonNull(params);

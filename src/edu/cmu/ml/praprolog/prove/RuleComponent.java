@@ -1,9 +1,5 @@
 package edu.cmu.ml.praprolog.prove;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,6 +9,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParsedFile;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 
 
@@ -63,7 +60,7 @@ public class RuleComponent extends Component {
 			}
 		}
 		return matches;
-		
+
 	}
 
 	@Override
@@ -112,41 +109,33 @@ public class RuleComponent extends Component {
 	 */
 	public static RuleComponent loadCompiled(String filename) {
 		RuleComponent result = new RuleComponent();
-		LineNumberReader reader;
-		try {
-			reader = new LineNumberReader(new FileReader(filename));
-			String line;
-			while ((line=reader.readLine()) != null) {
-				String[] parts = line.split("#");
-				if (parts.length != 3) {
-					throw new IllegalArgumentException("Line "+reader.getLineNumber()+" of "+filename+" needs 3 #-delimited fields; found "+parts.length+":\n"+line);
-				}
-				String[] variableList = parts[2].trim().split(",");
-
-				String[] ruleGoalStrings =  parts[0].trim().split("&");
-				Goal lhs;
-				Goal[] rhs = new Goal[ruleGoalStrings.length-1];
-				lhs = Goal.decompile(ruleGoalStrings[0]);
-				for (int i=1; i<ruleGoalStrings.length; i++) {
-					rhs[i-1] = Goal.decompile(ruleGoalStrings[i]);
-				}
-
-				String[] featureGoalStrings = parts[1].trim().split("&");
-				Goal[] featureGoals = new Goal[featureGoalStrings.length];
-				for (int i=0; i<featureGoalStrings.length; i++) {
-					featureGoals[i] = Goal.decompile(featureGoalStrings[i]);
-				}
-
-				result.add(new Rule(lhs,rhs,featureGoals)); // FIXME fishy! python has 
-				// r = rule(ruleGoals[0],ruleGoals[1:],'',featureGoals)
-				// where constructor is
-				// rule(lhs,rhs,features=tuple(),variableList=string.ascii_uppercase)
-
+		ParsedFile file = new ParsedFile(filename);
+		for (String line : file) {
+			String[] parts = line.split("#");
+			if (parts.length != 3) {
+				file.parseError("3 #-delimited fields required; found "+parts.length);
 			}
-		} catch (FileNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
+			String[] variableList = parts[2].trim().split(",");
+
+			String[] ruleGoalStrings =  parts[0].trim().split("&");
+			Goal lhs;
+			Goal[] rhs = new Goal[ruleGoalStrings.length-1];
+			lhs = Goal.decompile(ruleGoalStrings[0]);
+			for (int i=1; i<ruleGoalStrings.length; i++) {
+				rhs[i-1] = Goal.decompile(ruleGoalStrings[i]);
+			}
+
+			String[] featureGoalStrings = parts[1].trim().split("&");
+			Goal[] featureGoals = new Goal[featureGoalStrings.length];
+			for (int i=0; i<featureGoalStrings.length; i++) {
+				featureGoals[i] = Goal.decompile(featureGoalStrings[i]);
+			}
+
+			result.add(new Rule(lhs,rhs,featureGoals)); // FIXME fishy! python has 
+			// r = rule(ruleGoals[0],ruleGoals[1:],'',featureGoals)
+			// where constructor is
+			// rule(lhs,rhs,features=tuple(),variableList=string.ascii_uppercase)
+
 		}
 		return result;
 	}
@@ -166,9 +155,9 @@ public class RuleComponent extends Component {
 		return sb.toString();
 	}
 
-    // a little test case...
-    public static void main(String[] args)  {
-	RuleComponent rc = loadCompiled(args[0]);
-	System.out.println("listing of " + args[0] + ":\n" + rc.listing());
-    }
+	// a little test case...
+	public static void main(String[] args)  {
+		RuleComponent rc = loadCompiled(args[0]);
+		System.out.println("listing of " + args[0] + ":\n" + rc.listing());
+	}
 }
