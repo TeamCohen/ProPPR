@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog.trove;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -74,6 +75,29 @@ public class Trainer {
 		return result;
 	}
 
+    /** Return the batch gradient of the data
+     */
+    public Map<String,Double> findGradient(Collection<PosNegRWExample> examples) {
+		log.info("Computing gradient on cooked examples...");
+		Map<String,Double> sumGradient = new TreeMap<String,Double>();
+		Map<String,Double> paramVec = new TreeMap<String,Double>();
+		for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
+		int k=0;
+		for (PosNegRWExample x : examples) {
+		    this.learner.addDefaultWeights(x.getGraph(),paramVec);
+		    this.learner.accumulateGradient(this.learner.gradient(paramVec, x),sumGradient);
+		    k++;
+		}
+		return sumGradient;
+		/*
+		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
+		    String feature = it.next();
+		    System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
+		}
+		*/
+	}
+
+
 	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample> iteratorFactory) {
 		return this.trainParametersOnCookedIterator(iteratorFactory, false);
 	}
@@ -85,11 +109,13 @@ public class Trainer {
 			Collection<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, new TreeMap<String,Double>(), numEpochs, traceLosses);
 	}
+
 	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample> examples, 
 			Map<String, Double> initialParamVec, 
 			int numEpochs, 
 			boolean traceLosses) {
 		log.info("Training on cooked examples...");
+		double previousAvgLoss = Double.MAX_VALUE;
 		long start = System.currentTimeMillis();
 		this.epoch = 0;
 		Map<String,Double> paramVec = initialParamVec;
@@ -99,6 +125,7 @@ public class Trainer {
 		setUpEpochs(paramVec);
 		for (int i=0; i<numEpochs; i++) {
 			this.epoch++;
+			//learner.setEpoch(this.epoch); // wwc does NOT seem to help: TODO why not?
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
 			setUpExamples(i,examples);
@@ -115,8 +142,20 @@ public class Trainer {
 			cleanUpExamples(i);
 			//			log.info(k+" examples processed");
 			if(traceLosses) {
-				System.out.println("training loss "+(totalLossThisEpoch / numExamplesThisEpoch) + " on "+ numExamplesThisEpoch +" examples");
-				//if (this.testData)
+			    // wwc - added some more tracing here
+			    double avgLoss = (totalLossThisEpoch / numExamplesThisEpoch); 
+			    System.out.print("avg training loss " + avgLoss
+					     + " on "+ numExamplesThisEpoch +" examples");
+			    if (epoch>1) {
+				System.out.println(" improved by " + (previousAvgLoss-avgLoss));
+			    } else 
+				System.out.println();
+			    if (previousAvgLoss-avgLoss < 0.0) {
+				System.out.println("WARNING: loss INCREASED by " + 
+						   (avgLoss-previousAvgLoss) + " - what's THAT about?");
+			    }
+			    previousAvgLoss = avgLoss;
+			    //if (this.testData)
 			}
 		}
 		//		cleanUpEpochs();

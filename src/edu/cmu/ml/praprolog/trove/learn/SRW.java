@@ -50,6 +50,7 @@ public class SRW<E extends RWExample> {
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
 	}
+
 	/**
 	 * For each feature in the graph which is not already in the parameter vector,
 	 * initialize the parameter value to a weight near 1.0, slightly randomized to avoid symmetry.
@@ -64,6 +65,7 @@ public class SRW<E extends RWExample> {
 			}
 		}
 	}
+
 	/**
 	 * The unnormalized weight of the edge from u to v, weighted by the given parameter vector.
 	 * @param g
@@ -308,6 +310,18 @@ public class SRW<E extends RWExample> {
 	
 	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
 	
+	/** Add the gradient vector to a second accumulator vector
+	 */
+	public void accumulateGradient(TObjectDoubleHashMap<String> grad, Map<String,Double> sumGradient) {
+	    for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
+		f.advance();
+		if (!sumGradient.containsKey(f.key())) {
+		    sumGradient.put(f.key(), new Double(0.0));
+		}
+		sumGradient.put(f.key(), new Double(sumGradient.get(f.key()).doubleValue() + f.value()));
+	    }
+	}
+
 	/**
 	 * Modify the parameter vector paramVec by taking a gradient step along the dir suggested by this example.
 	 * @param weightVec

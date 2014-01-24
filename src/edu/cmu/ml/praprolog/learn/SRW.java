@@ -45,6 +45,8 @@ public class SRW<E extends RWExample> {
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
 	}
+
+
 	/**
 	 * For each feature in the graph which is not already in the parameter vector,
 	 * initialize the parameter value to a weight near 1.0, slightly randomized to avoid symmetry.
