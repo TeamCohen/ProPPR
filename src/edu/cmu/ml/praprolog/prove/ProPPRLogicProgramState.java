@@ -277,8 +277,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 	public boolean isHeadEdge() {
 		if (this.goals.length==0) return false;
 		return this.goals[0].getArity()==2 
-				&& this.goals[0].getArg(0).isConstant()
-				&& this.goals[0].getArg(1).isVariable();
+				&& this.goals[0].getArg(0).isConstant();
 	}
 	@Override
 	public int getHeadArity() {
