@@ -27,7 +27,7 @@ public class SRW<E extends RWExample> {
 	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
 	protected static final int NUM_EPOCHS = 5;
-	private static final double MAX_PARAM_VALUE = Math.log(Double.MAX_VALUE);
+//	private static final double MAX_PARAM_VALUE = Math.log(Double.MAX_VALUE);
 	public static final int DEFAULT_MAX_T=10;
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
@@ -211,8 +211,6 @@ public class SRW<E extends RWExample> {
 			// above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
 			double term2 = (edgeUV / totEdgeWeightU) * totDerEdgeUV;
 			double val = derEdgeUV.get(f) - term2;
-			if ( Double.isNaN(val / totEdgeWeightU))
-				throw new IllegalStateException("No NaNs Allowed");
 			derWalk.put(f, val / totEdgeWeightU);
 		}
 		return derWalk;
@@ -312,36 +310,36 @@ public class SRW<E extends RWExample> {
 		// unfortunately, this means we need locked access to the paramVec, since if someone fusses with it
 		// between when we set the rate and when we apply it, we could end up pushing the paramVec too far.
 		// :(
-		synchronized(paramVec) { 
-			for (Map.Entry<String,Double>f : grad.entrySet()) { //String f = fEntry.getKey(); 
-				if (Math.abs(f.getValue()) > 0) { 
-					double pf = Dictionary.safeGet(paramVec,f.getKey());
-					double smallEnough = pf / f.getValue();
-					double largeEnough = (pf - MAX_PARAM_VALUE) / f.getValue();
-					if (f.getValue() > 0) {
-						if (largeEnough > smallEnough) 
-							throw new IllegalStateException("Gradient for feature "+f.getKey()+" out of range");
-						rate = Math.min(rate, smallEnough);
-						rate = Math.max(rate, largeEnough);
-					} else {
-						if (largeEnough < smallEnough) 
-							throw new IllegalStateException("Gradient for feature "+f.getKey()+" out of range");
-						rate = Math.max(rate, smallEnough);
-						rate = Math.min(rate, largeEnough);
-					}
-					
-				}
-			}
+//		synchronized(paramVec) { 
+//			for (Map.Entry<String,Double>f : grad.entrySet()) { //String f = fEntry.getKey(); 
+//				if (Math.abs(f.getValue()) > 0) { 
+//					double pf = Dictionary.safeGet(paramVec,f.getKey());
+//					double smallEnough = pf / f.getValue();
+//					double largeEnough = (pf - MAX_PARAM_VALUE) / f.getValue();
+//					if (f.getValue() > 0) {
+//						if (largeEnough > smallEnough) 
+//							throw new IllegalStateException("Gradient for feature "+f.getKey()+" out of range");
+//						rate = Math.min(rate, smallEnough);
+//						rate = Math.max(rate, largeEnough);
+//					} else {
+//						if (largeEnough < smallEnough) 
+//							throw new IllegalStateException("Gradient for feature "+f.getKey()+" out of range");
+//						rate = Math.max(rate, smallEnough);
+//						rate = Math.min(rate, largeEnough);
+//					}
+//					
+//				}
+//			}
 //			if (log.isDebugEnabled()) log.debug("adjusted rate "+rate);
 			for (Map.Entry<String, Double> f : grad.entrySet()) {
 //				log.debug(String.format("%s %f %f [%f]", f,Dictionary.safeGet(paramVec,f),grad.get(f),rate*grad.get(f)));
 				Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
-				if (paramVec.get(f.getKey()) < 0) {
-					throw new IllegalStateException("Parameter weight "+f.getKey()+" can't be negative");
-				} else if (paramVec.get(f.getKey()) > MAX_PARAM_VALUE)
-					throw new IllegalStateException("Parameter weight "+f.getKey()+" can't trigger Infinity");
+//				if (paramVec.get(f.getKey()) < 0) {
+//					throw new IllegalStateException("Parameter weight "+f.getKey()+" can't be negative");
+//				} else if (paramVec.get(f.getKey()) > MAX_PARAM_VALUE)
+//					throw new IllegalStateException("Parameter weight "+f.getKey()+" can't trigger Infinity");
 			}
-		}
+//		}
 	}
 	
 	/**
