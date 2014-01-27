@@ -90,12 +90,17 @@ public class SRW<E extends RWExample> {
 	public double edgeWeightFunction(double product) {
 		//WW: We found exp to have the overflow issue, replace by sigmoid.
 		//return Math.exp(product);
-		return sigmoid(product);
+		//return sigmoid(product);
+		return tanh(product);
 	}
 
 	public double sigmoid(double x){
 		return 1/(1 + Math.exp(-x));
        }
+
+	public double tanh(double x){
+		return ( Math.exp(x) -  Math.exp(-x))/( Math.exp(x) +  Math.exp(-x));
+	}
 	
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
@@ -261,11 +266,16 @@ public class SRW<E extends RWExample> {
 		
 		//WW: replace with sigmoid function's derivative.
 		//return Math.exp(weight);
-		return derivSigmoid(weight);
+		//return derivSigmoid(weight);
+		return derivTanh(weight);
 	}
 
 	public double derivSigmoid(double value) {
 		return sigmoid(value) * (1 - sigmoid(value));
+       }
+
+	public double derivTanh(double value) {
+		return (1- tanh(value)*tanh(value));
        }
 
 

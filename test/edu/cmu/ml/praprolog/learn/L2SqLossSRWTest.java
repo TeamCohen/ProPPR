@@ -49,7 +49,7 @@ public class L2SqLossSRWTest extends SRWTest {
 		assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 				baselineLoss > biasedLoss);
 		assertEquals("baselineLoss",0.010638133294,baselineLoss,1e-4);
-		assertEquals("biasedLoss",3.287e-4,biasedLoss,1e-5);
+		assertEquals("biasedLoss",0.00129850,biasedLoss,1e-5);
 //		assertEquals("biasedLoss",0,biasedLoss,1e-4); <-- pre-sigmoid value
 		
 		
