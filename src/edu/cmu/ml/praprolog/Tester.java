@@ -27,6 +27,7 @@ import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
 import edu.cmu.ml.praprolog.prove.TracingDfsProver;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
 
 public class Tester extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(Tester.class);
@@ -165,16 +166,15 @@ public class Tester extends ExampleThawing {
 	public static void main(String[] args) {
 		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TEST | Configuration.USE_PARAMS;
 		log.info(String.format("flags: 0x%x",flags));
-		Configuration c = new Configuration(args,flags);
+		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
 		
-		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
+//		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
 		if (c.paramsFile != null)
-			tester.getMasterProgram().setFeatureDictWeighter(InnerProductWeighter.fromParamVec(
-					Dictionary.load(c.paramsFile)));
+			c.tester.setParams(Dictionary.load(c.paramsFile));
 
 		log.info("Testing on "+c.testFile+"...");
 		long start = System.currentTimeMillis();
-		TestResults results = tester.testExamples(c.testFile);
+		TestResults results = c.tester.testExamples(c.testFile);
 		System.out.println("result= running time "+(System.currentTimeMillis() - start));
 		System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 	
