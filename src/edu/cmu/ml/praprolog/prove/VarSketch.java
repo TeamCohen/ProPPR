@@ -20,9 +20,9 @@ public class VarSketch {
 		}
 	}
 	
-	public void include(RenamingSubstitution theta) {
-		this.n = Math.max(n, theta.offset); //hack
-	}
+//	public void include(RenamingSubstitution theta) {
+//		this.n = Math.max(n, theta.offset); //hack
+//	}
 
 	public int size() {
 		return n;
