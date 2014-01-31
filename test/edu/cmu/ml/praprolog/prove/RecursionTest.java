@@ -4,11 +4,12 @@ import static org.junit.Assert.*;
 
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class RecursionTest {
 
-	@Test
+	@Test @Ignore
 	public void test() {
 		/*
 		 * interp(P,X,Y) :- interp(R1,X,Z), interp(R2,Z,Y), abduce_chain(P,R1,R2) #fixedWeight.
