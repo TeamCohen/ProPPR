@@ -44,7 +44,7 @@ public class L2PosNegLossSRWTest extends SRWTest {
 			assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 					baselineLoss > biasedLoss);
 			assertEquals("baselineLoss",6.25056697891,baselineLoss,1e-6);
-			assertEquals("biasedLoss",5.43039527,biasedLoss,1e-6);
+			assertEquals("biasedLoss",5.6002602,biasedLoss,1e-6);
 //			assertEquals("biasedLoss",3.41579147351,biasedLoss,1e-6); <-- pre-sigmoid value
 			
 			Map<String,Double> gradient = srw.gradient(uniformWeightVec, new PosNegRWExample(brGraphs.get(0), startVec, pos,neg));

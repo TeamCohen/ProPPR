@@ -25,6 +25,7 @@ public class Configuration {
 	public static final int USE_LEARNINGSET=0x80;
 	public static final int USE_QUERIES=0x100;
 	public static final int USE_PARAMS = 0x200;
+	public static final int USE_SRW = 0x400;
 	/** programFiles, prover, threads **/
 	public static final int USE_DEFAULTS=0x19;
 	

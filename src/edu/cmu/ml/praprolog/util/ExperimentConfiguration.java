@@ -202,6 +202,8 @@ public class ExperimentConfiguration extends Configuration {
 				} 
 			}
 		} else this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+		
+		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
 	}
 	
 	protected void setupSRW(CommandLine line, int flags, Options options) {

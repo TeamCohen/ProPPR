@@ -15,7 +15,7 @@ then
 else
     PROGRAM=`cat $DIR/programFiles.arg`
     echo "Running regression experiment..."
-    java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Experiment --programFiles ${PROGRAM%:} --train $DIR/toytrain.data --output $DIR/toytrain.cooked --test $DIR/toytest.data --params $DIR/params.wts --prover dpr --epochs 85 | tee $DIR/log.log
+    java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Experiment --programFiles ${PROGRAM%:} --train $DIR/toytrain.data --output $DIR/toytrain.cooked --test $DIR/toytest.data --params $DIR/params.wts --prover dpr --epochs 83 | tee $DIR/log.log
 
     echo "Checking performance against gold standard..."
     sort -k 1b,1 $DIR/params.wts -o $DIR/params.wts
@@ -36,7 +36,7 @@ if [ $FAILED -ne 1 ]
 then
     echo "SUCCESS"
     echo "Checking param values against gold standard..."
-    join $DIR/params.wts.gold $DIR/params.wts | awk '{ foo = sqrt( ($3-$2)^2 ); if (foo > .2) { print foo,$1 }}' > $DIR/params.overweight
+    join $DIR/params.wts.gold $DIR/params.wts | awk '{ foo = sqrt( ($3-$2)^2 ); if (foo > .05) { print foo,$1 }}' > $DIR/params.overweight
     N=`wc -l $DIR/params.overweight | awk '{print $1}'`
 #echo "$N"
     if [ $N -gt 0 ];
