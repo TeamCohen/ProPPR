@@ -80,7 +80,11 @@ public class TestComponentPerformance {
 			LogicProgram lp = new LogicProgram(cs);
 			gstart = System.currentTimeMillis();
 			for(int i=0;i<TIMES;i++) {
-				n+=lp.lpOutlinks(states[i],LogicProgram.DEFAULT_TRUELOOP, LogicProgram.DEFAULT_RESTART).size();
+				try {
+					n+=lp.lpOutlinks(states[i],LogicProgram.DEFAULT_TRUELOOP, LogicProgram.DEFAULT_RESTART).size();
+				} catch (LogicProgramException e) {
+					throw new IllegalStateException(e);
+				}
 				gend = System.currentTimeMillis();
 				t += gend-gstart;
 				if (i % 100 == 0) {

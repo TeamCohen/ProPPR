@@ -70,10 +70,14 @@ public class TracingDfsProver extends Prover {
 		List<WeightedLogicProgramState> result = new ArrayList<WeightedLogicProgramState>();
 		result.add(new WeightedLogicProgramState(state0, incomingEdgeWeight));
 		if (!state0.isSolution() && state0.getDepth() < this.maxDepth) {
-			for(LogicProgramOutlink w : lp.lpOutlinks(state0, LogicProgram.DEFAULT_TRUELOOP, LogicProgram.DEFAULT_RESTART)){ // trueloop, restart
-				log.debug("@"+state0.getDepth()+" "+state0+" -> "+w.getState());
-				if (gw != null) gw.writeEdge(state0, w.getState(), w.getFeatureList());
-				result.addAll(this.dfs(lp,w.getState(),gw,w.getWeight()));
+			try {
+				for(LogicProgramOutlink w : lp.lpOutlinks(state0, LogicProgram.DEFAULT_TRUELOOP, LogicProgram.DEFAULT_RESTART)){ // trueloop, restart
+					log.debug("@"+state0.getDepth()+" "+state0+" -> "+w.getState());
+					if (gw != null) gw.writeEdge(state0, w.getState(), w.getFeatureList());
+					result.addAll(this.dfs(lp,w.getState(),gw,w.getWeight()));
+				}
+			} catch (LogicProgramException e) {
+				throw new IllegalStateException(e);
 			}
 		}
 		return result;

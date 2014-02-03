@@ -51,10 +51,14 @@ public class PprProver extends Prover {
 		int i=1,n=vec.size();
 		for (Map.Entry<LogicProgramState, Double> s : vec.entrySet()) {
 			log.info("state "+(i++)+" of "+n);
-			for (LogicProgramOutlink o : lp.lpNormalizedOutlinks(s.getKey(), TRUELOOP, RESTART)) {
-				if (gw != null) gw.writeEdge(s.getKey(), o.getState(), o.getFeatureList());
-				if (log.isTraceEnabled()) log.trace("walkonce normalizedOutlinks "+s.getKey()+" "+o.getWeight()+" "+o.getState());
-				Dictionary.increment(nextVec, o.getState(), o.getWeight() * s.getValue(),"(elided)");
+			try {
+				for (LogicProgramOutlink o : lp.lpNormalizedOutlinks(s.getKey(), TRUELOOP, RESTART)) {
+					if (gw != null) gw.writeEdge(s.getKey(), o.getState(), o.getFeatureList());
+					if (log.isTraceEnabled()) log.trace("walkonce normalizedOutlinks "+s.getKey()+" "+o.getWeight()+" "+o.getState());
+					Dictionary.increment(nextVec, o.getState(), o.getWeight() * s.getValue(),"(elided)");
+				}
+			} catch (LogicProgramException e) {
+				throw new IllegalStateException(e);
 			}
 		}
 		return nextVec;
