@@ -11,7 +11,7 @@ import java.io.LineNumberReader;
  *
  */
 public class TestComponentPerformance {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws LogicProgramException {
 		if (args.length<4) {
 			System.err.println("Usage:\n\tntimes {component|component:component:...} name queryfile.txt\n");
 			System.exit(0);
