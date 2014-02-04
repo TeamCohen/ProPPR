@@ -1,6 +1,7 @@
 package edu.cmu.ml.praprolog.prove;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -102,13 +103,20 @@ public class RuleComponent extends Component {
 		return sb.toString();
 	}
 
+	public static RuleComponent loadCompiled(List<String> files) {
+		RuleComponent result = new RuleComponent();
+		for (String filename : files) loadInto(result,filename);
+		return result;
+	}
 	/**
 	 * Load a rulebase in the format produced by the rulecompiler.
 	 * @param fileName
 	 * @return
 	 */
 	public static RuleComponent loadCompiled(String filename) {
-		RuleComponent result = new RuleComponent();
+		return loadCompiled(Collections.singletonList(filename));
+	}
+	private static void loadInto(RuleComponent result, String filename) {
 		ParsedFile file = new ParsedFile(filename);
 		for (String line : file) {
 			String[] parts = line.split("#");
@@ -137,7 +145,6 @@ public class RuleComponent extends Component {
 			// rule(lhs,rhs,features=tuple(),variableList=string.ascii_uppercase)
 
 		}
-		return result;
 	}
 
 	@Override
