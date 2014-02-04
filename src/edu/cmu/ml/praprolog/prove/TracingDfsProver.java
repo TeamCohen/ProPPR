@@ -28,6 +28,10 @@ public class TracingDfsProver extends Prover {
 		this.maxDepth=maxDepth;
 	}
 	
+	public Prover copy() {
+		return new TracingDfsProver(this.maxDepth);
+	}
+	
 	@Override
 	public Map<LogicProgramState, Double> proveState(LogicProgram lp,
 			LogicProgramState state0, GraphWriter w) {

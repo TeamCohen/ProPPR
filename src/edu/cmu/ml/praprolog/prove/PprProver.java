@@ -16,11 +16,19 @@ public class PprProver extends Prover {
 	private static final boolean TRUELOOP = true;
 	public static final int DEFAULT_MAXDEPTH=5;
 	protected int maxDepth;
-	protected boolean trace=false;
+	protected boolean trace;
 	
 	public PprProver() { this(DEFAULT_MAXDEPTH); }
 	public PprProver(int md) {
+		this(md,false);
+	}
+	public PprProver(int md, boolean tr) {
 		this.maxDepth=md;
+		trace=tr;
+	}
+	
+	public Prover copy() {
+		return new PprProver(this.maxDepth, this.trace);
 	}
 	
 	public void setMaxDepth(int i) {

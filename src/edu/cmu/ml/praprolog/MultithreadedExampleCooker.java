@@ -27,6 +27,12 @@ public class MultithreadedExampleCooker extends ExampleCooker {
 	}
 
 	@Override
+	protected Prover getProver() {
+		// for threadsafe backtraces
+		return this.prover.copy();
+	}
+	
+	@Override
 	public void cookExamples(String dataFile, Writer writer) throws IOException {
 		ExecutorService executor = Executors.newFixedThreadPool(this.nthreads);
 		

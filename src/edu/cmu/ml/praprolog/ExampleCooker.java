@@ -109,6 +109,10 @@ public class ExampleCooker extends ExampleThawing {
 		return line.toString();
 	}
 	
+	protected Prover getProver() {
+		return this.prover;
+	}
+	
 
 	/**
 	 * Run the prover to convert a raw example to a random-walk example
@@ -123,7 +127,7 @@ public class ExampleCooker extends ExampleThawing {
 					+Dictionary.buildString(x.getPosSet(), new StringBuilder(), " -", false).toString()
 					+Dictionary.buildString(x.getPosSet(), new StringBuilder(), " +", false).toString());
 		GraphWriter writer = new GraphWriter();
-		Map<LogicProgramState,Double> ans = this.prover.proveState(program, x.getQueryState(), writer);
+		Map<LogicProgramState,Double> ans = this.getProver().proveState(program, x.getQueryState(), writer);
 		if (log.isTraceEnabled()) {
 			new TracingDfsProver().proveState(new LogicProgram(program), x.getQueryState());
 		}

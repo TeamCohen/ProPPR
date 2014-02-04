@@ -53,12 +53,19 @@ public class DprProver extends Prover {
 		this(false, epsilon, minalpha);
 	}
 	public DprProver(boolean lazyWalk, double epsilon, double minalpha) {
-		this.epsilon = epsilon;
-		this.minAlpha = minalpha;
-		if (lazyWalk) this.stayProbability = 0.5;
-		else this.stayProbability = 0.0;
+		this( (lazyWalk?0.5:0.0),epsilon,minalpha);
+	}
+	protected DprProver(double stayP, double eps, double mina) {
+		this.epsilon = eps;
+		this.minAlpha = mina;
+		this.stayProbability = stayP;
 		moveProbability = 1.0-stayProbability;
 	}
+	
+	public Prover copy() {
+		return new DprProver(this.stayProbability, this.epsilon, this.minAlpha);
+	}
+	
 	@Override
 	public Map<LogicProgramState, Double> proveState(LogicProgram lp, LogicProgramState state0, GraphWriter gw) {
 
