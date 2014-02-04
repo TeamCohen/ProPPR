@@ -50,7 +50,7 @@ public class LogicProgram {
 		this.weighter = w;
 	}
 	public Iterable<LogicProgramOutlink> lpNormalizedOutlinks(LogicProgramState state, boolean trueloop,
-			boolean restart) {
+			boolean restart) throws LogicProgramException {
 		List<LogicProgramOutlink> outList = this.lpOutlinks(state, trueloop, restart);
 		double z = 0;
 		for (LogicProgramOutlink o : outList) z += o.getWeight();
@@ -67,9 +67,10 @@ public class LogicProgram {
 	 * @param trueloop
 	 * @param restart
 	 * @return
+	 * @throws LogicProgramException 
 	 */
 	public List<LogicProgramOutlink> lpOutlinks(LogicProgramState state, boolean trueloop,
-			boolean restart) {
+			boolean restart) throws LogicProgramException {
 		List<LogicProgramOutlink> result = new ArrayList<LogicProgramOutlink>();
 		if (state.isSolution()) {
 			if (trueloop) {
@@ -91,7 +92,7 @@ public class LogicProgram {
 					return result;
 				}
 			}
-			throw new IllegalStateException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
+			throw new LogicProgramException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
 		}
 	}
 
@@ -141,8 +142,9 @@ public class LogicProgram {
 	 * @param trueLoop
 	 * @param restart
 	 * @return
+	 * @throws LogicProgramException 
 	 */
-    public int lpDegree(LogicProgramState state, boolean trueLoop, boolean restart) {
+    public int lpDegree(LogicProgramState state, boolean trueLoop, boolean restart) throws LogicProgramException {
     	if(log.isDebugEnabled()) log.debug("degree of "+state);
         if (state.isSolution()) {
             int d=0;
@@ -159,7 +161,7 @@ public class LogicProgram {
                 }
             }
         }
-        throw new IllegalStateException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
+        throw new LogicProgramException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
     }
     /**
      * The weight that would be assigned to the restart from this
@@ -168,8 +170,9 @@ public class LogicProgram {
      * @param state
      * @param trueLoop
      * @return
+     * @throws LogicProgramException 
      */
-    public LogicProgramOutlink lpRestartWeight(LogicProgramState state, boolean trueLoop) {
+    public LogicProgramOutlink lpRestartWeight(LogicProgramState state, boolean trueLoop) throws LogicProgramException {
         if (state.isSolution() && trueLoop) {
             return weightForRestartEdge(trueLoopRestartFeatureDict,state);
         } else {
@@ -179,7 +182,7 @@ public class LogicProgram {
                 }
             }
         }
-        throw new IllegalStateException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
+        throw new LogicProgramException("No definition for "+state.getHeadFunctor()+"/"+state.getHeadArity()+"("+state.getHeadArg1()+" ...)");
     }
     /**
      * Convert the featureDict to a numeric weight, and possibly

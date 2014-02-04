@@ -23,7 +23,7 @@ public class Rule {
 		
 	}
 	
-	public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta) {
+	public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta) throws LogicProgramException {
 		return featuresAsDict(theta, RenamingSubstitution.NOT_RENAMED);
 	}
 	/**
@@ -31,14 +31,15 @@ public class Rule {
         being string versious of theta(F1),....,theta(Fk), and values 1.0.
 	 * @param theta
 	 * @return
+	 * @throws LogicProgramException 
 	 */
-	public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta, int renamedP) {
+	public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta, int renamedP) throws LogicProgramException {
 		Map<Goal,Double> result = new HashMap<Goal,Double>();
 		for (Goal g0 : this.features) {
 			Goal g = theta.applyToGoal(g0, renamedP);
 			for (Argument a : g.getArgs()) {
 				if (!a.isConstant()) {
-					throw new IllegalStateException("Error converting features of rule "+this.toString()+" with theta "+theta.toString());
+					throw new LogicProgramException("Error converting features of rule "+this.toString()+" with theta "+theta.toString());
 				}
 			}
 			result.put(g,1.0);

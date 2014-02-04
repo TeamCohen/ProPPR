@@ -64,7 +64,7 @@ public class RuleComponent extends Component {
 	}
 
 	@Override
-	public List<Outlink> outlinks(LogicProgramState state0) {
+	public List<Outlink> outlinks(LogicProgramState state0) throws LogicProgramException {
 		if (! (state0 instanceof ProPPRLogicProgramState)) 
 			throw new UnsupportedOperationException("Can't handle tuprolog states yet in rulecomponent");
 		ProPPRLogicProgramState state = (ProPPRLogicProgramState) state0;
