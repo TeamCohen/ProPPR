@@ -48,7 +48,7 @@ public abstract class GraphlikeComponent extends Component {
 				ProPPRLogicProgramState stateP = (ProPPRLogicProgramState) state.asProPPR();
 				double w = 1.0/values.size();
 				for (Argument v : values) {
-					RenamingSubstitution thnew = new RenamingSubstitution(stateP.getTheta().offset);
+					RenamingSubstitution thnew = new RenamingSubstitution(stateP.getOffset());
 					thnew.put(dstVar,v); 
 					result.add(new Outlink(this.getFeatureDict(), stateP.child(thnew)));
 				}

@@ -3,3 +3,9 @@ parent(X,Y) :- mother(X,Y).
 grandparent(X,Y) :- parent(X,Z),parent(Z,Y).
 #paternal grandfather
 pgf(X,Y) :- father(X,Z),father(Z,Y).
+
+#failure case:
+grandmother(X,Y) :- pgm(X,Y).
+grandmother(X,Y) :- mgm(X,Y).
+mgm(X,Y) :- mother(X,Z),mother(Z,Y).
+pgm(X,Y) :- pgf(Z,Y),married(Z,X).

@@ -10,6 +10,7 @@ import edu.cmu.ml.praprolog.ExampleCooker;
 import edu.cmu.ml.praprolog.ModularMultiExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
+import edu.cmu.ml.praprolog.RerankingTester;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
@@ -91,8 +92,9 @@ public class ExperimentConfiguration extends Configuration {
 					.withValueSeparator(':')
 					.withDescription("Default: t\n"
 						+"Available options:\n"
-						+"t\n"
-						+"mt[:threads] (default threads=3)")
+						+"t Tester\n"
+						+"mt[:threads] (default threads=3) MultithreadedTester\n"
+						+"rt RerankingTester")
 					.create());
 		options.addOption(
 				OptionBuilder
@@ -184,9 +186,24 @@ public class ExperimentConfiguration extends Configuration {
 				if (values.length > 1) threads = Integer.parseInt(values[1]);
 				if (values[0].equals("mt")) {
 					this.tester = new MultithreadedTester(this.prover, this.cooker.getMasterProgram(),threads);
-				}
+				} else if (values[0].equals("rt")) {
+					if (this.srw == null) this.setupSRW(line,flags,options);
+					if (this.trove) {
+						this.tester = new edu.cmu.ml.praprolog.trove.RerankingTester(
+								this.prover, 
+								this.cooker.getMasterProgram(), 
+								(edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW) this.srw);
+					} else {
+						this.tester = new edu.cmu.ml.praprolog.RerankingTester(
+								this.prover, 
+								this.cooker.getMasterProgram(), 
+								(edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw);
+					}
+				} 
 			}
 		} else this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+		
+		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
 	}
 	
 	protected void setupSRW(CommandLine line, int flags, Options options) {

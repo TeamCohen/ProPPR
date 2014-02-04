@@ -28,12 +28,18 @@ public class TracingDfsProver extends Prover {
 		this.maxDepth=maxDepth;
 	}
 	
+	public Prover copy() {
+		return new TracingDfsProver(this.maxDepth);
+	}
+	
 	@Override
 	public Map<LogicProgramState, Double> proveState(LogicProgram lp,
 			LogicProgramState state0, GraphWriter w) {
 		HashMap<LogicProgramState,Double> result = new HashMap<LogicProgramState,Double>();
 		int i=0;
-		for (WeightedLogicProgramState s : this.dfs(lp,state0, w)) {
+		List<WeightedLogicProgramState> states = this.dfs(lp,state0, w);
+		System.out.println();
+		for (WeightedLogicProgramState s : states) {
 			showState(s);
 			result.put(s.s,1.0/(++i));
 		}
@@ -44,14 +50,17 @@ public class TracingDfsProver extends Prover {
 	 * @param s
 	 */
 	private void showState(WeightedLogicProgramState s) {
+		System.out.println(buildState(s).toString());
+	}
+	private StringBuilder buildState(WeightedLogicProgramState s) {
 		StringBuilder sb = new StringBuilder();
-		for (int i=0; i<s.s.getDepth(); i++) sb.append(" |  ");
+		for (int i=0; i<s.s.getDepth(); i++) sb.append(" | ");
 //        if self.traceWeights: print "<%5.2f>" % w,
 		if (s.s.isSolution()) {
 			sb.append(s.s.description()).append(" using ");
 		}
 		sb.append(s.s.toString());
-		System.out.println(sb.toString());
+		return sb;
 	}
 	/**
 	 * Do depth first search from a state, yielding all states in the tree.
@@ -69,11 +78,16 @@ public class TracingDfsProver extends Prover {
 		ProPPRLogicProgramState state0 = (ProPPRLogicProgramState) state00;
 		List<WeightedLogicProgramState> result = new ArrayList<WeightedLogicProgramState>();
 		result.add(new WeightedLogicProgramState(state0, incomingEdgeWeight));
+		log.info(buildState(result.get(result.size()-1)).toString());
 		if (!state0.isSolution() && state0.getDepth() < this.maxDepth) {
-			for(LogicProgramOutlink w : lp.lpOutlinks(state0, LogicProgram.DEFAULT_TRUELOOP, LogicProgram.DEFAULT_RESTART)){ // trueloop, restart
-				log.debug("@"+state0.getDepth()+" "+state0+" -> "+w.getState());
-				if (gw != null) gw.writeEdge(state0, w.getState(), w.getFeatureList());
-				result.addAll(this.dfs(lp,w.getState(),gw,w.getWeight()));
+			try {
+				for(LogicProgramOutlink w : lp.lpOutlinks(state0, LogicProgram.DEFAULT_TRUELOOP, LogicProgram.DEFAULT_RESTART)){ // trueloop, restart
+					log.debug("@"+state0.getDepth()+" "+state0+" -> "+w.getState());
+					if (gw != null) gw.writeEdge(state0, w.getState(), w.getFeatureList());
+					result.addAll(this.dfs(lp,w.getState(),gw,w.getWeight()));
+				}
+			} catch (LogicProgramException e) {
+				throw new IllegalStateException(e);
 			}
 		}
 		return result;

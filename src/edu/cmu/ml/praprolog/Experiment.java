@@ -57,7 +57,7 @@ public class Experiment {
 		
 		// test trained parameters
 		log.info("Testing on "+c.testFile+"...");
-		c.cooker.getMasterProgram().setFeatureDictWeighter(InnerProductWeighter.fromParamVec(paramVec));
+		c.tester.setParams(paramVec);
 		TestResults results = c.tester.testExamples(c.testFile,c.strict);
 		if(!log.isInfoEnabled())  {
 			System.out.println("result= running time "+(System.currentTimeMillis() - start));

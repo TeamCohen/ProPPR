@@ -46,8 +46,9 @@ public abstract class Component {
         state->t transition
 	 * @param state
 	 * @return
+	 * @throws LogicProgramException 
 	 */
-	public abstract List<Outlink> outlinks(LogicProgramState state);
+	public abstract List<Outlink> outlinks(LogicProgramState state) throws LogicProgramException;
 	public static class Outlink {
 			Map<Goal,Double> featureDict;
 			LogicProgramState state;
@@ -70,8 +71,9 @@ public abstract class Component {
         be (1-alpha)*w
 	 * @param state
 	 * @return
+	 * @throws LogicProgramException 
 	 */
-	public Map<Goal, Double> restartFeatureDict(LogicProgramState state) {
+	public Map<Goal, Double> restartFeatureDict(LogicProgramState state) throws LogicProgramException {
 		int n = degree(state);
 		Map<Goal,Double> featureDict = new HashMap<Goal,Double>();
 //		featureDict.putAll(this.restartFD);
@@ -88,7 +90,7 @@ public abstract class Component {
 	public abstract void compile();
 	public abstract void compile(SymbolTable variableSymTab);
 
-	public int degree(LogicProgramState state) {
+	public int degree(LogicProgramState state) throws LogicProgramException {
         return this.outlinks(state).size();
     }
 
