@@ -95,10 +95,8 @@ public class QueryAnswerer {
 		long end = System.currentTimeMillis();
 		Map<String,Double> solutions = Prover.filterSolutions(dist);
 		if (normalize) {
-		    System.out.println("normalizing");
 		    solutions = Dictionary.normalize(solutions);
 		} else {
-		    System.out.println("not normalizing");
 		}
 		List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(solutions);
 		//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
