@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class BacktraceTest {
 
-	@Test
+	@Test(expected = IllegalStateException.class)
 	public void test() throws IOException {
 		LogicProgram program = new LogicProgram(
 				Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),Component.ALPHA_DEFAULT));
@@ -25,12 +25,6 @@ public class BacktraceTest {
 				assertFalse("Description includes variables",s.description().contains("v["));
 			}
 		}
-		
-//		System.out.println("===");
-//		for (String s : Prover.filterSolutions(ans).keySet()) {
-//			System.out.println(s);
-//			assertFalse("Filtered solutions contain variables",s.contains("v["));
-//		}
 	}
 
 }
