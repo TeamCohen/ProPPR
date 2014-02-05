@@ -61,6 +61,11 @@ public class GraphComponent extends GraphlikeComponent {
 		return this.featureDict;
 	}
 
+	public static GraphComponent load(List<String> files) {
+		GraphComponent result = new GraphComponent(files.get(0)+ (files.size() > 1 ? "+"+(files.size()-1)+"others" : ""));
+		for (String filename : files) loadInto(result,filename);
+		return result;
+	}
 	/**
 	 * Return a simpleGraphComponent with all the components loaded from
         a file.  The format of the file is that each line is a tab-separated 
@@ -69,7 +74,9 @@ public class GraphComponent extends GraphlikeComponent {
 	 * @return
 	 */
 	public static GraphComponent load(String fileName) {
-		GraphComponent result = new GraphComponent(fileName);
+		return load(Collections.singletonList(fileName));
+	}
+	private static void loadInto(GraphComponent result, String fileName) {
 		ParsedFile file = new ParsedFile(fileName);
 		for (String line : file) {
 			if(file.getLineNumber() % 10000 == 0) log.info("Read "+file.getLineNumber()+" lines");
@@ -81,6 +88,5 @@ public class GraphComponent extends GraphlikeComponent {
 			result.addEdge(edgeLabel, Argument.fromString(src), Argument.fromString(dst));
 		}
 		file.close();
-		return result;
 	}
 }

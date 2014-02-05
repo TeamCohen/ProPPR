@@ -160,31 +160,24 @@ public class GoalComponent extends Component {
 		return sb.toString();
 	}
 
+	public static GoalComponent loadCompiled(List<String> files) {
+		GoalComponent result = new GoalComponent(files.get(0)+ (files.size() > 1 ? "+"+(files.size()-1)+"others" : ""));
+		for (String filename : files) loadInto(result,filename);
+		return result;
+	}
+	private static void loadInto(GoalComponent result, String filename) {
+		ParsedFile file = new ParsedFile(filename);
+		for (String line : file) {
+			result.addFact(Goal.parseGoal(line,"\t"));//new Goal(functor_args[0],functor_args[1].split("\t")));
+		}
+	}
 	/**
 	 * Returns a goal component loaded from a file, where each line contains
         a single ground goal, stored as functor <TAB> arg1 <TAB> .....
 	 * @param filename
 	 */
 	public static GoalComponent loadCompiled(String filename) {
-		GoalComponent result = new GoalComponent(filename);
-		ParsedFile file = new ParsedFile(filename);
-		for (String line : file) {
-			result.addFact(Goal.parseGoal(line,"\t"));//new Goal(functor_args[0],functor_args[1].split("\t")));
-		}
-		return result;
-		/*
-		 *     def loadCompiled(inputFile):
-        """"""
-        result = goalComponent(label=inputFile)
-        for line in util.linesOf(inputFile):
-            line = line.strip()
-            if not line.startswith("#") and line:
-                parts = line.split("\t")
-                functor = parts[0]
-                args = parts[1:]
-                result.addFact(goal(functor,args))
-        return result
-		 */
+		return loadCompiled(Collections.singletonList(filename));
 	}
 
 	@Override
