@@ -14,10 +14,10 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
 
 public class FindGradient {
-	private static final Logger log = Logger.getLogger(Experiment.class);
+	private static final Logger log = Logger.getLogger(FindGradient.class);
 	public static void main(String[] args) {
 		ExperimentConfiguration c = new ExperimentConfiguration(args, 
-				Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_PARAMS);
+				Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_PARAMS | Configuration.USE_LEARNINGSET);
 		
 		System.out.println(c.toString());
 		
@@ -29,8 +29,12 @@ public class FindGradient {
 		log.info("Training model parameters...");
 		Map<String,Double> batchGradient;
 		if (c.trove) {
+		    Map<String,Double> paramVec = null;
 			Trainer trainer = (Trainer) c.trainer;
-			batchGradient = trainer.findGradient(trainer.importCookedExamples(c.outputFile));
+			if (c.epochs>0) {
+			    paramVec = trainer.trainParametersOnCookedIterator(trainer.importCookedExamples(c.outputFile), c.epochs, c.traceLosses);
+			}
+			batchGradient = trainer.findGradient(trainer.importCookedExamples(c.outputFile),paramVec);
 		} else {
 		    throw new UnsupportedOperationException("non-trove implementation? it's in the mail.");
 		}
