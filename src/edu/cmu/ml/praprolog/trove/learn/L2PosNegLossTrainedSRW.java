@@ -16,8 +16,8 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 
-	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta) {
-		super(maxT,mu,eta);
+	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, int wScheme) {
+		super(maxT,mu,eta,wScheme);
 	}
 
 	public L2PosNegLossTrainedSRW() {

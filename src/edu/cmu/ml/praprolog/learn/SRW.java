@@ -27,23 +27,31 @@ public class SRW<E extends RWExample> {
 	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
 	protected static final int NUM_EPOCHS = 5;
-//	private static final double MAX_PARAM_VALUE = Math.log(Double.MAX_VALUE);
 	public static final int DEFAULT_MAX_T=10;
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
+	public static final int WEIGHT_SIGMOID=0;
+	public static final int WEIGHT_TANH=1;
+	public static final int WEIGHT_DEFAULT=WEIGHT_TANH;
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected int epoch;
 	protected Set<String> untrainedFeatures;
+	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
-	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA); }
-	public SRW(int maxT, double mu, double eta) {
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, WEIGHT_DEFAULT); }
+	public SRW(int maxT, double mu, double eta, int wScheme) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
+		
+		switch(wScheme) {
+		case WEIGHT_SIGMOID: this.weightingScheme = new SigmoidWeightingScheme(); break;
+		case WEIGHT_TANH: this.weightingScheme = new TanhWeightingScheme(); break;
+		}
 	}
 
 
@@ -73,28 +81,28 @@ public class SRW<E extends RWExample> {
 		for (Feature f : g.phi(u, v)) {
 			sum += Dictionary.safeGet(p, f.featureName) * f.weight;
 		}
-		return edgeWeightFunction(sum);
+		return this.weightingScheme.edgeWeightFunction(sum);
 	}
 
-	/**
-	 * The function wraps the product of edge weight and feature.
-	 * @param p product of edge weight and feature.
-	 * @return 
-	 */
-	public double edgeWeightFunction(double product) {
-		//WW: We found exp to have the overflow issue, replace by sigmoid.
-		//return Math.exp(product);
-		//return sigmoid(product);
-		return tanh(product);
-	}
-
-	public double sigmoid(double x){
-		return 1/(1 + Math.exp(-x));
-       }
-
-	public double tanh(double x){
-		return ( Math.exp(x) -  Math.exp(-x))/( Math.exp(x) +  Math.exp(-x));
-	}
+//	/**
+//	 * The function wraps the product of edge weight and feature.
+//	 * @param p product of edge weight and feature.
+//	 * @return 
+//	 */
+//	public double edgeWeightFunction(double product) {
+//		//WW: We found exp to have the overflow issue, replace by sigmoid.
+//		//return Math.exp(product);
+//		//return sigmoid(product);
+//		return tanh(product);
+//	}
+//
+//	public double sigmoid(double x){
+//		return 1/(1 + Math.exp(-x));
+//       }
+//
+//	public double tanh(double x){
+//		return ( Math.exp(x) -  Math.exp(-x))/( Math.exp(x) +  Math.exp(-x));
+//	}
 
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
@@ -236,31 +244,31 @@ public class SRW<E extends RWExample> {
 			T v, Map<String, Double> paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, derivEdgeWeightFunction(f.weight));
+			result.put(f.featureName, this.weightingScheme.derivEdgeWeightFunction(f.weight));
 		}
 		return result;
 	}
 
-	/**
-	 * The function wraps the derivative of edge weight.
-	 * @param weight: edge weight.
-	 * @return wrapped derivative of the edge weight.
-	 */
-	public double derivEdgeWeightFunction(double weight) {
-		
-		//WW: replace with sigmoid function's derivative.
-		//return Math.exp(weight);
-		//return derivSigmoid(weight);
-		return derivTanh(weight);
-	}
-
-	public double derivSigmoid(double value) {
-		return sigmoid(value) * (1 - sigmoid(value));
-       }
-
-	public double derivTanh(double value) {
-		return (1- tanh(value)*tanh(value));
-       }
+//	/**
+//	 * The function wraps the derivative of edge weight.
+//	 * @param weight: edge weight.
+//	 * @return wrapped derivative of the edge weight.
+//	 */
+//	public double derivEdgeWeightFunction(double weight) {
+//		
+//		//WW: replace with sigmoid function's derivative.
+//		//return Math.exp(weight);
+//		//return derivSigmoid(weight);
+//		return derivTanh(weight);
+//	}
+//
+//	public double derivSigmoid(double value) {
+//		return sigmoid(value) * (1 - sigmoid(value));
+//       }
+//
+//	public double derivTanh(double value) {
+//		return (1- tanh(value)*tanh(value));
+//       }
 
 	/**
 	 * Builds a set of features in the specified set that are not on the untrainedFeatures list.
