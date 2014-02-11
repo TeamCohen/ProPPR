@@ -114,14 +114,20 @@ public class ComplexFeatureTest {
 
     @Test
     public void inProgram() {
-        LogicProgram lp = new LogicProgram(
+        final LogicProgram lp = new LogicProgram(
                 GoalComponent.loadCompiled("testcases/family-more.cfacts"), RuleComponent
                 .loadCompiled("testcases/family.crules"));
-        Prover p = new DprProver();
-        Map<LogicProgramState, Double> result = p
-                .proveState(lp, new ProPPRLogicProgramState(Goal.decompile("sim,katie,-1")));
+        final Map<LogicProgramState, Double> result = new DprProver().proveState(
+                lp,
+                new ProPPRLogicProgramState(Goal.decompile("sim,katie,-1")));
+        final String expected = "c[ashley]";
+        final ComplexFeature cf = new SpecialWordCF(lp, new String[] {"1", expected, "1.0"});
+
         for (Map.Entry<LogicProgramState, Double> e : result.entrySet()) {
-            if (e.getKey().isSolution()) System.out.println(e.getValue() + "\t" + e.getKey());
+            if (e.getKey().isSolution()) {
+                Goal g = e.getKey().getHeadGoal();
+
+            }
         }
     }
 
@@ -158,7 +164,8 @@ public class ComplexFeatureTest {
 
     static public class SpecialWordCF extends ComplexFeature {
 
-        final public String specialVarName, specialValue;
+        final public String specialValue;
+        final public int specialIndex;
         final public double defaultValue;
 
         public SpecialWordCF(LogicProgram lp, String[] args) {
@@ -169,7 +176,12 @@ public class ComplexFeatureTest {
                 if (args[ai] == null)
                     throw new NullPointerException("arguments[" + ai + "] cannot be null");
             }
-            this.specialVarName = args[0];
+            try {
+                this.specialIndex = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                throw new NumberFormatException("first argument: \"" + args[0] + "\" is not an int\n" +
+                                                e.getMessage());
+            }
             this.specialValue = args[1];
             try {
                 this.defaultValue = Double.parseDouble(args[2]);
@@ -180,20 +192,12 @@ public class ComplexFeatureTest {
         }
 
         @Override
-        protected Map<Goal, Double> featuresAsDict_h(RenamingSubstitution theta, int renamedP, Goal unifiedFeatInst) {
+        protected Map<Goal, Double> featuresAsDict_h(Goal unifiedFeatInst) {
             Map<Goal, Double> m = new HashMap<Goal, Double>();
             if (unifiedFeatInst.args[0] instanceof ConstantArgument) {
-                ConstantArgument a = (ConstantArgument) unifiedFeatInst.args[0];
-//                a.getName()
-            }
-            for (int ai = 0; ai < unifiedFeatInst.args.length; ai++) {
-                Argument a = unifiedFeatInst.args[ai];
-                if (a instanceof VariableArgument && a.getName().equals(specialVarName)) {
-                    Goal g = new Goal(unifiedFeatInst.getFunctor(),
-                                      new Argument[unifiedFeatInst.args.length]);
-                    System.arraycopy(unifiedFeatInst.args, 0, g.args, 0, g.args.length);
-                    g.args[ai] = new ConstantArgument(specialValue);
-                    m.put(g, defaultValue);
+                ConstantArgument a = (ConstantArgument) unifiedFeatInst.args[specialIndex];
+                if (a.getName().equals(specialValue)) {
+                    m.put(unifiedFeatInst, defaultValue);
                 }
             }
             return m;

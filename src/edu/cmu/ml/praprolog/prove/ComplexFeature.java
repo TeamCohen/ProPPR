@@ -32,7 +32,8 @@ public abstract class ComplexFeature {
     /**
      * Alias for featuresAsDict(theta, RenamingSubstitution.NOT_RENAMED)
      */
-    final public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta, Goal featureInstance) {
+    final public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta, Goal featureInstance)
+            throws LogicProgramException {
         return featuresAsDict(theta, RenamingSubstitution.NOT_RENAMED, featureInstance);
     }
 
@@ -44,20 +45,39 @@ public abstract class ComplexFeature {
      * @param featureInstance cannot be null
      * @param renamedP
      */
-    final public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta, int renamedP, Goal featureInstance) {
+    final public Map<Goal, Double> featuresAsDict(RenamingSubstitution theta, int renamedP, Goal featureInstance)
+            throws LogicProgramException {
         if (theta == null)
             throw new NullPointerException("input RenamingSubsittution cannot be null");
         if (featureInstance == null)
             throw new NullPointerException("input feature instance Goal cannot be null");
 
-        return featuresAsDict_h(theta, renamedP,
-                                theta.applyToGoal(featureInstance, renamedP));
+        final Goal unified = theta.applyToGoal(featureInstance, renamedP);
+        for (final Argument a : unified.getArgs()) {
+            if (!a.isConstant()) {
+                throw new LogicProgramException("Error converting features of goal \"" +
+                                                unified + "\" with theta " + theta);
+            }
+        }
+
+        final Map<Goal, Double> m = featuresAsDict_h(unified);
+
+        for (final Map.Entry<Goal, Double> entry : m.entrySet()) {
+            final Goal g = entry.getKey();
+            for (final Argument a : g.getArgs()) {
+                if (!a.isConstant()) {
+                    throw new LogicProgramException("Error: ComplexFeature \"" + getClass() +
+                                                    "\" returned goal \"" + g + "\" with variable argument");
+                }
+            }
+        }
+
+        return m;
     }
 
     /**
-     * @param theta           will not be null
-     * @param unifiedFeatInst will have as many variable arguments satisifed as possible, using the RenamingSubstitution
-     * @param renamedP
+     * @param unifiedFeatInst (not null) will have as many variable arguments satisifed as possible, using the RenamingSubstitution
+     * @return each goal in the mapping must have no variable arguments
      */
-    protected abstract Map<Goal, Double> featuresAsDict_h(RenamingSubstitution theta, int renamedP, Goal unifiedFeatInst);
+    protected abstract Map<Goal, Double> featuresAsDict_h(Goal unifiedFeatInst);
 }

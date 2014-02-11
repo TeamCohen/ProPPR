@@ -19,6 +19,18 @@ public class ComplexFeatureLibrary {
     static private Map<String, ComplexFeature> functor2cf;
     static private LogicProgram lp;
 
+    static public boolean isComplexFeature(Goal g) {
+        if (g == null)
+            throw new NullPointerException("goal cannot be null");
+        return isComplexFeature(g.getFunctor());
+    }
+
+    static public boolean isComplexFeature(String functor) {
+        if (functor == null)
+            throw new NullPointerException("functor cannot be null");
+        return functor.startsWith(ESCAPE_PREFIX);
+    }
+
     /**
      * @param functor
      * @return the ComplexFeature for the registered functor, null if functor is not registered

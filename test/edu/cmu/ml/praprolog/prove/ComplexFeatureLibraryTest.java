@@ -115,7 +115,7 @@ public class ComplexFeatureLibraryTest {
         public TestLoad(LogicProgram lp, String[] args) { super(lp, args); }
 
         @Override
-        protected Map<Goal, Double> featuresAsDict_h(RenamingSubstitution a, int b, Goal unifiedFeatInst) {
+        protected Map<Goal, Double> featuresAsDict_h(Goal unifiedFeatInst) {
             throw new RuntimeException("unimplemented on purpose");
         }
     }
@@ -133,7 +133,7 @@ public class ComplexFeatureLibraryTest {
         }
 
         @Override
-        protected Map<Goal, Double> featuresAsDict_h(RenamingSubstitution theta, int renamedP, Goal unifiedFeatInst) {
+        protected Map<Goal, Double> featuresAsDict_h(Goal unifiedFeatInst) {
             throw new RuntimeException("unimplemented");
         }
     }

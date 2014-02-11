@@ -15,9 +15,7 @@ public class ConstantArgument extends Argument {
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
 
     public String toString() {
         return "c[" + this.name + "]";
