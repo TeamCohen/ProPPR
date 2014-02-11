@@ -34,7 +34,7 @@ public class ComplexFeatureTest {
     }
 
     @Test
-    public void testOutlinks() {
+    public void testOutlinks() throws LogicProgramException {
         RuleComponent r = (RuleComponent) ComplexFeatureTest.makeMemIDB();
         r.compile();
         List<Outlink> outlinks = r.outlinks(Prover.parseQuery("mem", "X", "l_de"));
@@ -182,6 +182,10 @@ public class ComplexFeatureTest {
         @Override
         protected Map<Goal, Double> featuresAsDict_h(RenamingSubstitution theta, int renamedP, Goal unifiedFeatInst) {
             Map<Goal, Double> m = new HashMap<Goal, Double>();
+            if (unifiedFeatInst.args[0] instanceof ConstantArgument) {
+                ConstantArgument a = (ConstantArgument) unifiedFeatInst.args[0];
+//                a.getName()
+            }
             for (int ai = 0; ai < unifiedFeatInst.args.length; ai++) {
                 Argument a = unifiedFeatInst.args[ai];
                 if (a instanceof VariableArgument && a.getName().equals(specialVarName)) {
