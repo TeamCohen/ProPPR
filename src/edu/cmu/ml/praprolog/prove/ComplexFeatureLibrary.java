@@ -61,75 +61,79 @@ public class ComplexFeatureLibrary {
         functor2cf = new HashMap<String, ComplexFeature>();
         // load & construct functor classes
         for (String line; (line = r.readLine()) != null; ) {
-            final String[] bits = line.split("=");
-            if (bits.length != 2)
-                throw new IllegalArgumentException("improper format, need %s=%s[,%s]*\\n, not \"" +
-                                                   line + "\"");
+            line = line.trim();
+            if (line.charAt(0) != '#') {
+                // lines that start with # are comments
+                final String[] bits = line.split("=");
+                if (bits.length != 2)
+                    throw new IllegalArgumentException("improper format, need %s=%s[,%s]*\\n, not \"" +
+                                                       line + "\"");
 
-            final String functor = bits[0].trim();
-            if (functor.length() == 0)
-                throw new IllegalArgumentException("cannot have zero-length functor (line: \"" +
-                                                   line + "\"");
+                final String functor = bits[0].trim();
+                if (functor.length() == 0)
+                    throw new IllegalArgumentException("cannot have zero-length functor (line: \"" +
+                                                       line + "\"");
 
-            bits[1] = bits[1].trim();
-            if (bits[1].length() == 0)
-                throw new IllegalArgumentException("cannot have zero-length ComplexFeature class & args string (line: \"" +
-                                                   line + "\"");
-            final int firstComma = bits[1].indexOf(",");
-            final String[] constructionArgs;
-            final String classStr;
-            if (firstComma == -1) {
-                classStr = bits[1];
-                constructionArgs = new String[0];
-            } else {
-                classStr = bits[1].substring(0, firstComma);
-                constructionArgs = bits[1].substring(firstComma + 1).split(",");
-            }
-            if (classStr.length() == 0)
-                throw new IllegalArgumentException("cannot have zero length ComplexFeature class (line: \"" +
-                                                   line + "\"");
+                bits[1] = bits[1].trim();
+                if (bits[1].length() == 0)
+                    throw new IllegalArgumentException("cannot have zero-length ComplexFeature class & args string (line: \"" +
+                                                       line + "\"");
+                final int firstComma = bits[1].indexOf(",");
+                final String[] constructionArgs;
+                final String classStr;
+                if (firstComma == -1) {
+                    classStr = bits[1];
+                    constructionArgs = new String[0];
+                } else {
+                    classStr = bits[1].substring(0, firstComma);
+                    constructionArgs = bits[1].substring(firstComma + 1).split(",");
+                }
+                if (classStr.length() == 0)
+                    throw new IllegalArgumentException("cannot have zero length ComplexFeature class (line: \"" +
+                                                       line + "\"");
 
-            final Class c;
-            try {
-                c = Class.forName(classStr);
-            } catch (ClassNotFoundException e) {
-                throw new ClassNotFoundException("Couldn't find class for functor: \"" +
-                                                 functor + "\" line: \"" + line + "\"\n", e);
-            }
+                final Class c;
+                try {
+                    c = Class.forName(classStr);
+                } catch (ClassNotFoundException e) {
+                    throw new ClassNotFoundException("Couldn't find class for functor: \"" +
+                                                     functor + "\" line: \"" + line + "\"\n", e);
+                }
 
-            final ComplexFeature cf;
-            try {
-                String[] x = new String[0];
-                cf = (ComplexFeature) c.getDeclaredConstructor(LogicProgram.class, String[].class)
-                                       .newInstance(lp, (Object) constructionArgs);
+                final ComplexFeature cf;
+                try {
+                    String[] x = new String[0];
+                    cf = (ComplexFeature) c.getDeclaredConstructor(LogicProgram.class, String[].class)
+                                           .newInstance(lp, (Object) constructionArgs);
 
-            } catch (InstantiationException e) {
-                throw new InstantiationException("Couldn't construct for functor: \"" +
-                                                 functor + "\" line: \"" + line + "\"\n" + e.getMessage());
-            } catch (IllegalAccessException e) {
-                throw new IllegalAccessException("Couldn't access constructor for functor: \"" +
-                                                 functor + "\" line: \"" + line + "\"\n" + e.getMessage());
-            } catch (ClassCastException e) {
-                throw new ClassCastException("functor class doesn't extend ComplexFeature: \"" +
-                                             classStr + "\" line: \"" + line + "\"\n" + e.getMessage());
-            } catch (NoSuchMethodException e) {
-                throw new NoSuchMethodException("ComplexFeature class \"" + c +
-                                                "\" doesn't have String[] constructor line: \"" +
-                                                line + "\"\n" + e.getMessage());
-            } catch (InvocationTargetException e) {
-                throw new NoSuchMethodException("ComplexFeature class \"" + c +
-                                                "\" cannot call with String[] constructor line: \"" +
-                                                line + "\"\n" + e.getMessage());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("ComplexFeature class \"" + c +
-                                                   "\" line: \"" + line + "\"\n" + e.getMessage());
-            }
+                } catch (InstantiationException e) {
+                    throw new InstantiationException("Couldn't construct for functor: \"" +
+                                                     functor + "\" line: \"" + line + "\"\n" + e.getMessage());
+                } catch (IllegalAccessException e) {
+                    throw new IllegalAccessException("Couldn't access constructor for functor: \"" +
+                                                     functor + "\" line: \"" + line + "\"\n" + e.getMessage());
+                } catch (ClassCastException e) {
+                    throw new ClassCastException("functor class doesn't extend ComplexFeature: \"" +
+                                                 classStr + "\" line: \"" + line + "\"\n" + e.getMessage());
+                } catch (NoSuchMethodException e) {
+                    throw new NoSuchMethodException("ComplexFeature class \"" + c +
+                                                    "\" doesn't have String[] constructor line: \"" +
+                                                    line + "\"\n" + e.getMessage());
+                } catch (InvocationTargetException e) {
+                    throw new NoSuchMethodException("ComplexFeature class \"" + c +
+                                                    "\" cannot call with String[] constructor line: \"" +
+                                                    line + "\"\n" + e.getMessage());
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("ComplexFeature class \"" + c +
+                                                       "\" line: \"" + line + "\"\n" + e.getMessage());
+                }
 
-            functor2cf.put(functor, cf);
-            if (functor.startsWith(ESCAPE_PREFIX)) {
-                functor2cf.put(new String(functor.split(ESCAPE_PREFIX)[1]), cf);
-            } else {
-                functor2cf.put(ESCAPE_PREFIX + functor, cf);
+                functor2cf.put(functor, cf);
+                if (functor.startsWith(ESCAPE_PREFIX)) {
+                    functor2cf.put(new String(functor.split(ESCAPE_PREFIX)[1]), cf);
+                } else {
+                    functor2cf.put(ESCAPE_PREFIX + functor, cf);
+                }
             }
         }
 

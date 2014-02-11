@@ -32,11 +32,13 @@ import java.util.Map;
 public class QueryAnswerer {
     private static final Logger log = Logger.getLogger(QueryAnswerer.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         QueryAnswererConfiguration c = new QueryAnswererConfiguration(
                 args,
-                Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT | Configuration.USE_PARAMS);
+                Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT |
+                Configuration.USE_PARAMS | Configuration.USE_COMPLEX_FEATURES);
         LogicProgram program = new LogicProgram(Component.loadComponents(c.programFiles, c.alpha));
+        ComplexFeatureLibrary.init(program, c.complexFeatureConfigFile);
 
         QueryAnswerer qa;
         if (c.rerank) qa = new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw);
