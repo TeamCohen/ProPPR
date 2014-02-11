@@ -1,3 +1,11 @@
 .project
 beatles
 *.pyc
+*.swp
+*~
+.idea
+*.iml
+compiled*
+bin
+test-results
+out
