@@ -1,4 +1,7 @@
-package edu.cmu.ml.praprolog.prove;
+package edu.cmu.ml.praprolog.prove.feat;
+
+import edu.cmu.ml.praprolog.prove.Goal;
+import edu.cmu.ml.praprolog.prove.LogicProgram;
 
 import java.io.BufferedReader;
 import java.io.File;

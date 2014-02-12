@@ -1,5 +1,6 @@
-package edu.cmu.ml.praprolog.prove;
+package edu.cmu.ml.praprolog.prove.feat;
 
+import edu.cmu.ml.praprolog.prove.*;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -84,8 +85,8 @@ public class ComplexFeatureTest {
         @Override
         protected Map<Goal, Double> featuresAsDict_h(Goal unifiedFeatInst) {
             Map<Goal, Double> m = new HashMap<Goal, Double>();
-            if (unifiedFeatInst.args[0] instanceof ConstantArgument) {
-                ConstantArgument a = (ConstantArgument) unifiedFeatInst.args[specialIndex];
+            if (unifiedFeatInst.getArg(specialIndex) instanceof ConstantArgument) {
+                ConstantArgument a = (ConstantArgument) unifiedFeatInst.getArg(specialIndex);
                 if (a.getName().equals(specialValue)) {
                     m.put(unifiedFeatInst, defaultValue);
                 }

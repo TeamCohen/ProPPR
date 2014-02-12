@@ -84,6 +84,12 @@ public class Goal implements Comparable<Goal> {
         return this.args[i];
     }
 
+    public void setArg(int i, Argument a) {
+        if (a == null)
+            throw new NullPointerException("cannot have null argument");
+        args[i] = a;
+    }
+
     public boolean isHard() {
         return this.hardGoal;
     }

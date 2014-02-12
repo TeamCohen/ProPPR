@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.prove;
 
+import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 

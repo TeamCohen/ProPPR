@@ -1,4 +1,6 @@
-package edu.cmu.ml.praprolog.prove;
+package edu.cmu.ml.praprolog.prove.feat;
+
+import edu.cmu.ml.praprolog.prove.*;
 
 import java.util.Map;
 
@@ -17,6 +19,14 @@ public abstract class ComplexFeature {
 
     public ComplexFeature(LogicProgram lp, String[] childargs) {
         setLogicProgram(lp);
+
+        if (childargs == null)
+            throw new NullPointerException("child's arguments cannot be null");
+        for (int ai = 0; ai < childargs.length; ai++) {
+            String arg = childargs[ai];
+            if (arg == null)
+                throw new NullPointerException("(string) argument " + ai + " is null");
+        }
     }
 
     public LogicProgram getLogicProgram() {

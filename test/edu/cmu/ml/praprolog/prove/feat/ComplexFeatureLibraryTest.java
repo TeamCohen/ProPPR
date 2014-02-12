@@ -1,5 +1,8 @@
-package edu.cmu.ml.praprolog.prove;
+package edu.cmu.ml.praprolog.prove.feat;
 
+import edu.cmu.ml.praprolog.prove.Component;
+import edu.cmu.ml.praprolog.prove.Goal;
+import edu.cmu.ml.praprolog.prove.LogicProgram;
 import junit.framework.Assert;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -27,7 +30,7 @@ public class ComplexFeatureLibraryTest {
     public void testSimpleLoad() throws Exception {
         final String functor = "TestLoad";
         BufferedReader r = new BufferedReader(new StringReader(
-                functor + "=edu.cmu.ml.praprolog.prove.ComplexFeatureLibraryTest$TestLoad"
+                functor + "=edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibraryTest$TestLoad"
         ));
         LogicProgram lp = new LogicProgram(new Component[0]);
 
@@ -42,7 +45,7 @@ public class ComplexFeatureLibraryTest {
     public void testArgumentLoad() throws Exception {
         final String functor = "TestArgumentLoad";
         BufferedReader r = new BufferedReader(new StringReader(
-                functor + "=edu.cmu.ml.praprolog.prove.ComplexFeatureLibraryTest$TestArgumentLoad,a,b"
+                functor + "=edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibraryTest$TestArgumentLoad,a,b"
         ));
         LogicProgram lp = new LogicProgram(new Component[0]);
 
@@ -65,7 +68,7 @@ public class ComplexFeatureLibraryTest {
         try {
 
             r = new BufferedReader(new StringReader(
-                    "" + "=edu.cmu.ml.praprolog.prove.ComplexFeatureLibraryTest$TestArgumentLoad,a,b"
+                    "" + "=edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibraryTest$TestArgumentLoad,a,b"
             ));
             ComplexFeatureLibrary.init(lp, r);
             Assert.fail("zero length functor in init should be caugth");
@@ -96,7 +99,7 @@ public class ComplexFeatureLibraryTest {
         final String functor = "wow, so much";
         r = new BufferedReader(new StringReader(
                 functor +
-                "=edu.cmu.ml.praprolog.prove.ComplexFeatureLibraryTest$TestLoad"));
+                "=edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibraryTest$TestLoad"));
 
         ComplexFeatureLibrary.init(lp, r);
 
