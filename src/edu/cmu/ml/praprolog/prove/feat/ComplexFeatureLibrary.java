@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog.prove.feat;
 
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
+import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class ComplexFeatureLibrary {
 
     static public final String ESCAPE_PREFIX = "escape__";
+    static protected Logger log = Logger.getLogger(ComplexFeatureLibrary.class);
     //
     static private boolean initizliaed = false;
     static private Map<String, ComplexFeature> functor2cf;
@@ -133,8 +135,11 @@ public class ComplexFeatureLibrary {
 
                 functor2cf.put(functor, cf);
                 if (functor.startsWith(ESCAPE_PREFIX)) {
-                    functor2cf.put(new String(functor.split(ESCAPE_PREFIX)[1]), cf);
+                    String f = new String(functor.split(ESCAPE_PREFIX)[1]);
+                    log.info("adding ComplexFeature: " + f);
+                    functor2cf.put(f, cf);
                 } else {
+                    log.info("adding ComplexFeature: " + functor);
                     functor2cf.put(ESCAPE_PREFIX + functor, cf);
                 }
             }
