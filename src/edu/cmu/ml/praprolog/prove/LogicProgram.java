@@ -184,6 +184,13 @@ public class LogicProgram {
         return this.symbolTable;
     }
 
+    /**
+     * @return reference to underlying Component[]
+     */
+    public Component[] getComponents() {
+        return components;
+    }
+
     public String listing() {
         StringBuilder sb = new StringBuilder("logicProgram:");
         for (Component c : this.components) sb.append("\n").append(c.listing());
