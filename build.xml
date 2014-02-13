@@ -51,8 +51,6 @@
 				<include name="params.wts"/>
 				<include name="params.overweight"/>
 				<include name="programFiles.arg"/>
-				<include name="textcat.crules"/>
-				<include name="toylabels.cfacts"/>
 				<include name="toytrain.cooked"/>
 			</fileset>
 		</delete>
