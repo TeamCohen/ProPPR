@@ -1,11 +1,19 @@
 package edu.cmu.ml.praprolog.util;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Properties;
+import java.util.Set;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PermissiveParser;
 
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.DprProver;
@@ -28,6 +36,8 @@ public class Configuration {
 	public static final int USE_SRW = 0x400;
 	/** programFiles, prover, threads **/
 	public static final int USE_DEFAULTS=0x19;
+	public static final String PROPFILE = "config.properties";
+	private static final boolean DEFAULT_COMBINE=true;
 	
 	public Prover prover=null;
 	public String[] programFiles=null;
@@ -45,11 +55,11 @@ public class Configuration {
 		return (flags & flag) == flag;
 	}
 	
-	public Configuration(String[] args) { this(args, new PprProver()); }
-	public Configuration(String[] args, int flags) { this(args,new PprProver(), flags); }
-	public Configuration(String[] args, Prover dflt) { this(args, dflt, USE_DEFAULTS); }
-
-	public Configuration(String[] args, Prover dflt, int flags) {
+	public Configuration(String[] args) { this(args, new DprProver()); }
+	public Configuration(String[] args, int flags) { this(args, new DprProver(), flags, DEFAULT_COMBINE); }
+	public Configuration(String[] args, Prover dflt) { this(args, dflt, USE_DEFAULTS, DEFAULT_COMBINE); }
+	public Configuration(String[] args, Prover dflt, int flags) { this(args,dflt,flags,DEFAULT_COMBINE); }
+	public Configuration(String[] args, Prover dflt, int flags, boolean combine) {
 		if (isOn(flags,USE_DATA) && isOn(flags,USE_TRAINTEST)) {
 			throw new IllegalArgumentException("Programmer error: Illegal to request --data and also --train/--test");
 		}
@@ -59,17 +69,49 @@ public class Configuration {
 		addOptions(options, flags);
 
 		try {
-			CommandLineParser parser = new BasicParser();
-
+			PermissiveParser parser = new PermissiveParser(true);
+			
+			// if the user specified a properties file, add those values at the end
+			// (so that command line args override them)
+			if(combine) args = combinedArgs(args);
+			
 		    // parse the command line arguments
 		    CommandLine line = parser.parse( options, args );
+		    if (parser.hasUnrecognizedOptions()) {
+		    	System.err.println("WARNING: unrecognized options detected:");
+		    	for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
+		    }
 		    retrieveSettings(line,flags,options);
 			
 		} catch( Exception exp ) {
 			System.err.println("\n"+exp.getMessage()+"\n");
 			usageOptions(options,flags);
+			
+			/*
+			 * For silently passing through unrecognized options, we may want to use:
+			 *
+	public class ExtendedGnuParser extends GnuParser {
+
+    private boolean ignoreUnrecognizedOption;
+
+    public ExtendedGnuParser(final boolean ignoreUnrecognizedOption) {
+        this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
+    }
+
+    @Override
+    protected void processOption(final String arg, final ListIterator iter) throws     ParseException {
+        boolean hasOption = getOptions().hasOption(arg);
+
+        if (hasOption || !ignoreUnrecognizedOption) {
+            super.processOption(arg, iter);
+        }
+    }
+
+} 
+			 */
 		}
 	}
+
 	protected void retrieveSettings(CommandLine line, int flags, Options options) {
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
 		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = line.getOptionValue("data");
@@ -83,7 +125,7 @@ public class Configuration {
 		if (isOn(flags,USE_TRAIN) && line.hasOption("train"))                this.dataFile = line.getOptionValue("train");
 		if (isOn(flags,USE_PARAMS) && line.hasOption("params"))              this.paramsFile = line.getOptionValue("params");
 		if (isOn(flags,USE_PROVER) && line.hasOption("prover")) {
-			String[] values = line.getOptionValues("prover");
+			String[] values = line.getOptionValue("prover").split(":");
 			if(values[0].startsWith("ppr")) {
 				if (values.length==1) {
 					this.prover = new PprProver();
@@ -153,8 +195,7 @@ public class Configuration {
 				OptionBuilder
 					.withLongOpt("prover")
 					.withArgName("class[:arg:...:arg]")
-					.hasArgs()
-					.withValueSeparator(':')
+					.hasArg()
 					.withDescription("Default: "+this.prover.getClass().getSimpleName()+"\n"
 							+"Available options:\n"
 							+"ppr[:depth] (default depth=5)\n"
@@ -240,5 +281,37 @@ public class Configuration {
 	@Override
 	public String toString() {
 		return this.getClass().getCanonicalName();
+	}
+	
+	protected String[] combinedArgs(String[] origArgs) {
+		// if the user specified a properties file, add those values at the end
+		// (so that command line args override them)
+		if (System.getProperty(PROPFILE) != null) {
+			String[] propArgs = fakeCommandLine(System.getProperty(PROPFILE));
+			String[] args = new String[origArgs.length + propArgs.length];
+			int i=0;
+			for (int j=0; j<origArgs.length; j++) args[i++] = origArgs[j];
+			for (int j=0; j<propArgs.length; j++) args[i++] = propArgs[j];
+			return args;
+		}
+		return origArgs;
+	}
+	protected String[] fakeCommandLine(String propsFile) {
+		Properties props = new Properties();
+		try {
+			props.load(new BufferedReader(new FileReader(propsFile)));
+			StringBuilder sb = new StringBuilder();
+			for (String name : props.stringPropertyNames()) {
+				sb.append(" --").append(name);
+				if (props.getProperty(name) != null) {
+					sb.append(" ").append(props.getProperty(name));
+				}
+			}
+			return sb.substring(1).split("\\s");
+		} catch (FileNotFoundException e) {
+			throw new IllegalArgumentException(e);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 }
