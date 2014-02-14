@@ -12,7 +12,8 @@ import java.util.*;
  * @author Malcolm Greaves
  */
 public abstract class WordBelongsToPOSGroup extends ComplexFeature {
-
+    static protected Logger log = Logger.getLogger(WordBelongsToPOSGroup.class);
+    // fields
     protected Set<String> tags;
 
     public WordBelongsToPOSGroup(LogicProgram lp, String[] childargs) {
@@ -26,8 +27,6 @@ public abstract class WordBelongsToPOSGroup extends ComplexFeature {
      * @author Malcolm
      */
     static public class Noun extends WordBelongsToPOSGroup {
-
-        static protected Logger log = Logger.getLogger(Noun.class);
         static public final String FOUND = "FoundWordWithNounPOSTag";
         static public final double VALUE = 1.0;
         // fields
@@ -41,11 +40,11 @@ public abstract class WordBelongsToPOSGroup extends ComplexFeature {
         public Noun(LogicProgram lp, String[] childargs) {
             super(lp, childargs);
             this.goalComponentFunctorLookup = childargs[0];
-            for (String tag : new String[] {"NN", "NNS", "NNP", "NNPS"}) {
+            for (String tag : new String[] {"p_NN", "p_NNS", "p_NNP", "p_NNPS"}) {
                 tags.add(tag);
             }
 
-
+            // find the GoalComponents in the LogicProgram
             List<GoalComponent> f = new ArrayList<GoalComponent>(lp.getComponents().length);
             for (Component c : lp.getComponents()) {
                 if (c instanceof GoalComponent) {
@@ -58,21 +57,17 @@ public abstract class WordBelongsToPOSGroup extends ComplexFeature {
         @Override
         protected Map<Goal, Double> featuresAsDict_h(Goal unifiedFeatInst) {
             log.info("working on unified feature instance: " + unifiedFeatInst);
-            // arg 0 == sentence
-            // arg 1 == word
             Map<Goal, Double> m = new HashMap<Goal, Double>();
             try {
-                final Argument sentence = unifiedFeatInst.getArg(0);
+                final Argument sentenceID = unifiedFeatInst.getArg(0);
                 final Argument word = unifiedFeatInst.getArg(1);
-                if (sentence.isConstant() && word.isConstant()) {
+                if (sentenceID.isConstant() && word.isConstant()) {
                     for (GoalComponent c : facts) {
-                        for (Goal g : c.goalsMatching(goalComponentFunctorLookup, 3, sentence)) {
+                        for (Goal g : c.goalsMatching(goalComponentFunctorLookup, 3, sentenceID)) {
+
                             if (g.getArg(1).getName().equals(word.getName()) &&
                                 tags.contains(g.getArg(2).getName())) {
-
-                                Goal found = new Goal(FOUND, unifiedFeatInst.getArgs());
-                                m.put(found, VALUE);
-                                log.info("GoalComponent goal: \"" + g + "\" matches, returning \"" + found);
+                                m.put(new Goal(FOUND, unifiedFeatInst.getArgs()), VALUE);
                                 return m;
                             }
                         }
@@ -84,7 +79,6 @@ public abstract class WordBelongsToPOSGroup extends ComplexFeature {
                          unifiedFeatInst + "\"\n" + e);
                 throw new RuntimeException(e);
             }
-            log.info("nada");
             return m;
         }
     }
