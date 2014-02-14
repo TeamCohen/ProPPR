@@ -10,7 +10,6 @@ import edu.cmu.ml.praprolog.ExampleCooker;
 import edu.cmu.ml.praprolog.ModularMultiExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
-import edu.cmu.ml.praprolog.RerankingTester;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;

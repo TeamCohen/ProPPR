@@ -41,7 +41,21 @@
     <target name="clean">
         <delete dir="${build}"/>
     </target>
-    <target depends="clean" name="cleanall"/>
+	<target name="decruft">
+		<delete dir="${junit.results}"/>
+		<delete verbose="true">
+			<fileset dir="." includes="compiled*.pl"/>
+			<fileset dir="scripts" includes="*.pyc"/>
+			<fileset dir="testcases/textcattoy">
+				<include name="log.log"/>
+				<include name="params.wts"/>
+				<include name="params.overweight"/>
+				<include name="programFiles.arg"/>
+				<include name="toytrain.cooked"/>
+			</fileset>
+		</delete>
+	</target>
+    <target depends="clean,decruft" name="cleanall"/>
     <target depends="build-subprojects,build-project" name="build"/>
     <target name="build-subprojects"/>
 	
