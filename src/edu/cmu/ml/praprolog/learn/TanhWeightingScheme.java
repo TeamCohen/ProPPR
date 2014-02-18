@@ -4,7 +4,7 @@ public class TanhWeightingScheme extends WeightingScheme {
 
 	@Override
 	public double edgeWeightFunction(double product) {
-		return (Math.exp(product) -  Math.exp(-product)) / (Math.exp(product) + Math.exp(-product));
+		return Math.tanh(product);
 	}
 
 	@Override

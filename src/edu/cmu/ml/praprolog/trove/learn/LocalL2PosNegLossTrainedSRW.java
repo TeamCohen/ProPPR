@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
-	public LocalL2PosNegLossTrainedSRW(int maxT, double mu, double eta, int wScheme) {
-		super(maxT,mu,eta,wScheme);
+	public LocalL2PosNegLossTrainedSRW(int maxT, double mu, double eta, int wScheme, double delta) {
+		super(maxT,mu,eta,wScheme,delta);
 	}
 
 	@Override
