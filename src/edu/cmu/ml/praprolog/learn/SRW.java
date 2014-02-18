@@ -80,11 +80,7 @@ public class SRW<E extends RWExample> {
 	 * @return
 	 */
 	public <T> double edgeWeight(AnnotatedGraph<T> g, T u, T v,  Map<String,Double> p) {
-		double sum = 0.0;
-		for (Feature f : g.phi(u, v)) {
-			sum += Dictionary.safeGet(p, f.featureName) * f.weight;
-		}
-		return this.weightingScheme.edgeWeightFunction(sum);
+		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
 	}
 
 //	/**
@@ -247,7 +243,7 @@ public class SRW<E extends RWExample> {
 			T v, Map<String, Double> paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeightFunction(f.weight));
+			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
 		}
 		return result;
 	}

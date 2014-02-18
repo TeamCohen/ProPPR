@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
@@ -13,7 +12,7 @@ import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
-import edu.cmu.ml.praprolog.trove.graph.Feature;
+import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
@@ -89,11 +88,7 @@ public class SRW<E extends RWExample> {
 	 * @return
 	 */
 	public  double edgeWeight(AnnotatedTroveGraph g, int u, int v,  Map<String,Double> p) {
-		double sum = 0.0;
-		for (Feature f : g.phi(u, v)) {
-			sum += Dictionary.safeGet(p, f.featureName) * f.weight;
-		}
-		return this.weightingScheme.edgeWeightFunction(sum);
+		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
 	}
 
 //	/**
@@ -266,7 +261,7 @@ public class SRW<E extends RWExample> {
 			int v, Map<String, Double> paramVec) {
 		TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeightFunction(f.weight));
+			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
 		}
 		return result;
 	}

@@ -7,6 +7,8 @@ import org.apache.log4j.Logger;
 
 import com.skjegstad.utils.BloomFilter;
 
+import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 /**
@@ -23,22 +25,29 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 		this(new HashMap<Goal,Double>());
 	}
 	public InnerProductWeighter(Map<Goal,Double> weights) {
+		this(new LinearWeightingScheme(), weights);
+		
+	}
+	public InnerProductWeighter(WeightingScheme ws, Map<Goal,Double> weights) {
+		super(ws);
 		this.weights = weights;
 	}
 	@Override
 	public double w(Map<Goal, Double> featureDict) {
-		double result = 0;
+////		double result = 0;
 		for (Map.Entry<Goal,Double> e : featureDict.entrySet()) {
 			if (!this.weights.containsKey(e.getKey()) && !unknownFeatures.contains(e.getKey())) {
 				log.warn("Using default weight 1.0 for unknown feature "+e.getKey()+" (this message only prints once)");
-				this.unknownFeatures.add(e.getKey());
+				unknownFeatures.add(e.getKey());
 			}
-			result += e.getValue() * Dictionary.safeGet(this.weights, e.getKey(), 1.0);
-			if (log.isDebugEnabled()) log.debug("+="+e.getKey()+":"+e.getValue()+"*"+Dictionary.safeGet(this.weights, e.getKey(), 1.0)
-					+"="+(e.getValue() * Dictionary.safeGet(this.weights, e.getKey(), 1.0))
-					+" = "+result);
 		}
-		return result;
+////			result += e.getValue() * Dictionary.safeGet(this.weights, e.getKey(), 1.0);
+////			if (log.isDebugEnabled()) log.debug("+="+e.getKey()+":"+e.getValue()+"*"+Dictionary.safeGet(this.weights, e.getKey(), 1.0)
+////					+"="+(e.getValue() * Dictionary.safeGet(this.weights, e.getKey(), 1.0))
+////					+" = "+result);
+////		}
+//		return result;
+		return this.weightingScheme.edgeWeight(this.weights, featureDict);
 	}
 	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec) {
 		//         goalDict = dict(( (rc.parser.parseGoal(s),w) for s,w in paramVec.items() ))
