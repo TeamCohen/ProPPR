@@ -18,7 +18,7 @@ public class Configuration {
             USE_PARAMS = 0x200,
             USE_TRAINTEST = 0x260,
             USE_SRW = 0x400,
-            USE_COMPLEX_FEATURES = 0x1000;
+            USE_COMPLEX_FEATURES = 0x800;
     public Prover prover = null;
     public String[] programFiles = null;
     public String
