@@ -5,6 +5,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.CommandLine;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -96,7 +97,7 @@ public class QueryAnswerer {
 	public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
 		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile), wScheme));
 	}
-	public void findSolutions(LogicProgram program, Prover prover, String queryFile, String outputFile, boolean normalize) throws IOException {
+	public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize) throws IOException {
 		ParsedFile reader = new ParsedFile(queryFile);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {

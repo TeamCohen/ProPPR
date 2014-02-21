@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -48,8 +49,8 @@ public class Tester extends ExampleThawing {
 			this.map = m;
 		}
 	}
-	public TestResults testExamples(String dataFile) { return testExamples(dataFile,false); }
-	public TestResults testExamples(String dataFile, boolean strict) {
+	public TestResults testExamples(File testFile) { return testExamples(testFile,false); }
+	public TestResults testExamples(File dataFile, boolean strict) {
 		int k=0;
 		double pairTotal=0,pairErrors=0,apTotal=0,numAP=0;
 		List<RawPosNegExample> examples = new RawPosNegExampleStreamer(dataFile).load();

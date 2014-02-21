@@ -1,6 +1,8 @@
 package edu.cmu.ml.praprolog.prove.tune;
 
 
+import java.io.File;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -36,7 +38,7 @@ public class DprMinAlphaTuner {
 		}
 	}
 
-	public void tune(String queryFile, double start, double epsilon) {
+	public void tune(File dataFile, double start, double epsilon) {
 		double minalpha=start, del=minalpha;//, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
 		int i;
 		boolean hasSuccess=false;
@@ -60,7 +62,7 @@ public class DprMinAlphaTuner {
 			this.program.setAlpha(minalpha+epsilon);
 			del = del/2;
 			try {
-				if (!query(p,queryFile)) break;
+				if (!query(p,dataFile)) break;
 				hasSuccess = true;
 				lastSuccess = minalpha;
 				log.info("Succeeded. Increasing alpha...");
@@ -73,7 +75,7 @@ public class DprMinAlphaTuner {
 		log.info("Reached minalpha "+lastSuccess+" +/- "+del+" in "+i+" iterations");
 	}
 
-	public boolean query(Prover prover, String queryFile) {
+	public boolean query(Prover prover, File queryFile) {
 		boolean success = true;
 		MinAlphaException a = null;
 		ParsedFile reader = null;

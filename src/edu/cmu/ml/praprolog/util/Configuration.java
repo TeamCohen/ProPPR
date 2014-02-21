@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
+import java.io.File;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -45,9 +46,9 @@ public class Configuration {
 	
 	public Prover prover=null;
 	public String[] programFiles=null;
-	public String dataFile=null;
-	public String queryFile=null;
-	public String testFile=null;
+	public File dataFile=null;
+	public File queryFile=null;
+	public File testFile=null;
 	public String outputFile=null;
 	public int nthreads=-1;
 	public double alpha = Component.ALPHA_DEFAULT;
@@ -119,18 +120,22 @@ public class Configuration {
 			 */
 		}
 	}
-
+	protected File getExistingFileOption(CommandLine line, String name) {
+		File value = new File(line.getOptionValue(name));
+		if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
+		return value;
+	}
 	protected void retrieveSettings(CommandLine line, int flags, Options options) {
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
-		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = line.getOptionValue("data");
-		if (isOn(flags,USE_QUERIES) && line.hasOption("queries"))            this.queryFile = line.getOptionValue("queries");
+		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = getExistingFileOption(line,"data");
+		if (isOn(flags,USE_QUERIES) && line.hasOption("queries"))            this.queryFile = getExistingFileOption(line,"queries");
 		if ((isOn(flags,USE_OUTPUT) || isOn(flags,USE_TRAIN)) 
 				&& line.hasOption("output"))                                 this.outputFile = line.getOptionValue("output");
 		if (isOn(flags,USE_THREADS) && line.hasOption("threads"))            this.nthreads = Integer.parseInt(line.getOptionValue("threads"));
 		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("epochs"))         this.epochs = Integer.parseInt(line.getOptionValue("epochs"));
 		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("traceLosses"))    this.traceLosses = true;
-		if (isOn(flags,USE_TEST) && line.hasOption("test"))                  this.testFile = line.getOptionValue("test");
-		if (isOn(flags,USE_TRAIN) && line.hasOption("train"))                this.dataFile = line.getOptionValue("train");
+		if (isOn(flags,USE_TEST) && line.hasOption("test"))                  this.testFile = getExistingFileOption(line,"test");
+		if (isOn(flags,USE_TRAIN) && line.hasOption("train"))                this.dataFile = getExistingFileOption(line,"train");
 		if (isOn(flags,USE_PARAMS) && line.hasOption("params"))              this.paramsFile = line.getOptionValue("params");
 		if (isOn(flags,USE_PROVER) && line.hasOption("prover")) {
 			String[] values = line.getOptionValue("prover").split(":");
