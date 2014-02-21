@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.util.Map;
 
 import org.junit.Test;
@@ -32,11 +33,11 @@ public class RerankingTesterTest {
 		
 		RerankingTester rt = new RerankingTester(prover, program, srw);
 		rt.setParams(params);
-		TestResults rt_results = rt.testExamples("testcases/textcattoy/toytest.data");
+		TestResults rt_results = rt.testExamples(new File("testcases/textcattoy/toytest.data"));
 		
 		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(params));
 		Tester t = new Tester(prover, program);
-		TestResults t_results = t.testExamples("testcases/textcattoy/toytest.data");
+		TestResults t_results = t.testExamples(new File("testcases/textcattoy/toytest.data"));
 		
 		assertEquals("pairTotal",t_results.pairTotal,rt_results.pairTotal, EPSILON);
 		assertEquals("pairErrors",t_results.pairErrors,rt_results.pairErrors, EPSILON);

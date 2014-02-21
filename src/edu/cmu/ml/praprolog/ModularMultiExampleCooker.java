@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.concurrent.ExecutionException;
@@ -24,7 +25,7 @@ public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 	}
 
 	@Override
-	public void cookExamples(String dataFile, Writer writer) throws IOException {
+	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		ExecutorService cookingPool = Executors.newFixedThreadPool(this.nthreads);
 		ExecutorService writingPool = Executors.newFixedThreadPool(1);
 		int k=0;

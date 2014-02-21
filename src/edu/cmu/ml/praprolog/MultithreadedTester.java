@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -27,7 +28,7 @@ public class MultithreadedTester extends Tester {
 	}
 	
 	@Override
-	public TestResults testExamples(String dataFile, boolean strict) {
+	public TestResults testExamples(File dataFile, boolean strict) {
 		ExecutorService executor = Executors.newFixedThreadPool(this.nthreads);
 		ArrayDeque<Future<ExampleSolutionScore>> futures = new ArrayDeque<Future<ExampleSolutionScore>>();
 		
