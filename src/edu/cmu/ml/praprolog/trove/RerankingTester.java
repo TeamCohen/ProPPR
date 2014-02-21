@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.Tester;
 import edu.cmu.ml.praprolog.graph.GraphWriter;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
@@ -28,7 +29,7 @@ public class RerankingTester extends Tester {
 	}
 	
 	@Override
-	public void setParams(Map<String,Double> params) {
+	public void setParams(Map<String,Double> params, WeightingScheme wScheme) {
 		this.params = params;
 	}
 	

@@ -3,6 +3,7 @@ package edu.cmu.ml.praprolog.prove;
 import java.util.Map;
 
 import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 
 /**
  * Weight all features uniformly as 1.0
@@ -10,8 +11,11 @@ import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
  *
  */
 public class UniformWeighter extends FeatureDictWeighter {
+	public UniformWeighter(WeightingScheme wScheme) {
+		super(wScheme);
+	}
 	public UniformWeighter() {
-		super(new LinearWeightingScheme());
+		this(new LinearWeightingScheme());
 	}
 
 	@Override

@@ -8,6 +8,9 @@ import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public abstract class WeightingScheme {
+	public static final int WEIGHT_SIGMOID=0;
+	public static final int WEIGHT_TANH=1;
+	public static final int WEIGHT_LINEAR = 2;
 	public abstract double edgeWeightFunction(double sum);
 	public abstract double derivEdgeWeight(double weight);
 	public abstract double defaultWeight();

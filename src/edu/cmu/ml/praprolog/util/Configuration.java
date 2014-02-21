@@ -15,6 +15,10 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PermissiveParser;
 
+import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
+import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.DprProver;
 import edu.cmu.ml.praprolog.prove.PprProver;
@@ -50,9 +54,13 @@ public class Configuration {
 	public int epochs=5;
 	public boolean traceLosses=false;
 	public String paramsFile=null;
+	public WeightingScheme weightingScheme=null;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
+	}	
+	static boolean anyOn(int flags, int flag) {
+		return (flags & flag) > 0;
 	}
 	
 	public Configuration(String[] args) { this(args, new DprProver()); }
@@ -154,6 +162,17 @@ public class Configuration {
 			}else {
 				System.err.println("No prover definition for '"+values[0]+"'");
 			    usageOptions(options,flags);
+			}
+		}
+
+		if (anyOn(flags, USE_PROGRAMFILES | USE_PROVER)) {
+			this.weightingScheme = new TanhWeightingScheme();
+			if (line.hasOption("weightingScheme")) {
+				String value = line.getOptionValue("weightingScheme");
+				if (value.equals("linear")) weightingScheme = new LinearWeightingScheme();
+				else if (value.equals("sigmoid")) weightingScheme = new SigmoidWeightingScheme();
+				else if (value.equals("tanh")) weightingScheme = weightingScheme;
+				else { System.err.println("Unrecognized weighting scheme "+value); this.usageOptions(options, flags); }
 			}
 		}
 	}

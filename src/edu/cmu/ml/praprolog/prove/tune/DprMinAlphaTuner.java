@@ -6,6 +6,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.DprProver;
 import edu.cmu.ml.praprolog.prove.Goal;
@@ -25,13 +26,13 @@ public class DprMinAlphaTuner {
 	private static final double MIN_DELTA = 1e-10;
 	protected LogicProgram program;
 
-	public DprMinAlphaTuner(String[] programFiles, double alpha, String paramsFile) {
+	public DprMinAlphaTuner(String[] programFiles, double alpha, String paramsFile, WeightingScheme wScheme) {
 		this.program = new LogicProgram(Component.loadComponents(programFiles, alpha));
 		if (paramsFile != null) {
 			log.info("Using parameter weights from file "+paramsFile);
 			this.program.setFeatureDictWeighter(
 					InnerProductWeighter.fromParamVec(
-							Dictionary.load(paramsFile)));
+							Dictionary.load(paramsFile), wScheme));
 		}
 	}
 
@@ -144,7 +145,7 @@ public class DprMinAlphaTuner {
 			}
 		};
 		log.info("Tuning with initial alpha "+(Double) c.getCustomSetting(null));
-		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles,c.alpha, c.paramsFile);
+		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles, c.alpha, c.paramsFile, c.weightingScheme);
 		t.tune(c.dataFile,(Double) c.getCustomSetting("start"),(Double) c.getCustomSetting("epsilon"));
 	}
 

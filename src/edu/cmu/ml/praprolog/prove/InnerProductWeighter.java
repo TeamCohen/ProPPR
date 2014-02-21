@@ -21,11 +21,14 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 public class InnerProductWeighter extends FeatureDictWeighter {
 	private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
 	protected static final BloomFilter<Goal> unknownFeatures = new BloomFilter<Goal>(.01,100);
+	private static WeightingScheme DEFAULT_WEIGHTING_SCHEME() {
+		return new LinearWeightingScheme();
+	}
 	public InnerProductWeighter() {
 		this(new HashMap<Goal,Double>());
 	}
 	public InnerProductWeighter(Map<Goal,Double> weights) {
-		this(new LinearWeightingScheme(), weights);
+		this(DEFAULT_WEIGHTING_SCHEME(), weights);
 		
 	}
 	public InnerProductWeighter(WeightingScheme ws, Map<Goal,Double> weights) {
@@ -50,12 +53,15 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 		return this.weightingScheme.edgeWeight(this.weights, featureDict);
 	}
 	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec) {
+		return fromParamVec(paramVec, DEFAULT_WEIGHTING_SCHEME());
+	}
+	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec, WeightingScheme wScheme) {
 		//         goalDict = dict(( (rc.parser.parseGoal(s),w) for s,w in paramVec.items() ))
 		Map<Goal,Double> weights = new HashMap<Goal,Double>();
 		for (Map.Entry<String,Double> s : paramVec.entrySet()) {
 			weights.put(Goal.parseGoal(s.getKey().replaceAll("[(),]"," ")), s.getValue());
 		}
-		return new InnerProductWeighter(weights);
+		return new InnerProductWeighter(wScheme, weights);
 	}
 
 }

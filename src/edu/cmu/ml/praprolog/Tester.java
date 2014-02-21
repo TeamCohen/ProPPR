@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.graph.GraphWriter;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
@@ -170,7 +171,7 @@ public class Tester extends ExampleThawing {
 		
 //		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
 		if (c.paramsFile != null)
-			c.tester.setParams(Dictionary.load(c.paramsFile));
+			c.tester.setParams(Dictionary.load(c.paramsFile), c.weightingScheme);
 
 		log.info("Testing on "+c.testFile+"...");
 		long start = System.currentTimeMillis();
@@ -179,7 +180,7 @@ public class Tester extends ExampleThawing {
 		System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 	
 	}
-	public void setParams(Map<String, Double> paramVec) {
-		this.masterProgram.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(paramVec));
+	public void setParams(Map<String, Double> paramVec, WeightingScheme wScheme) {
+		this.masterProgram.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(paramVec, wScheme));
 	}
 }

@@ -10,7 +10,13 @@ import edu.cmu.ml.praprolog.ExampleCooker;
 import edu.cmu.ml.praprolog.ModularMultiExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
+import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.prove.Component;
+import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
 import edu.cmu.ml.praprolog.Tester;
@@ -25,6 +31,7 @@ public class ExperimentConfiguration extends Configuration {
 	public boolean trove;//=true;
 	public boolean pretest;//=false;
 	public boolean strict;//=false;
+	public LogicProgram program;
 	
 	public ExperimentConfiguration(String[] args, int flags) {
 		super(args, flags);
@@ -91,6 +98,7 @@ public class ExperimentConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: tanh\n"
 							+"Available options:\n"
+							+"linear\n"
 							+"tanh\n"
 							+"sigmoid")
 					.create());
@@ -132,6 +140,10 @@ public class ExperimentConfiguration extends Configuration {
 		if (line.hasOption("pretest")) this.pretest = true;
 		this.strict=false;
 		if (line.hasOption("strict")) this.strict = true;
+		
+		if (isOn(flags,Configuration.USE_PROGRAMFILES)) {
+			this.program = new LogicProgram(Component.loadComponents(programFiles, this.alpha));
+		}
 		
 		int threads = 3;
 		if(line.hasOption("threads")) threads = this.nthreads;
@@ -220,12 +232,7 @@ public class ExperimentConfiguration extends Configuration {
 		double mu = SRW.DEFAULT_MU;
 		double eta = SRW.DEFAULT_ETA;
 		double delta = SRW.DEFAULT_DELTA;
-		int weightingScheme = SRW.WEIGHT_DEFAULT;
-		if (line.hasOption("weightingScheme")) {
-			String value = line.getOptionValue("weightingScheme");
-			if (value.equals("sigmoid")) weightingScheme = SRW.WEIGHT_SIGMOID;
-			if (value.equals("tanh")) weightingScheme = SRW.WEIGHT_TANH;
-		}
+
 		if (line.hasOption("srw")) {
 			String[] values = line.getOptionValues("srw");
 			if (values.length > 1) {
@@ -269,6 +276,7 @@ public class ExperimentConfiguration extends Configuration {
 		sb.append("Tester: ").append(tester.getClass().getCanonicalName()).append("\n");
 		sb.append("Cooker: ").append(cooker.getClass().getCanonicalName()).append("\n");
 		sb.append("Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
+		sb.append("Weighting Scheme: ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
 		sb.append("Pretest? ").append(this.pretest ? "yes" : "no").append("\n");
 		sb.append("Strict? ").append(this.strict ? "yes" : "no").append("\n");
 		return sb.toString();

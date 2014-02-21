@@ -30,10 +30,7 @@ public class SRW<E extends RWExample> {
 	public static final int DEFAULT_MAX_T=10;
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
-	public static final double DEFAULT_DELTA=0.5; 
-	public static final int WEIGHT_SIGMOID=0;
-	public static final int WEIGHT_TANH=1;
-	public static final int WEIGHT_DEFAULT=WEIGHT_TANH;
+	public static final double DEFAULT_DELTA=0.5;
 	protected double mu;
 	protected int maxT;
 	protected double eta;
@@ -42,19 +39,15 @@ public class SRW<E extends RWExample> {
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
-	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, WEIGHT_DEFAULT, DEFAULT_DELTA); }
-	public SRW(int maxT, double mu, double eta, int wScheme, double delta) {
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, new TanhWeightingScheme(), DEFAULT_DELTA); }
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.epoch = 1;
 		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
-		
-		switch(wScheme) {
-		case WEIGHT_SIGMOID: this.weightingScheme = new SigmoidWeightingScheme(); break;
-		case WEIGHT_TANH: this.weightingScheme = new TanhWeightingScheme(); break;
-		}
+		this.weightingScheme = wScheme;
 	}
 
 

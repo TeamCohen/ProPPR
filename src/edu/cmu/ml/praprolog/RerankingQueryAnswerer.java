@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.graph.GraphWriter;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
@@ -25,7 +26,8 @@ public class RerankingQueryAnswerer extends QueryAnswerer {
 		this.srw = walker;
 	}
 	@Override
-	public void addParams(LogicProgram program, String paramsFile) {
+	public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
+		// weightingScheme is only used by the SRW, which got a copy during configuration
 		this.params = Dictionary.load(paramsFile);
 	}
 	@Override

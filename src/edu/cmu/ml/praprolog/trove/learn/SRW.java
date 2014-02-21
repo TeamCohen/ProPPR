@@ -45,23 +45,15 @@ public class SRW<E extends RWExample> {
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(10); }
-	public SRW(int maxT) { this(maxT, 0.001, 1.0, edu.cmu.ml.praprolog.learn.SRW.WEIGHT_DEFAULT,0.5); }
-	public SRW(int maxT, double mu, double eta, int wScheme, double delta) {
+	public SRW(int maxT) { this(maxT, 0.001, 1.0, new TanhWeightingScheme(),0.5); }
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.epoch = 1;
 		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
-		
-		switch(wScheme) {
-		case edu.cmu.ml.praprolog.learn.SRW.WEIGHT_SIGMOID: 
-			this.weightingScheme = new SigmoidWeightingScheme(); 
-			break;
-		case edu.cmu.ml.praprolog.learn.SRW.WEIGHT_TANH: 
-			this.weightingScheme = new TanhWeightingScheme(); 
-			break;
-		}
+		this.weightingScheme = wScheme;
 	}
 
 	/**
