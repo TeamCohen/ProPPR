@@ -45,10 +45,10 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 
 		for (T x : example.getPosList()) {
 			if (log.isDebugEnabled()) log.debug("pos example "+x);
-			double px = p.get(x);
-			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
+					double px = p.get(x);
+					if(px > pmax) pmax = px;
 					if (log.isDebugEnabled()) log.debug(String.format(" - delta %s is - %f * %f", f,d.get(x).get(f),1.0/p.get(x)));
 					Dictionary.increment(derivFparamVec, f, -d.get(x).get(f)/p.get(x));
 				}

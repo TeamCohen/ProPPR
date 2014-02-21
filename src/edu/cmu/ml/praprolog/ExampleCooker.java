@@ -96,6 +96,11 @@ public class ExampleCooker extends ExampleThawing {
 			}
 		}
 		
+		if (x.length() == 0) {
+			log.warn("No positive or negative solutions for query "+nwritten+":"+rawX.getQuery().toSaveString()+"; skipping");
+			return "";
+		}
+		
 		StringBuilder line = new StringBuilder();
 		line.append(rawX.getQuery().toSaveString())
 			.append("\t");

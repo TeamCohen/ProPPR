@@ -56,8 +56,15 @@ public class Trainer<T> {
 			TreeMap<T, Double> queryVec = new TreeMap<T,Double>();
 			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(g.keyToId(u), 1.0);
 
-			String[] rawPosList = parts[2].split(MINOR_DELIM);
-			String[] rawNegList = parts[3].split(MINOR_DELIM);
+			String[] rawPosList, rawNegList;
+			if (parts[2].length()>0) rawPosList = parts[2].split(MINOR_DELIM);
+			else rawPosList = new String[0];
+			if (parts[3].length()>0) rawNegList = parts[3].split(MINOR_DELIM);
+			else rawNegList = new String[0];
+			if (rawPosList.length + rawNegList.length == 0) {
+				log.warn("no labeled solutions for example on line "+reader.getAbsoluteLineNumber()+"; skipping");
+				continue;
+			}
 			T[] posList = g.keyToId(rawPosList);
 			T[] negList = g.keyToId(rawNegList);
 			try {
