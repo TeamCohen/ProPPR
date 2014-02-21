@@ -1,3 +1,8 @@
+testcases/textcattoy/log.log
+testcases/textcattoy/params.overweight
+testcases/textcattoy/params.wts
+testcases/textcattoy/programFiles.arg
+testcases/textcattoy/toytrain.cooked
 .project
 beatles
 *.pyc
