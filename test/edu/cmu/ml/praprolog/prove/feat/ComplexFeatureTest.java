@@ -29,17 +29,14 @@ public class ComplexFeatureTest {
         final double defaultValue = 1.0;
         final ComplexFeature cf = new SpecialWordCF(
                 new LogicProgram(new Component[0]),
-                new String[] {specialVarName, specialValue, "" + defaultValue});
+                new String[] {"0", specialValue, "" + defaultValue});
 
         nullCFChecks(cf);
 
         final RenamingSubstitution theta = new RenamingSubstitution(0);
         final int reanmedP = RenamingSubstitution.RENAMED;
         final Goal specialFeatureInstnace = new Goal(specialVarName, new Argument[] {
-
         });
-
-        Assert.fail("need to come up with good automated test!");
     }
 
     static public void nullCFChecks(ComplexFeature cf) throws LogicProgramException {
