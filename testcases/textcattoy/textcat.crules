@@ -1,0 +1,2 @@
+predict,-1,-2 & hasWord,-1,-3 & isLabel,-2 & related,-3,-2 # r # X,Y,W
+related,-1,-2 # w,-1,-2 # W,Y
