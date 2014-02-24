@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
@@ -13,7 +12,7 @@ import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
-import edu.cmu.ml.praprolog.trove.graph.Feature;
+import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
@@ -42,25 +41,19 @@ public class SRW<E extends RWExample> {
 	protected int maxT;
 	protected double eta;
 	protected int epoch;
+	protected double delta;
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(10); }
-	public SRW(int maxT) { this(maxT, 0.001, 1.0, edu.cmu.ml.praprolog.learn.SRW.WEIGHT_DEFAULT); }
-	public SRW(int maxT, double mu, double eta, int wScheme) {
+	public SRW(int maxT) { this(maxT, 0.001, 1.0, new TanhWeightingScheme(),0.5); }
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.epoch = 1;
+		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
-		
-		switch(wScheme) {
-		case edu.cmu.ml.praprolog.learn.SRW.WEIGHT_SIGMOID: 
-			this.weightingScheme = new SigmoidWeightingScheme(); 
-			break;
-		case edu.cmu.ml.praprolog.learn.SRW.WEIGHT_TANH: 
-			this.weightingScheme = new TanhWeightingScheme(); 
-			break;
-		}
+		this.weightingScheme = wScheme;
 	}
 
 	/**
@@ -87,11 +80,7 @@ public class SRW<E extends RWExample> {
 	 * @return
 	 */
 	public  double edgeWeight(AnnotatedTroveGraph g, int u, int v,  Map<String,Double> p) {
-		double sum = 0.0;
-		for (Feature f : g.phi(u, v)) {
-			sum += Dictionary.safeGet(p, f.featureName) * f.weight;
-		}
-		return this.weightingScheme.edgeWeightFunction(sum);
+		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
 	}
 
 //	/**
@@ -264,7 +253,7 @@ public class SRW<E extends RWExample> {
 			int v, Map<String, Double> paramVec) {
 		TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeightFunction(f.weight));
+			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
 		}
 		return result;
 	}

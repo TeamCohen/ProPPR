@@ -6,6 +6,7 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
@@ -16,8 +17,8 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 
-	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, int wScheme) {
-		super(maxT,mu,eta,wScheme);
+	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
+		super(maxT,mu,eta,wScheme,delta);
 	}
 
 	public L2PosNegLossTrainedSRW() {
@@ -41,23 +42,30 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		for (String f : paramVec.keySet()) derivFparamVec.put(f,derivRegularization(f,paramVec));
 		
 		//compute gradient
-		
+		double pmax = 0;
+
 		Set<String> trainables = trainableFeatures(paramVec); 
 		for (int x : example.getPosList()) {
 			TObjectDoubleHashMap<String> dx = d.get(x);
 			double px = p.get(x);
+			if(px > pmax) pmax = px;
 			for (String f : trainables) {
 				if (Dictionary.safeContains(d,x,f)) {
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
 		}
+		
+            	double h = pmax + delta;
+		double beta = 1;
+		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
+		
 		for (int x : example.getNegList()) {
 			TObjectDoubleHashMap<String> dx = d.get(x);
 			double px = p.get(x);
 			for (String f : trainables) {
 				if (Dictionary.safeContains(d,x,f)) 
-					Dictionary.increment(derivFparamVec, f, dx.get(f)/(1-px));
+					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
 			}
 		}
 		int length = example.length();

@@ -58,10 +58,19 @@ public class Trainer {
 			TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
 			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(u, 1.0);
 
-			String[] rawPosList = parts[2].split(MINOR_DELIM);
-			String[] rawNegList = parts[3].split(MINOR_DELIM);
+//			String[] rawPosList = parts[2].split(MINOR_DELIM);
+//			String[] rawNegList = parts[3].split(MINOR_DELIM);
+			String[] rawPosList, rawNegList;
+			if (parts[2].length()>0) rawPosList = parts[2].split(MINOR_DELIM);
+			else rawPosList = new String[0];
+			if (parts[3].length()>0) rawNegList = parts[3].split(MINOR_DELIM);
+			else rawNegList = new String[0];
 			//				int[] posList = g.keyToId(rawPosList);
 			//				int[] negList = g.keyToId(rawNegList);
+			if (rawPosList.length + rawNegList.length == 0) {
+				log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
+				continue;
+			}
 			try {
 				g = AnnotatedTroveGraph.fromStringParts(parts[4],g);
 				result.add(new PosNegRWExample(g,queryVec,rawPosList,rawNegList));

@@ -1,11 +1,14 @@
 package edu.cmu.ml.praprolog.prove.tune;
 
 
+import java.io.File;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.DprProver;
 import edu.cmu.ml.praprolog.prove.Goal;
@@ -25,17 +28,17 @@ public class DprMinAlphaTuner {
 	private static final double MIN_DELTA = 1e-10;
 	protected LogicProgram program;
 
-	public DprMinAlphaTuner(String[] programFiles, double alpha, String paramsFile) {
+	public DprMinAlphaTuner(String[] programFiles, double alpha, String paramsFile, WeightingScheme wScheme) {
 		this.program = new LogicProgram(Component.loadComponents(programFiles, alpha));
 		if (paramsFile != null) {
 			log.info("Using parameter weights from file "+paramsFile);
 			this.program.setFeatureDictWeighter(
 					InnerProductWeighter.fromParamVec(
-							Dictionary.load(paramsFile)));
+							Dictionary.load(paramsFile), wScheme));
 		}
 	}
 
-	public void tune(String queryFile, double start, double epsilon) {
+	public void tune(File dataFile, double start, double epsilon) {
 		double minalpha=start, del=minalpha;//, rat = (DprProver.EPS_DEFAULT / DprProver.MINALPH_DEFAULT);
 		int i;
 		boolean hasSuccess=false;
@@ -59,7 +62,7 @@ public class DprMinAlphaTuner {
 			this.program.setAlpha(minalpha+epsilon);
 			del = del/2;
 			try {
-				if (!query(p,queryFile)) break;
+				if (!query(p,dataFile)) break;
 				hasSuccess = true;
 				lastSuccess = minalpha;
 				log.info("Succeeded. Increasing alpha...");
@@ -72,7 +75,7 @@ public class DprMinAlphaTuner {
 		log.info("Reached minalpha "+lastSuccess+" +/- "+del+" in "+i+" iterations");
 	}
 
-	public boolean query(Prover prover, String queryFile) {
+	public boolean query(Prover prover, File queryFile) {
 		boolean success = true;
 		MinAlphaException a = null;
 		ParsedFile reader = null;
@@ -144,7 +147,7 @@ public class DprMinAlphaTuner {
 			}
 		};
 		log.info("Tuning with initial alpha "+(Double) c.getCustomSetting(null));
-		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles,c.alpha, c.paramsFile);
+		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles, c.alpha, c.paramsFile, c.weightingScheme);
 		t.tune(c.dataFile,(Double) c.getCustomSetting("start"),(Double) c.getCustomSetting("epsilon"));
 	}
 

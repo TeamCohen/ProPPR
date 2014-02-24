@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.util.HashMap;
 
 import junit.framework.TestResult;
@@ -52,7 +53,7 @@ public class TesterTest {
 		LogicProgram textcat = new LogicProgram(
 				Component.loadComponents("testcases/textcat/textcat.crules:testcases/textcat/labels.cfacts:testcases/textcat/words.graph".split(":"), DprProver.MINALPH_DEFAULT+DprProver.EPS_DEFAULT));
 		Tester tee = new Tester(new DprProver(), textcat);
-		TestResults results = tee.testExamples("testcases/textcat/test.1.data");
+		TestResults results = tee.testExamples(new File("testcases/textcat/test.1.data"));
 		System.out.println("pairs "+results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 	}
 

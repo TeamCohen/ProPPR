@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayDeque;
@@ -33,7 +34,7 @@ public class MultithreadedExampleCooker extends ExampleCooker {
 	}
 	
 	@Override
-	public void cookExamples(String dataFile, Writer writer) throws IOException {
+	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		ExecutorService executor = Executors.newFixedThreadPool(this.nthreads);
 		
 		// using a deque for ease of garbage collection of already-written futures

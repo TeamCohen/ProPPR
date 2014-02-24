@@ -1,6 +1,7 @@
 package edu.cmu.ml.praprolog;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -40,7 +41,7 @@ public class ExampleCooker extends ExampleThawing {
 		super.init(p,new LogicProgram(Component.loadComponents(programFiles,alpha)));
 	}
 	
-	public void cookExamples(String dataFile, String outputFile) {
+	public void cookExamples(File dataFile, String outputFile) {
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new FileWriter(outputFile));
@@ -51,7 +52,7 @@ public class ExampleCooker extends ExampleThawing {
 		}
 	}
 	
-	public void cookExamples(String dataFile, Writer writer) throws IOException {
+	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		int k=0, empty=0;
 		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).load()) {
 			k++;
@@ -93,6 +94,11 @@ public class ExampleCooker extends ExampleThawing {
 				log.info("Cooked "+nwritten+" examples");
 				lastPrint = now;
 			}
+		}
+		
+		if (x.length() == 0) {
+			log.warn("No positive or negative solutions for query "+nwritten+":"+rawX.getQuery().toSaveString()+"; skipping");
+			return "";
 		}
 		
 		StringBuilder line = new StringBuilder();

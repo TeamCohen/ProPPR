@@ -53,6 +53,9 @@ public class ComplexFeatureLibrary {
         return functor2cf.get(functor);
     }
 
+    static public void init(LogicProgram logProg, File f) {
+    	throw new UnsupportedOperationException("Not yet implemented");
+    }
     static public void init(LogicProgram logProg, BufferedReader r)
             throws IOException, ClassNotFoundException, ClassCastException,
             InstantiationException, IllegalAccessException, NoSuchMethodException {

@@ -1,21 +1,20 @@
 package edu.cmu.ml.praprolog.learn;
 
-
-public class SigmoidWeightingScheme extends WeightingScheme {
+public class LinearWeightingScheme extends WeightingScheme {
 
 	@Override
 	public double edgeWeightFunction(double sum) {
-		return 1/(1 + Math.exp(-sum));
+		return sum;
 	}
 
 	@Override
 	public double derivEdgeWeight(double weight) {
-		return edgeWeightFunction(weight) * (1 - edgeWeightFunction(weight));
+		return weight;
 	}
 
 	@Override
 	public double defaultWeight() {
-		return 0.0;
+		return 1.0;
 	}
 
 }

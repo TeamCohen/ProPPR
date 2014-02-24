@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog;
 
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.*;
 import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
 import edu.cmu.ml.praprolog.util.Configuration;
@@ -14,6 +15,7 @@ import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -33,35 +35,33 @@ import java.util.Map;
 public class QueryAnswerer {
     private static final Logger log = Logger.getLogger(QueryAnswerer.class);
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         QueryAnswererConfiguration c = new QueryAnswererConfiguration(
                 args,
                 Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT |
-                Configuration.USE_PARAMS | Configuration.USE_COMPLEX_FEATURES);
+                Configuration.USE_PARAMS);
         LogicProgram program = new LogicProgram(Component.loadComponents(c.programFiles, c.alpha));
         ComplexFeatureLibrary.init(program, c.complexFeatureConfigFile);
 
-        QueryAnswerer qa;
-        if (c.rerank) qa = new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw);
-        else qa = new QueryAnswerer();
-
+        QueryAnswerer qa = c.rerank ?
+                           new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw) :
+                           new QueryAnswerer();
         log.info("Running queries from " + c.queryFile + "; saving results to " + c.outputFile);
-        qa.findSolutions(program, c.prover, c.queryFile, c.outputFile, c.normalize, c.paramsFile);
+        if (c.paramsFile != null) {
+            qa.addParams(program, c.paramsFile, c.weightingScheme);
+        }
+        qa.findSolutions(program, c.prover, c.queryFile, c.outputFile, c.normalize);
     }
 
     public Map<LogicProgramState, Double> getSolutions(Prover prover, Goal query, LogicProgram program) {
         return prover.proveState(program, new ProPPRLogicProgramState(query));
     }
 
-    public void addParams(LogicProgram program, String paramsFile) {
-        program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile)));
+    public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
+        program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile), wScheme));
     }
 
-    public void findSolutions(LogicProgram program, Prover prover, String queryFile,
-                              String outputFile, boolean normalize, String paramsFile) throws IOException {
-        if (paramsFile != null) {
-            addParams(program, paramsFile);
-        }
+    public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize) throws IOException {
         ParsedFile reader = new ParsedFile(queryFile);
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
         try {

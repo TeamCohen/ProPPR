@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.graph.GraphWriter;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
@@ -23,7 +24,8 @@ public class RerankingTester extends Tester {
 	}
 	
 	@Override
-	public void setParams(Map<String,Double> params) {
+	public void setParams(Map<String,Double> params, WeightingScheme wScheme) {
+		// weightingScheme is only used by the SRW, which got a copy during configuration
 		this.params = params;
 	}
 	

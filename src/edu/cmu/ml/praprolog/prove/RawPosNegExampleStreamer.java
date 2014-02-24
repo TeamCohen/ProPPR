@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.prove;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,9 +20,9 @@ import edu.cmu.ml.praprolog.util.ParsedFile;
  *
  */
 public class RawPosNegExampleStreamer {
-	private String[] files;
-	public RawPosNegExampleStreamer(String ... files) {
-		this.files = files;
+	private File[] files;
+	public RawPosNegExampleStreamer(File ... filelist) {
+		this.files = filelist;
 	}
 
 	public RawPosNegExample exampleFromString(String line, boolean parsed) {
@@ -47,8 +48,8 @@ public class RawPosNegExampleStreamer {
 
 	public List<RawPosNegExample> load() {
 		List<RawPosNegExample> examples = new ArrayList<RawPosNegExample>();
-		for (String f : files) {
-			boolean parsed = f.endsWith(".cdata");
+		for (File f : files) {
+			boolean parsed = f.getName().endsWith(".cdata");
 			ParsedFile file = new ParsedFile(f);
 			for(String line : file) {
 				examples.add(exampleFromString(line,parsed));
@@ -68,16 +69,24 @@ public class RawPosNegExampleStreamer {
 	 */
 	public class RawExampleIterator implements Iterable<RawPosNegExample>, Iterator<RawPosNegExample> {
 		LineNumberReader reader=null;
-		String currentFile;
-		String[] fileList;
+		File currentFile;
+		File[] fileList;
 		int currentFileId;
 		String nextLine = null;
 		Exception lastException=null;
 		boolean parsed;
-		public RawExampleIterator(String[] files) {
+		private void init() {
 			currentFileId=-1;
-			fileList = files;
 			nextFile();
+		}
+		public RawExampleIterator(File[] files) {
+			fileList = files;
+			init();
+		}
+		public RawExampleIterator(String[] filenames) {
+			fileList = new File[filenames.length];
+			for (int i=0; i<filenames.length; i++) fileList[i] = new File(filenames[i]);
+			init();
 		}
 		protected void nextFile() {
 			currentFileId++;
@@ -86,7 +95,7 @@ public class RawPosNegExampleStreamer {
 
 				if (currentFileId < fileList.length) {
 					currentFile=fileList[currentFileId];
-					parsed = currentFile.endsWith(".cdata");
+					parsed = currentFile.getName().endsWith(".cdata");
 					reader = new LineNumberReader(new FileReader(currentFile));
 					peek();
 				}

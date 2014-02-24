@@ -12,8 +12,8 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinit log loss.
 
-	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, int wScheme) {
-		super(maxT,mu,eta,wScheme);
+	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
+		super(maxT,mu,eta,wScheme,delta);
 	}
 
 	public L2PosNegLossTrainedSRW() {
@@ -41,18 +41,28 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		Set<String> trainableFeatures = trainableFeatures(localFeatures(paramVec,example));
 		
 		//compute gradient
+		double pmax = 0;
+
 		for (T x : example.getPosList()) {
 			if (log.isDebugEnabled()) log.debug("pos example "+x);
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
+					double px = p.get(x);
+					if(px > pmax) pmax = px;
 					if (log.isDebugEnabled()) log.debug(String.format(" - delta %s is - %f * %f", f,d.get(x).get(f),1.0/p.get(x)));
 					Dictionary.increment(derivFparamVec, f, -d.get(x).get(f)/p.get(x));
 				}
 			}
 		}
+
+		//negative instance booster
+		double h = pmax + delta;
+		double beta = 1;
+		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
+
 		for (T x : example.getNegList()) {
 			for (String f : trainableFeatures) {
-				if (Dictionary.safeContains(d,x,f)) Dictionary.increment(derivFparamVec, f, d.get(x).get(f)/(1-p.get(x)));
+				if (Dictionary.safeContains(d,x,f)) Dictionary.increment(derivFparamVec, f, beta*d.get(x).get(f)/(1-p.get(x)));
 			}
 		}
 		for (String f : trainableFeatures) {
