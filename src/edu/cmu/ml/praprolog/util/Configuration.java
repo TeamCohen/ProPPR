@@ -5,12 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
-import java.util.Set;
 import java.io.File;
 
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -34,13 +31,16 @@ public class Configuration {
 	public static final int USE_THREADS=0x10;
 	public static final int USE_TRAIN=0x20;
 	public static final int USE_TEST=0x40;
-	public static final int USE_TRAINTEST=0x260;
 	public static final int USE_LEARNINGSET=0x80;
 	public static final int USE_QUERIES=0x100;
 	public static final int USE_PARAMS = 0x200;
 	public static final int USE_SRW = 0x400;
+	public static final int USE_COMPLEX_FEATURES = 0x800;
+	// combo flags:
 	/** programFiles, prover, threads **/
 	public static final int USE_DEFAULTS=0x19;
+	/** train, test, params **/
+	public static final int USE_TRAINTEST=0x260;
 	public static final String PROPFILE = "config.properties";
 	private static final boolean DEFAULT_COMBINE=true;
 	
@@ -49,6 +49,7 @@ public class Configuration {
 	public File dataFile=null;
 	public File queryFile=null;
 	public File testFile=null;
+	public File complexFeatureConfigFile=null;
 	public String outputFile=null;
 	public int nthreads=-1;
 	public double alpha = Component.ALPHA_DEFAULT;
@@ -95,29 +96,6 @@ public class Configuration {
 		} catch( Exception exp ) {
 			System.err.println("\n"+exp.getMessage()+"\n");
 			usageOptions(options,flags);
-			
-			/*
-			 * For silently passing through unrecognized options, we may want to use:
-			 *
-	public class ExtendedGnuParser extends GnuParser {
-
-    private boolean ignoreUnrecognizedOption;
-
-    public ExtendedGnuParser(final boolean ignoreUnrecognizedOption) {
-        this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
-    }
-
-    @Override
-    protected void processOption(final String arg, final ListIterator iter) throws     ParseException {
-        boolean hasOption = getOptions().hasOption(arg);
-
-        if (hasOption || !ignoreUnrecognizedOption) {
-            super.processOption(arg, iter);
-        }
-    }
-
-} 
-			 */
 		}
 	}
 	protected File getExistingFileOption(CommandLine line, String name) {

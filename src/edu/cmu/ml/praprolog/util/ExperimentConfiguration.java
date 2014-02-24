@@ -24,117 +24,117 @@ import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW;
 
 public class ExperimentConfiguration extends Configuration {
-	public ExampleCooker cooker;
-	public Object srw;
-	public Object trainer;
-	public Tester tester;
-	public boolean trove;//=true;
-	public boolean pretest;//=false;
-	public boolean strict;//=false;
-	public LogicProgram program;
-	
-	public ExperimentConfiguration(String[] args, int flags) {
-		super(args, flags);
-	}
-	
-	@Override 
-	protected void addOptions(Options options, int flags) {
-		super.addOptions(options,flags);
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("strict")
-					.withDescription("Fail immediately if an unexpected state occurs (default off)")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("pretest")
-					.withDescription("Run and report accuracy on test examples before training")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("cooker")
-					.withArgName("class[:arg]")
-					.hasArgs()
-					.withValueSeparator(':')
-					.withDescription("Default: mmc:3\n"
-						+"Available options:\n"
-						+"ec\n"
-						+"mec[:threads] (default threads=3)\n"
-						+"mmc[:threads] (default threads=3)")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("trainer")
-					.withArgName("class[:arg]")
-					.hasArgs()
-					.withValueSeparator(':')
-					.withDescription("Default: trove.mrr:3\n"
-							+"Available options:\n"
-							+"t\n"
-							+"mt[:threads] (default threads=3)\n"
-							+"mrr[:threads] (default threads=3)\n"
-							+"trove.t\n"
-							+"trove.mt[:threads] (default threads=3)\n"
-							+"trove.mrr[:threads] (default threads=3)")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("srw")
-					.withArgName("class")
-					.hasArgs()
-					.withValueSeparator(':')
-					.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
-							+"Default mu=.001\n"
-							+"Default eta=1.0\n"
-							+"Default delta=0.5\n"
-							+"Available options:\n"
-							+"l2p[:mu[:eta[:delta]]] (L2PosNegLossTrainedSRW)\n"
-							+"l2plocal[:mu[:eta[:delta]]] (LocalL2PosNegLossTrainedSRW)")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("weightingScheme")
-					.withArgName("scheme")
-					.hasArg()
-					.withDescription("Default: tanh\n"
-							+"Available options:\n"
-							+"linear\n"
-							+"tanh\n"
-							+"sigmoid")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("tester")
-					.withArgName("class[:arg]")
-					.hasArgs()
-					.withValueSeparator(':')
-					.withDescription("Default: t\n"
-						+"Available options:\n"
-						+"t Tester\n"
-						+"mt[:threads] (default threads=3) MultithreadedTester\n"
-						+"rt RerankingTester")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("seed")
-					.withArgName("s")
-					.hasArg()
-					.withDescription("Seed the SRW random number generator")
-					.create());
-	}
-	private void vanillaSeed(CommandLine line) {
-		if (!line.hasOption("seed")) return;
-		long seed = Long.parseLong(line.getOptionValue("seed"));
-		edu.cmu.ml.praprolog.learn.SRW.seed(seed);
-	}
-	private void troveSeed(CommandLine line) {
-		if (!line.hasOption("seed")) return;
-		long seed = Long.parseLong(line.getOptionValue("seed"));
-		edu.cmu.ml.praprolog.trove.learn.SRW.seed(seed);
-	}
-	@Override
-	protected void retrieveSettings(CommandLine line, int flags, Options options) {
-		super.retrieveSettings(line, flags, options);
+    public ExampleCooker cooker;
+    public Object srw;
+    public Object trainer;
+    public Tester tester;
+    public boolean trove;//=true;
+    public boolean pretest;//=false;
+    public boolean strict;//=false;
+    public LogicProgram program;
+    public ExperimentConfiguration(String[] args, int flags) {
+        super(args, flags);
+    }
+
+    @Override
+    protected void addOptions(Options options, int flags) {
+        super.addOptions(options, flags);
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("strict")
+                        .withDescription("Fail immediately if an unexpected state occurs (default off)")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("pretest")
+                        .withDescription("Run and report accuracy on test examples before training")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("cooker")
+                        .withArgName("class[:arg]")
+                        .hasArgs()
+                        .withValueSeparator(':')
+                        .withDescription("Default: mmc:3\n"
+                                         + "Available options:\n"
+                                         + "ec\n"
+                                         + "mec[:threads] (default threads=3)\n"
+                                         + "mmc[:threads] (default threads=3)")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("trainer")
+                        .withArgName("class[:arg]")
+                        .hasArgs()
+                        .withValueSeparator(':')
+                        .withDescription("Default: trove.mrr:3\n"
+                                         + "Available options:\n"
+                                         + "t\n"
+                                         + "mt[:threads] (default threads=3)\n"
+                                         + "mrr[:threads] (default threads=3)\n"
+                                         + "trove.t\n"
+                                         + "trove.mt[:threads] (default threads=3)\n"
+                                         + "trove.mrr[:threads] (default threads=3)")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("srw")
+                        .withArgName("class")
+                        .hasArgs()
+                        .withValueSeparator(':')
+                        .withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
+                                         + "Default mu=.001\n"
+                                         + "Default eta=1.0\n"
+                                         + "Available options:\n"
+                                         + "l2p[:mu[:eta]] (L2PosNegLossTrainedSRW)\n"
+                                         + "l2plocal[:mu[:eta]] (LocalL2PosNegLossTrainedSRW)")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("weightingScheme")
+                        .withArgName("scheme")
+                        .hasArg()
+                        .withDescription("Default: tanh\n"
+                                         + "Available options:\n"
+                                         + "tanh\n"
+                                         + "sigmoid")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("tester")
+                        .withArgName("class[:arg]")
+                        .hasArgs()
+                        .withValueSeparator(':')
+                        .withDescription("Default: t\n"
+                                         + "Available options:\n"
+                                         + "t Tester\n"
+                                         + "mt[:threads] (default threads=3) MultithreadedTester\n"
+                                         + "rt RerankingTester")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("seed")
+                        .withArgName("s")
+                        .hasArg()
+                        .withDescription("Seed the SRW random number generator")
+                        .create());
+    }
+
+    private void vanillaSeed(CommandLine line) {
+        if (!line.hasOption("seed")) return;
+        long seed = Long.parseLong(line.getOptionValue("seed"));
+        edu.cmu.ml.praprolog.learn.SRW.seed(seed);
+    }
+
+    private void troveSeed(CommandLine line) {
+        if (!line.hasOption("seed")) return;
+        long seed = Long.parseLong(line.getOptionValue("seed"));
+        edu.cmu.ml.praprolog.trove.learn.SRW.seed(seed);
+    }
+
+    @Override
+    protected void retrieveSettings(CommandLine line, int flags, Options options) {
+        super.retrieveSettings(line, flags, options);
 
 		this.pretest=false;
 		if (line.hasOption("pretest")) this.pretest = true;

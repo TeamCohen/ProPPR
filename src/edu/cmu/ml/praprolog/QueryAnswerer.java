@@ -1,15 +1,15 @@
 package edu.cmu.ml.praprolog;
 
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.CommandLine;
+import org.apache.log4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.List;
 import java.util.Map;
 
@@ -31,20 +31,21 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 import edu.cmu.ml.praprolog.util.SymbolTable;
+import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
 
 
 /**
  * Contains a main() which executes a series of queries against a
  * ProPPR and saves the results in an output file. Each query should
- * be a single ProPPR goal, but may include other content after a 
- * <TAB> character (as in a training file).  The format of the output 
- * file is one line for each query, in the format '# proved Q# <TAB> 
- * QUERY <TAB> TIME-IN-MILLISEC msec', followed by one line for each 
+ * be a single ProPPR goal, but may include other content after a
+ * <TAB> character (as in a training file).  The format of the output
+ * file is one line for each query, in the format '# proved Q# <TAB>
+ * QUERY <TAB> TIME-IN-MILLISEC msec', followed by one line for each
  * solution, in the format 'RANK <TAB> SCORE <TAB> VARIABLE-BINDINGS'.
  **/
 
 public class QueryAnswerer {
-	private static final Logger log = Logger.getLogger(QueryAnswerer.class);
+    private static final Logger log = Logger.getLogger(QueryAnswerer.class);
 
 	static class QueryAnswererConfiguration extends ExperimentConfiguration {
 		boolean normalize;
@@ -81,6 +82,7 @@ public class QueryAnswerer {
 				new QueryAnswererConfiguration(args, 
 						Configuration.USE_DEFAULTS|Configuration.USE_QUERIES|Configuration.USE_OUTPUT|Configuration.USE_PARAMS);
 		LogicProgram program = new LogicProgram(Component.loadComponents(c.programFiles,c.alpha));
+		ComplexFeatureLibrary.init(program, c.complexFeatureConfigFile);
 		
 		QueryAnswerer qa = null;
 		if (c.rerank) qa = new RerankingQueryAnswerer( (SRW<PosNegRWExample<String>>) c.srw);
@@ -123,7 +125,8 @@ public class QueryAnswerer {
 				//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
 				log.info("Writing "+solutionDist.size()+" solutions...");
 
-				writer.append("# proved ").append(String.valueOf(querynum)).append("\t").append(query.toSaveString()).append("\t").append((end-start) + " msec");
+                writer.append("# proved ").append(String.valueOf(querynum)).append("\t").append(query.toSaveString())
+                      .append("\t").append((end - start) + " msec");
 
 				writer.newLine();
 				int rank = 0;
