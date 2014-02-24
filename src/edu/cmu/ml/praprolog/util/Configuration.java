@@ -76,29 +76,6 @@ public class Configuration {
         } catch (Exception exp) {
             System.err.println("\n" + exp.getMessage() + "\n");
             usageOptions(options, flags);
-
-			/*
-             * For silently passing through unrecognized options, we may want to use:
-			 *
-	public class ExtendedGnuParser extends GnuParser {
-
-    private boolean ignoreUnrecognizedOption;
-
-    public ExtendedGnuParser(final boolean ignoreUnrecognizedOption) {
-        this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
-    }
-
-    @Override
-    protected void processOption(final String arg, final ListIterator iter) throws     ParseException {
-        boolean hasOption = getOptions().hasOption(arg);
-
-        if (hasOption || !ignoreUnrecognizedOption) {
-            super.processOption(arg, iter);
-        }
-    }
-
-}
-			 */
         }
     }
 
@@ -106,6 +83,10 @@ public class Configuration {
         return (flags & flag) == flag;
     }
 
+    /**
+     * Initializes & sets the appropriate fields using the values of the
+     * command line options.
+     */
     protected void retrieveSettings(CommandLine line, int flags, Options options) {
         if (isOn(flags, USE_PROGRAMFILES) && line.hasOption("programFiles"))
             this.programFiles = line.getOptionValues("programFiles");
@@ -153,8 +134,14 @@ public class Configuration {
                 usageOptions(options, flags);
             }
         }
+        if (isOn(flags, USE_COMPLEX_FEATURES))
+            this.complexFeatureConfigFile = line.getOptionValue("complexFeatConfig");
     }
 
+    /**
+     * For all option flags as specified in this file, addOptions creates
+     * and adds Option objects to the Options object.
+     */
     protected void addOptions(Options options, int flags) {
         options.addOption(
                 OptionBuilder
@@ -165,14 +152,15 @@ public class Configuration {
                         .withValueSeparator(':')
                         .withDescription("Description of the logic program. Formats:\n\t\tcrules:goal,, & ... & goal,, # feature,, # variable,,\n\t\tcfacts:f\\ta\\ta")
                         .create());
-        if (!isOn(flags, USE_TRAINTEST)) options.addOption(
-                OptionBuilder
-                        .withLongOpt("data")
-                        .isRequired(isOn(flags, USE_DATA))
-                        .withArgName("file")
-                        .hasArg()
-                        .withDescription("Examples. Format: f a a\\t{+|-}f a a\\t...")
-                        .create());
+        if (!isOn(flags, USE_TRAINTEST))
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("data")
+                            .isRequired(isOn(flags, USE_DATA))
+                            .withArgName("file")
+                            .hasArg()
+                            .withDescription("Examples. Format: f a a\\t{+|-}f a a\\t...")
+                            .create());
         options.addOption(
                 OptionBuilder
                         .withLongOpt("output")
@@ -247,6 +235,15 @@ public class Configuration {
                             .withDescription("Print training loss at each epoch")
                             .create());
         }
+        if (isOn(flags, USE_COMPLEX_FEATURES)) {
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("complexFeatConfig")
+                            .withArgName("file")
+                            .hasArg()
+                            .withDescription("configurtion file for complex features")
+                            .create());
+        }
     }
 
     protected void constructUsageSyntax(StringBuilder syntax, int flags) {
@@ -258,8 +255,12 @@ public class Configuration {
         if (isOn(flags, USE_TEST)) syntax.append(" --test testing.data");
         if (isOn(flags, USE_PARAMS)) syntax.append("  [--params params.txt]");
         if (isOn(flags, USE_LEARNINGSET)) syntax.append(" [--epochs <int>] [--traceLosses]");
+        if (isOn(flags, USE_COMPLEX_FEATURES)) syntax.append("[-- complexFeatConfig complex_features.conf");
     }
 
+    /**
+     * Calls System.exit(0)
+     */
     protected void usageOptions(Options options, int flags) {
         HelpFormatter formatter = new HelpFormatter();
         int width = 80;
@@ -281,7 +282,7 @@ public class Configuration {
 
     @Override
     public String toString() {
-        return this.getClass().getCanonicalName();
+        return getClass().getCanonicalName();
     }
 
     protected String[] combinedArgs(String[] origArgs) {
