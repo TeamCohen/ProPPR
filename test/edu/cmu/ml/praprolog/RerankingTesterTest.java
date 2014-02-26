@@ -33,7 +33,7 @@ public class RerankingTesterTest {
 		
 		RerankingTester rt = new RerankingTester(prover, program, srw);
 		rt.setParams(params, null);
-		TestResults rt_results = rt.testExamples("testcases/textcattoy/toytest.data");
+		TestResults rt_results = rt.testExamples(new File("testcases/textcattoy/toytest.data"));
 		
 		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(params));
 		Tester t = new Tester(prover, program);

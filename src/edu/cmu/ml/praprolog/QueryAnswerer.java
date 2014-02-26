@@ -97,7 +97,7 @@ public class QueryAnswerer {
 	public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
 		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile), wScheme));
 	}
-	public void findSolutions(LogicProgram program, Prover prover, String queryFile, String outputFile, boolean normalize) throws IOException {
+	public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize) throws IOException {
 		ParsedFile reader = new ParsedFile(queryFile);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {
