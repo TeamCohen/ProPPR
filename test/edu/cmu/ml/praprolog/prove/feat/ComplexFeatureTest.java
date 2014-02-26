@@ -22,6 +22,7 @@ public class ComplexFeatureTest {
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.WARN);
     }
+    
 
     @Test
     public void specialWordComplexFeature() throws LogicProgramException {

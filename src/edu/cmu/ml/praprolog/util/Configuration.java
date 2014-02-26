@@ -24,13 +24,9 @@ public class Configuration {
     public static final int USE_SRW = 0x400;
     public static final int USE_COMPLEX_FEATURES = 0x800;
     // combo flags:
-    /**
-     * programFiles, prover, threads *
-     */
+    /** programFiles, prover, threads **/
     public static final int USE_DEFAULTS = 0x19;
-    /**
-     * train, test, params *
-     */
+    /** train, test, params **/
     public static final int USE_TRAINTEST = 0x260;
     public static final String PROPFILE = "config.properties";
     private static final boolean DEFAULT_COMBINE = true;
@@ -148,9 +144,8 @@ public class Configuration {
                 usageOptions(options, flags);
             }
         }
-        if (isOn(flags, USE_COMPLEX_FEATURES))
-            this.complexFeatureConfigFile = new File(line.getOptionValue("complexFeatConfig"));
-
+        if (isOn(flags, USE_COMPLEX_FEATURES) && line.hasOption("complexFeatures"))
+            this.complexFeatureConfigFile = getExistingFileOption(line,"complexFeatures");
 
         if (anyOn(flags, USE_PROGRAMFILES | USE_PROVER)) {
             this.weightingScheme = new TanhWeightingScheme();
@@ -267,10 +262,10 @@ public class Configuration {
         if (isOn(flags, USE_COMPLEX_FEATURES)) {
             options.addOption(
                     OptionBuilder
-                            .withLongOpt("complexFeatConfig")
+                            .withLongOpt("complexFeatures")
                             .withArgName("file")
                             .hasArg()
-                            .withDescription("configurtion file for complex features")
+                            .withDescription("Properties file for complex features")
                             .create());
         }
     }

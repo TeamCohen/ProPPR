@@ -17,6 +17,7 @@ import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
+import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
 import edu.cmu.ml.praprolog.Tester;
@@ -144,6 +145,9 @@ public class ExperimentConfiguration extends Configuration {
 		if (isOn(flags,Configuration.USE_PROGRAMFILES)) {
 			this.program = new LogicProgram(Component.loadComponents(programFiles, this.alpha));
 		}
+
+        if (isOn(flags, USE_COMPLEX_FEATURES) && line.hasOption("complexFeatures"))
+        	ComplexFeatureLibrary.init(this.program, this.complexFeatureConfigFile);
 		
 		int threads = 3;
 		if(line.hasOption("threads")) threads = this.nthreads;

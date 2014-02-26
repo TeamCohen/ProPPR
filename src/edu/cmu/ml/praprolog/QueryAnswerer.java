@@ -34,23 +34,38 @@ import java.util.Map;
 
 public class QueryAnswerer {
     private static final Logger log = Logger.getLogger(QueryAnswerer.class);
+    
+    static class QueryAnswererConfiguration extends ExperimentConfiguration {
+        boolean normalize;
+        boolean rerank;
 
-    public static void main(String[] args) throws IOException {
-        QueryAnswererConfiguration c = new QueryAnswererConfiguration(
-                args,
-                Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT |
-                Configuration.USE_PARAMS);
-        LogicProgram program = new LogicProgram(Component.loadComponents(c.programFiles, c.alpha));
-        ComplexFeatureLibrary.init(program, c.complexFeatureConfigFile);
-
-        QueryAnswerer qa = c.rerank ?
-                           new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw) :
-                           new QueryAnswerer();
-        log.info("Running queries from " + c.queryFile + "; saving results to " + c.outputFile);
-        if (c.paramsFile != null) {
-            qa.addParams(program, c.paramsFile, c.weightingScheme);
+        public QueryAnswererConfiguration(String[] args, int flags) {
+            super(args, flags);
         }
-        qa.findSolutions(program, c.prover, c.queryFile, c.outputFile, c.normalize);
+
+        @Override
+        protected void addOptions(Options options, int flags) {
+            super.addOptions(options, flags);
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("unnormalized")
+                            .withDescription("Show unnormalized scores for answers")
+                            .create());
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("reranked")
+                            .withDescription("Cook with unit weights and rerank solutions, instead of cooking with trained weights")
+                            .create());
+        }
+
+        @Override
+        protected void retrieveSettings(CommandLine line, int flags, Options options) {
+            super.retrieveSettings(line, flags, options);
+            this.normalize = true;
+            if (line.hasOption("unnormalized")) this.normalize = false;
+            this.rerank = false;
+            if (line.hasOption("reranked")) this.rerank = true;
+        }
     }
 
     public Map<LogicProgramState, Double> getSolutions(Prover prover, Goal query, LogicProgram program) {
@@ -104,36 +119,19 @@ public class QueryAnswerer {
         }
     }
 
-    static class QueryAnswererConfiguration extends ExperimentConfiguration {
-        boolean normalize;
-        boolean rerank;
+    public static void main(String[] args) throws IOException {
+        QueryAnswererConfiguration c = new QueryAnswererConfiguration(
+                args,
+                Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT |
+                Configuration.USE_PARAMS | Configuration.USE_COMPLEX_FEATURES);
 
-        public QueryAnswererConfiguration(String[] args, int flags) {
-            super(args, flags);
+        QueryAnswerer qa = c.rerank ?
+                           new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw) :
+                           new QueryAnswerer();
+        log.info("Running queries from " + c.queryFile + "; saving results to " + c.outputFile);
+        if (c.paramsFile != null) {
+            qa.addParams(c.program, c.paramsFile, c.weightingScheme);
         }
-
-        @Override
-        protected void addOptions(Options options, int flags) {
-            super.addOptions(options, flags);
-            options.addOption(
-                    OptionBuilder
-                            .withLongOpt("unnormalized")
-                            .withDescription("Show unnormalized scores for answers")
-                            .create());
-            options.addOption(
-                    OptionBuilder
-                            .withLongOpt("reranked")
-                            .withDescription("Cook with unit weights and rerank solutions, instead of cooking with trained weights")
-                            .create());
-        }
-
-        @Override
-        protected void retrieveSettings(CommandLine line, int flags, Options options) {
-            super.retrieveSettings(line, flags, options);
-            this.normalize = true;
-            if (line.hasOption("unnormalized")) this.normalize = false;
-            this.rerank = false;
-            if (line.hasOption("reranked")) this.rerank = true;
-        }
+        qa.findSolutions(c.program, c.prover, c.queryFile, c.outputFile, c.normalize);
     }
 }
