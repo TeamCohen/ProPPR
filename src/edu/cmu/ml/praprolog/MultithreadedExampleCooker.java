@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
+import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.prove.RawPosNegExample;
 import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
@@ -21,8 +22,8 @@ import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
 public class MultithreadedExampleCooker extends ExampleCooker {
 	private static final Logger log = Logger.getLogger(MultithreadedExampleCooker.class);
 	protected int nthreads;
-	public MultithreadedExampleCooker(Prover p, String[] programFiles, double alpha, int nt) {
-		super(p, programFiles,alpha);
+	public MultithreadedExampleCooker(Prover p, LogicProgram program, int nt) {
+		super(p, program);
 		this.nthreads = nt;
 	}
 

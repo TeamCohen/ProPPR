@@ -150,16 +150,16 @@ public class ExperimentConfiguration extends Configuration {
 		if (line.hasOption("cooker")) {
 			String[] values = line.getOptionValues("cooker");
 			if (values[0].equals("ec")) {
-				this.cooker = new ExampleCooker(this.prover,this.programFiles,this.alpha);
+				this.cooker = new ExampleCooker(this.prover,this.program);
 			} else {
 				if (values.length > 1) threads = Integer.parseInt(values[1]);
 				if (values[0].equals("mec")) {
-					this.cooker = new MultithreadedExampleCooker(this.prover, this.programFiles, this.alpha, threads);
+					this.cooker = new MultithreadedExampleCooker(this.prover, this.program, threads);
 				} else if (values[0].equals("mmc")) {
-					this.cooker = new ModularMultiExampleCooker(this.prover, this.programFiles, this.alpha, threads);
+					this.cooker = new ModularMultiExampleCooker(this.prover, this.program, threads);
 				}
 			}
-		} else this.cooker = new ModularMultiExampleCooker(this.prover, this.programFiles, this.alpha, threads);
+		} else this.cooker = new ModularMultiExampleCooker(this.prover, this.program, threads);
 		
 		this.trove=true;
 		threads = 3;
@@ -203,27 +203,27 @@ public class ExperimentConfiguration extends Configuration {
 		if (line.hasOption("tester")) {
 			String[] values = line.getOptionValues("tester");
 			if (values[0].equals("t")) {
-				this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+				this.tester = new Tester(this.prover, this.program);
 			} else {
 				if (values.length > 1) threads = Integer.parseInt(values[1]);
 				if (values[0].equals("mt")) {
-					this.tester = new MultithreadedTester(this.prover, this.cooker.getMasterProgram(),threads);
+					this.tester = new MultithreadedTester(this.prover, this.program, threads);
 				} else if (values[0].equals("rt")) {
 					if (this.srw == null) this.setupSRW(line,flags,options);
 					if (this.trove) {
 						this.tester = new edu.cmu.ml.praprolog.trove.RerankingTester(
 								this.prover, 
-								this.cooker.getMasterProgram(), 
+								this.program, 
 								(edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW) this.srw);
 					} else {
 						this.tester = new edu.cmu.ml.praprolog.RerankingTester(
 								this.prover, 
-								this.cooker.getMasterProgram(), 
+								this.program, 
 								(edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw);
 					}
 				} 
 			}
-		} else this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+		} else this.tester = new Tester(this.prover, this.program);
 		
 		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
 	}
