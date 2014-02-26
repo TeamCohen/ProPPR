@@ -138,6 +138,9 @@ public class TuprologComponent extends Component {
 
 	}
 
+	public static Component load(List<String> value) {
+		return new TuprologComponent(value.toArray(new String[0]));
+	}
 	public static TuprologComponent load(String filename) {
 		return new TuprologComponent(filename);
 	}

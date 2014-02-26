@@ -32,8 +32,8 @@ public class RerankingTesterTest {
 		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
 		
 		RerankingTester rt = new RerankingTester(prover, program, srw);
-		rt.setParams(params);
-		TestResults rt_results = rt.testExamples(new File("testcases/textcattoy/toytest.data"));
+		rt.setParams(params, null);
+		TestResults rt_results = rt.testExamples("testcases/textcattoy/toytest.data");
 		
 		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(params));
 		Tester t = new Tester(prover, program);

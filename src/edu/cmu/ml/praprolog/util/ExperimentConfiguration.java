@@ -10,8 +10,13 @@ import edu.cmu.ml.praprolog.ExampleCooker;
 import edu.cmu.ml.praprolog.ModularMultiExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
-import edu.cmu.ml.praprolog.RerankingTester;
+import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.prove.Component;
+import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
 import edu.cmu.ml.praprolog.Tester;
@@ -26,6 +31,7 @@ public class ExperimentConfiguration extends Configuration {
 	public boolean trove;//=true;
 	public boolean pretest;//=false;
 	public boolean strict;//=false;
+	public LogicProgram program;
 	
 	public ExperimentConfiguration(String[] args, int flags) {
 		super(args, flags);
@@ -80,9 +86,21 @@ public class ExperimentConfiguration extends Configuration {
 					.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
 							+"Default mu=.001\n"
 							+"Default eta=1.0\n"
+							+"Default delta=0.5\n"
 							+"Available options:\n"
-							+"l2p[:mu[:eta]] (L2PosNegLossTrainedSRW)\n"
-							+"l2plocal[:mu[:eta]] (LocalL2PosNegLossTrainedSRW)")
+							+"l2p[:mu[:eta[:delta]]] (L2PosNegLossTrainedSRW)\n"
+							+"l2plocal[:mu[:eta[:delta]]] (LocalL2PosNegLossTrainedSRW)")
+					.create());
+		options.addOption(
+				OptionBuilder
+					.withLongOpt("weightingScheme")
+					.withArgName("scheme")
+					.hasArg()
+					.withDescription("Default: tanh\n"
+							+"Available options:\n"
+							+"linear\n"
+							+"tanh\n"
+							+"sigmoid")
 					.create());
 		options.addOption(
 				OptionBuilder
@@ -123,21 +141,25 @@ public class ExperimentConfiguration extends Configuration {
 		this.strict=false;
 		if (line.hasOption("strict")) this.strict = true;
 		
+		if (isOn(flags,Configuration.USE_PROGRAMFILES)) {
+			this.program = new LogicProgram(Component.loadComponents(programFiles, this.alpha));
+		}
+		
 		int threads = 3;
 		if(line.hasOption("threads")) threads = this.nthreads;
 		if (line.hasOption("cooker")) {
 			String[] values = line.getOptionValues("cooker");
 			if (values[0].equals("ec")) {
-				this.cooker = new ExampleCooker(this.prover,this.programFiles,this.alpha);
+				this.cooker = new ExampleCooker(this.prover,this.program);
 			} else {
 				if (values.length > 1) threads = Integer.parseInt(values[1]);
 				if (values[0].equals("mec")) {
-					this.cooker = new MultithreadedExampleCooker(this.prover, this.programFiles, this.alpha, threads);
+					this.cooker = new MultithreadedExampleCooker(this.prover, this.program, threads);
 				} else if (values[0].equals("mmc")) {
-					this.cooker = new ModularMultiExampleCooker(this.prover, this.programFiles, this.alpha, threads);
+					this.cooker = new ModularMultiExampleCooker(this.prover, this.program, threads);
 				}
 			}
-		} else this.cooker = new ModularMultiExampleCooker(this.prover, this.programFiles, this.alpha, threads);
+		} else this.cooker = new ModularMultiExampleCooker(this.prover, this.program, threads);
 		
 		this.trove=true;
 		threads = 3;
@@ -181,27 +203,27 @@ public class ExperimentConfiguration extends Configuration {
 		if (line.hasOption("tester")) {
 			String[] values = line.getOptionValues("tester");
 			if (values[0].equals("t")) {
-				this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+				this.tester = new Tester(this.prover, this.program);
 			} else {
 				if (values.length > 1) threads = Integer.parseInt(values[1]);
 				if (values[0].equals("mt")) {
-					this.tester = new MultithreadedTester(this.prover, this.cooker.getMasterProgram(),threads);
+					this.tester = new MultithreadedTester(this.prover, this.program, threads);
 				} else if (values[0].equals("rt")) {
 					if (this.srw == null) this.setupSRW(line,flags,options);
 					if (this.trove) {
 						this.tester = new edu.cmu.ml.praprolog.trove.RerankingTester(
 								this.prover, 
-								this.cooker.getMasterProgram(), 
+								this.program, 
 								(edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW) this.srw);
 					} else {
 						this.tester = new edu.cmu.ml.praprolog.RerankingTester(
 								this.prover, 
-								this.cooker.getMasterProgram(), 
+								this.program, 
 								(edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw);
 					}
 				} 
 			}
-		} else this.tester = new Tester(this.prover, this.cooker.getMasterProgram());
+		} else this.tester = new Tester(this.prover, this.program);
 		
 		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
 	}
@@ -209,6 +231,8 @@ public class ExperimentConfiguration extends Configuration {
 	protected void setupSRW(CommandLine line, int flags, Options options) {
 		double mu = SRW.DEFAULT_MU;
 		double eta = SRW.DEFAULT_ETA;
+		double delta = SRW.DEFAULT_DELTA;
+
 		if (line.hasOption("srw")) {
 			String[] values = line.getOptionValues("srw");
 			if (values.length > 1) {
@@ -217,17 +241,20 @@ public class ExperimentConfiguration extends Configuration {
 			if (values.length > 2) {
 				eta = Double.parseDouble(values[2]);
 			}
+			if (values.length > 3) {
+				delta = Double.parseDouble(values[3]);
+			}
 			if (values[0].equals("l2p")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta);
+					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 				}
 			} else if (values[0].equals("l2plocal")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta);
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 				}
 			} else {
 				System.err.println("No srw definition for '"+values+"'");
@@ -235,9 +262,9 @@ public class ExperimentConfiguration extends Configuration {
 			}
 		} else {
 			if (this.trove) {
-				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta);
+				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 			} else {
-				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta);
+				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 			}
 		}
 	}
@@ -249,6 +276,7 @@ public class ExperimentConfiguration extends Configuration {
 		sb.append("Tester: ").append(tester.getClass().getCanonicalName()).append("\n");
 		sb.append("Cooker: ").append(cooker.getClass().getCanonicalName()).append("\n");
 		sb.append("Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
+		sb.append("Weighting Scheme: ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
 		sb.append("Pretest? ").append(this.pretest ? "yes" : "no").append("\n");
 		sb.append("Strict? ").append(this.strict ? "yes" : "no").append("\n");
 		return sb.toString();

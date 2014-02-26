@@ -77,11 +77,13 @@ public class Trainer {
 
     /** Return the batch gradient of the data
      */
-    public Map<String,Double> findGradient(Collection<PosNegRWExample> examples) {
+    public Map<String,Double> findGradient(Collection<PosNegRWExample> examples,Map<String,Double> paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
-		Map<String,Double> paramVec = new TreeMap<String,Double>();
-		for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
+		if (paramVec==null) {
+		    paramVec = new TreeMap<String,Double>();
+		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
+		}
 		int k=0;
 		for (PosNegRWExample x : examples) {
 		    this.learner.addDefaultWeights(x.getGraph(),paramVec);

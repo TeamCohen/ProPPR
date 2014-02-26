@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
@@ -85,19 +86,18 @@ public class QueryAnswerer {
 		if (c.rerank) qa = new RerankingQueryAnswerer( (SRW<PosNegRWExample<String>>) c.srw);
 		else qa = new QueryAnswerer();
 		log.info("Running queries from "+c.queryFile+"; saving results to "+c.outputFile);
-		qa.findSolutions(program, c.prover, c.queryFile, c.outputFile, c.normalize, c.paramsFile);
-
+		if (c.paramsFile != null) {
+			qa.addParams(program,c.paramsFile, c.weightingScheme);
+		}
+		qa.findSolutions(program, c.prover, c.queryFile, c.outputFile, c.normalize);
 	}
 	public Map<LogicProgramState,Double> getSolutions(Prover prover,Goal query,LogicProgram program) {
 		return prover.proveState(program, new ProPPRLogicProgramState(query));
 	}
-	public void addParams(LogicProgram program, String paramsFile) {
-		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile)));
+	public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
+		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile), wScheme));
 	}
-	public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize, String paramsFile) throws IOException {
-		if (paramsFile != null) {
-			addParams(program,paramsFile);
-		}
+	public void findSolutions(LogicProgram program, Prover prover, String queryFile, String outputFile, boolean normalize) throws IOException {
 		ParsedFile reader = new ParsedFile(queryFile);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		try {

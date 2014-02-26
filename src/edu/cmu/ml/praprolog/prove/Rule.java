@@ -39,7 +39,8 @@ public class Rule {
 			Goal g = theta.applyToGoal(g0, renamedP);
 			for (Argument a : g.getArgs()) {
 				if (!a.isConstant()) {
-					throw new LogicProgramException("Error converting features of rule "+this.toString()+" with theta "+theta.toString());
+					throw new LogicProgramException("Error converting features of rule "+this.toString()+" with theta "+theta.toString()
+							+": offending feature "+g0+" became "+g);
 				}
 			}
 			result.put(g,1.0);
