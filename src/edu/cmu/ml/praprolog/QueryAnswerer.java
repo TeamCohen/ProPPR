@@ -80,16 +80,15 @@ public class QueryAnswerer {
 		QueryAnswererConfiguration c = 
 				new QueryAnswererConfiguration(args, 
 						Configuration.USE_DEFAULTS|Configuration.USE_QUERIES|Configuration.USE_OUTPUT|Configuration.USE_PARAMS);
-		LogicProgram program = new LogicProgram(Component.loadComponents(c.programFiles,c.alpha));
 		
 		QueryAnswerer qa = null;
 		if (c.rerank) qa = new RerankingQueryAnswerer( (SRW<PosNegRWExample<String>>) c.srw);
 		else qa = new QueryAnswerer();
 		log.info("Running queries from "+c.queryFile+"; saving results to "+c.outputFile);
 		if (c.paramsFile != null) {
-			qa.addParams(program,c.paramsFile, c.weightingScheme);
+			qa.addParams(c.program,c.paramsFile, c.weightingScheme);
 		}
-		qa.findSolutions(program, c.prover, c.queryFile, c.outputFile, c.normalize);
+		qa.findSolutions(c.program, c.prover, c.queryFile, c.outputFile, c.normalize);
 	}
 	public Map<LogicProgramState,Double> getSolutions(Prover prover,Goal query,LogicProgram program) {
 		return prover.proveState(program, new ProPPRLogicProgramState(query));
