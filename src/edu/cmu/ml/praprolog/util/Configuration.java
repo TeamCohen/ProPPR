@@ -1,5 +1,16 @@
 package edu.cmu.ml.praprolog.util;
 
+import java.util.Properties;
+import java.util.Set;
+
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PermissiveParser;
+
 import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
@@ -44,108 +55,95 @@ public class Configuration {
     public String paramsFile = null;
     public WeightingScheme weightingScheme = null;
 
-    public Configuration(String[] args) { this(args, new DprProver()); }
+	static boolean isOn(int flags, int flag) {
+		return (flags & flag) == flag;
+	}	
+	static boolean anyOn(int flags, int flag) {
+		return (flags & flag) > 0;
+	}
+	
+	public Configuration(String[] args) { this(args, new DprProver()); }
+	public Configuration(String[] args, int flags) { this(args, new DprProver(), flags, DEFAULT_COMBINE); }
+	public Configuration(String[] args, Prover dflt) { this(args, dflt, USE_DEFAULTS, DEFAULT_COMBINE); }
+	public Configuration(String[] args, Prover dflt, int flags) { this(args,dflt,flags,DEFAULT_COMBINE); }
+	public Configuration(String[] args, Prover dflt, int flags, boolean combine) {
+		if (isOn(flags,USE_DATA) && isOn(flags,USE_TRAINTEST)) {
+			throw new IllegalArgumentException("Programmer error: Illegal to request --data and also --train/--test");
+		}
+		
+		Options options = new Options();
+		this.prover = dflt;
+		addOptions(options, flags);
 
-    public Configuration(String[] args, int flags) { this(args, new DprProver(), flags, DEFAULT_COMBINE); }
-
-    public Configuration(String[] args, Prover dflt) { this(args, dflt, USE_DEFAULTS, DEFAULT_COMBINE); }
-
-    public Configuration(String[] args, Prover dflt, int flags) { this(args, dflt, flags, DEFAULT_COMBINE); }
-
-    public Configuration(String[] args, Prover dflt, int flags, boolean combine) {
-        if (isOn(flags, USE_DATA) && isOn(flags, USE_TRAINTEST)) {
-            throw new IllegalArgumentException("Programmer error: Illegal to request --data and also --train/--test");
-        }
-
-        Options options = new Options();
-        this.prover = dflt;
-        addOptions(options, flags);
-
-        try {
-            PermissiveParser parser = new PermissiveParser(true);
-
-            // if the user specified a properties file, add those values at the end
-            // (so that command line args override them)
-            if (combine) args = combinedArgs(args);
-
-            // parse the command line arguments
-            CommandLine line = parser.parse(options, args);
-            if (parser.hasUnrecognizedOptions()) {
-                System.err.println("WARNING: unrecognized options detected:");
-                for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t" + opt); }
-            }
-            retrieveSettings(line, flags, options);
-
-        } catch (Exception exp) {
-            System.err.println("\n" + exp.getMessage() + "\n");
-            usageOptions(options, flags);
-        }
-    }
-
-    static boolean isOn(int flags, int flag) {
-        return (flags & flag) == flag;
-    }
-
-    static boolean anyOn(int flags, int flag) {
-        return (flags & flag) > 0;
-    }
-
-    protected File getExistingFileOption(CommandLine line, String name) {
-        File value = new File(line.getOptionValue(name));
-        if (!value.exists()) throw new IllegalArgumentException("File '" + value.getName() + "' must exist");
-        return value;
-    }
-
-    protected void retrieveSettings(CommandLine line, int flags, Options options) {
-        if (isOn(flags, USE_PROGRAMFILES) && line.hasOption("programFiles"))
-            this.programFiles = line.getOptionValues("programFiles");
-        if (isOn(flags, USE_DATA) && line.hasOption("data")) this.dataFile = getExistingFileOption(line, "data");
-        if (isOn(flags, USE_QUERIES) && line.hasOption("queries"))
-            this.queryFile = getExistingFileOption(line, "queries");
-        if ((isOn(flags, USE_OUTPUT) || isOn(flags, USE_TRAIN))
-            && line.hasOption("output")) this.outputFile = line.getOptionValue("output");
-        if (isOn(flags, USE_THREADS) && line.hasOption("threads"))
-            this.nthreads = Integer.parseInt(line.getOptionValue("threads"));
-        if (isOn(flags, USE_LEARNINGSET) && line.hasOption("epochs"))
-            this.epochs = Integer.parseInt(line.getOptionValue("epochs"));
-        if (isOn(flags, USE_LEARNINGSET) && line.hasOption("traceLosses")) this.traceLosses = true;
-        if (isOn(flags, USE_TEST) && line.hasOption("test")) this.testFile = getExistingFileOption(line, "test");
-        if (isOn(flags, USE_TRAIN) && line.hasOption("train")) this.dataFile = getExistingFileOption(line, "train");
-        if (isOn(flags, USE_PARAMS) && line.hasOption("params")) this.paramsFile = line.getOptionValue("params");
-        if (isOn(flags, USE_PROVER) && line.hasOption("prover")) {
-            String[] values = line.getOptionValue("prover").split(":");
-            if (values[0].startsWith("ppr")) {
-                if (values.length == 1) {
-                    this.prover = new PprProver();
-                } else {
-                    int depth = Integer.parseInt(values[1]);
-                    this.prover = new PprProver(depth);
-                }
-            } else if (values[0].startsWith("dpr")) {
-                if (values.length == 1)
-                    this.prover = new DprProver();
-                else {
-                    double epsilon = Double.parseDouble(values[1]);
-                    this.alpha = DprProver.MINALPH_DEFAULT;
-                    if (values.length > 2) {
-                        this.alpha = Double.parseDouble(values[2]);
-                    }
-                    this.prover = new DprProver(epsilon, this.alpha);
-                    this.alpha += epsilon;
-                }
-            } else if (values[0].startsWith("tr")) {
-                int depth = TracingDfsProver.DEFAULT_MAXDEPTH;
-                if (values.length != 1) {
-                    depth = Integer.parseInt(values[1]);
-                }
-                this.prover = new TracingDfsProver(depth);
-            } else {
-                System.err.println("No prover definition for '" + values[0] + "'");
-                usageOptions(options, flags);
-            }
-        }
-        if (isOn(flags, USE_COMPLEX_FEATURES) && line.hasOption("complexFeatures"))
-            this.complexFeatureConfigFile = getExistingFileOption(line,"complexFeatures");
+		try {
+			PermissiveParser parser = new PermissiveParser(true);
+			
+			// if the user specified a properties file, add those values at the end
+			// (so that command line args override them)
+			if(combine) args = combinedArgs(args);
+			
+		    // parse the command line arguments
+		    CommandLine line = parser.parse( options, args );
+		    if (parser.hasUnrecognizedOptions()) {
+		    	System.err.println("WARNING: unrecognized options detected:");
+		    	for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
+		    }
+		    retrieveSettings(line,flags,options);
+			
+		} catch( Exception exp ) {
+			System.err.println("\n"+exp.getMessage()+"\n");
+			usageOptions(options,flags);
+		}
+	}
+	protected File getExistingFileOption(CommandLine line, String name) {
+		File value = new File(line.getOptionValue(name));
+		if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
+		return value;
+	}
+	protected void retrieveSettings(CommandLine line, int flags, Options options) {
+		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
+		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = getExistingFileOption(line,"data");
+		if (isOn(flags,USE_QUERIES) && line.hasOption("queries"))            this.queryFile = getExistingFileOption(line,"queries");
+		if ((isOn(flags,USE_OUTPUT) || isOn(flags,USE_TRAIN)) 
+				&& line.hasOption("output"))                                 this.outputFile = line.getOptionValue("output");
+		if (isOn(flags,USE_THREADS) && line.hasOption("threads"))            this.nthreads = Integer.parseInt(line.getOptionValue("threads"));
+		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("epochs"))         this.epochs = Integer.parseInt(line.getOptionValue("epochs"));
+		if (isOn(flags,USE_LEARNINGSET) && line.hasOption("traceLosses"))    this.traceLosses = true;
+		if (isOn(flags,USE_TEST) && line.hasOption("test"))                  this.testFile = getExistingFileOption(line,"test");
+		if (isOn(flags,USE_TRAIN) && line.hasOption("train"))                this.dataFile = getExistingFileOption(line,"train");
+		if (isOn(flags,USE_PARAMS) && line.hasOption("params"))              this.paramsFile = line.getOptionValue("params");
+		if (isOn(flags,USE_PROVER) && line.hasOption("prover")) {
+			String[] values = line.getOptionValue("prover").split(":");
+			if(values[0].startsWith("ppr")) {
+				if (values.length==1) {
+					this.prover = new PprProver();
+				} else {
+					int depth = Integer.parseInt(values[1]);
+					this.prover = new PprProver(depth);
+				}
+			} else if (values[0].startsWith("dpr")) {
+				if (values.length==1)
+					this.prover = new DprProver();
+				else {
+					double epsilon = Double.parseDouble(values[1]);
+					this.alpha = DprProver.MINALPH_DEFAULT;
+					if (values.length>2) {
+						this.alpha = Double.parseDouble(values[2]);
+					}
+					this.prover = new DprProver(epsilon,this.alpha);
+					this.alpha += epsilon;
+				}
+			} else if(values[0].startsWith("tr")) {
+				int depth = TracingDfsProver.DEFAULT_MAXDEPTH;
+				if (values.length!=1) {
+					depth = Integer.parseInt(values[1]);
+				}
+				this.prover = new TracingDfsProver(depth);
+			}else {
+				System.err.println("No prover definition for '"+values[0]+"'");
+			    usageOptions(options,flags);
+			}
+		}
 
         if (anyOn(flags, USE_PROGRAMFILES | USE_PROVER)) {
             this.weightingScheme = new TanhWeightingScheme();

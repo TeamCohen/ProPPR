@@ -68,39 +68,40 @@ public class QueryAnswerer {
         }
     }
 
-    public Map<LogicProgramState, Double> getSolutions(Prover prover, Goal query, LogicProgram program) {
-        return prover.proveState(program, new ProPPRLogicProgramState(query));
-    }
 
-    public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
-        program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile), wScheme));
-    }
+	public Map<LogicProgramState,Double> getSolutions(Prover prover,Goal query,LogicProgram program) {
+		return prover.proveState(program, new ProPPRLogicProgramState(query));
+	}
+	public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
+		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile), wScheme));
+	}
 
-    public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize) throws IOException {
-        ParsedFile reader = new ParsedFile(queryFile);
-        BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
-        try {
-            int querynum = 0;
-            for (String line : reader) {
-                querynum++;
-                String queryString = line.split("\t")[0];
-                queryString = queryString.replaceAll("[(]", ",").replaceAll("\\)", "").trim();
-                Goal query = Goal.parseGoal(queryString, ",");
-                query.compile(program.getSymbolTable());
-                log.info("Querying: " + query);
-                long start = System.currentTimeMillis();
-                Map<LogicProgramState, Double> dist = getSolutions(prover, query, program);
-                long end = System.currentTimeMillis();
-                Map<String, Double> solutions = Prover.filterSolutions(dist);
-                if (normalize) {
-                    log.debug("normalizing");
-                    solutions = Dictionary.normalize(solutions);
-                } else {
-                    log.debug("not normalizing");
-                }
-                List<Map.Entry<String, Double>> solutionDist = Dictionary.sort(solutions);
-                //			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
-                log.info("Writing " + solutionDist.size() + " solutions...");
+	public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize) throws IOException {
+
+		ParsedFile reader = new ParsedFile(queryFile);
+		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+		try {
+			int querynum=0;
+			for (String line : reader) {
+				querynum++;
+				String queryString = line.split("\t")[0];
+				queryString = queryString.replaceAll("[(]", ",").replaceAll("\\)","").trim();
+				Goal query = Goal.parseGoal(queryString, ",");
+				query.compile(program.getSymbolTable());
+				log.info("Querying: "+query);
+				long start = System.currentTimeMillis();
+				Map<LogicProgramState,Double> dist = getSolutions(prover,query,program);
+				long end = System.currentTimeMillis();
+				Map<String,Double> solutions = Prover.filterSolutions(dist);
+				if (normalize) {
+					log.debug("normalizing");
+					solutions = Dictionary.normalize(solutions);
+				} else {
+					log.debug("not normalizing");
+				}
+				List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(solutions);
+				//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
+				log.info("Writing "+solutionDist.size()+" solutions...");
 
                 writer.append("# proved ").append(String.valueOf(querynum)).append("\t").append(query.toSaveString())
                       .append("\t").append((end - start) + " msec");
