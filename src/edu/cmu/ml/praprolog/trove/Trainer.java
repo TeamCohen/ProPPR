@@ -196,41 +196,41 @@ public class Trainer {
 	protected void setUpEpochs(Map<String,Double> paramVec) {}
 
 	//////////////////////////// Running /////////////////////////////
-	private static final String USAGE = "Usage:\n\tcookedExampleFile outputParamFile [options]\n"
-			+"\t\t--epochs {int}\tNumber of epochs (default 5)\n"
-			+"\t\t--traceLosses\tTurn on traceLosses (default off)\n"
-			+"\t\t             \tNB: example count for losses is sum(x.length() for x in examples)\n"
-			+"\t\t             \tand won't match `wc -l cookedExampleFile`\n";
-	private static void usage() {
-		System.err.println(USAGE);
-		System.exit(0);
-	}
-	public static void main(String[] args) {
-		if (args.length < 2) {
-			usage();
-		}
-
-		String cookedExampleFile = args[0];
-		String outputParamFile   = args[1];
-		int epochs = 5;
-		boolean traceLosses = false;
-		if (args.length > 2) {
-			for (int i=2; i<args.length; i++) {
-				if ("--epochs".equals(args[i])) {
-					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
-					else usage();
-				} else if ("--traceLosses".equals(args[i])) {
-					traceLosses = true;
-				} else usage();
-			}
-		}
-
-		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
-		Trainer trainer = new Trainer(srw);
-		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-				trainer.importCookedExamples(cookedExampleFile),
-				epochs,
-				traceLosses);
-		Dictionary.save(paramVec, outputParamFile);
-	}
+//	private static final String USAGE = "Usage:\n\tcookedExampleFile outputParamFile [options]\n"
+//			+"\t\t--epochs {int}\tNumber of epochs (default 5)\n"
+//			+"\t\t--traceLosses\tTurn on traceLosses (default off)\n"
+//			+"\t\t             \tNB: example count for losses is sum(x.length() for x in examples)\n"
+//			+"\t\t             \tand won't match `wc -l cookedExampleFile`\n";
+//	private static void usage() {
+//		System.err.println(USAGE);
+//		System.exit(0);
+//	}
+//	public static void main(String[] args) {
+//		if (args.length < 2) {
+//			usage();
+//		}
+//
+//		String cookedExampleFile = args[0];
+//		String outputParamFile   = args[1];
+//		int epochs = 5;
+//		boolean traceLosses = false;
+//		if (args.length > 2) {
+//			for (int i=2; i<args.length; i++) {
+//				if ("--epochs".equals(args[i])) {
+//					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
+//					else usage();
+//				} else if ("--traceLosses".equals(args[i])) {
+//					traceLosses = true;
+//				} else usage();
+//			}
+//		}
+//
+//		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
+//		Trainer trainer = new Trainer(srw);
+//		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
+//				trainer.importCookedExamples(cookedExampleFile),
+//				epochs,
+//				traceLosses);
+//		Dictionary.save(paramVec, outputParamFile);
+//	}
 }

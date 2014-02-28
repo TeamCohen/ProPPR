@@ -37,6 +37,7 @@ import edu.cmu.ml.praprolog.util.Dictionary;
  */
 public class ExampleCooker extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(ExampleCooker.class);
+	public static final String COOKED_SUFFIX = ".cooked";
 	public ExampleCooker(Prover p, LogicProgram program) {
 		super.init(p,program);
 	}
