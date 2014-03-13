@@ -49,10 +49,13 @@ public class Trainer<T> {
 		log.info("Imported "+result.size()+" examples");
 		return result;
 	}
-	public Collection<PosNegRWExample<T>> importCookedExamples(ParsedFile reader, AnnotatedGraphFactory<T> factory) {
+	public Collection<PosNegRWExample<T>> importCookedExamples(ParsedFile file, AnnotatedGraphFactory<T> factory) {
 		ArrayList<PosNegRWExample<T>> result = null;
 		result = new ArrayList<PosNegRWExample<T>>();
-		for(String line : reader){
+		for(String line : file){
+			
+			log.debug("Imporing example from line "+file.getLineNumber());
+		
 			AnnotatedGraph<T> g = factory.create();
 
 			String[] parts = line.trim().split(MAJOR_DELIM,5);
@@ -66,7 +69,7 @@ public class Trainer<T> {
 			if (parts[3].length()>0) rawNegList = parts[3].split(MINOR_DELIM);
 			else rawNegList = new String[0];
 			if (rawPosList.length + rawNegList.length == 0) {
-				log.warn("no labeled solutions for example on line "+reader.getAbsoluteLineNumber()+"; skipping");
+				log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
 				continue;
 			}
 			T[] posList = g.keyToId(rawPosList);
@@ -75,12 +78,36 @@ public class Trainer<T> {
 				g = AnnotatedGraph.fromStringParts(parts[4],g);
 				result.add(new PosNegRWExample<T>(g,queryVec,posList,negList));
 			} catch (GraphFormatException e) {
-				reader.parseError("["+e.getMessage()+"]");
+				file.parseError("["+e.getMessage()+"]");
 			}
 
 		}
-		reader.close();
+		file.close();
 		return result;
+	}
+	
+    /** Return the batch gradient of the data
+     */
+    public Map<String,Double> findGradient(Collection<PosNegRWExample<T>> examples,Map<String,Double> paramVec) {
+		log.info("Computing gradient on cooked examples...");
+		Map<String,Double> sumGradient = new TreeMap<String,Double>();
+		if (paramVec==null) {
+		    paramVec = new TreeMap<String,Double>();
+		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
+		}
+		int k=0;
+		for (PosNegRWExample<T> x : examples) {
+		    SRW.addDefaultWeights(x.getGraph(),paramVec);
+		    this.learner.accumulateGradient(this.learner.gradient(paramVec, x),sumGradient);
+		    k++;
+		}
+		return sumGradient;
+		/*
+		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
+		    String feature = it.next();
+		    System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
+		}
+		*/
 	}
 
 	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample<T>> iteratorFactory) {
@@ -99,6 +126,8 @@ public class Trainer<T> {
 			int numEpochs, 
 			boolean traceLosses) {
 		log.info("Training on cooked examples...");
+		double previousAvgLoss = Double.MAX_VALUE;
+		long start = System.currentTimeMillis();
 		this.epoch = 0;
 		Map<String,Double> paramVec = initialParamVec;
 		if (paramVec.size() == 0) {
@@ -121,34 +150,57 @@ public class Trainer<T> {
 				k++;
 			}
 			cleanUpExamples(i);
-			log.info(k+" examples processed");
+//			log.info(k+" examples processed");
 			if(traceLosses) {
-				System.out.println("training loss "+(totalLossThisEpoch / numExamplesThisEpoch) + " on "+ numExamplesThisEpoch +" examples");
-				//if (this.testData)
-			}
-			if (log.isDebugEnabled()) {
-				log.debug("After epoch "+epoch+": "+Dictionary.buildString(paramVec, new StringBuilder(), "\n\t").toString());
+				// wwc - added some more tracing here
+			    double avgLoss = (totalLossThisEpoch / numExamplesThisEpoch); 
+			    System.out.print("avg training loss " + avgLoss
+					     + " on "+ numExamplesThisEpoch +" examples");
+			    System.out.print(" avg pos training loss " + (totalPosLossThisEpoch/numExamplesThisEpoch));
+			    System.out.print(" avg neg training loss " + (totalNegLossThisEpoch/numExamplesThisEpoch));
+			    if (totalNegLossThisEpoch>0) {
+				System.out.print(" ratio of pos/neg training loss " + (totalPosLossThisEpoch/totalNegLossThisEpoch));
+			    }
+			    if (epoch>1) {
+				System.out.println(" improved by " + (previousAvgLoss-avgLoss));
+			    } else 
+				System.out.println();
+			    if (previousAvgLoss-avgLoss < 0.0) {
+				System.out.println("WARNING: loss INCREASED by " + 
+						   (avgLoss-previousAvgLoss) + " - what's THAT about?");
+			    }
+			    previousAvgLoss = avgLoss;
+			    //if (this.testData)
+				
 			}
 		}
 		//		cleanUpEpochs();
+		log.info("Finished in "+(System.currentTimeMillis() - start)+" ms");
+		
 		return paramVec;
 	}
 
 	////////////////////////// Template methods /////////////////////////////////////
 
 	protected double totalLossThisEpoch;
+	protected double totalPosLossThisEpoch;
+	protected double totalNegLossThisEpoch;
 	protected int numExamplesThisEpoch;
 	protected void doExample(int k, PosNegRWExample<T> x, Map<String,Double> paramVec, boolean traceLosses) {
 		log.debug("example "+x.toString()+" ...");
 		this.learner.trainOnExample(paramVec, x);
 		if (traceLosses) {
 			totalLossThisEpoch += this.learner.empiricalLoss(paramVec, x);
+			totalPosLossThisEpoch += this.learner.empiricalLoss(paramVec, x.posOnly());
+			totalNegLossThisEpoch += this.learner.empiricalLoss(paramVec, x.negOnly());
 			numExamplesThisEpoch += x.length();
 		}
 	}
 
 	protected void setUpExamples(int epoch, Collection<PosNegRWExample<T>> examples) {
 		totalLossThisEpoch = 0;
+		totalPosLossThisEpoch = 0;
+		totalNegLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
 	protected void cleanUpExamples(int epoch) {}

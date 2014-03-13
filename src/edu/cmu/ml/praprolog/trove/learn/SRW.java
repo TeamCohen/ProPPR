@@ -35,17 +35,22 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static Random random = new Random(); 
- 	public static void seed(long seed) { random.setSeed(seed); } 	
+	public static void seed(long seed) { random.setSeed(seed); } 	
 	protected static final int NUM_EPOCHS = 5;
 	protected double mu;
 	protected int maxT;
 	protected double eta;
-	protected int epoch;
 	protected double delta;
+	protected int epoch;
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
-	public SRW() { this(10); }
-	public SRW(int maxT) { this(maxT, 0.001, 1.0, new TanhWeightingScheme(),0.5); }
+	public SRW() { this(edu.cmu.ml.praprolog.learn.SRW.DEFAULT_MAX_T); }
+	public SRW(int maxT) { 
+		this(maxT, 
+				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_MU, 
+				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_ETA, 
+				new TanhWeightingScheme(),
+				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_DELTA); }
 	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		this.maxT = maxT;
 		this.mu = mu;
@@ -63,7 +68,7 @@ public class SRW<E extends RWExample> {
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 */
 	public static void addDefaultWeights(AnnotatedTroveGraph graph, Map<String,Double> p) {
-		
+
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
 				p.put(f,1.0+0.01*random.nextDouble());
@@ -83,26 +88,26 @@ public class SRW<E extends RWExample> {
 		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
 	}
 
-//	/**
-//	 * The function wraps the product of edge weight and feature.
-//	 * @param p product of edge weight and feature.
-//	 * @return 
-//	 */
-//	public double edgeWeightFunction(double product) {
-//		//WW: We found exp to have the overflow issue, replace by sigmoid.
-//		//return Math.exp(product);
-//		//return sigmoid(product);
-//		return tanh(product);
-//	}
-//
-//	public double sigmoid(double x){
-//		return 1/(1 + Math.exp(-x));
-//       }
-//
-//	public double tanh(double x){
-//		return ( Math.exp(x) -  Math.exp(-x))/( Math.exp(x) +  Math.exp(-x));
-//	}
-//	
+	//	/**
+	//	 * The function wraps the product of edge weight and feature.
+	//	 * @param p product of edge weight and feature.
+	//	 * @return 
+	//	 */
+	//	public double edgeWeightFunction(double product) {
+	//		//WW: We found exp to have the overflow issue, replace by sigmoid.
+	//		//return Math.exp(product);
+	//		//return sigmoid(product);
+	//		return tanh(product);
+	//	}
+	//
+	//	public double sigmoid(double x){
+	//		return 1/(1 + Math.exp(-x));
+	//       }
+	//
+	//	public double tanh(double x){
+	//		return ( Math.exp(x) -  Math.exp(-x))/( Math.exp(x) +  Math.exp(-x));
+	//	}
+	//	
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
 	 * @param g
@@ -194,7 +199,7 @@ public class SRW<E extends RWExample> {
 					TObjectDoubleHashMap<String> dWP_ju = derivWalkProbByParams(graph,j.key(),u.key(),paramVec);
 					for (String f : trainableFeatures(graph.phi(j.key(),u.key()))) {
 						Dictionary.increment(dNext, u.key(), f, 
-								  edgeWeight(graph,j.key(),u.key(),paramVec) * Dictionary.safeGet(d, j.key(), f) 
+								edgeWeight(graph,j.key(),u.key(),paramVec) * Dictionary.safeGet(d, j.key(), f) 
 								+ Dictionary.safeGet(p, j.key()) * dWP_ju.get(f));
 					}
 				}
@@ -217,32 +222,27 @@ public class SRW<E extends RWExample> {
 	 */
 	protected  TObjectDoubleHashMap<String> derivWalkProbByParams(AnnotatedTroveGraph graph,
 			int u, int v, Map<String, Double> paramVec) {
-		
+
 		double edgeUV = this.edgeWeight(graph, u, v, paramVec);
 		// vector of edge weights - one for each active feature
 		TObjectDoubleMap<String> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
 		Set<String> activeFeatures = derEdgeUV.keySet();
 		double totEdgeWeightU = totalEdgeWeight(graph,u,paramVec);
-//		double totEdgeWeightV = totalEdgeWeight(graph, v, paramVec);
 		double totDerEdgeUV = 0;
 		for (double w : derEdgeUV.values()) totDerEdgeUV += w;
 		TObjectDoubleHashMap<String> derWalk = new TObjectDoubleHashMap<String>();
 		for (String f : trainableFeatures(activeFeatures)) {
-//			double val = derEdgeUV.get(f) * totEdgeWeightU - edgeUV * totDerEdgeUV;
-//			derWalk.put(f, val / (totEdgeWeightU * totEdgeWeightU));
 			// above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
 			double term2 = (edgeUV / totEdgeWeightU) * totDerEdgeUV;
 			double val = derEdgeUV.get(f) - term2;
-//			if ( Double.isNaN(val / totEdgeWeightU))
-//				throw new IllegalStateException("No NaNs Allowed");
 			derWalk.put(f, val / totEdgeWeightU);
 		}
 		return derWalk;
 	}
 	/**
 	 * A dictionary d so that d[f] is the derivative of the
-     *  unnormalized edge weight between u and v wrt feature f.  This
-     *  assumes edge weights are linear in their feature sums.
+	 *  unnormalized edge weight between u and v wrt feature f.  This
+	 *  assumes edge weights are linear in their feature sums.
 	 * @param graph
 	 * @param u Start node
 	 * @param v End node 
@@ -258,26 +258,26 @@ public class SRW<E extends RWExample> {
 		return result;
 	}
 
-//	/**
-//	 * The function wraps the derivative of edge weight.
-//	 * @param weight: edge weight.
-//	 * @return wrapped derivative of the edge weight.
-//	 */
-//	public double derivEdgeWeightFunction(double weight) {
-//		
-//		//WW: replace with sigmoid function's derivative.
-//		//return Math.exp(weight);
-//		//return derivSigmoid(weight);
-//		return derivTanh(weight);
-//	}
-//
-//	public double derivSigmoid(double value) {
-//		return sigmoid(value) * (1 - sigmoid(value));
-//       }
-//
-//	public double derivTanh(double value) {
-//		return (1- tanh(value)*tanh(value));
-//       }
+	//	/**
+	//	 * The function wraps the derivative of edge weight.
+	//	 * @param weight: edge weight.
+	//	 * @return wrapped derivative of the edge weight.
+	//	 */
+	//	public double derivEdgeWeightFunction(double weight) {
+	//		
+	//		//WW: replace with sigmoid function's derivative.
+	//		//return Math.exp(weight);
+	//		//return derivSigmoid(weight);
+	//		return derivTanh(weight);
+	//	}
+	//
+	//	public double derivSigmoid(double value) {
+	//		return sigmoid(value) * (1 - sigmoid(value));
+	//       }
+	//
+	//	public double derivTanh(double value) {
+	//		return (1- tanh(value)*tanh(value));
+	//       }
 
 
 	/**
@@ -313,24 +313,24 @@ public class SRW<E extends RWExample> {
 		}
 		return result;
 	}
-	
+
 	/** Allow subclasses to filter feature list **/
 	public Set<String> localFeatures(Map<String,Double> paramVec, E example) {
 		return paramVec.keySet();
 	}
-	
+
 	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
-	
+
 	/** Add the gradient vector to a second accumulator vector
 	 */
 	public void accumulateGradient(TObjectDoubleHashMap<String> grad, Map<String,Double> sumGradient) {
-	    for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
-		f.advance();
-		if (!sumGradient.containsKey(f.key())) {
-		    sumGradient.put(f.key(), new Double(0.0));
+		for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
+			f.advance();
+			if (!sumGradient.containsKey(f.key())) {
+				sumGradient.put(f.key(), new Double(0.0));
+			}
+			sumGradient.put(f.key(), new Double(sumGradient.get(f.key()).doubleValue() + f.value()));
 		}
-		sumGradient.put(f.key(), new Double(sumGradient.get(f.key()).doubleValue() + f.value()));
-	    }
 	}
 
 	/**
@@ -352,43 +352,43 @@ public class SRW<E extends RWExample> {
 		// unfortunately, this means we need locked access to the paramVec, since if someone fusses with it
 		// between when we set the rate and when we apply it, we could end up pushing the paramVec too far.
 		// :(
-//		synchronized(paramVec) { 
-//			for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) { //String f = fEntry.getKey();
-//				f.advance();
-////				if (f.value() > 0) { 
-////					rate = Math.min(rate, Dictionary.safeGet(paramVec,f.key()) / f.value());
-////				}
-//				if (Math.abs(f.value()) > 0) { 
-//					double pf = Dictionary.safeGet(paramVec,f.key());
-//					double smallEnough = pf / f.value();
-//					double largeEnough = (pf - MAX_PARAM_VALUE) / f.value();
-//					if (f.value() > 0) {
-//						if (largeEnough > smallEnough) 
-//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
-//						rate = Math.min(rate, smallEnough);
-//						rate = Math.max(rate, largeEnough);
-//					} else {
-//						if (largeEnough < smallEnough) 
-//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
-//						rate = Math.max(rate, smallEnough);
-//						rate = Math.min(rate, largeEnough);
-//					}
-//					
-//				}
-//			}
-//			if (log.isDebugEnabled()) log.debug("adjusted rate "+rate);
-			for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
-				f.advance();
-//				log.debug(String.format("%s %f %f [%f]", f,Dictionary.safeGet(paramVec,f),grad.get(f),rate*grad.get(f)));
-				Dictionary.increment(paramVec, f.key(), - rate * f.value());
-//				if (paramVec.get(f.key()) < 0) {
-//					throw new IllegalStateException("Parameter weight "+f.key()+" can't be negative");
-//				} else if (paramVec.get(f.key()) > MAX_PARAM_VALUE)
-//					throw new IllegalStateException("Parameter weight "+f.key()+" can't trigger Infinity");
-			}
-//		}
+		//		synchronized(paramVec) { 
+		//			for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) { //String f = fEntry.getKey();
+		//				f.advance();
+		////				if (f.value() > 0) { 
+		////					rate = Math.min(rate, Dictionary.safeGet(paramVec,f.key()) / f.value());
+		////				}
+		//				if (Math.abs(f.value()) > 0) { 
+		//					double pf = Dictionary.safeGet(paramVec,f.key());
+		//					double smallEnough = pf / f.value();
+		//					double largeEnough = (pf - MAX_PARAM_VALUE) / f.value();
+		//					if (f.value() > 0) {
+		//						if (largeEnough > smallEnough) 
+		//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
+		//						rate = Math.min(rate, smallEnough);
+		//						rate = Math.max(rate, largeEnough);
+		//					} else {
+		//						if (largeEnough < smallEnough) 
+		//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
+		//						rate = Math.max(rate, smallEnough);
+		//						rate = Math.min(rate, largeEnough);
+		//					}
+		//					
+		//				}
+		//			}
+		//			if (log.isDebugEnabled()) log.debug("adjusted rate "+rate);
+		for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
+			f.advance();
+			//				log.debug(String.format("%s %f %f [%f]", f,Dictionary.safeGet(paramVec,f),grad.get(f),rate*grad.get(f)));
+			Dictionary.increment(paramVec, f.key(), - rate * f.value());
+			//				if (paramVec.get(f.key()) < 0) {
+			//					throw new IllegalStateException("Parameter weight "+f.key()+" can't be negative");
+			//				} else if (paramVec.get(f.key()) > MAX_PARAM_VALUE)
+			//					throw new IllegalStateException("Parameter weight "+f.key()+" can't trigger Infinity");
+		}
+		//		}
 	}
-	
+
 	/**
 	 * [originally from SRW even though SRW lacks empiricalLoss]
 	 * @param paramVec
@@ -408,9 +408,9 @@ public class SRW<E extends RWExample> {
 	}
 	/**
 	 * Compute the local gradient of the parameters, associated
-     *  with a particular start vector and a particular desired
-     *  ranking as encoded in the example.
-     *  
+	 *  with a particular start vector and a particular desired
+	 *  ranking as encoded in the example.
+	 *  
 	 * @param paramVec
 	 * @param example
 	 * @return
@@ -427,6 +427,6 @@ public class SRW<E extends RWExample> {
 			E example) {
 		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
 	}
-	
-	
+
+
 }

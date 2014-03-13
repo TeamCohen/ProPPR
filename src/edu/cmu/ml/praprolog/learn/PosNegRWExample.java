@@ -15,6 +15,25 @@ public class PosNegRWExample<T> extends RWExample<T> {
 	protected List<T> posList = new ArrayList<T>();
 	protected List<T> negList = new ArrayList<T>();
 
+	// wwc add, kmm port
+	public PosNegRWExample<T> posOnly() {
+		PosNegRWExample<T> result = new PosNegRWExample<T>(this.graph,this.queryVec);
+		result.posList = this.posList;
+		//System.out.println("posOnly() for "+this+" is "+result);
+		return result;
+	}
+	// wwc add, kmm port
+	public PosNegRWExample<T> negOnly() {
+		PosNegRWExample<T> result = new PosNegRWExample<T>(this.graph,this.queryVec);
+		result.negList = this.negList;
+		//System.out.println("negOnly() for "+this+" is "+result);
+		return result;
+	}
+
+	private PosNegRWExample(AnnotatedGraph<T> graph, Map<T, Double> queryVec) {
+		super(graph,queryVec);
+	}
+	
 	public PosNegRWExample(AnnotatedGraph<T> g, Map<T, Double> queryVec,
 			T[] pos, T[] neg) {
 		super(g,queryVec);
@@ -37,12 +56,12 @@ public class PosNegRWExample<T> extends RWExample<T> {
 	public int length() {
 		return posList.size() + negList.size();
 	}
-	
+
 	public String toString() {
 		return String.format("PosNegRWExample[%d/%d; [%s] -> +[%s]; -[%s]]",graph.getNodes().size(),graph.getNumEdges(),
 				Dictionary.buildString(queryVec.keySet(), new StringBuilder(), "','").toString()+"'",
 				posList.size() > 0 ? (Dictionary.buildString(posList, new StringBuilder(), "','").toString()+"'") : "",
-				negList.size() > 0 ? (Dictionary.buildString(negList, new StringBuilder(), "','").toString()+"'") : "");
+						negList.size() > 0 ? (Dictionary.buildString(negList, new StringBuilder(), "','").toString()+"'") : "");
 	}
 
 	public List<T> getPosList() {
