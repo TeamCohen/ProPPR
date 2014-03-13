@@ -17,6 +17,10 @@ public class ComponentConsolidationTest {
 		} catch (LogicProgramException e) {
 			fail("katie not found!");
 		}
+		
+		Component[] components = Component.loadComponents(new String[] {"testcases/family.cfacts"}, Component.ALPHA_DEFAULT);
+		assertEquals(1,components.length);
+		assertEquals("'testcases/family.cfacts'", ((GoalComponent) components[0]).label);
 	}
 
 }
