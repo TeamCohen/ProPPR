@@ -19,33 +19,54 @@ import edu.cmu.ml.praprolog.util.Dictionary;
  */
 public class DprProver extends Prover {
 	private static final Logger log = Logger.getLogger(DprProver.class);
-	public static final double EPS_DEFAULT = 0.0001, MINALPH_DEFAULT=0.1;
+        public static final double EPS_DEFAULT = 0.0001, MINALPH_DEFAULT=0.1;
+        public static int ADJUST_ALPHA = 1;
+        public static int BOOST_ALPHA = 2;
+        public static int THROW_ALPHA_ERRORS = 3;
+        public static final int STRATEGY_DEFAULT=THROW_ALPHA_ERRORS;
 	private final double epsilon;
-	private final double minAlpha;
+        // not final, we might change it with the ADJUST_ALPHA strategy!
+	private double minAlpha;
 	private final double stayProbability;
 	private final double moveProbability;
+        private final int minAlphaErrorStrategy;
+        // for timing traces
 	private long start, last;
+        // for debug
 	private Backtrace backtrace = new Backtrace(log);
 
+        public String toString() { return "dprprover(eps="+this.epsilon+", minAlpha="+this.minAlpha+", strat="+minAlphaErrorStrategy+")"; }
+
 	public DprProver() { this(false); }
+
 	public DprProver(boolean lazyWalk) {
-		this(lazyWalk,EPS_DEFAULT,MINALPH_DEFAULT);
+	    this(lazyWalk,EPS_DEFAULT,MINALPH_DEFAULT,STRATEGY_DEFAULT);
 	}
 	public DprProver(double epsilon, double minalpha) {
-		this(false, epsilon, minalpha);
+	    this(false, epsilon, minalpha,STRATEGY_DEFAULT);
 	}
-	public DprProver(boolean lazyWalk, double epsilon, double minalpha) {
-		this( (lazyWalk?0.5:0.0),epsilon,minalpha);
+        public DprProver(double epsilon, double minalpha,int strat) {
+	    this(false, epsilon, minalpha,strat);
 	}
-	protected DprProver(double stayP, double eps, double mina) {
-		this.epsilon = eps;
-		this.minAlpha = mina;
-		this.stayProbability = stayP;
-		moveProbability = 1.0-stayProbability;
+        public DprProver(boolean lazyWalk, double epsilon, double minalpha) {
+	    this( (lazyWalk?0.5:0.0),epsilon,minalpha,STRATEGY_DEFAULT);
+	}
+        public DprProver(boolean lazyWalk, double epsilon, double minalpha, int strat) {
+	    this( (lazyWalk?0.5:0.0),epsilon,minalpha,strat);
+	}
+        protected DprProver(double stayP, double eps, double mina) {
+	    this( stayP,eps,mina,STRATEGY_DEFAULT);
+	}
+        protected DprProver(double stayP, double eps, double mina,int strat) {
+	    this.epsilon = eps;
+	    this.minAlpha = mina;
+	    this.stayProbability = stayP;
+	    this.moveProbability = 1.0-stayProbability;
+	    this.minAlphaErrorStrategy = strat;
 	}
 	
 	public Prover copy() {
-		return new DprProver(this.stayProbability, this.epsilon, this.minAlpha);
+	    return new DprProver(this.stayProbability, this.epsilon, this.minAlpha, this.minAlphaErrorStrategy);
 	}
 	
 	@Override
@@ -108,9 +129,28 @@ public class DprProver extends Prover {
 				double localAlpha = unNormalizedAlpha / z;
 
 				if (localAlpha < this.minAlpha) {
+				    log.warn("minAlpha problem, strategy="+minAlphaErrorStrategy);
+				    if (minAlphaErrorStrategy==ADJUST_ALPHA) {
+					log.warn("decreasing minAlpha from "+minAlpha+" to "+localAlpha);
+					this.minAlpha = localAlpha;
+				    } else if (minAlphaErrorStrategy==BOOST_ALPHA) {
+					// figure out how much we need to increment the unNormalizedAlpha to get to minAlpha
+					if (log.isDebugEnabled()) {
+					    log.debug("minAlpha issue: minAlpha="+this.minAlpha+" localAlpha="+localAlpha
+						      +" max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
+					}
+					// figure out how much to boost
+					double nonresetWeightSum = z - unNormalizedAlpha;
+					double amountToBoost = (this.minAlpha*(nonresetWeightSum + unNormalizedAlpha) - unNormalizedAlpha)/(1.0 - this.minAlpha);
+					z += amountToBoost;
+					unNormalizedAlpha += amountToBoost;
+					localAlpha = unNormalizedAlpha/z;
+					log.warn("boosted to localAlpha="+localAlpha+"; unAlpha="+unNormalizedAlpha+"; z="+z);
+				    } else {
 					log.warn("max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
 					log.warn("ru="+ru+"; degu="+deg.get(u)+"; u="+u);
 					throw new MinAlphaException(minAlpha,localAlpha,u);
+				    }
 				}
 				Dictionary.increment(p,u,minAlpha * ru,"(elided)");
 				r.put(u, r.get(u) * stayProbability * (1.0-minAlpha));

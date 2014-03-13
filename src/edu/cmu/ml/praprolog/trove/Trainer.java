@@ -157,6 +157,11 @@ public class Trainer {
 			    double avgLoss = (totalLossThisEpoch / numExamplesThisEpoch); 
 			    System.out.print("avg training loss " + avgLoss
 					     + " on "+ numExamplesThisEpoch +" examples");
+			    System.out.print(" avg pos training loss " + (totalPosLossThisEpoch/numExamplesThisEpoch));
+			    System.out.print(" avg neg training loss " + (totalNegLossThisEpoch/numExamplesThisEpoch));
+			    if (totalNegLossThisEpoch>0) {
+				System.out.print(" ratio of pos/neg training loss " + (totalPosLossThisEpoch/totalNegLossThisEpoch));
+			    }
 			    if (epoch>1) {
 				System.out.println(" improved by " + (previousAvgLoss-avgLoss));
 			    } else 
@@ -177,18 +182,25 @@ public class Trainer {
 	////////////////////////// Template methods /////////////////////////////////////
 
 	protected double totalLossThisEpoch;
+	protected double totalPosLossThisEpoch;
+	protected double totalNegLossThisEpoch;
+
 	protected int numExamplesThisEpoch;
 	protected void doExample(int k, PosNegRWExample x, Map<String,Double> paramVec, boolean traceLosses) {
 		log.debug("example "+x.toString()+" ...");
 		this.learner.trainOnExample(paramVec, x);
 		if (traceLosses) {
 			totalLossThisEpoch += this.learner.empiricalLoss(paramVec, x);
+			totalPosLossThisEpoch += this.learner.empiricalLoss(paramVec, x.posOnly());
+			totalNegLossThisEpoch += this.learner.empiricalLoss(paramVec, x.negOnly());
 			numExamplesThisEpoch += x.length();
 		}
 	}
 
 	protected void setUpExamples(int epoch, Collection<PosNegRWExample> examples) {
 		totalLossThisEpoch = 0;
+		totalPosLossThisEpoch = 0;
+		totalNegLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
 	protected void cleanUpExamples(int epoch) {}

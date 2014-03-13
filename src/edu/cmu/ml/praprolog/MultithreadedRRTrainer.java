@@ -25,6 +25,7 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	public MultithreadedRRTrainer(SRW<PosNegRWExample<T>> learner, int numThreads) {
 		super(learner);
 		nthreads = numThreads;
+		log.info("training with "+numThreads + " threads and learner "+learner.getClass());
 	}
 
 	@Override
