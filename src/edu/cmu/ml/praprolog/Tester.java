@@ -1,8 +1,6 @@
 package edu.cmu.ml.praprolog;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,10 +12,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.GraphWriter;
-import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
-import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.prove.LogicProgram;

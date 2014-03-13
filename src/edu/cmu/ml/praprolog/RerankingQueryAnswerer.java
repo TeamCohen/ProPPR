@@ -1,10 +1,5 @@
 package edu.cmu.ml.praprolog;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
 import edu.cmu.ml.praprolog.graph.GraphWriter;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
@@ -16,6 +11,10 @@ import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import org.apache.log4j.Logger;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RerankingQueryAnswerer extends QueryAnswerer {
 	private static final Logger log = Logger.getLogger(RerankingQueryAnswerer.class);

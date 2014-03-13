@@ -188,57 +188,57 @@ public class MultithreadedTrainer<T> extends Trainer<T> {
 		System.err.println(USAGE);
 		System.exit(0);
 	}
-	public static void main(String[] args) {
-		if (args.length < 2) {
-			usage();
-		}
-		
-		String cookedExampleFile = args[0];
-		String outputParamFile   = args[1];
-		int epochs = 5;
-		int threads = 4;
-		boolean traceLosses = false;
-		boolean roundRobin = false;
-		String graphType = AnnotatedGraphFactory.STRING;
-		if (args.length > 2) {
-			for (int i=2; i<args.length; i++) {
-				if ("--epochs".equals(args[i])) {
-					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
-					else usage();
-				} else if ("--traceLosses".equals(args[i])) {
-					traceLosses = true;
-				} else if ("--threads".equals(args[i])) {
-					if (i+1<args.length) threads = Integer.parseInt(args[++i]);
-					else usage();
-				} else if ("--rr".equals(args[i])) {
-					roundRobin = true;
-				} else if ("--string".equals(args[i])) {
-					graphType = AnnotatedGraphFactory.STRING;
-				} else if ("--int".equals(args[i])) {
-					graphType = AnnotatedGraphFactory.INT;
-				} else usage();
-			}
-		}
-		
-//		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
-//		Trainer<String> trainer = new MultithreadedTrainer<String>(srw,threads);
+//	public static void main(String[] args) {
+//		if (args.length < 2) {
+//			usage();
+//		}
+//		
+//		String cookedExampleFile = args[0];
+//		String outputParamFile   = args[1];
+//		int epochs = 5;
+//		int threads = 4;
+//		boolean traceLosses = false;
+//		boolean roundRobin = false;
+//		String graphType = AnnotatedGraphFactory.STRING;
+//		if (args.length > 2) {
+//			for (int i=2; i<args.length; i++) {
+//				if ("--epochs".equals(args[i])) {
+//					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
+//					else usage();
+//				} else if ("--traceLosses".equals(args[i])) {
+//					traceLosses = true;
+//				} else if ("--threads".equals(args[i])) {
+//					if (i+1<args.length) threads = Integer.parseInt(args[++i]);
+//					else usage();
+//				} else if ("--rr".equals(args[i])) {
+//					roundRobin = true;
+//				} else if ("--string".equals(args[i])) {
+//					graphType = AnnotatedGraphFactory.STRING;
+//				} else if ("--int".equals(args[i])) {
+//					graphType = AnnotatedGraphFactory.INT;
+//				} else usage();
+//			}
+//		}
+//		
+////		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
+////		Trainer<String> trainer = new MultithreadedTrainer<String>(srw,threads);
+////		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
+////				trainer.importCookedExamples(cookedExampleFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
+////				epochs,
+////				traceLosses);
+//		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
+//		Trainer trainer = null;
+//		if (roundRobin) {
+//			trainer = new MultithreadedRRTrainer(srw,threads);
+//		} else {
+//			trainer = new MultithreadedTrainer(srw,threads);
+//		}
+////		Trainer trainer = new MultithreadedTrainer(srw,threads);
 //		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-//				trainer.importCookedExamples(cookedExampleFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
+//				trainer.importCookedExamples(cookedExampleFile, 
+//					new AnnotatedGraphFactory(graphType)),
 //				epochs,
 //				traceLosses);
-		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
-		Trainer trainer = null;
-		if (roundRobin) {
-			trainer = new MultithreadedRRTrainer(srw,threads);
-		} else {
-			trainer = new MultithreadedTrainer(srw,threads);
-		}
-//		Trainer trainer = new MultithreadedTrainer(srw,threads);
-		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-				trainer.importCookedExamples(cookedExampleFile, 
-					new AnnotatedGraphFactory(graphType)),
-				epochs,
-				traceLosses);
-		Dictionary.save(paramVec, outputParamFile);
-	}
+//		Dictionary.save(paramVec, outputParamFile);
+//	}
 }

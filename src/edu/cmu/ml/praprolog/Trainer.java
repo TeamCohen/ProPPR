@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -7,13 +8,16 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph.GraphFormatException;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class Trainer<T> {
@@ -154,41 +158,47 @@ public class Trainer<T> {
 
 	////////////////////////// Run ////////////////////////////////////////
 
-	private static final String USAGE = "SINGLETHREADED TRAINING:\nUsage:\n\tcookedExampleFile outputParamFile [options]\n"
-			+"\t\t--epochs {int}\tNumber of epochs (default 5)\n"
-			+"\t\t--traceLosses\tTurn on traceLosses (default off)\n"
-			+"\t\t             \tNB: example count for losses is sum(x.length() for x in examples)\n"
-			+"\t\t             \tand won't match `wc -l cookedExampleFile`\n";
-	private static void usage() {
-		System.err.println(USAGE);
-		System.exit(0);
-	}
 	public static void main(String[] args) {
-		if (args.length < 2) {
-			usage();
+		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_PARAMS;
+		log.info(String.format("flags: 0x%x",flags));
+		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
+
+		String cookedFile=c.dataFile.getPath();
+		if (!c.dataFile.getName().endsWith(ExampleCooker.COOKED_SUFFIX)) {
+			// then we have to cook first
+			log.info("Cooking "+c.dataFile+"...");
+			if (c.outputFile == null) 
+				throw new IllegalArgumentException("If you specify an uncooked file for --data, "
+						+"you have to use --output to tell me where to put the cooked version. "
+						+"Use "+ExampleCooker.COOKED_SUFFIX+" for cooked files so I can tell the difference.");
+			long start = System.currentTimeMillis();
+			c.cooker.cookExamples(c.dataFile, c.outputFile);
+			log.info("Finished cooking in "+(System.currentTimeMillis()-start)+" ms");
+			cookedFile = c.outputFile;
 		}
 
-		String cookedExampleFile = args[0];
-		String outputParamFile   = args[1];
-		int epochs = 5;
-		boolean traceLosses = false;
-		if (args.length > 2) {
-			for (int i=2; i<args.length; i++) {
-				if ("--epochs".equals(args[i])) {
-					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
-					else usage();
-				} else if ("--traceLosses".equals(args[i])) {
-					traceLosses = true;
-				} else usage();
-			}
+		// train parameters on the cooked training data
+		log.info("Training model parameters on "+cookedFile+"...");
+		long start = System.currentTimeMillis();
+		Map<String,Double> paramVec = null;
+		if (c.trove) {
+			edu.cmu.ml.praprolog.trove.Trainer trainer = (edu.cmu.ml.praprolog.trove.Trainer) c.trainer;
+			paramVec = trainer.trainParametersOnCookedIterator(
+					trainer.importCookedExamples(cookedFile), 
+					c.epochs, 
+					c.traceLosses);
+		} else {
+			Trainer<String> trainer = (Trainer<String>) c.trainer;
+			paramVec = trainer.trainParametersOnCookedIterator(
+					trainer.importCookedExamples(cookedFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
+					c.epochs,
+					c.traceLosses);
 		}
+		log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");
 
-		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
-		Trainer<String> trainer = new Trainer<String>(srw);
-		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-				trainer.importCookedExamples(cookedExampleFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
-				epochs,
-				traceLosses);
-		Dictionary.save(paramVec, outputParamFile);
+		if (c.paramsFile != null) {
+			log.info("Saving parameters to "+c.paramsFile+"...");
+			Dictionary.save(paramVec, c.paramsFile);
+		}
 	}
 }

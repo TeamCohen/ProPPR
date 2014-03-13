@@ -1,12 +1,7 @@
 package edu.cmu.ml.praprolog.util;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
-import java.io.File;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -20,42 +15,45 @@ import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
-import edu.cmu.ml.praprolog.prove.Component;
-import edu.cmu.ml.praprolog.prove.DprProver;
-import edu.cmu.ml.praprolog.prove.PprProver;
-import edu.cmu.ml.praprolog.prove.Prover;
-import edu.cmu.ml.praprolog.prove.TracingDfsProver;
+import edu.cmu.ml.praprolog.prove.*;
+import org.apache.commons.cli.*;
+
+import java.io.*;
+import java.util.Properties;
 
 public class Configuration {
-	public static final int USE_PROGRAMFILES=1;
-	public static final int USE_DATA=2;
-	public static final int USE_OUTPUT=4;
-	public static final int USE_PROVER=8;
-	public static final int USE_THREADS=0x10;
-	public static final int USE_TRAIN=0x20;
-	public static final int USE_TEST=0x40;
-	public static final int USE_TRAINTEST=0x260;
-	public static final int USE_LEARNINGSET=0x80;
-	public static final int USE_QUERIES=0x100;
-	public static final int USE_PARAMS = 0x200;
-	public static final int USE_SRW = 0x400;
-	/** programFiles, prover, threads **/
-	public static final int USE_DEFAULTS=0x19;
-	public static final String PROPFILE = "config.properties";
-	private static final boolean DEFAULT_COMBINE=true;
-	
-	public Prover prover=null;
-	public String[] programFiles=null;
-	public File dataFile=null;
-	public File queryFile=null;
-	public File testFile=null;
-	public String outputFile=null;
-	public int nthreads=-1;
-	public double alpha = Component.ALPHA_DEFAULT;
-	public int epochs=5;
-	public boolean traceLosses=false;
-	public String paramsFile=null;
-	public WeightingScheme weightingScheme=null;
+    public static final int USE_PROGRAMFILES = 1;
+    public static final int USE_DATA = 2;
+    public static final int USE_OUTPUT = 4;
+    public static final int USE_PROVER = 8;
+    public static final int USE_THREADS = 0x10;
+    public static final int USE_TRAIN = 0x20;
+    public static final int USE_TEST = 0x40;
+    public static final int USE_LEARNINGSET = 0x80;
+    public static final int USE_QUERIES = 0x100;
+    public static final int USE_PARAMS = 0x200;
+    public static final int USE_SRW = 0x400;
+    public static final int USE_COMPLEX_FEATURES = 0x800;
+    // combo flags:
+    /** programFiles, prover, threads **/
+    public static final int USE_DEFAULTS = 0x19;
+    /** train, test, params **/
+    public static final int USE_TRAINTEST = 0x260;
+    public static final String PROPFILE = "config.properties";
+    private static final boolean DEFAULT_COMBINE = true;
+    public Prover prover = null;
+    public String[] programFiles = null;
+    public File dataFile = null;
+    public File queryFile = null;
+    public File testFile = null;
+    public File complexFeatureConfigFile = null;
+    public String outputFile = null;
+    public int nthreads = -1;
+    public double alpha = Component.ALPHA_DEFAULT;
+    public int epochs = 5;
+    public boolean traceLosses = false;
+    public String paramsFile = null;
+    public WeightingScheme weightingScheme = null;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -95,29 +93,6 @@ public class Configuration {
 		} catch( Exception exp ) {
 			System.err.println("\n"+exp.getMessage()+"\n");
 			usageOptions(options,flags);
-			
-			/*
-			 * For silently passing through unrecognized options, we may want to use:
-			 *
-	public class ExtendedGnuParser extends GnuParser {
-
-    private boolean ignoreUnrecognizedOption;
-
-    public ExtendedGnuParser(final boolean ignoreUnrecognizedOption) {
-        this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
-    }
-
-    @Override
-    protected void processOption(final String arg, final ListIterator iter) throws     ParseException {
-        boolean hasOption = getOptions().hasOption(arg);
-
-        if (hasOption || !ignoreUnrecognizedOption) {
-            super.processOption(arg, iter);
-        }
-    }
-
-} 
-			 */
 		}
 	}
 	protected File getExistingFileOption(CommandLine line, String name) {
@@ -170,172 +145,198 @@ public class Configuration {
 			}
 		}
 
-		if (anyOn(flags, USE_PROGRAMFILES | USE_PROVER)) {
-			this.weightingScheme = new TanhWeightingScheme();
-			if (line.hasOption("weightingScheme")) {
-				String value = line.getOptionValue("weightingScheme");
-				if (value.equals("linear")) weightingScheme = new LinearWeightingScheme();
-				else if (value.equals("sigmoid")) weightingScheme = new SigmoidWeightingScheme();
-				else if (value.equals("tanh")) weightingScheme = weightingScheme;
-				else { System.err.println("Unrecognized weighting scheme "+value); this.usageOptions(options, flags); }
-			}
-		}
-	}
-	protected void addOptions(Options options, int flags) {
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("programFiles")
-					.isRequired(isOn(flags,USE_PROGRAMFILES))
-					.withArgName("file:...:file")
-					.hasArgs()
-					.withValueSeparator(':')
-					.withDescription("Description of the logic program. Formats:\n\t\tcrules:goal,, & ... & goal,, # feature,, # variable,,\n\t\tcfacts:f\\ta\\ta")
-					.create());
-		if (!isOn(flags,USE_TRAINTEST)) options.addOption(
-				OptionBuilder
-					.withLongOpt("data")
-					.isRequired(isOn(flags,USE_DATA))
-					.withArgName("file")
-					.hasArg()
-					.withDescription("Examples. Format: f a a\\t{+|-}f a a\\t...")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("output")
-					.isRequired(isOn(flags,USE_OUTPUT | USE_TRAIN))
-					.withArgName("file")
-					.hasArg()
-					.withDescription("Cooked training examples. Format: query\\tkeys,,\\tposList,,\\tnegList,,\\tgraph")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("queries")
-				        .isRequired(isOn(flags,USE_QUERIES))
-					.withArgName("file")
-					.hasArg()
-				        .withDescription("Queries.  Format f a a")
-					.create());
-		options.addOption(
-				OptionBuilder
-					.withLongOpt("prover")
-					.withArgName("class[:arg:...:arg]")
-					.hasArg()
-					.withDescription("Default: "+this.prover.getClass().getSimpleName()+"\n"
-							+"Available options:\n"
-							+"ppr[:depth] (default depth=5)\n"
-							+"dpr[:eps[:alph]] (default eps=1E-4, alph=0.1)\n"
-							+"tr[:depth] (default depth=5)")
-					.create());
-		if (isOn(flags,USE_THREADS)) options.addOption(
-				OptionBuilder
-					.withLongOpt("threads")
-					.withArgName("integer")
-					.hasArg()
-					.withDescription("Activate multithreading with x worker threads.")
-					.create());
-		if (isOn(flags,USE_TRAIN))
-			options.addOption(
-					OptionBuilder
-						.withLongOpt("train")
-						.isRequired()
-						.withArgName("file")
-						.hasArg()
-						.withDescription("Training examples. Format: f a a\\t{+|-}f a a\\t...")
-						.create());
-		if (isOn(flags,USE_TEST))
-			options.addOption(
-					OptionBuilder
-						.withLongOpt("test")
-						.isRequired()
-						.withArgName("file")
-						.hasArg()
-						.withDescription("Testing examples. Format: f a a\\t{+|-}f a a\\t...")
-						.create());	
-		if (isOn(flags,USE_PARAMS))
-			options.addOption(
-					OptionBuilder
-						.withLongOpt("params")
-						.withArgName("file")
-						.hasArg()
-						.withDescription("Save/load learned walker parameters.")
-						.create());
-		if (isOn(flags,USE_LEARNINGSET)) {
-			options.addOption(
-				OptionBuilder
-					.withLongOpt("epochs")
-					.withArgName("integer")
-					.hasArg()
-					.withDescription("For training model parameters (default = 5)")
-					.create());
-			options.addOption(
-					OptionBuilder
-						.withLongOpt("traceLosses")
-						.withDescription("Print training loss at each epoch")
-						.create());
-		}
-	}
-	protected void constructUsageSyntax(StringBuilder syntax, int flags) {
-		if (isOn(flags,USE_PROGRAMFILES)) syntax.append(" --programFiles file.crules:file.cfacts:file.graph");
-		if (isOn(flags,USE_DATA)) syntax.append(" --data training.data");
-		if (isOn(flags,USE_OUTPUT)) syntax.append(" --output training.cooked");
-		if (isOn(flags,USE_PROVER)) syntax.append(" [--prover { ppr[:depth] | dpr[:eps[:alph]] | tr[:depth] }]");
-		if (isOn(flags,USE_TRAIN)) syntax.append(" --train training.data");
-		if (isOn(flags,USE_TEST)) syntax.append(" --test testing.data");
-		if (isOn(flags,USE_PARAMS)) syntax.append("  [--params params.txt]");
-		if (isOn(flags,USE_LEARNINGSET)) syntax.append(" [--epochs <int>] [--traceLosses]");
-	}
-	protected void usageOptions(Options options,int flags) {
-		HelpFormatter formatter = new HelpFormatter();
-		int width = 80;
+        if (anyOn(flags, USE_PROGRAMFILES | USE_PROVER)) {
+            this.weightingScheme = new TanhWeightingScheme();
+            if (line.hasOption("weightingScheme")) {
+                String value = line.getOptionValue("weightingScheme");
+                if (value.equals("linear")) weightingScheme = new LinearWeightingScheme();
+                else if (value.equals("sigmoid")) weightingScheme = new SigmoidWeightingScheme();
+                else if (value.equals("tanh")) weightingScheme = weightingScheme;
+                else {
+                    System.err.println("Unrecognized weighting scheme " + value);
+                    this.usageOptions(options, flags);
+                }
+            }
+        }
+    }
 
-		String swidth = System.getenv("COLUMNS");
-		if (swidth != null) {
-			try {
-				width = Integer.parseInt(swidth);
-			} catch (NumberFormatException e) {}
-		}
-		formatter.setWidth(width);
-		formatter.setLeftPadding(0);
-		formatter.setDescPadding(2);
-		StringBuilder syntax = new StringBuilder();
-		constructUsageSyntax(syntax, flags);
-		formatter.printHelp(syntax.toString(), options );
-		System.exit(0);
-	}
-	@Override
-	public String toString() {
-		return this.getClass().getCanonicalName();
-	}
-	
-	protected String[] combinedArgs(String[] origArgs) {
-		// if the user specified a properties file, add those values at the end
-		// (so that command line args override them)
-		if (System.getProperty(PROPFILE) != null) {
-			String[] propArgs = fakeCommandLine(System.getProperty(PROPFILE));
-			String[] args = new String[origArgs.length + propArgs.length];
-			int i=0;
-			for (int j=0; j<origArgs.length; j++) args[i++] = origArgs[j];
-			for (int j=0; j<propArgs.length; j++) args[i++] = propArgs[j];
-			return args;
-		}
-		return origArgs;
-	}
-	protected String[] fakeCommandLine(String propsFile) {
-		Properties props = new Properties();
-		try {
-			props.load(new BufferedReader(new FileReader(propsFile)));
-			StringBuilder sb = new StringBuilder();
-			for (String name : props.stringPropertyNames()) {
-				sb.append(" --").append(name);
-				if (props.getProperty(name) != null) {
-					sb.append(" ").append(props.getProperty(name));
-				}
-			}
-			return sb.substring(1).split("\\s");
-		} catch (FileNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
-		}
-	}
+    /**
+     * For all option flags as specified in this file, addOptions creates
+     * and adds Option objects to the Options object.
+     */
+    protected void addOptions(Options options, int flags) {
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("programFiles")
+                        .isRequired(isOn(flags, USE_PROGRAMFILES))
+                        .withArgName("file:...:file")
+                        .hasArgs()
+                        .withValueSeparator(':')
+                        .withDescription("Description of the logic program. Formats:\n\t\tcrules:goal,, & ... & goal,, # feature,, # variable,,\n\t\tcfacts:f\\ta\\ta")
+                        .create());
+        if (!isOn(flags, USE_TRAINTEST))
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("data")
+                            .isRequired(isOn(flags, USE_DATA))
+                            .withArgName("file")
+                            .hasArg()
+                            .withDescription("Examples. Format: f a a\\t{+|-}f a a\\t...")
+                            .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("output")
+                        .isRequired(isOn(flags, USE_OUTPUT | USE_TRAIN))
+                        .withArgName("file")
+                        .hasArg()
+                        .withDescription("Cooked training examples. Format: query\\tkeys,,\\tposList,,\\tnegList,,\\tgraph")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("queries")
+                        .isRequired(isOn(flags, USE_QUERIES))
+                        .withArgName("file")
+                        .hasArg()
+                        .withDescription("Queries.  Format f a a")
+                        .create());
+        options.addOption(
+                OptionBuilder
+                        .withLongOpt("prover")
+                        .withArgName("class[:arg:...:arg]")
+                        .hasArg()
+                        .withDescription("Default: " + this.prover.getClass().getSimpleName() + "\n"
+                                         + "Available options:\n"
+                                         + "ppr[:depth] (default depth=5)\n"
+                                         + "dpr[:eps[:alph]] (default eps=1E-4, alph=0.1)\n"
+                                         + "tr[:depth] (default depth=5)")
+                        .create());
+        if (isOn(flags, USE_THREADS)) options.addOption(
+                OptionBuilder
+                        .withLongOpt("threads")
+                        .withArgName("integer")
+                        .hasArg()
+                        .withDescription("Activate multithreading with x worker threads.")
+                        .create());
+        if (isOn(flags, USE_TRAIN))
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("train")
+                            .isRequired()
+                            .withArgName("file")
+                            .hasArg()
+                            .withDescription("Training examples. Format: f a a\\t{+|-}f a a\\t...")
+                            .create());
+        if (isOn(flags, USE_TEST))
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("test")
+                            .isRequired()
+                            .withArgName("file")
+                            .hasArg()
+                            .withDescription("Testing examples. Format: f a a\\t{+|-}f a a\\t...")
+                            .create());
+        if (isOn(flags, USE_PARAMS))
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("params")
+                            .withArgName("file")
+                            .hasArg()
+                            .withDescription("Save/load learned walker parameters.")
+                            .create());
+        if (isOn(flags, USE_LEARNINGSET)) {
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("epochs")
+                            .withArgName("integer")
+                            .hasArg()
+                            .withDescription("For training model parameters (default = 5)")
+                            .create());
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("traceLosses")
+                            .withDescription("Print training loss at each epoch")
+                            .create());
+        }
+        if (isOn(flags, USE_COMPLEX_FEATURES)) {
+            options.addOption(
+                    OptionBuilder
+                            .withLongOpt("complexFeatures")
+                            .withArgName("file")
+                            .hasArg()
+                            .withDescription("Properties file for complex features")
+                            .create());
+        }
+    }
+
+    protected void constructUsageSyntax(StringBuilder syntax, int flags) {
+        if (isOn(flags, USE_PROGRAMFILES)) syntax.append(" --programFiles file.crules:file.cfacts:file.graph");
+        if (isOn(flags, USE_DATA)) syntax.append(" --data training.data");
+        if (isOn(flags, USE_OUTPUT)) syntax.append(" --output training.cooked");
+        if (isOn(flags, USE_PROVER)) syntax.append(" [--prover { ppr[:depth] | dpr[:eps[:alph]] | tr[:depth] }]");
+        if (isOn(flags, USE_TRAIN)) syntax.append(" --train training.data");
+        if (isOn(flags, USE_TEST)) syntax.append(" --test testing.data");
+        if (isOn(flags, USE_PARAMS)) syntax.append("  [--params params.txt]");
+        if (isOn(flags, USE_LEARNINGSET)) syntax.append(" [--epochs <int>] [--traceLosses]");
+        if (isOn(flags, USE_COMPLEX_FEATURES)) syntax.append("[-- complexFeatConfig complex_features.conf");
+    }
+
+    /**
+     * Calls System.exit(0)
+     */
+    protected void usageOptions(Options options, int flags) {
+        HelpFormatter formatter = new HelpFormatter();
+        int width = 80;
+
+        String swidth = System.getenv("COLUMNS");
+        if (swidth != null) {
+            try {
+                width = Integer.parseInt(swidth);
+            } catch (NumberFormatException e) {}
+        }
+        formatter.setWidth(width);
+        formatter.setLeftPadding(0);
+        formatter.setDescPadding(2);
+        StringBuilder syntax = new StringBuilder();
+        constructUsageSyntax(syntax, flags);
+        formatter.printHelp(syntax.toString(), options);
+        System.exit(0);
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getCanonicalName();
+    }
+
+    protected String[] combinedArgs(String[] origArgs) {
+        // if the user specified a properties file, add those values at the end
+        // (so that command line args override them)
+        if (System.getProperty(PROPFILE) != null) {
+            String[] propArgs = fakeCommandLine(System.getProperty(PROPFILE));
+            String[] args = new String[origArgs.length + propArgs.length];
+            int i = 0;
+            for (int j = 0; j < origArgs.length; j++) args[i++] = origArgs[j];
+            for (int j = 0; j < propArgs.length; j++) args[i++] = propArgs[j];
+            return args;
+        }
+        return origArgs;
+    }
+
+    protected String[] fakeCommandLine(String propsFile) {
+        Properties props = new Properties();
+        try {
+            props.load(new BufferedReader(new FileReader(propsFile)));
+            StringBuilder sb = new StringBuilder();
+            for (String name : props.stringPropertyNames()) {
+                sb.append(" --").append(name);
+                if (props.getProperty(name) != null) {
+                    sb.append(" ").append(props.getProperty(name));
+                }
+            }
+            return sb.substring(1).split("\\s");
+        } catch (FileNotFoundException e) {
+            throw new IllegalArgumentException(e);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
 }

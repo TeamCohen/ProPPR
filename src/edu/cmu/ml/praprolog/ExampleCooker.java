@@ -37,8 +37,9 @@ import edu.cmu.ml.praprolog.util.Dictionary;
  */
 public class ExampleCooker extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(ExampleCooker.class);
-	public ExampleCooker(Prover p, String[] programFiles, double alpha) {
-		super.init(p,new LogicProgram(Component.loadComponents(programFiles,alpha)));
+	public static final String COOKED_SUFFIX = ".cooked";
+	public ExampleCooker(Prover p, LogicProgram program) {
+		super.init(p,program);
 	}
 	
 	public void cookExamples(File dataFile, String outputFile) {
@@ -157,8 +158,8 @@ public class ExampleCooker extends ExampleThawing {
 		Configuration c = new Configuration(args, Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT);
 		
 		ExampleCooker cooker = null;
-		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,c.programFiles,c.alpha);
-		else cooker = new ModularMultiExampleCooker(c.prover, c.programFiles, c.alpha, c.nthreads); 
+		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
+		else cooker = new ModularMultiExampleCooker(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)), c.nthreads); 
 				//MultithreadedExampleCooker(c.prover,c.programFiles,c.nthreads);
 		long start = System.currentTimeMillis();
 		cooker.cookExamples(c.dataFile, c.outputFile);
