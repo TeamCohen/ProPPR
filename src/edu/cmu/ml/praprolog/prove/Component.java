@@ -105,6 +105,7 @@ public abstract class Component {
             }
         }
 
+        // determine final Component[] size
         int nComponents = args.size();
         if (args.containsKey(SparseGraphComponent.FILE_EXTENSION)) {
             nComponents += args.get(SparseGraphComponent.FILE_EXTENSION).size() - 1;
@@ -114,6 +115,7 @@ public abstract class Component {
         // instantiate each type
         int i = 0;
         for (Map.Entry<String, List<String>> arg : args.entrySet()) {
+        	// one component for each sparsegraph
             if (arg.getKey().equals(SparseGraphComponent.FILE_EXTENSION)) {
                 for (String fileName : arg.getValue()) {
                     log.info("Loading from file '" + fileName + "' with alpha=" + alpha + " ...");
@@ -121,7 +123,11 @@ public abstract class Component {
                     result[i - 1].setAlpha(alpha);
                 }
             } else {
-
+            	if (arg.getValue().size() > 1) {
+            		log.info("Consolidating all "+arg.getKey()+" components together");
+            	}
+            	
+            	// consolidate all other multiples in a single component of that type
                 if (arg.getKey().equals(GoalComponent.FILE_EXTENSION)) {
                     result[i++] = GoalComponent.loadCompiled(arg.getValue());
                 } else if (arg.getKey().equals(RuleComponent.FILE_EXTENSION)) {
