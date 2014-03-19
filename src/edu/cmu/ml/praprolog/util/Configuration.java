@@ -130,7 +130,13 @@ public class Configuration {
 					if (values.length>2) {
 						this.alpha = Double.parseDouble(values[2]);
 					}
-					this.prover = new DprProver(epsilon,this.alpha);
+					int strategy = DprProver.STRATEGY_DEFAULT;
+					if (values.length>3) {
+						if ("throw".equals(values[3])) strategy = DprProver.THROW_ALPHA_ERRORS;
+						if ("boost".equals(values[3])) strategy = DprProver.BOOST_ALPHA;
+						if ("adjust".equals(values[3])) strategy = DprProver.ADJUST_ALPHA;
+					}
+					this.prover = new DprProver(epsilon,this.alpha, strategy);
 					this.alpha += epsilon;
 				}
 			} else if(values[0].startsWith("tr")) {
@@ -146,12 +152,12 @@ public class Configuration {
 		}
 
         if (anyOn(flags, USE_PROGRAMFILES | USE_PROVER)) {
-            this.weightingScheme = new TanhWeightingScheme();
+            if (this.weightingScheme == null) this.weightingScheme = new TanhWeightingScheme();
             if (line.hasOption("weightingScheme")) {
                 String value = line.getOptionValue("weightingScheme");
                 if (value.equals("linear")) weightingScheme = new LinearWeightingScheme();
                 else if (value.equals("sigmoid")) weightingScheme = new SigmoidWeightingScheme();
-                else if (value.equals("tanh")) weightingScheme = weightingScheme;
+                else if (value.equals("tanh")) weightingScheme = new TanhWeightingScheme();
                 else {
                     System.err.println("Unrecognized weighting scheme " + value);
                     this.usageOptions(options, flags);
@@ -207,7 +213,7 @@ public class Configuration {
                         .withDescription("Default: " + this.prover.getClass().getSimpleName() + "\n"
                                          + "Available options:\n"
                                          + "ppr[:depth] (default depth=5)\n"
-                                         + "dpr[:eps[:alph]] (default eps=1E-4, alph=0.1)\n"
+                                         + "dpr[:eps[:alph[:strat]]] (default eps=1E-4, alph=0.1, strategy=throw(boost,adjust))\n"
                                          + "tr[:depth] (default depth=5)")
                         .create());
         if (isOn(flags, USE_THREADS)) options.addOption(
@@ -272,7 +278,7 @@ public class Configuration {
         if (isOn(flags, USE_PROGRAMFILES)) syntax.append(" --programFiles file.crules:file.cfacts:file.graph");
         if (isOn(flags, USE_DATA)) syntax.append(" --data training.data");
         if (isOn(flags, USE_OUTPUT)) syntax.append(" --output training.cooked");
-        if (isOn(flags, USE_PROVER)) syntax.append(" [--prover { ppr[:depth] | dpr[:eps[:alph]] | tr[:depth] }]");
+        if (isOn(flags, USE_PROVER)) syntax.append(" [--prover { ppr[:depth] | dpr[:eps[:alph[:strat]]] | tr[:depth] }]");
         if (isOn(flags, USE_TRAIN)) syntax.append(" --train training.data");
         if (isOn(flags, USE_TEST)) syntax.append(" --test testing.data");
         if (isOn(flags, USE_PARAMS)) syntax.append("  [--params params.txt]");
@@ -325,18 +331,21 @@ public class Configuration {
         Properties props = new Properties();
         try {
             props.load(new BufferedReader(new FileReader(propsFile)));
-            StringBuilder sb = new StringBuilder();
-            for (String name : props.stringPropertyNames()) {
-                sb.append(" --").append(name);
-                if (props.getProperty(name) != null) {
-                    sb.append(" ").append(props.getProperty(name));
-                }
-            }
-            return sb.substring(1).split("\\s");
+            return fakeCommandLine(props);
         } catch (FileNotFoundException e) {
             throw new IllegalArgumentException(e);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+    protected String[] fakeCommandLine(Properties props) {
+        StringBuilder sb = new StringBuilder();
+        for (String name : props.stringPropertyNames()) {
+            sb.append(" --").append(name);
+            if (props.getProperty(name) != null) {
+                sb.append(" ").append(props.getProperty(name));
+            }
+        }
+        return sb.substring(1).split("\\s");
     }
 }

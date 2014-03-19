@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -12,6 +13,7 @@ import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class Experiment {
 	private static final Logger log = Logger.getLogger(Experiment.class);
@@ -52,7 +54,8 @@ public class Experiment {
 		//log.info("paramVec="+Dictionary.buildString(paramVec, new StringBuilder(), "\n").toString());
 		if (c.paramsFile != null) {
 			log.info("Saving parameters to "+c.paramsFile+"...");
-			Dictionary.save(paramVec, c.paramsFile);
+			ParamsFile.save(paramVec, new File(c.paramsFile), c);
+//			Dictionary.save(paramVec, c.paramsFile);
 		}
 		
 		// test trained parameters
