@@ -8,6 +8,7 @@ import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamsFile;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
@@ -72,8 +73,8 @@ public class QueryAnswerer {
 	public Map<LogicProgramState,Double> getSolutions(Prover prover,Goal query,LogicProgram program) {
 		return prover.proveState(program, new ProPPRLogicProgramState(query));
 	}
-	public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
-		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(Dictionary.load(paramsFile), wScheme));
+	public void addParams(LogicProgram program, Map<String,Double> params, WeightingScheme wScheme) {
+		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(params, wScheme));
 	}
 
 	public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize) throws IOException {
@@ -131,7 +132,9 @@ public class QueryAnswerer {
                            new QueryAnswerer();
         log.info("Running queries from " + c.queryFile + "; saving results to " + c.outputFile);
         if (c.paramsFile != null) {
-            qa.addParams(c.program, c.paramsFile, c.weightingScheme);
+        	ParamsFile file = new ParamsFile(c.paramsFile);
+            qa.addParams(c.program, Dictionary.load(file), c.weightingScheme);
+            file.check(c);
         }
         qa.findSolutions(c.program, c.prover, c.queryFile, c.outputFile, c.normalize);
     }

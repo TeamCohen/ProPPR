@@ -111,4 +111,26 @@ public class ParamsFile extends ParsedFile {
 			e.printStackTrace();
 		}
 	}
+
+	/** Check supported configuraton settings to see that the specified configuration
+	 * matches the settings stored in this params file.
+	 * @param c
+	 */
+	public void check(Configuration c) {
+		if (!this.getProperty("weightingScheme").equals(c.weightingScheme.toString())) 
+			failCheck("weightingScheme",this.getProperty("weightingScheme"), c.weightingScheme.toString());
+		
+		int i=0;
+		for (String p : this.getProperty("programFiles").split(":")) {
+			if (!p.equals(c.programFiles[i])) failCheck("programFiles:"+i,p,c.programFiles[i]);
+			i++;
+		}
+		
+		// this one may not work
+		if (!this.getProperty("prover").equals(c.prover.toString()))
+			failCheck("prover",this.getProperty("prover"),c.prover.toString());
+	}
+	private void failCheck(String setting, String paramsFile, String configuration) {
+		throw new MisconfigurationException("Command line configuration does not match params file! Setting '"+setting+"' expected '"+paramsFile+"' but was '"+configuration+"'");
+	}
 }

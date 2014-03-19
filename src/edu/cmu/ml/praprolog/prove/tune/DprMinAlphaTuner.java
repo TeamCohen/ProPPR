@@ -2,6 +2,7 @@ package edu.cmu.ml.praprolog.prove.tune;
 
 
 import java.io.File;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
@@ -20,6 +21,7 @@ import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.CustomConfiguration;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamsFile;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class DprMinAlphaTuner {
@@ -28,13 +30,12 @@ public class DprMinAlphaTuner {
 	private static final double MIN_DELTA = 1e-10;
 	protected LogicProgram program;
 
-	public DprMinAlphaTuner(String[] programFiles, double alpha, String paramsFile, WeightingScheme wScheme) {
+	public DprMinAlphaTuner(String[] programFiles, double alpha, Map<String,Double> params, WeightingScheme wScheme) {
 		this.program = new LogicProgram(Component.loadComponents(programFiles, alpha));
-		if (paramsFile != null) {
-			log.info("Using parameter weights from file "+paramsFile);
+		if (params != null) {
 			this.program.setFeatureDictWeighter(
 					InnerProductWeighter.fromParamVec(
-							Dictionary.load(paramsFile), wScheme));
+							params, wScheme));
 		}
 	}
 
@@ -147,7 +148,15 @@ public class DprMinAlphaTuner {
 			}
 		};
 		log.info("Tuning with initial alpha "+(Double) c.getCustomSetting(null));
-		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles, c.alpha, c.paramsFile, c.weightingScheme);
+
+		Map<String,Double> params = null;
+		if (c.paramsFile != null) {
+			log.info("Using parameter weights from file "+c.paramsFile);
+			ParamsFile file = new ParamsFile(c.paramsFile);
+			params = Dictionary.load(file);
+			file.check(c);
+		}
+		DprMinAlphaTuner t = new DprMinAlphaTuner(c.programFiles, c.alpha, params, c.weightingScheme);
 		t.tune(c.dataFile,(Double) c.getCustomSetting("start"),(Double) c.getCustomSetting("epsilon"));
 	}
 

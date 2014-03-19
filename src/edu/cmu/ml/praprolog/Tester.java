@@ -25,6 +25,7 @@ import edu.cmu.ml.praprolog.prove.TracingDfsProver;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class Tester extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(Tester.class);
@@ -166,8 +167,11 @@ public class Tester extends ExampleThawing {
 		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
 		
 //		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
-		if (c.paramsFile != null)
-			c.tester.setParams(Dictionary.load(c.paramsFile), c.weightingScheme);
+		if (c.paramsFile != null) {
+			ParamsFile file = new ParamsFile(c.paramsFile);
+			c.tester.setParams(Dictionary.load(file), c.weightingScheme);
+			file.check(c);
+		}
 
 		log.info("Testing on "+c.testFile+"...");
 		long start = System.currentTimeMillis();
