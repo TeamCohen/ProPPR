@@ -126,7 +126,6 @@ public class ParamsFile extends ParsedFile {
 			i++;
 		}
 		
-		// this one may not work
 		if (!this.getProperty("prover").equals(c.prover.toString()))
 			failCheck("prover",this.getProperty("prover"),c.prover.toString());
 	}

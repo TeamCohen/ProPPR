@@ -7,14 +7,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class ParamsFileTest {
-
-	@Test
-	public void test() {
-		File paramsFile=new File("testcases/paramsFileTest.wts");
-		Map<String,Double> params = new HashMap<String,Double>();
+	Map<String,Double> params;
+	
+	@Before
+	public void setup() {
+		params = new HashMap<String,Double>();
 		params.put("a", 0.0);
 		params.put("ca", .06);
 		params.put("fe",.06);
@@ -23,6 +24,11 @@ public class ParamsFileTest {
 		params.put("b6",.02);
 		params.put("p",.1);
 		params.put("zn",.04);
+	}
+	
+	@Test
+	public void test() {
+		File paramsFile=new File("testcases/paramsFileTest.wts");
 
 		ParamsFile.save(params, paramsFile, null);
 		{
@@ -49,6 +55,19 @@ public class ParamsFileTest {
 			}
 			paramsFile.delete();
 		}
+	}
+	
+	@Test
+	public void testValidation() {
+		Configuration c = new Configuration("--programFiles testcases/family.crules:testcases/family.cfacts:testcases/family.graph --prover dpr:1e-5:.02".split(" "));
+		File paramsFile=new File("testcases/paramsFileTest.wts");
+		ParamsFile.save(params,paramsFile,c);
+		
+		ParamsFile file = new ParamsFile(paramsFile);
+		Map<String,Double> loadedParams = Dictionary.load(file);
+		file.check(c);
+		Configuration c2 = new Configuration("--programFiles testcases/family.crules:testcases/family.cfacts:testcases/family.graph --prover dpr:1e-5:2e-2".split(" "));
+		file.check(c2);
 	}
 
 }
