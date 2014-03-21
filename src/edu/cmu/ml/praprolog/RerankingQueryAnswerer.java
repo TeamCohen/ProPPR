@@ -25,9 +25,9 @@ public class RerankingQueryAnswerer extends QueryAnswerer {
 		this.srw = walker;
 	}
 	@Override
-	public void addParams(LogicProgram program, String paramsFile, WeightingScheme wScheme) {
+	public void addParams(LogicProgram program, Map<String,Double> params, WeightingScheme wScheme) {
 		// weightingScheme is only used by the SRW, which got a copy during configuration
-		this.params = Dictionary.load(paramsFile);
+		this.params = params;
 	}
 	@Override
 	public Map<LogicProgramState,Double> getSolutions(Prover prover,Goal query,LogicProgram program) {

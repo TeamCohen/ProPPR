@@ -29,6 +29,9 @@ public class TracingDfsProver extends Prover {
 		this.maxDepth=maxDepth;
 	}
 	
+	@Override
+	public String toString() { return "tr:"+this.maxDepth; }
+	
 	public Prover copy() {
 		return new TracingDfsProver(this.maxDepth);
 	}

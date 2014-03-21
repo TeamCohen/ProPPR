@@ -21,6 +21,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 	private LineNumberReader reader;
 	private String peek;
 	private int dataLine=-2;
+	private boolean closed = false;
 	public ParsedFile(String filename) {
 		this.filename = filename;
 		try {
@@ -65,9 +66,14 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 		if (reader != null)
 			try {
 				reader.close();
+				this.closed = true;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+	}
+	
+	public boolean isClosed() {
+		return this.closed;
 	}
 	
 	@Override
@@ -95,17 +101,24 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 	public int getAbsoluteLineNumber() {
 		return this.reader.getLineNumber()-1;
 	}
+	
+	protected boolean isComment(String line) {
+		return line.startsWith("#");
+	}
+	protected void processComment(String line) {}
 
 	@Override
 	public String next() {
 		String next = peek;
 		try {
 			peek = reader.readLine();
-			while( 
-					(peek != null) 
-					&& 
-					( ((peek=peek.trim()).length() == 0) || peek.startsWith("#") )
-				) {
+			for(boolean skip=true; peek != null; ) {
+				skip = skip && ((peek=peek.trim()).length() == 0);
+				if (isComment(peek)) {
+					skip = true;
+					processComment(peek);
+				}
+				if (!skip) break;
 				peek = reader.readLine();
 			}
 		} catch (IOException e) {

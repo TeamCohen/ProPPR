@@ -27,6 +27,9 @@ public class PprProver extends Prover {
 		trace=tr;
 	}
 	
+	@Override
+	public String toString() { return "ppr:"+this.maxDepth; }
+	
 	public Prover copy() {
 		return new PprProver(this.maxDepth, this.trace);
 	}

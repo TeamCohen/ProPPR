@@ -211,21 +211,21 @@ public class Dictionary {
 		return sb;
 	}
 
-
-	public static void save(TIntDoubleMap map, String filename) {
-		BufferedWriter writer;
-		try {
-			writer = new BufferedWriter(new FileWriter(filename));
-			for (TIntDoubleIterator e = map.iterator(); e.hasNext(); ) {
-				e.advance();
-				writer.write(String.format("%s\t%f\n", String.valueOf(e.key()),e.value()));
-			}
-			writer.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+// // removed by krivard 17 mar 2014 - not called anywhere 
+//	public static void save(TIntDoubleMap map, String filename) {
+//		BufferedWriter writer;
+//		try {
+//			writer = new BufferedWriter(new FileWriter(filename));
+//			for (TIntDoubleIterator e = map.iterator(); e.hasNext(); ) {
+//				e.advance();
+//				writer.write(String.format("%s\t%f\n", String.valueOf(e.key()),e.value()));
+//			}
+//			writer.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
 	public static boolean safeContains(TIntObjectMap<TIntDoubleHashMap> map,
 			int key1, int key2) {
 		if (!map.containsKey(key1)) return false;
@@ -389,7 +389,9 @@ public class Dictionary {
 		return map;
 	}
 	public static Map<String, Double> load(String filename) {
-		ParsedFile file = new ParsedFile(filename);
+		return load(new ParsedFile(filename));
+	}
+	public static Map<String,Double> load(ParsedFile file) {
 		Map<String,Double> map = new HashMap<String,Double>();
 		for (String line : file) {
 			String[] parts = line.split("\t");

@@ -35,7 +35,11 @@ public class DprProver extends Prover {
         // for debug
 	private Backtrace backtrace = new Backtrace(log);
 
-        public String toString() { return "dprprover(eps="+this.epsilon+", minAlpha="+this.minAlpha+", strat="+minAlphaErrorStrategy+")"; }
+	@Override
+	public String toString() { 
+		return String.format("dpr:%.6g:%g:%s", this.epsilon, this.minAlpha, new String[]{"adjust","boost","throw"}[minAlphaErrorStrategy-1]);
+		//return "dprprover(eps="+this.epsilon+", minAlpha="+this.minAlpha+", strat="+minAlphaErrorStrategy+")"; 
+	}
 
 	public DprProver() { this(false); }
 

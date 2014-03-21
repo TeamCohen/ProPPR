@@ -18,6 +18,7 @@ import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamsFile;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class Trainer<T> {
@@ -250,7 +251,8 @@ public class Trainer<T> {
 
 		if (c.paramsFile != null) {
 			log.info("Saving parameters to "+c.paramsFile+"...");
-			Dictionary.save(paramVec, c.paramsFile);
+			ParamsFile.save(paramVec,new File(c.paramsFile), c);
+//			Dictionary.save(paramVec, c.paramsFile);
 		}
 	}
 }

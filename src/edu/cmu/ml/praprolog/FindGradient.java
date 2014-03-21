@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -12,6 +13,7 @@ import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class FindGradient {
 	private static final Logger log = Logger.getLogger(FindGradient.class);
@@ -38,6 +40,7 @@ public class FindGradient {
 		} else {
 		    throw new UnsupportedOperationException("non-trove implementation? it's in the mail.");
 		}
-		Dictionary.save(batchGradient,c.paramsFile);
+		ParamsFile.save(batchGradient,new File(c.paramsFile),c);
+//		Dictionary.save(batchGradient,c.paramsFile);
 	}
 }

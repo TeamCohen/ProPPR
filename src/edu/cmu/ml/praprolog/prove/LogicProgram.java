@@ -19,7 +19,7 @@ public class LogicProgram {
     protected SymbolTable symbolTable;
 
     public LogicProgram(Component... cmpnts) {
-        this.components = Arrays.copyOf(cmpnts, cmpnts.length);
+        this.components = cmpnts;
         symbolTable = new SymbolTable();
         for (Component c : this.components) {
             if (c == null) continue;
