@@ -133,4 +133,8 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 		throw new UnsupportedOperationException("Can't remove a line from a file, silly");
 	}
 
+	public String getFileName() {
+		return this.filename;
+	}
+
 }

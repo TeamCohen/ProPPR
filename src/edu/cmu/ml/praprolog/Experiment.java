@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
+import edu.cmu.ml.praprolog.learn.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.trove.Trainer;
@@ -47,7 +48,7 @@ public class Experiment {
 		} else {
 			edu.cmu.ml.praprolog.Trainer<String> trainer = (edu.cmu.ml.praprolog.Trainer<String>) c.trainer;
 			paramVec = trainer.trainParametersOnCookedIterator(
-				trainer.importCookedExamples(c.outputFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
+				new CookedExampleStreamer<String>(c.outputFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
 				c.epochs,
 				c.traceLosses);
 		}
