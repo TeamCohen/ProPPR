@@ -66,8 +66,7 @@ public class MultithreadedExampleCooker extends ExampleCooker {
 			}
 		}
 		if (log.isDebugEnabled()) log.debug("Cooking-only "+(System.currentTimeMillis() - start));
-
-		if (empty>0) log.info("Skipped "+empty+" of "+id+" examples due to empty graphs");
+		reportStatistics(empty);
 	}
 	
 	protected static int nextId=0;

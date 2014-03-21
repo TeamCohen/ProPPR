@@ -53,6 +53,10 @@ public class ExampleCooker extends ExampleThawing {
 		}
 	}
 	
+
+    /** Single-threaded baseline method to ground examples.
+     */
+
 	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		int k=0, empty=0;
 		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).load()) {
@@ -86,6 +90,7 @@ public class ExampleCooker extends ExampleThawing {
 	
 	long lastPrint = System.currentTimeMillis();
 	int nwritten=0;
+
 	protected String serializeCookedExample(RawPosNegExample rawX, PosNegRWExample<String> x) {
 		
 		if (log.isInfoEnabled()) {
@@ -120,7 +125,6 @@ public class ExampleCooker extends ExampleThawing {
 		return this.prover;
 	}
 	
-
 	/**
 	 * Run the prover to convert a raw example to a random-walk example
 	 * @param rawX
@@ -150,7 +154,35 @@ public class ExampleCooker extends ExampleThawing {
 		}
 		Map<String,Double> queryVector = new HashMap<String,Double>();
 		queryVector.put(writer.getId(x.getQueryState()), 1.0);
+
+		updateStatistics(rawX,rawX.getPosList().length,rawX.getNegList().length,posIds.size(),negIds.size());
 		return new PosNegRWExample<String>(writer.getGraph(), queryVector, posIds, negIds);
+	}
+
+        // statistics
+        static int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
+        static RawPosNegExample worstX = null;
+        static double smallestFractionCovered = 1.0;
+
+        protected synchronized static void updateStatistics(RawPosNegExample rawX,int npos,int nneg,int covpos,int covneg) {
+	    // keep track of some statistics - synchronized for multithreading
+	    totalPos += npos;
+	    totalNeg += nneg;
+	    coveredPos += covpos;
+	    coveredNeg += covneg;
+	    double fractionCovered = covpos/(double)npos;
+	    if (fractionCovered < smallestFractionCovered) {
+		worstX = rawX;
+		smallestFractionCovered = fractionCovered;
+	    }
+	}
+
+        protected void reportStatistics(int empty) {
+	    if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
+	    log.info("totalPos: " + totalPos + " totalNeg: "+totalNeg+" coveredPos: "+coveredPos+" coveredNeg: "+coveredNeg);
+	    if (totalPos>0) log.info("For positive examples " + coveredPos + "/" + totalPos + " proveable [" + ((100.0*coveredPos)/totalPos) + "%]");
+	    if (totalNeg>0) log.info("For negative examples " + coveredNeg + "/" + totalNeg + " proveable [" + ((100.0*coveredNeg)/totalNeg) + "%]");
+	    if (worstX!=null) log.info("Example with fewest ["+100.0*smallestFractionCovered+"%] pos examples covered: "+worstX.getQuery());
 	}
 
 	
@@ -163,7 +195,7 @@ public class ExampleCooker extends ExampleThawing {
 				//MultithreadedExampleCooker(c.prover,c.programFiles,c.nthreads);
 		long start = System.currentTimeMillis();
 		cooker.cookExamples(c.dataFile, c.outputFile);
-		System.out.println(System.currentTimeMillis()-start);
+		System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
 		System.out.println("Done.");
 		
 	}
