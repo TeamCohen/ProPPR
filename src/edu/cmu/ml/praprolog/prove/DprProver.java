@@ -113,6 +113,7 @@ public class DprProver extends Prover {
 					log.info("push "+pushCounter+"->"+(pushCounter+1)+" "+r.size()+" r-states u "+u);
 					last = now;
 				}
+				if (log.isDebugEnabled()) log.debug("PUSHPATH include "+(pushCounter+1)+" "+u);
 			}
 			pushCounter += 1;
 			double ru = r.get(u);
@@ -177,6 +178,8 @@ public class DprProver extends Prover {
 				backtrace.print(e);
 			}
 			backtrace.pop(u);
+		} else {
+			if (log.isDebugEnabled()) log.debug("PUSHPATH exclude "+(pushCounter+1)+" "+u);
 		}
 		return pushCounter;
 	}
