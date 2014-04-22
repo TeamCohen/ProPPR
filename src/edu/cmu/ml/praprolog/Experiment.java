@@ -44,7 +44,7 @@ public class Experiment {
 		Map<String,Double> paramVec = null;
 		if (c.trove) {
 			Trainer trainer = (Trainer) c.trainer;
-			paramVec = trainer.trainParametersOnCookedIterator(trainer.importCookedExamples(c.outputFile), c.epochs, c.traceLosses);
+			paramVec = trainer.trainParametersOnCookedIterator(new edu.cmu.ml.praprolog.trove.learn.CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);
 		} else {
 			edu.cmu.ml.praprolog.Trainer<String> trainer = (edu.cmu.ml.praprolog.Trainer<String>) c.trainer;
 			paramVec = trainer.trainParametersOnCookedIterator(

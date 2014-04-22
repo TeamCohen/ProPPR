@@ -34,59 +34,59 @@ public class Trainer {
 		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 
-	/**
-	 * Generate the cooked examples stored in this file.
-	 * @param cookedExamplesFile
-	 * @return
-	 */
-	public Collection<PosNegRWExample> importCookedExamples(String cookedExamplesFile) {
-		log.info("Importing cooked examples from "+cookedExamplesFile);
-		Collection<PosNegRWExample> result = null;
-		result = importCookedExamples(new ParsedFile(cookedExamplesFile));
-		log.info("Imported "+result.size()+" examples");
-		return result;
-	}
-	public Collection<PosNegRWExample> importCookedExamples(ParsedFile file) {
-		ArrayList<PosNegRWExample> result = null;
-		result = new ArrayList<PosNegRWExample>();
-		for(String line : file){
-			log.debug("Imporing example from line "+file.getLineNumber());
-			AnnotatedTroveGraph g = new AnnotatedTroveGraph();
-
-			String[] parts = line.trim().split(MAJOR_DELIM,5);
-
-			TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
-			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(u, 1.0);
-
-//			String[] rawPosList = parts[2].split(MINOR_DELIM);
-//			String[] rawNegList = parts[3].split(MINOR_DELIM);
-			String[] rawPosList, rawNegList;
-			if (parts[2].length()>0) rawPosList = parts[2].split(MINOR_DELIM);
-			else rawPosList = new String[0];
-			if (parts[3].length()>0) rawNegList = parts[3].split(MINOR_DELIM);
-			else rawNegList = new String[0];
-			//				int[] posList = g.keyToId(rawPosList);
-			//				int[] negList = g.keyToId(rawNegList);
-			if (rawPosList.length + rawNegList.length == 0) {
-				log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
-				continue;
-			}
-			try {
-				g = AnnotatedTroveGraph.fromStringParts(parts[4],g);
-				result.add(new PosNegRWExample(g,queryVec,rawPosList,rawNegList));
-			} catch (GraphFormatException e) {
-				file.parseError("["+e.getMessage()+"]");
-			}
-
-		}
-		file.close();
-		log.debug(TroveGraph.nextIdPeek());
-		return result;
-	}
+//	/**
+//	 * Generate the cooked examples stored in this file.
+//	 * @param cookedExamplesFile
+//	 * @return
+//	 */
+//	public Collection<PosNegRWExample> importCookedExamples(String cookedExamplesFile) {
+//		log.info("Importing cooked examples from "+cookedExamplesFile);
+//		Collection<PosNegRWExample> result = null;
+//		result = importCookedExamples(new ParsedFile(cookedExamplesFile));
+//		log.info("Imported "+result.size()+" examples");
+//		return result;
+//	}
+//	public Collection<PosNegRWExample> importCookedExamples(ParsedFile file) {
+//		ArrayList<PosNegRWExample> result = null;
+//		result = new ArrayList<PosNegRWExample>();
+//		for(String line : file){
+//			log.debug("Imporing example from line "+file.getLineNumber());
+//			AnnotatedTroveGraph g = new AnnotatedTroveGraph();
+//
+//			String[] parts = line.trim().split(MAJOR_DELIM,5);
+//
+//			TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
+//			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(u, 1.0);
+//
+////			String[] rawPosList = parts[2].split(MINOR_DELIM);
+////			String[] rawNegList = parts[3].split(MINOR_DELIM);
+//			String[] rawPosList, rawNegList;
+//			if (parts[2].length()>0) rawPosList = parts[2].split(MINOR_DELIM);
+//			else rawPosList = new String[0];
+//			if (parts[3].length()>0) rawNegList = parts[3].split(MINOR_DELIM);
+//			else rawNegList = new String[0];
+//			//				int[] posList = g.keyToId(rawPosList);
+//			//				int[] negList = g.keyToId(rawNegList);
+//			if (rawPosList.length + rawNegList.length == 0) {
+//				log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
+//				continue;
+//			}
+//			try {
+//				g = AnnotatedTroveGraph.fromStringParts(parts[4],g);
+//				result.add(new PosNegRWExample(g,queryVec,rawPosList,rawNegList));
+//			} catch (GraphFormatException e) {
+//				file.parseError("["+e.getMessage()+"]");
+//			}
+//
+//		}
+//		file.close();
+//		log.debug(TroveGraph.nextIdPeek());
+//		return result;
+//	}
 
     /** Return the batch gradient of the data
      */
-    public Map<String,Double> findGradient(Collection<PosNegRWExample> examples,Map<String,Double> paramVec) {
+    public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples,Map<String,Double> paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
 		if (paramVec==null) {
@@ -109,19 +109,19 @@ public class Trainer {
 	}
 
 
-	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample> iteratorFactory) {
+	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample> iteratorFactory) {
 		return this.trainParametersOnCookedIterator(iteratorFactory, false);
 	}
 	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample> importCookedExamples, boolean traceLosses) {
+			Iterable<PosNegRWExample> importCookedExamples, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, 5, traceLosses);
 	}
 	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
+			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, new TreeMap<String,Double>(), numEpochs, traceLosses);
 	}
 
-	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample> examples, 
+	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample> examples, 
 			Map<String, Double> initialParamVec, 
 			int numEpochs, 
 			boolean traceLosses) {
@@ -139,7 +139,7 @@ public class Trainer {
 			//learner.setEpoch(this.epoch); // wwc does NOT seem to help: TODO why not?
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
-			setUpExamples(i,examples);
+			setUpExamples(i);
 			for (PosNegRWExample x : examples) {
 				if (System.currentTimeMillis() - lasttime > 30000) {
 					lasttime = System.currentTimeMillis();
@@ -197,7 +197,7 @@ public class Trainer {
 		}
 	}
 
-	protected void setUpExamples(int epoch, Collection<PosNegRWExample> examples) {
+	protected void setUpExamples(int epoch) {
 		totalLossThisEpoch = 0;
 		totalPosLossThisEpoch = 0;
 		totalNegLossThisEpoch = 0;

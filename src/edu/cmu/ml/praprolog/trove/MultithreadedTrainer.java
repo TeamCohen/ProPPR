@@ -29,7 +29,7 @@ public class MultithreadedTrainer extends Trainer {
 
 	@Override
 	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
+			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(), numEpochs, traceLosses);
 	}
 	
@@ -39,8 +39,8 @@ public class MultithreadedTrainer extends Trainer {
 	}
 	
 	@Override
-	protected void setUpExamples(int epoch, Collection<PosNegRWExample> examples) {
-		super.setUpExamples(epoch, examples);
+	protected void setUpExamples(int epoch) {
+		super.setUpExamples(epoch);
 		if (currentTrainingRun.threads != null) {
 			throw new IllegalStateException("template called out of order! Must clean up last example set using cleanUpExamples()");
 		}

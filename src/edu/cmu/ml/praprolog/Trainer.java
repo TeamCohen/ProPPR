@@ -237,7 +237,7 @@ public class Trainer<T> {
 		if (c.trove) {
 			edu.cmu.ml.praprolog.trove.Trainer trainer = (edu.cmu.ml.praprolog.trove.Trainer) c.trainer;
 			paramVec = trainer.trainParametersOnCookedIterator(
-					trainer.importCookedExamples(cookedFile), 
+					new edu.cmu.ml.praprolog.trove.learn.CookedExampleStreamer(cookedFile), 
 					c.epochs, 
 					c.traceLosses);
 		} else {
