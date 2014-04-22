@@ -15,6 +15,7 @@ import edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.FileBackedIterable;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class Trainer {
@@ -140,6 +141,7 @@ public class Trainer {
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
 			setUpExamples(i);
+			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 			for (PosNegRWExample x : examples) {
 				if (System.currentTimeMillis() - lasttime > 30000) {
 					lasttime = System.currentTimeMillis();

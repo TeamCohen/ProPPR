@@ -7,10 +7,11 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph.GraphFormatException;
+import edu.cmu.ml.praprolog.util.FileBackedIterable;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class CookedExampleStreamer implements Iterable<PosNegRWExample>,
-		Iterator<PosNegRWExample> {
+		Iterator<PosNegRWExample>, FileBackedIterable {
 	private static final Logger log = Logger.getLogger(CookedExampleStreamer.class);
 	private ParsedFile file;
 	public CookedExampleStreamer(String cookedExamplesFile) {
@@ -68,6 +69,13 @@ public class CookedExampleStreamer implements Iterable<PosNegRWExample>,
 	@Override
 	public Iterator<PosNegRWExample> iterator() {
 		return this;
+	}
+	
+	@Override
+	public void wrap() {
+		if (this.hasNext()) return;
+		this.file.close();
+		this.file = new ParsedFile(this.file.getFileName());
 	}
 
 }
