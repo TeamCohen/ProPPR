@@ -59,7 +59,7 @@ public class ExampleCooker extends ExampleThawing {
 
 	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		int k=0, empty=0;
-		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).load()) {
+		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).stream()) {
 			k++;
 //			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
 			try {	

@@ -49,8 +49,8 @@ public class Tester extends ExampleThawing {
 	public TestResults testExamples(File dataFile, boolean strict) {
 		int k=0;
 		double pairTotal=0,pairErrors=0,apTotal=0,numAP=0;
-		List<RawPosNegExample> examples = new RawPosNegExampleStreamer(dataFile).load();
-		for (RawPosNegExample rawX : examples) {
+//		List<RawPosNegExample> examples = new RawPosNegExampleStreamer(dataFile).load();
+		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).stream()) {
 			k++;
 //			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
 			try {	
