@@ -19,6 +19,8 @@ import edu.cmu.ml.praprolog.learn.SRW;
 
 public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	private static final Logger log = Logger.getLogger(MultithreadedRRTrainer.class);
+	public static final int DEFAULT_CAPACITY = 16;
+	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
 	protected TrainingRun currentTrainingRun;
 	
@@ -31,7 +33,7 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	@Override
 	public Map<String, Double> trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample<T>> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(), numEpochs, traceLosses);
+		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads), numEpochs, traceLosses);
 	}
 	
 	@Override

@@ -30,7 +30,12 @@ public class MultithreadedTrainer extends Trainer {
 	@Override
 	public Map<String, Double> trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(), numEpochs, traceLosses);
+		return trainParametersOnCookedIterator(importCookedExamples, 
+				new ConcurrentHashMap<String,Double>(
+						edu.cmu.ml.praprolog.MultithreadedTrainer.DEFAULT_CAPACITY,
+						edu.cmu.ml.praprolog.MultithreadedTrainer.DEFAULT_LOAD,
+						this.nthreads), 
+				numEpochs, traceLosses);
 	}
 	
 	@Override
