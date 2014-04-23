@@ -80,8 +80,7 @@ public class CookedExampleStreamer<T> implements Iterable<PosNegRWExample<T>>, I
 	@Override
 	public void wrap() {
 		if (this.hasNext()) return;
-		this.file.close();
-		this.file = new ParsedFile(this.file.getFileName());
+		this.file.reset();
 	}
 
 }
