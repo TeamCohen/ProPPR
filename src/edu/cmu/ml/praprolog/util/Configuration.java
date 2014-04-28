@@ -29,11 +29,15 @@ public class Configuration {
     public static final int USE_THREADS = 0x10;
     public static final int USE_TRAIN = 0x20;
     public static final int USE_TEST = 0x40;
+    /** epochs, traceLosses */
     public static final int USE_LEARNINGSET = 0x80;
+    /** */
     public static final int USE_QUERIES = 0x100;
     public static final int USE_PARAMS = 0x200;
     public static final int USE_SRW = 0x400;
     public static final int USE_COMPLEX_FEATURES = 0x800;
+    public static final int USE_NOTEST = 0x1000;
+    public static final int USE_SOLUTIONS = 0x2000;
     // combo flags:
     /** programFiles, prover, threads **/
     public static final int USE_DEFAULTS = 0x19;
@@ -197,14 +201,14 @@ public class Configuration {
                         .hasArg()
                         .withDescription("Cooked training examples. Format: query\\tkeys,,\\tposList,,\\tnegList,,\\tgraph")
                         .create());
-        options.addOption(
-                OptionBuilder
-                        .withLongOpt("queries")
-                        .isRequired(isOn(flags, USE_QUERIES))
-                        .withArgName("file")
-                        .hasArg()
-                        .withDescription("Queries.  Format f a a")
-                        .create());
+        if(isOn(flags, USE_QUERIES))
+	        options.addOption(
+	                OptionBuilder
+	                        .withLongOpt("queries")
+	                        .withArgName("file")
+	                        .hasArg()
+	                        .withDescription("Queries. Format f a a")
+	                        .create());
         options.addOption(
                 OptionBuilder
                         .withLongOpt("prover")
@@ -232,15 +236,16 @@ public class Configuration {
                             .hasArg()
                             .withDescription("Training examples. Format: f a a\\t{+|-}f a a\\t...")
                             .create());
-        if (isOn(flags, USE_TEST))
+        if (isOn(flags, USE_TEST)) {
             options.addOption(
-                    OptionBuilder
-                            .withLongOpt("test")
-                            .isRequired()
-                            .withArgName("file")
-                            .hasArg()
-                            .withDescription("Testing examples. Format: f a a\\t{+|-}f a a\\t...")
-                            .create());
+            		OptionBuilder
+			            .withLongOpt("test")
+			            .isRequired(!isOn(flags,USE_NOTEST))
+			            .withArgName("file")
+			            .hasArg()
+			            .withDescription("Testing examples. Format: f a a\\t{+|-}f a a\\t...")
+			            .create());
+        }
         if (isOn(flags, USE_PARAMS))
             options.addOption(
                     OptionBuilder

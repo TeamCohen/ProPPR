@@ -66,6 +66,10 @@ public class QueryAnswerer {
             if (line.hasOption("unnormalized")) this.normalize = false;
             this.rerank = false;
             if (line.hasOption("reranked")) this.rerank = true;
+            if (!line.hasOption("queries")) {
+            	System.err.println("\nMissing required option: queries\n");
+            	usageOptions(options, flags);
+            }
         }
     }
 
