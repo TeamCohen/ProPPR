@@ -30,6 +30,7 @@ import edu.cmu.ml.praprolog.util.ParsedFile;
 public class SparseMatrixIndex {
 	private static final Logger log = Logger.getLogger(SparseMatrixIndex.class);
 	private static final int LOGUPDATE_MS=5000;
+	String name;
 	// counts of each
 	int rows, cols, entries;
 	// names of rows, cols
@@ -46,6 +47,7 @@ public class SparseMatrixIndex {
 	}
 	public void load(String dir, String functor_arg1type_arg2type) throws IOException {
 		log.info("Loading matrix "+functor_arg1type_arg2type+" from "+dir+"...");
+		this.name = dir+":"+functor_arg1type_arg2type;
 		long start0 = System.currentTimeMillis();
 		/* Read the number of rows, columns, and entries - entry is a triple (i,j,m[i,j])
 		 * except I don't store m[i,j] since it's always 1.0 for me. */
@@ -94,8 +96,12 @@ public class SparseMatrixIndex {
 		start = System.currentTimeMillis(); last=start;
 		file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".colIndex"));
 		for(String line : file) {
-			colIndices[file.getLineNumber()] = Integer.parseInt(line);
-			values[file.getLineNumber()] = (float) 1.0;
+			int ln = file.getLineNumber();
+			colIndices[ln] = Integer.parseInt(line);
+			values[ln] = (float) 1.0;
+			if (colIndices[ln] >= arg2.length) {
+				throw new IllegalArgumentException("Malformed sparsegraph! For index "+this.name+", colIndices["+ln+"]="+colIndices[ln]+"; arg2.length is only "+arg2.length);
+			}
 			if (log.isInfoEnabled()) {
 				long now = System.currentTimeMillis();
 				if ( (now-last) > LOGUPDATE_MS) {
@@ -129,6 +135,8 @@ public class SparseMatrixIndex {
 		else {
 			ArrayList<Argument> ret = new ArrayList<Argument>();
 			for (int k=this.rowOffsets[r]; k<this.rowOffsets[r+1]; k++) {
+				if (this.arg2[this.colIndices[k]] == null) 
+					throw new IllegalStateException("Found null argument in index "+this.name+" arg2[colIndices["+k+"]="+colIndices[k]+"] (arg2.length="+arg2.length+")");
 				ret.add(this.arg2[this.colIndices[k]]);
 			}
 			return ret;

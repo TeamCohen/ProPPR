@@ -78,13 +78,17 @@ public class LogicProgram {
             for (Component c : this.components) {
                 if (c.claim(state)) {
                     if (log.isInfoEnabled()) log.info(state + "\n\tclaimed by " + c);
-                    for (Outlink o : c.outlinks(state)) {
-                        result.add(this.weightEdge(o.getFeatureDict(), state, o.getState()));
+                    try {
+                    	for (Outlink o : c.outlinks(state)) {
+                    		result.add(this.weightEdge(o.getFeatureDict(), state, o.getState()));
+                    	}
+                    	if (restart) {
+                    		result.add(this.weightEdge(c.restartFeatureDict(state), state, state.restart()));
+                    	}
+                    	return result;
+                    } catch(Exception e) {
+                    	throw new LogicProgramException(e);
                     }
-                    if (restart) {
-                        result.add(this.weightEdge(c.restartFeatureDict(state), state, state.restart()));
-                    }
-                    return result;
                 }
             }
             throw new LogicProgramException("No definition for " + state.getHeadFunctor() + "/" + state

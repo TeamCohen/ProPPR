@@ -213,7 +213,18 @@ public class Configuration {
 	                        .hasArg()
 	                        .withDescription("Queries. Format f a a")
 	                        .create());
-
+        if(isOn(flags, USE_PROVER))
+	        options.addOption(
+		                OptionBuilder
+		                        .withLongOpt("prover")
+		                        .withArgName("class[:arg:...:arg]")
+		                        .hasArg()
+		                        .withDescription("Default: " + this.prover.getClass().getSimpleName() + "\n"
+		                                         + "Available options:\n"
+		                                         + "ppr[:depth] (default depth=5)\n"
+		                                         + "dpr[:eps[:alph[:strat]]] (default eps=1E-4, alph=0.1, strategy=throw(boost,adjust))\n"
+		                                         + "tr[:depth] (default depth=5)")
+		                        .create());
         if (isOn(flags, USE_THREADS)) options.addOption(
                 OptionBuilder
                         .withLongOpt("threads")
