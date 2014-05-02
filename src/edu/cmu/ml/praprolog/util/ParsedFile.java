@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 /**
  * File utility with support for automatically skipping blank lines and #-comments.
  * 
@@ -17,17 +19,28 @@ import java.util.Map;
  *
  */
 public class ParsedFile implements Iterable<String>, Iterator<String> {
+	private static final Logger log = Logger.getLogger(ParsedFile.class);
+	private static final boolean DEFAULT_STRICT=true;
 	private boolean cheating=false;
 	private String filename;
 	private LineNumberReader reader;
 	private String peek;
 	private int dataLine=-2;
 	private boolean closed;
+	private boolean strict;
 	public ParsedFile(String filename) {
+		this(filename,DEFAULT_STRICT);
+	}
+	public ParsedFile(String filename, boolean strict) {
+		this.strict = strict;
 		this.init(filename);
 	}
 	
 	public ParsedFile(File file) {
+		this(file,DEFAULT_STRICT);
+	}
+	public ParsedFile(File file, boolean strict) {
+		this.strict=strict;
 		try {
 			this.init(file.getCanonicalPath());
 		} catch (IOException e) {
@@ -46,6 +59,10 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 		}
 	}
 
+	/**
+	 * Used primarily for unit tests (only supports up to 1024 bytes)
+	 * @param stringReader
+	 */
 	public ParsedFile(StringReader stringReader) {
 		this.filename = stringReader.getClass().getCanonicalName() + stringReader.hashCode();
 		this.reader = new LineNumberReader(stringReader);
@@ -63,7 +80,11 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 		parseError(null);
 	}
 	public void parseError(String msg) {
-		throw new IllegalArgumentException("Unparsable line "+filename+":"+reader.getLineNumber()+":"
+		if (this.strict)
+			throw new IllegalArgumentException("Unparsable line "+filename+":"+reader.getLineNumber()+":"
+					+ (msg!=null ? ("\n"+msg) : "")
+					+ "\n"+peek);
+		log.error("Unparsable line "+filename+":"+reader.getLineNumber()+":"
 				+ (msg!=null ? ("\n"+msg) : "")
 				+ "\n"+peek);
 	}
@@ -148,6 +169,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 		return this.filename;
 	}
 	
+	/** Reset the iterator back to the beginning of the file */
 	public void reset() {
 		if (this.cheating) {
 			try {

@@ -136,7 +136,7 @@ public class ExperimentConfiguration extends Configuration {
 					.withValueSeparator(':')
 					.withDescription("Runs QA after training. Default: none\n"
 							+"Available options:\n"
-							+"qa[:{norm|unnorm}] QueryAnswerer, normalized (default) or unnormalized"
+							+"qa[:{norm|unnorm}] QueryAnswerer, normalized (default) or unnormalized\n"
 							+"rqa[:{norm|unnorm}] RerankingQueryAnswerer")
 							.create());
 			options.addOption(
@@ -176,11 +176,16 @@ public class ExperimentConfiguration extends Configuration {
 		if (line.hasOption("strict")) this.strict = true;
 
 		if (isOn(flags,Configuration.USE_PROGRAMFILES)) {
+			if (this.programFiles != null) 
 			this.program = new LogicProgram(Component.loadComponents(programFiles, this.alpha));
+			else if (!isOn(flags,Configuration.USE_DEFERREDPROGRAM)) missing(Configuration.USE_PROGRAMFILES, flags);
 		}
+		
+		// TODO: There are likely other logic errors below for things that need a program if we've deferred it
 
-		if (isOn(flags, USE_COMPLEX_FEATURES) && line.hasOption("complexFeatures"))
+		if (isOn(flags, USE_COMPLEX_FEATURES) && line.hasOption("complexFeatures")) {
 			ComplexFeatureLibrary.init(this.program, this.complexFeatureConfigFile);
+		}
 
 		int threads = 3;
 		if(line.hasOption("threads")) threads = this.nthreads;

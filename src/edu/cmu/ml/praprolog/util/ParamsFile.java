@@ -12,8 +12,12 @@ import java.io.Writer;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
+
 public class ParamsFile extends ParsedFile {
+	private static final Logger log = Logger.getLogger(ParamsFile.class);
 	public static final String HEADER_PREFIX="#! ";
+	
 	private Properties properties;
 	
 	public ParamsFile(File file) {
@@ -65,10 +69,12 @@ public class ParamsFile extends ParsedFile {
 		writer.write(config.weightingScheme.toString());
 		writer.write("\n");
 		
-		writer.write(HEADER_PREFIX);
-		writer.write("programFiles=");
-		writer.write(Dictionary.buildString(config.programFiles, new StringBuilder(), ":", true).toString());
-		writer.write("\n");
+		if (config.programFiles != null) {
+			writer.write(HEADER_PREFIX);
+			writer.write("programFiles=");
+			writer.write(Dictionary.buildString(config.programFiles, new StringBuilder(), ":", true).toString());
+			writer.write("\n");
+		}
 		
 		if (config.prover != null) {
 			writer.write(HEADER_PREFIX);
@@ -118,18 +124,25 @@ public class ParamsFile extends ParsedFile {
 	 */
 	public void check(Configuration c) {
 		if (!this.getProperty("weightingScheme").equals(c.weightingScheme.toString())) 
-			failCheck("weightingScheme",this.getProperty("weightingScheme"), c.weightingScheme.toString());
+			failCheck("weightingScheme",this.getProperty("weightingScheme"), c.weightingScheme.toString(), c.force);
 		
-		int i=0;
-		for (String p : this.getProperty("programFiles").split(":")) {
-			if (!p.equals(c.programFiles[i])) failCheck("programFiles:"+i,p,c.programFiles[i]);
-			i++;
+		if (c.programFiles != null) {
+			int i=0;
+			for (String p : this.getProperty("programFiles").split(":")) {
+				if (!p.equals(c.programFiles[i])) failCheck("programFiles:"+i,p,c.programFiles[i], c.force);
+				i++;
+			}
 		}
 		
 		if (!this.getProperty("prover").equals(c.prover.toString()))
-			failCheck("prover",this.getProperty("prover"),c.prover.toString());
+			failCheck("prover",this.getProperty("prover"),c.prover.toString(), c.force);
 	}
-	private void failCheck(String setting, String paramsFile, String configuration) {
-		throw new MisconfigurationException("Command line configuration does not match params file! Setting '"+setting+"' expected '"+paramsFile+"' but was '"+configuration+"'");
+	private void failCheck(String setting, String paramsFile, String configuration, boolean force) {
+		String line = "Command line configuration does not match params file! Setting '"+setting+"' expected '"+paramsFile+"' but was '"+configuration+"'";
+		if (force) {
+			log.error(line);
+			return;
+		}
+		throw new MisconfigurationException(line);
 	}
 }

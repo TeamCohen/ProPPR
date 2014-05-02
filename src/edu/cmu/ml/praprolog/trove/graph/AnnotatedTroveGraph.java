@@ -91,6 +91,9 @@ public class AnnotatedTroveGraph extends TroveGraph {
 		
 		for (String p : parts[3].split("\t")) {
 			String[] pair = p.split(":");
+			if (pair.length < 2) {
+				throw new GraphFormatException("Bad edge: "+parts[3]);
+			}
 			String edgeStr = pair[0], featStr = pair[1];
 			
 			String[] nodes = edgeStr.split("->");

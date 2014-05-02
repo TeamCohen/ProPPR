@@ -187,7 +187,9 @@ public class ExampleCooker extends ExampleThawing {
 
 	
 	public static void main(String ... args) {
-		Configuration c = new Configuration(args, Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT);
+		int flags = Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT;
+		Configuration c = new Configuration(args, flags);
+		if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
 		
 		ExampleCooker cooker = null;
 		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
