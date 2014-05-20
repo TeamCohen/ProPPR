@@ -126,11 +126,15 @@ public class ParamsFile extends ParsedFile {
 		if (!this.getProperty("weightingScheme").equals(c.weightingScheme.toString())) 
 			failCheck("weightingScheme",this.getProperty("weightingScheme"), c.weightingScheme.toString(), c.force);
 		
-		if (c.programFiles != null) {
-			int i=0;
-			for (String p : this.getProperty("programFiles").split(":")) {
-				if (!p.equals(c.programFiles[i])) failCheck("programFiles:"+i,p,c.programFiles[i], c.force);
-				i++;
+		if (this.getProperty("programFiles") != null) {
+			if (c.programFiles == null) {
+				failCheck("programFiles",this.getProperty("programFiles"),"null",c.force);
+			} else {
+				int i=0;
+				for (String p : this.getProperty("programFiles").split(":")) {
+					if (!p.equals(c.programFiles[i])) failCheck("programFiles:"+i,p,c.programFiles[i], c.force);
+					i++;
+				}
 			}
 		}
 		
