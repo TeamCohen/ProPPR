@@ -65,4 +65,5 @@ public abstract class Prover {
 		return this.proveState(lp, state0, null);
 	}
 	public abstract Map<LogicProgramState, Double> proveState(LogicProgram lp, LogicProgramState state0, GraphWriter w);
+	public abstract Prover copy();
 }

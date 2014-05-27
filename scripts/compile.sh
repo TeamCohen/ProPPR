@@ -25,7 +25,7 @@ then
     for factfile in $FACTS
     do
 	echo "converting $factfile"
-	sed 's/[\(,]/\t/g;s/[\)]/\t/g' ${factfile} > ${factfile%.facts}.cfacts
+	sed 's/[\(\)]/,/g' ${factfile} | tr ',' '\t' > ${factfile%.facts}.cfacts
 	echo -n "${factfile%.facts}.cfacts:" >> $1/programFiles.arg
     done
 fi

@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
 import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.learn.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.L2SqLossSRW;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
@@ -29,7 +30,7 @@ public class TrainerTest {
 		L2PosNegLossTrainedSRW<Integer> srwInt = new L2PosNegLossTrainedSRW<Integer>();
 		Trainer<Integer> trainerInt = new Trainer<Integer>(srwInt);
 		Map<String,Double> paramVecInt = trainerInt.trainParametersOnCookedIterator(
-				trainerInt.importCookedExamples(COOKED_FILE, 
+				new CookedExampleStreamer<Integer>(COOKED_FILE, 
 						new AnnotatedGraphFactory<Integer>(AnnotatedGraphFactory.INT)),
 				epochs,
 				false);//tracelosses
@@ -37,7 +38,7 @@ public class TrainerTest {
 		L2PosNegLossTrainedSRW<String> srwStr = new L2PosNegLossTrainedSRW<String>();
 		Trainer<String> trainerStr = new Trainer<String>(srwStr);
 		Map<String,Double> paramVecStr = trainerStr.trainParametersOnCookedIterator(
-				trainerStr.importCookedExamples(COOKED_FILE, 
+				new CookedExampleStreamer<String>(COOKED_FILE, 
 						new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
 				epochs,
 				false);//tracelosses

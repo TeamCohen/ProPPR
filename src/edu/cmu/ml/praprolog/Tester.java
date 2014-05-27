@@ -1,7 +1,6 @@
 package edu.cmu.ml.praprolog;
 
-import java.io.IOException;
-import java.io.Writer;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,9 +12,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.GraphWriter;
-import edu.cmu.ml.praprolog.learn.PosNegRWExample;
-import edu.cmu.ml.praprolog.prove.Component;
+import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
@@ -27,6 +24,8 @@ import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
 import edu.cmu.ml.praprolog.prove.TracingDfsProver;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class Tester extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(Tester.class);
@@ -46,12 +45,12 @@ public class Tester extends ExampleThawing {
 			this.map = m;
 		}
 	}
-	public TestResults testExamples(String dataFile) { return testExamples(dataFile,false); }
-	public TestResults testExamples(String dataFile, boolean strict) {
+	public TestResults testExamples(File testFile) { return testExamples(testFile,false); }
+	public TestResults testExamples(File dataFile, boolean strict) {
 		int k=0;
 		double pairTotal=0,pairErrors=0,apTotal=0,numAP=0;
-		List<RawPosNegExample> examples = new RawPosNegExampleStreamer(dataFile).load();
-		for (RawPosNegExample rawX : examples) {
+//		List<RawPosNegExample> examples = new RawPosNegExampleStreamer(dataFile).load();
+		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).stream()) {
 			k++;
 //			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
 			try {	
@@ -94,8 +93,7 @@ public class Tester extends ExampleThawing {
 					+Dictionary.buildString(x.getNegSet(), new StringBuilder(), " -", false).toString()
 					+Dictionary.buildString(x.getPosSet(), new StringBuilder(), " +", false).toString());
 		else if (log.isDebugEnabled()) log.debug("Query: "+x.getQueryState());
-		GraphWriter writer = new GraphWriter();
-		Map<LogicProgramState,Double> ans = this.prover.proveState(program, x.getQueryState(), writer);
+		Map<LogicProgramState,Double> ans = getSolutions(x,program);
 		if (log.isTraceEnabled()) {
 			new TracingDfsProver().proveState(new LogicProgram(program), x.getQueryState());
 		}
@@ -121,6 +119,10 @@ public class Tester extends ExampleThawing {
 		}
 		s.averagePrecision = averagePrecision(solnScore,x.getPosSet());
 		return s;
+	}
+	
+	public Map<LogicProgramState,Double> getSolutions(ThawedPosNegExample x,LogicProgram program) {
+		return this.prover.proveState(program, x.getQueryState(), null);
 	}
 	
 	private int maxTraced=10;
@@ -162,18 +164,23 @@ public class Tester extends ExampleThawing {
 	public static void main(String[] args) {
 		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TEST | Configuration.USE_PARAMS;
 		log.info(String.format("flags: 0x%x",flags));
-		Configuration c = new Configuration(args,flags);
+		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
 		
-		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
-		if (c.paramsFile != null)
-			tester.getMasterProgram().setFeatureDictWeighter(InnerProductWeighter.fromParamVec(
-					Dictionary.load(c.paramsFile)));
+//		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
+		if (c.paramsFile != null) {
+			ParamsFile file = new ParamsFile(c.paramsFile);
+			c.tester.setParams(Dictionary.load(file), c.weightingScheme);
+			file.check(c);
+		}
 
 		log.info("Testing on "+c.testFile+"...");
 		long start = System.currentTimeMillis();
-		TestResults results = tester.testExamples(c.testFile);
+		TestResults results = c.tester.testExamples(c.testFile);
 		System.out.println("result= running time "+(System.currentTimeMillis() - start));
 		System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 	
+	}
+	public void setParams(Map<String, Double> paramVec, WeightingScheme wScheme) {
+		this.masterProgram.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(paramVec, wScheme));
 	}
 }

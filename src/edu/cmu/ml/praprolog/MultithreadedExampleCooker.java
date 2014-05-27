@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayDeque;
@@ -14,6 +15,7 @@ import java.util.concurrent.Future;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
+import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.prove.RawPosNegExample;
 import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
@@ -21,13 +23,19 @@ import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
 public class MultithreadedExampleCooker extends ExampleCooker {
 	private static final Logger log = Logger.getLogger(MultithreadedExampleCooker.class);
 	protected int nthreads;
-	public MultithreadedExampleCooker(Prover p, String[] programFiles, double alpha, int nt) {
-		super(p, programFiles,alpha);
+	public MultithreadedExampleCooker(Prover p, LogicProgram program, int nt) {
+		super(p, program);
 		this.nthreads = nt;
 	}
 
 	@Override
-	public void cookExamples(String dataFile, Writer writer) throws IOException {
+	protected Prover getProver() {
+		// for threadsafe backtraces
+		return this.prover.copy();
+	}
+	
+	@Override
+	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		ExecutorService executor = Executors.newFixedThreadPool(this.nthreads);
 		
 		// using a deque for ease of garbage collection of already-written futures
@@ -58,8 +66,7 @@ public class MultithreadedExampleCooker extends ExampleCooker {
 			}
 		}
 		if (log.isDebugEnabled()) log.debug("Cooking-only "+(System.currentTimeMillis() - start));
-
-		if (empty>0) log.info("Skipped "+empty+" of "+id+" examples due to empty graphs");
+		reportStatistics(empty);
 	}
 	
 	protected static int nextId=0;

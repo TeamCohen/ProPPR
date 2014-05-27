@@ -1,6 +1,7 @@
 package edu.cmu.ml.praprolog;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -36,11 +37,12 @@ import edu.cmu.ml.praprolog.util.Dictionary;
  */
 public class ExampleCooker extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(ExampleCooker.class);
-	public ExampleCooker(Prover p, String[] programFiles, double alpha) {
-		super.init(p,new LogicProgram(Component.loadComponents(programFiles,alpha)));
+	public static final String COOKED_SUFFIX = ".cooked";
+	public ExampleCooker(Prover p, LogicProgram program) {
+		super.init(p,program);
 	}
 	
-	public void cookExamples(String dataFile, String outputFile) {
+	public void cookExamples(File dataFile, String outputFile) {
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new FileWriter(outputFile));
@@ -51,9 +53,13 @@ public class ExampleCooker extends ExampleThawing {
 		}
 	}
 	
-	public void cookExamples(String dataFile, Writer writer) throws IOException {
+
+    /** Single-threaded baseline method to ground examples.
+     */
+
+	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		int k=0, empty=0;
-		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).load()) {
+		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).stream()) {
 			k++;
 //			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
 			try {	
@@ -84,6 +90,7 @@ public class ExampleCooker extends ExampleThawing {
 	
 	long lastPrint = System.currentTimeMillis();
 	int nwritten=0;
+
 	protected String serializeCookedExample(RawPosNegExample rawX, PosNegRWExample<String> x) {
 		
 		if (log.isInfoEnabled()) {
@@ -93,6 +100,11 @@ public class ExampleCooker extends ExampleThawing {
 				log.info("Cooked "+nwritten+" examples");
 				lastPrint = now;
 			}
+		}
+		
+		if (x.length() == 0) {
+			log.warn("No positive or negative solutions for query "+nwritten+":"+rawX.getQuery().toSaveString()+"; skipping");
+			return "";
 		}
 		
 		StringBuilder line = new StringBuilder();
@@ -109,7 +121,10 @@ public class ExampleCooker extends ExampleThawing {
 		return line.toString();
 	}
 	
-
+	protected Prover getProver() {
+		return this.prover;
+	}
+	
 	/**
 	 * Run the prover to convert a raw example to a random-walk example
 	 * @param rawX
@@ -123,7 +138,7 @@ public class ExampleCooker extends ExampleThawing {
 					+Dictionary.buildString(x.getPosSet(), new StringBuilder(), " -", false).toString()
 					+Dictionary.buildString(x.getPosSet(), new StringBuilder(), " +", false).toString());
 		GraphWriter writer = new GraphWriter();
-		Map<LogicProgramState,Double> ans = this.prover.proveState(program, x.getQueryState(), writer);
+		Map<LogicProgramState,Double> ans = this.getProver().proveState(program, x.getQueryState(), writer);
 		if (log.isTraceEnabled()) {
 			new TracingDfsProver().proveState(new LogicProgram(program), x.getQueryState());
 		}
@@ -139,20 +154,50 @@ public class ExampleCooker extends ExampleThawing {
 		}
 		Map<String,Double> queryVector = new HashMap<String,Double>();
 		queryVector.put(writer.getId(x.getQueryState()), 1.0);
+
+		updateStatistics(rawX,rawX.getPosList().length,rawX.getNegList().length,posIds.size(),negIds.size());
 		return new PosNegRWExample<String>(writer.getGraph(), queryVector, posIds, negIds);
+	}
+
+        // statistics
+        static int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
+        static RawPosNegExample worstX = null;
+        static double smallestFractionCovered = 1.0;
+
+        protected synchronized static void updateStatistics(RawPosNegExample rawX,int npos,int nneg,int covpos,int covneg) {
+	    // keep track of some statistics - synchronized for multithreading
+	    totalPos += npos;
+	    totalNeg += nneg;
+	    coveredPos += covpos;
+	    coveredNeg += covneg;
+	    double fractionCovered = covpos/(double)npos;
+	    if (fractionCovered < smallestFractionCovered) {
+		worstX = rawX;
+		smallestFractionCovered = fractionCovered;
+	    }
+	}
+
+        protected void reportStatistics(int empty) {
+	    if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
+	    log.info("totalPos: " + totalPos + " totalNeg: "+totalNeg+" coveredPos: "+coveredPos+" coveredNeg: "+coveredNeg);
+	    if (totalPos>0) log.info("For positive examples " + coveredPos + "/" + totalPos + " proveable [" + ((100.0*coveredPos)/totalPos) + "%]");
+	    if (totalNeg>0) log.info("For negative examples " + coveredNeg + "/" + totalNeg + " proveable [" + ((100.0*coveredNeg)/totalNeg) + "%]");
+	    if (worstX!=null) log.info("Example with fewest ["+100.0*smallestFractionCovered+"%] pos examples covered: "+worstX.getQuery());
 	}
 
 	
 	public static void main(String ... args) {
-		Configuration c = new Configuration(args, Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT);
+		int flags = Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT;
+		Configuration c = new Configuration(args, flags);
+		if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
 		
 		ExampleCooker cooker = null;
-		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,c.programFiles,c.alpha);
-		else cooker = new ModularMultiExampleCooker(c.prover, c.programFiles, c.alpha, c.nthreads); 
+		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
+		else cooker = new ModularMultiExampleCooker(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)), c.nthreads); 
 				//MultithreadedExampleCooker(c.prover,c.programFiles,c.nthreads);
 		long start = System.currentTimeMillis();
 		cooker.cookExamples(c.dataFile, c.outputFile);
-		System.out.println(System.currentTimeMillis()-start);
+		System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
 		System.out.println("Done.");
 		
 	}

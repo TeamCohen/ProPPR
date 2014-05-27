@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.concurrent.ExecutionException;
@@ -10,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.prove.RawPosNegExample;
 import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
@@ -19,12 +21,12 @@ public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 	private static final int THROTTLE=100;
 	private static final int UNTHROTTLE=30;
 
-	public ModularMultiExampleCooker(Prover p, String[] programFiles, double alpha, int nt) {
-		super(p, programFiles, alpha, nt);
+	public ModularMultiExampleCooker(Prover p, LogicProgram program, int nt) {
+		super(p, program, nt);
 	}
 
 	@Override
-	public void cookExamples(String dataFile, Writer writer) throws IOException {
+	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		ExecutorService cookingPool = Executors.newFixedThreadPool(this.nthreads);
 		ExecutorService writingPool = Executors.newFixedThreadPool(1);
 		int k=0;
@@ -64,6 +66,7 @@ public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 			log.error("Interrupted?",e);
 		}
 		writer.close();
+		reportStatistics(empty);
 	}
 	
 	static int finished=0,empty=0;

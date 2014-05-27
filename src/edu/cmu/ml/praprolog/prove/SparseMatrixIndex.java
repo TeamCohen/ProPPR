@@ -1,16 +1,16 @@
 package edu.cmu.ml.praprolog.prove;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 
 /**
@@ -30,6 +30,7 @@ import org.apache.log4j.Logger;
 public class SparseMatrixIndex {
 	private static final Logger log = Logger.getLogger(SparseMatrixIndex.class);
 	private static final int LOGUPDATE_MS=5000;
+	String name;
 	// counts of each
 	int rows, cols, entries;
 	// names of rows, cols
@@ -46,18 +47,20 @@ public class SparseMatrixIndex {
 	}
 	public void load(String dir, String functor_arg1type_arg2type) throws IOException {
 		log.info("Loading matrix "+functor_arg1type_arg2type+" from "+dir+"...");
+		this.name = dir+":"+functor_arg1type_arg2type;
 		long start0 = System.currentTimeMillis();
 		/* Read the number of rows, columns, and entries - entry is a triple (i,j,m[i,j])
 		 * except I don't store m[i,j] since it's always 1.0 for me. */
-		LineNumberReader reader = new LineNumberReader(new FileReader(new File(dir,functor_arg1type_arg2type+".rce")));
+		ParsedFile file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".rce"));
 		{
-			String line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 1 must list #rows");
+			Iterator<String> it = file.iterator();
+			String line=it.next(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 1 must list #rows");
 			this.rows = Integer.parseInt(line.trim());
-			line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 2 must list #cols");
+			line=it.next(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 2 must list #cols");
 			this.cols = Integer.parseInt(line.trim());
-			line=reader.readLine(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 3 must list #entries");
+			line=it.next(); if (line==null) throw new IllegalArgumentException("Bad format for "+functor_arg1type_arg2type+".rce: line 3 must list #entries");
 			this.entries = Integer.parseInt(line.trim());
-			reader.close();
+			file.close();
 		}
 		
 		/* Data is stored like this: colIndices[] is one long
@@ -77,35 +80,37 @@ public class SparseMatrixIndex {
 		this.values = new float[entries];
 
 		long start = System.currentTimeMillis(), last=start;
-		reader = new LineNumberReader(new FileReader(new File(dir,functor_arg1type_arg2type+".rowOffset")));
-		int lineNum = 0;
-		for(String line; (line=reader.readLine()) != null; lineNum++) {
-			rowsOffsets.add(Integer.parseInt(line.trim()));
+		file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".rowOffset"));
+		for(String line : file) {
+			rowsOffsets.add(Integer.parseInt(line));
 			if (log.isInfoEnabled()) {
 				long now = System.currentTimeMillis();
 				if ( (now-last) > LOGUPDATE_MS) {
-					log.info("rowOffset: "+reader.getLineNumber()+" lines ("+(reader.getLineNumber()/(now-start))+" klps)");
+					log.info("rowOffset: "+file.getLineNumber()+" lines ("+(file.getLineNumber()/(now-start))+" klps)");
 					last = now;
 				}
 			}
 		}
-		reader.close();
+		file.close();
 		
 		start = System.currentTimeMillis(); last=start;
-		reader = new LineNumberReader(new FileReader(new File(dir,functor_arg1type_arg2type+".colIndex")));
-		lineNum = 0;
-		for(String line; (line=reader.readLine()) != null; lineNum++) {
-			colIndices[lineNum] = Integer.parseInt(line.trim());
-			values[lineNum] = (float) 1.0;
+		file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".colIndex"));
+		for(String line : file) {
+			int ln = file.getLineNumber();
+			colIndices[ln] = Integer.parseInt(line);
+			values[ln] = (float) 1.0;
+			if (colIndices[ln] >= arg2.length) {
+				throw new IllegalArgumentException("Malformed sparsegraph! For index "+this.name+", colIndices["+ln+"]="+colIndices[ln]+"; arg2.length is only "+arg2.length);
+			}
 			if (log.isInfoEnabled()) {
 				long now = System.currentTimeMillis();
 				if ( (now-last) > LOGUPDATE_MS) {
-					log.info("colIndex: "+reader.getLineNumber()+" lines ("+(reader.getLineNumber()/(now-start))+" klps)");
+					log.info("colIndex: "+file.getLineNumber()+" lines ("+(file.getLineNumber()/(now-start))+" klps)");
 					last = now;
 				}
 			}
 		}
-		reader.close();
+		file.close();
 		this.rowOffsets = new int[rowsOffsets.size()+1];
 		for (int i=0; i<rowsOffsets.size(); i++) {
 			rowOffsets[i] = rowsOffsets.get(i);
@@ -130,6 +135,8 @@ public class SparseMatrixIndex {
 		else {
 			ArrayList<Argument> ret = new ArrayList<Argument>();
 			for (int k=this.rowOffsets[r]; k<this.rowOffsets[r+1]; k++) {
+				if (this.arg2[this.colIndices[k]] == null) 
+					throw new IllegalStateException("Found null argument in index "+this.name+" arg2[colIndices["+k+"]="+colIndices[k]+"] (arg2.length="+arg2.length+")");
 				ret.add(this.arg2[this.colIndices[k]]);
 			}
 			return ret;

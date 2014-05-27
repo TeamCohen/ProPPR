@@ -1,19 +1,11 @@
 package edu.cmu.ml.praprolog.prove;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 
 /**
@@ -56,7 +48,7 @@ public abstract class GraphlikeComponent extends Component {
 				ProPPRLogicProgramState stateP = (ProPPRLogicProgramState) state.asProPPR();
 				double w = 1.0/values.size();
 				for (Argument v : values) {
-					RenamingSubstitution thnew = new RenamingSubstitution(stateP.getTheta().offset);
+					RenamingSubstitution thnew = new RenamingSubstitution(stateP.getOffset());
 					thnew.put(dstVar,v); 
 					result.add(new Outlink(this.getFeatureDict(), stateP.child(thnew)));
 				}

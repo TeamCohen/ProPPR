@@ -96,6 +96,7 @@ public class RenamingSubstitution {
 	 * @param b
 	 */
 	public void put(Argument a, Argument b) {
+		if (b==null) throw new IllegalArgumentException("Not allowed to assign a null substitution for "+a);
 		this.dict.put(a, b);
 	}
 	protected Argument applyToAtom(Argument arg, int renamedP1) {
@@ -122,8 +123,8 @@ public class RenamingSubstitution {
 	 * @return
 	 */
 	public RenamingSubstitution copy(RenamingSubstitution overwrite) {
-//		RenamingSubstitution result = new RenamingSubstitution(overwrite.offset);
-		RenamingSubstitution result = new RenamingSubstitution(Math.max(this.offset, overwrite.offset));
+		RenamingSubstitution result = new RenamingSubstitution(overwrite.offset);
+//		RenamingSubstitution result = new RenamingSubstitution(Math.max(this.offset, overwrite.offset));
 		result.dict.putAll(this.dict);
 		if (overwrite != this) result.dict.putAll(overwrite.dict);
 		return result;

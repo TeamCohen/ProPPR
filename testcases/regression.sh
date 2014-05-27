@@ -15,7 +15,7 @@ then
 else
     PROGRAM=`cat $DIR/programFiles.arg`
     echo "Running regression experiment..."
-    java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Experiment --programFiles ${PROGRAM%:} --train $DIR/toytrain.data --output $DIR/toytrain.cooked --test $DIR/toytest.data --params $DIR/params.wts --prover dpr --epochs 20 | tee $DIR/log.log
+    java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Experiment --programFiles ${PROGRAM%:} --train $DIR/toytrain.data --output $DIR/toytrain.cooked --test $DIR/toytest.data --params $DIR/params.wts --prover dpr --epochs 83 | tee $DIR/log.log
 
     echo "Checking performance against gold standard..."
     sort -k 1b,1 $DIR/params.wts -o $DIR/params.wts

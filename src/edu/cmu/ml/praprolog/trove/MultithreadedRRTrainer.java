@@ -29,8 +29,13 @@ public class MultithreadedRRTrainer extends Trainer {
 
 	@Override
 	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(), numEpochs, traceLosses);
+			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
+		return trainParametersOnCookedIterator(importCookedExamples, 
+				new ConcurrentHashMap<String,Double>(
+						edu.cmu.ml.praprolog.MultithreadedRRTrainer.DEFAULT_CAPACITY,
+						edu.cmu.ml.praprolog.MultithreadedRRTrainer.DEFAULT_LOAD,
+						this.nthreads), 
+				numEpochs, traceLosses);
 	}
 	
 	@Override
@@ -39,8 +44,8 @@ public class MultithreadedRRTrainer extends Trainer {
 	}
 	
 	@Override
-	protected void setUpExamples(int epoch, Collection<PosNegRWExample> examples) {
-		super.setUpExamples(epoch, examples);
+	protected void setUpExamples(int epoch) {
+		super.setUpExamples(epoch);
 		if (currentTrainingRun.executor != null) {
 			throw new IllegalStateException("template called out of order! Must clean up last example set using cleanUpExamples()");
 		}
@@ -73,15 +78,23 @@ public class MultithreadedRRTrainer extends Trainer {
 		
 		currentTrainingRun.executor.shutdown();
 		k=0;
+		int warningCounter = 0;
+		final int MAX_WARNINGS = 3;
 		for(Future f; (f=currentTrainingRun.futures.poll()) != null; k++) {
 			try {
 				log.debug("Joining on example "+k);
 				f.get();
 				log.debug("Joining on example "+k+" ***joined");
 			} catch (InterruptedException e) {
+			    if (++warningCounter<=MAX_WARNINGS) {
 				log.warn("While waiting for example "+k,e);
+				if (warningCounter==MAX_WARNINGS) log.warn("that's your last of those warnings....");
+			    }
 			} catch (ExecutionException e) {
+			    if (++warningCounter<=MAX_WARNINGS) {
 				log.warn("While waiting for example "+k,e);
+				if (warningCounter==MAX_WARNINGS) log.warn("that's your last of those warnings....");
+			    }
 			}
 		}
 		currentTrainingRun.executor = null;

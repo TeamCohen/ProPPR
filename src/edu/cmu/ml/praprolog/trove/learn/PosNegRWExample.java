@@ -16,6 +16,21 @@ public class PosNegRWExample extends RWExample {
 	protected int[] posList;// = new ArrayList();
 	protected int[] negList;// = new ArrayList();
 
+    // wwc add
+    public PosNegRWExample posOnly() {
+	PosNegRWExample result = new PosNegRWExample(this.graph,this.queryVec,new String[]{},new String[]{});
+	result.posList = this.posList;
+	//System.out.println("posOnly() for "+this+" is "+result);
+	return result;
+    }
+    // wwc add
+    public PosNegRWExample negOnly() {
+	PosNegRWExample result = new PosNegRWExample(this.graph,this.queryVec,new String[]{},new String[]{});
+	result.negList = this.negList;
+	//System.out.println("negOnly() for "+this+" is "+result);
+	return result;
+    }
+
 	public PosNegRWExample(AnnotatedTroveGraph g, Map<String, Double> queryVec,
 			String[] pos, String[] neg) {
 		super(g,queryVec);

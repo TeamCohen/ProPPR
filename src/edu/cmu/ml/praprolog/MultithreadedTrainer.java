@@ -20,6 +20,8 @@ import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class MultithreadedTrainer<T> extends Trainer<T> {
 	private static final Logger log = Logger.getLogger(MultithreadedTrainer.class);
+	public static final int DEFAULT_CAPACITY = 16;
+	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
 	protected TrainingRun currentTrainingRun;
 	
@@ -30,8 +32,8 @@ public class MultithreadedTrainer<T> extends Trainer<T> {
 
 	@Override
 	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample<T>> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(), numEpochs, traceLosses);
+			Iterable<PosNegRWExample<T>> importCookedExamples, int numEpochs, boolean traceLosses) {
+		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads), numEpochs, traceLosses);
 	}
 	
 	@Override
@@ -40,8 +42,8 @@ public class MultithreadedTrainer<T> extends Trainer<T> {
 	}
 	
 	@Override
-	protected void setUpExamples(int epoch, Collection<PosNegRWExample<T>> examples) {
-		super.setUpExamples(epoch, examples);
+	protected void setUpExamples(int epoch) {
+		super.setUpExamples(epoch);
 		if (currentTrainingRun.threads != null) {
 			throw new IllegalStateException("template called out of order! Must clean up last example set using cleanUpExamples()");
 		}
@@ -188,57 +190,57 @@ public class MultithreadedTrainer<T> extends Trainer<T> {
 		System.err.println(USAGE);
 		System.exit(0);
 	}
-	public static void main(String[] args) {
-		if (args.length < 2) {
-			usage();
-		}
-		
-		String cookedExampleFile = args[0];
-		String outputParamFile   = args[1];
-		int epochs = 5;
-		int threads = 4;
-		boolean traceLosses = false;
-		boolean roundRobin = false;
-		String graphType = AnnotatedGraphFactory.STRING;
-		if (args.length > 2) {
-			for (int i=2; i<args.length; i++) {
-				if ("--epochs".equals(args[i])) {
-					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
-					else usage();
-				} else if ("--traceLosses".equals(args[i])) {
-					traceLosses = true;
-				} else if ("--threads".equals(args[i])) {
-					if (i+1<args.length) threads = Integer.parseInt(args[++i]);
-					else usage();
-				} else if ("--rr".equals(args[i])) {
-					roundRobin = true;
-				} else if ("--string".equals(args[i])) {
-					graphType = AnnotatedGraphFactory.STRING;
-				} else if ("--int".equals(args[i])) {
-					graphType = AnnotatedGraphFactory.INT;
-				} else usage();
-			}
-		}
-		
-//		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
-//		Trainer<String> trainer = new MultithreadedTrainer<String>(srw,threads);
+//	public static void main(String[] args) {
+//		if (args.length < 2) {
+//			usage();
+//		}
+//		
+//		String cookedExampleFile = args[0];
+//		String outputParamFile   = args[1];
+//		int epochs = 5;
+//		int threads = 4;
+//		boolean traceLosses = false;
+//		boolean roundRobin = false;
+//		String graphType = AnnotatedGraphFactory.STRING;
+//		if (args.length > 2) {
+//			for (int i=2; i<args.length; i++) {
+//				if ("--epochs".equals(args[i])) {
+//					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
+//					else usage();
+//				} else if ("--traceLosses".equals(args[i])) {
+//					traceLosses = true;
+//				} else if ("--threads".equals(args[i])) {
+//					if (i+1<args.length) threads = Integer.parseInt(args[++i]);
+//					else usage();
+//				} else if ("--rr".equals(args[i])) {
+//					roundRobin = true;
+//				} else if ("--string".equals(args[i])) {
+//					graphType = AnnotatedGraphFactory.STRING;
+//				} else if ("--int".equals(args[i])) {
+//					graphType = AnnotatedGraphFactory.INT;
+//				} else usage();
+//			}
+//		}
+//		
+////		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
+////		Trainer<String> trainer = new MultithreadedTrainer<String>(srw,threads);
+////		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
+////				trainer.importCookedExamples(cookedExampleFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
+////				epochs,
+////				traceLosses);
+//		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
+//		Trainer trainer = null;
+//		if (roundRobin) {
+//			trainer = new MultithreadedRRTrainer(srw,threads);
+//		} else {
+//			trainer = new MultithreadedTrainer(srw,threads);
+//		}
+////		Trainer trainer = new MultithreadedTrainer(srw,threads);
 //		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-//				trainer.importCookedExamples(cookedExampleFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
+//				trainer.importCookedExamples(cookedExampleFile, 
+//					new AnnotatedGraphFactory(graphType)),
 //				epochs,
 //				traceLosses);
-		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
-		Trainer trainer = null;
-		if (roundRobin) {
-			trainer = new MultithreadedRRTrainer(srw,threads);
-		} else {
-			trainer = new MultithreadedTrainer(srw,threads);
-		}
-//		Trainer trainer = new MultithreadedTrainer(srw,threads);
-		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-				trainer.importCookedExamples(cookedExampleFile, 
-					new AnnotatedGraphFactory(graphType)),
-				epochs,
-				traceLosses);
-		Dictionary.save(paramVec, outputParamFile);
-	}
+//		Dictionary.save(paramVec, outputParamFile);
+//	}
 }

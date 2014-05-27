@@ -28,7 +28,7 @@ public class RuleComponentTest {
     }
     
     @Test
-    public void testOutlinks() {
+    public void testOutlinks() throws LogicProgramException {
         RuleComponent r = (RuleComponent) RuleComponentTest.makeMemIDB(); r.compile();
         List<Outlink> outlinks = r.outlinks(Prover.parseQuery("mem", "X","l_de"));
         for (Outlink o : outlinks) {

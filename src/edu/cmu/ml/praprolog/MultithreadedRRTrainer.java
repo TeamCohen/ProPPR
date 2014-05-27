@@ -19,18 +19,21 @@ import edu.cmu.ml.praprolog.learn.SRW;
 
 public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	private static final Logger log = Logger.getLogger(MultithreadedRRTrainer.class);
+	public static final int DEFAULT_CAPACITY = 16;
+	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
 	protected TrainingRun currentTrainingRun;
 	
 	public MultithreadedRRTrainer(SRW<PosNegRWExample<T>> learner, int numThreads) {
 		super(learner);
 		nthreads = numThreads;
+		log.info("training with "+numThreads + " threads and learner "+learner.getClass());
 	}
 
 	@Override
 	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample<T>> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(), numEpochs, traceLosses);
+			Iterable<PosNegRWExample<T>> importCookedExamples, int numEpochs, boolean traceLosses) {
+		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads), numEpochs, traceLosses);
 	}
 	
 	@Override
@@ -39,8 +42,8 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	}
 	
 	@Override
-	protected void setUpExamples(int epoch, Collection<PosNegRWExample<T>> examples) {
-		super.setUpExamples(epoch, examples);
+	protected void setUpExamples(int epoch) {
+		super.setUpExamples(epoch);
 		if (currentTrainingRun.executor != null) {
 			throw new IllegalStateException("template called out of order! Must clean up last example set using cleanUpExamples()");
 		}

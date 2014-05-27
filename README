@@ -1,17 +1,19 @@
 ProPPR: PROGRAMMING WITH PERSONALIZED PAGERANK
 ==============================================
-This is a Java package for generating local groundings of first-order logic programs, and using graph walk algorithms to perform inference tasks. The package makes use of parallelization to substantially speed processing, making it practical even for large databases.
-
-We currently support grounding, learning, and testing on trained parameters. The full pipeline is also available at a significant speed penalty in Python, an implementation on which this one is based.
+This is a Java package for using graph walk algorithms to perform inference tasks over local groundings of first-order logic programs. The package makes use of parallelization to substantially speed processing, making it practical even for large databases.
 
 Contents:
 1. Build
 2. Run
    2.0. Overview of Java main() classes
-   2.1. Full pipeline
-   2.2. Grounding
-   2.3. Learning
-   2.4. Testing
+   2.1. Experiment pipeline
+        2.1.0. Experiment: full pipeline
+        2.1.1. ExampleCooker: Grounding or "Cooking"
+        2.1.2. Trainer: SGD learning
+        2.1.3. Tester: Evaluating results
+   2.2. Utilities
+        2.2.0. QueryAnswerer: Answering queries against a program
+        2.2.1. Prompt: Interact with ProPPR machinery in a shell
 3. File Formats
 
 
@@ -24,7 +26,7 @@ ProPPR $ ant clean build
 2. RUN
 ======
 
-For all run phases, control logging output using log4j.properties.
+For all run phases, control logging output using conf/log4j.properties.
 
 
 2.0. RUN: JAVA MAIN CLASSES
@@ -33,19 +35,25 @@ For all run phases, control logging output using log4j.properties.
 edu.cmu.ml.Experiment - Full pipeline: ground, train, test.
 
 edu.cmu.ml.praprolog.ExampleCooker - for grounding (used by grounding.sh)
-edu.cmu.ml.praprolog.prove.Prompt - interactive prompt for exploring state trees in grounding proofs - good for debugging rulefiles
 
-edu.cmu.ml.praprolog.trove.Trainer - single-threaded parameter-learning
+edu.cmu.ml.praprolog.trove.Trainer - single-threaded parameter-learning over labeled examples
 edu.cmu.ml.praprolog.trove.MultithreadedTrainer - multithreaded parameter-learning
     - if the trove *Trainer classes have trouble, there are less memory-efficient but potentially easier-to-debug versions which use string keys:
       edu.cmu.ml.praprolog.Trainer
       edu.cmu.ml.praprolog.MultithreadedTrainer
 
-edu.cmu.ml.praprolog.Tester - single-threaded testing of trained parameters
+edu.cmu.ml.praprolog.Tester - single-threaded evaluation of trained parameters over labeled examples
+
+edu.cmu.ml.praprolog.prove.Prompt - interactive prompt for exploring state trees in grounding proofs - good for debugging rulefiles
+
+edu.cmu.ml.praprolog.QueryAnswerer - compute query solutions, using trained or untrained parameters
 
 
-2.1. RUN: FULL PIPELINE
-=======================
+2.1. RUN: EXPERIMENT PIPELINE
+=============================
+
+2.1.0. RUN: EXPERIMENT PIPELINE: EXPERIMENT
+===========================================
 
 Use the file formats below to create files that specify your program's
 rules and fact DBs, and optionally a graph. Create training and testing data
@@ -111,8 +119,8 @@ The full list of options is available (including setting details on prover type,
 number of threads, loss output, etc) by running Experiment with no arguments.
 
 
-2.2. RUN: GROUNDING
-===================
+2.1.1. RUN: EXPERIMENT PIPELINE: EXAMPLECOOKER
+==============================================
 
 Use the provided script 'ground.sh'
 
@@ -179,8 +187,8 @@ ProPPR $ ls my_program
 facts.facts	graph.graph	rules.rules train.data
 
 
-2.3. RUN: LEARNING
-==================
+2.1.2. RUN: EXPERIMENT PIPELINE: TRAINER
+========================================
 
 Given a cooked file we can learn the parameter weights that best
 support the training examples:
@@ -202,8 +210,9 @@ With the same options as above, plus:
     --threads {int}  Number of threads (default 4)
     --rr             Use round-robin scheduling (default:queue) (RECOMMENDED)
 
-2.4. RUN: TESTING
-=================
+
+2.1.3. RUN: EXPERIMENT PIPELINE: TESTER
+=======================================
 
 Given a cooked file of testing examples and the model parameters output from 
 Trainer, we can get the MAP of the trained model over the test data.
@@ -230,8 +239,12 @@ ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Tester \
 result= running time 113
 result= pairs 7.0 errors 0.0 errorRate 0.0 map 1.0
 
-2.5 RUN: ANSWERING QUERIES AGAINST A PROGRAM
-=================
+
+2.2. RUN: UTILITIES
+===================
+
+2.2.0. RUN: UTILITIES: QUERYANSWERER
+====================================
 
 If you want to use a program to answer a series of queries, you can
 use the QueryAnswerer class.  If you are running this step you should
@@ -264,6 +277,50 @@ ProPPR $ cat answers.txt
 2	0.0452874181687741	-1=c[caroline]
 3	0.0452874181687741	-1=c[elizabeth]
 
+
+2.2.1. RUN: UTILITIES: PROMPT
+=============================
+
+An interactive prompt can be useful while debugging logic program issues, because you can examine a single query in detail. If you are running this step you should already have a compiled program.
+
+Starting up the prompt:
+
+"""
+ProPPR $ java -cp conf/:bin/:lib/* edu.cmu.ml.praprolog.prove.Prompt --programFiles ${PROGRAMFILES%:}
+Starting up beanshell...
+prv set: edu.cmu.ml.praprolog.prove.TracingDfsProver@57fdc2d
+ INFO [Component] Loading from file 'kbp_prototype/doc.crules' with alpha=0.0 ...
+ INFO [Component] Loading from file 'kbp_prototype/kb.cfacts' with alpha=0.0 ...
+ INFO [Component] Loading from file 'kbp_prototype/lp_predicate_SF_ENG_001-50doc.graph' with alpha=0.0 ...
+lp set: edu.cmu.ml.praprolog.prove.LogicProgram@2225a091
+
+Type 'help();' for help, 'quit();' to quit; 'list();' for a variable listing.
+
+BeanShell 2.0b4 - by Pat Niemeyer (pat@pat.net)
+bsh % 
+"""
+
+When it starts up, Prompt instantiates the logic program from the command line as 'lp', and a default prover which prints a depth-first-search-style proof of a query (default maximum depth is 5). You can specify a different prover on the command line if you wish. For information on built-in commands and interpreter syntax, type 'help();':
+
+"""
+bsh % help();
+This is a beanshell, a command-line interpreter for java. A full beanshell manual is available at <http://www.beanshell.org/manual/contents.html>.
+
+Type java statements and expressions at the prompt. Don't forget semicolons.
+
+Type 'help();' for help, 'quit();' to quit; 'list();' for a variable listing.
+
+'show();' will toggle automatic printing of the results of expressions. Otherwise you must use 'print( expr );' to see results.
+
+'javap( x );' will list the fields and methods available on an object. Be warned; beanshell has trouble locating methods that are only defined on the superclass.
+
+'[sol = ]run(prover,logicprogram,"functor(arg,arg,...,arg)")' will prove the associated state.
+
+'pretty(sol)' will list solutions first, then intermediate states in descending weight order.
+
+bsh %
+"""
+ 
 
 3. FILE FORMATS
 ===============

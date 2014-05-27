@@ -1,10 +1,6 @@
 package edu.cmu.ml.praprolog.prove;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,7 +15,6 @@ import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.Index;
@@ -31,6 +26,8 @@ import org.neo4j.unsafe.batchinsert.BatchInserterIndex;
 import org.neo4j.unsafe.batchinsert.BatchInserterIndexProvider;
 import org.neo4j.unsafe.batchinsert.BatchInserters;
 import org.neo4j.unsafe.batchinsert.BatchInserter;
+
+import edu.cmu.ml.praprolog.util.ParsedFile;
 
 public class Neo4jGraphComponent extends GraphlikeComponent {
 	private static final Map<String, Object> NO_PROPERTIES = Collections.emptyMap();
@@ -224,7 +221,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 				indexProvider.relationshipIndex( RELINDEX, MapUtil.stringMap( "type", "exact" ) );
 
 		// then load a pile of relationships
-		LineNumberReader reader=null;
+		ParsedFile reader=null;
 
 		long[] from = new long[DEFAULT_BATCH],
 				to = new long[DEFAULT_BATCH];
@@ -243,46 +240,39 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 				log.error("Skipping file "+file+" (needs name format functor_arg1type_arg2type)");
 				continue;
 			}
-			String fromTypeQuery = xTypeQuery+types[1]+"\" AND"+xNameQuery;
-			String toTypeQuery = xTypeQuery+types[2]+"\" AND"+xNameQuery;
-			try {
-				reader = new LineNumberReader(new FileReader(file));
-				long last = System.currentTimeMillis(), now = last, first = last;
-				log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
-				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+			//			String fromTypeQuery = xTypeQuery+types[1]+"\" AND"+xNameQuery;
+			//			String toTypeQuery = xTypeQuery+types[2]+"\" AND"+xNameQuery;
+			reader = new ParsedFile(file);
+			long last = System.currentTimeMillis(), now = last, first = last;
+			log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
+			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 
-				for (String line; (line=reader.readLine())!= null; k++) {
-					if (k>=from.length) k=commit(inserter,relationships,from,to,functor,k,reader.getLineNumber());
-					
-					if( (now = System.currentTimeMillis()) - last > 2000)  {
-						log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
-						last = now;
-						log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-					}
-					line = line.trim();
-					String[] parts = line.split("\t");
-					if (parts.length < 3) {
-						log.error("Bad format of "+file+" line "+reader.getLineNumber()+" (needs functor/targ1/targ2):" + line);
-						continue;
-					}
+			for (String line : reader) {
+				if (k>=from.length) k=commit(inserter,relationships,from,to,functor,k,reader.getLineNumber());
 
-					functor[k] = parts[0];
-					from[k] = nodes.get(NODEID_KEY, types[1]+parts[1]).getSingle();//queryHelper(fromTypeQuery,parts[1],nodes,line);
-					to[k] = nodes.get(NODEID_KEY, types[2]+parts[2]).getSingle();//queryHelper(toTypeQuery,parts[2],nodes,line);
+				if( (now = System.currentTimeMillis()) - last > 2000)  {
+					log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+					last = now;
+					log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 				}
-				k=commit(inserter,relationships,from,to,functor,k,reader.getLineNumber());
-				now = System.currentTimeMillis();
-				log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
-				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+				String[] parts = line.split("\t");
+				if (parts.length < 3) {
+					log.error("Bad format of "+file+" line "+reader.getLineNumber()+" (needs functor/targ1/targ2):" + line);
+					reader.close();
+					continue;
+				}
 
-			} catch (FileNotFoundException e) { log.error("Couldn't find file "+file+";",e);
-			} catch (IOException e) { log.error("Trouble reading file "+file+";",e);
-			} finally {
-				if (reader!=null)
-					try {
-						reader.close();
-					} catch (IOException e) { log.error("Trouble closing file "+file+";",e); }
+				functor[k] = parts[0];
+				from[k] = nodes.get(NODEID_KEY, types[1]+parts[1]).getSingle();//queryHelper(fromTypeQuery,parts[1],nodes,line);
+				to[k] = nodes.get(NODEID_KEY, types[2]+parts[2]).getSingle();//queryHelper(toTypeQuery,parts[2],nodes,line);
+				k++;
 			}
+			k=commit(inserter,relationships,from,to,functor,k,reader.getLineNumber());
+			now = System.currentTimeMillis();
+			log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+
+			reader.close();
 		}
 
 		relationships.flush();
@@ -332,7 +322,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 		nodes.setCacheCapacity( NODENAME_KEY, DEFAULT_CACHE );
 
 		// then load a pile of nodes
-		LineNumberReader reader=null;
+		ParsedFile reader=null;
 		int numnodes=0;
 		for (String file : files) {
 			if (!file.endsWith(SparseGraphComponent.INDEX_EXTENSION)) {
@@ -341,40 +331,30 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 			} else 
 				log.info("Reading file "+file);
 			String type = baseName(file,SparseGraphComponent.INDEX_EXTENSION);
-//			properties.put( NODEID_KEY, baseName(file,SparseGraphComponent.INDEX_EXTENSION) );
-			try {
-				reader = new LineNumberReader(new FileReader(file));
-				long last = System.currentTimeMillis(), now = last, first = last;
-				log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
-				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+			//			properties.put( NODEID_KEY, baseName(file,SparseGraphComponent.INDEX_EXTENSION) );
+			reader = new ParsedFile(file);
+			long last = System.currentTimeMillis(), now = last, first = last;
+			log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
+			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 
-				for (String line; (line=reader.readLine())!= null;) {
-					if( (now = System.currentTimeMillis()) - last > 2000)  {
-						log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
-						last = now;
-						log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-					}
-					line = line.trim();
-
-					properties.put( NODENAME_KEY, line );
-					properties.put( NODEID_KEY, type+line);
-					long node = inserter.createNode( properties );
-					nodes.add(node, properties);
-					numnodes++;
-
+			for (String line : reader) {
+				if( (now = System.currentTimeMillis()) - last > 2000)  {
+					log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+					last = now;
+					log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 				}
-				now = System.currentTimeMillis();
-				log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
-				log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 
-			} catch (FileNotFoundException e) { log.error("Couldn't find file "+file+";",e);
-			} catch (IOException e) { log.error("Trouble reading file "+file+";",e);
-			} finally {
-				if (reader!=null)
-					try {
-						reader.close();
-					} catch (IOException e) { log.error("Trouble closing file "+file+";",e); }
+				properties.put( NODENAME_KEY, line );
+				properties.put( NODEID_KEY, type+line);
+				long node = inserter.createNode( properties );
+				nodes.add(node, properties);
+				numnodes++;
+
 			}
+			now = System.currentTimeMillis();
+			log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
+			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+			reader.close();
 		}
 		log.info("Loaded "+numnodes+" nodes in total");
 		nodes.flush();
@@ -392,25 +372,22 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 	 */
 	public static Neo4jGraphComponent load(Neo4jGraphComponent result, String graphFile) {
 		Transaction tx = graphDb.beginTx();
-		LineNumberReader reader=null;
+		ParsedFile reader=null;
 		try {
-			reader = new LineNumberReader(new FileReader(graphFile));
+			reader = new ParsedFile(graphFile);
 
-			String line;
 			long last = System.currentTimeMillis(), now = last, first = last;
 			log.info("Read "+reader.getLineNumber()+" lines "+now+" 0 lps");
 			log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-			while ((line=reader.readLine())!= null) {
+			for(String line : reader) {
 				if(reader.getLineNumber() % 20000 == 0) { tx.success(); tx.finish(); tx = graphDb.beginTx(); }
 				if( (now = System.currentTimeMillis()) - last > 2000)  {
 					log.info("Read "+reader.getLineNumber()+" lines "+now+" "+((double) reader.getLineNumber() / (now-first) * 1000)+" lps");
 					last = now;
 					log.debug("mem "+now+" "+Runtime.getRuntime().totalMemory()+" "+(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
 				}
-				line=line.trim();
-				if (line.startsWith("#") || line.length()==0) continue;
 				String[] parts = line.split("\t");
-				if (parts.length != 3) throw new IllegalStateException("Bad line "+reader.getLineNumber()+" (must be $edge\t$src\t$dst): "+line);
+				if (parts.length != 3) reader.parseError("Bad line (must be $edge\t$src\t$dst)");
 				String edgeLabel = parts[0].trim();
 				String src = parts[1].trim();
 				String dst = parts[2].trim();
@@ -422,23 +399,13 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 
 			reader.close();
 			tx.success();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			throw(e);
 		}
 		finally
 		{
 			tx.finish();
-			if (reader!=null)
-				try {
-					reader.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			if (reader!=null) reader.close();
 		}
 		return result;
 	}

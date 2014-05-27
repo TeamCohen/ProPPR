@@ -22,7 +22,7 @@ public class TuprologComponentTest {
 	}
 
 	@Test
-	public void test() {
+	public void test() throws LogicProgramException {
 		TuprologComponent tc = new TuprologComponent();
 		tc.addTheory("testcases/prolog/familyx.pl");
 		

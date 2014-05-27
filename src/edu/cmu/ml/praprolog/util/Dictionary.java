@@ -13,10 +13,8 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.io.BufferedWriter;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,7 +57,7 @@ public class Dictionary {
 			map.put(key,sanitize(newvalue, String.valueOf(key)));
 		}
 	}
-	
+
 	/**
 	 * Increment the key's value, or set it if the key is new.
 	 * @param map
@@ -90,7 +88,7 @@ public class Dictionary {
 			inner.put(key2, sanitize(newvalue, key1+":"+key2));
 		}
 	}
-	
+
 	public static void increment( TIntObjectMap<TObjectDoubleHashMap<String>> map, int key1,
 			String key2, double value) {
 		if (!map.containsKey(key1)) { map.put(key1,new TObjectDoubleHashMap<String>()); }
@@ -101,7 +99,7 @@ public class Dictionary {
 			inner.put(key2, sanitize(newvalue, key1+":"+key2));
 		}
 	}
-	
+
 	/**
 	 * Return the key's value, or 0.0 if the key is not in this map.
 	 * @param map
@@ -184,7 +182,7 @@ public class Dictionary {
 		}
 		return sb;
 	}
-	
+
 	public static <K> StringBuilder buildString(Iterable<K> keys, StringBuilder sb, String delim) {
 		boolean first=true;
 		for (K k : keys) {
@@ -194,7 +192,7 @@ public class Dictionary {
 		}
 		return sb;
 	}
-	
+
 	public static StringBuilder buildString(int[] keys, StringBuilder sb, String delim) {
 		for (int i : keys) {
 			sb.append(delim).append(i);
@@ -212,22 +210,22 @@ public class Dictionary {
 		}
 		return sb;
 	}
-	
-	
-	public static void save(TIntDoubleMap map, String filename) {
-		BufferedWriter writer;
-		try {
-			writer = new BufferedWriter(new FileWriter(filename));
-			for (TIntDoubleIterator e = map.iterator(); e.hasNext(); ) {
-				e.advance();
-				writer.write(String.format("%s\t%f\n", String.valueOf(e.key()),e.value()));
-			}
-			writer.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+
+// // removed by krivard 17 mar 2014 - not called anywhere 
+//	public static void save(TIntDoubleMap map, String filename) {
+//		BufferedWriter writer;
+//		try {
+//			writer = new BufferedWriter(new FileWriter(filename));
+//			for (TIntDoubleIterator e = map.iterator(); e.hasNext(); ) {
+//				e.advance();
+//				writer.write(String.format("%s\t%f\n", String.valueOf(e.key()),e.value()));
+//			}
+//			writer.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
 	public static boolean safeContains(TIntObjectMap<TIntDoubleHashMap> map,
 			int key1, int key2) {
 		if (!map.containsKey(key1)) return false;
@@ -240,7 +238,7 @@ public class Dictionary {
 		if (!map.get(key1).containsKey(key2)) return false;
 		return true;
 	}
-	
+
 	/**
 	 * Increment the key's value, or set it if the key is new.
 	 * @param map
@@ -325,7 +323,7 @@ public class Dictionary {
 		}
 		return sb;
 	}
-	
+
 	public static <K> void save(Map<K,Double> map, String filename) {
 		BufferedWriter writer;
 		try {
@@ -384,41 +382,24 @@ public class Dictionary {
 	 * @param map
 	 * @return
 	 */
-    public static <K> Map<K, Double> normalize(Map<K, Double> map) {
-        double z = 0.0;
-        for (Double d : map.values()) z += d;
-        for (Map.Entry<K,Double> e : map.entrySet()) e.setValue(e.getValue()/z);
-        return map;
-    }
+	public static <K> Map<K, Double> normalize(Map<K, Double> map) {
+		double z = 0.0;
+		for (Double d : map.values()) z += d;
+		for (Map.Entry<K,Double> e : map.entrySet()) e.setValue(e.getValue()/z);
+		return map;
+	}
 	public static Map<String, Double> load(String filename) {
-		LineNumberReader reader=null;
-		try {
-			reader = new LineNumberReader(new FileReader(filename));
-			Map<String,Double> map = new HashMap<String,Double>();
-			for (String line; (line = reader.readLine()) != null; ) {
-				line = line.trim();
-				if (line.length() == 0 || line.startsWith("#")) continue;
-				String[] parts = line.split("\t");
-				if (parts.length != 2) {
-					throw new IllegalArgumentException("Unparsable line "+filename+":"+reader.getLineNumber()+": "+line);
-				}
-				map.put(parts[0], Double.parseDouble(parts[1]));
-			}
-			reader.close();
-			return map;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			if (reader != null)
-				try {
-					reader.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		return load(new ParsedFile(filename));
+	}
+	public static Map<String,Double> load(ParsedFile file) {
+		Map<String,Double> map = new HashMap<String,Double>();
+		for (String line : file) {
+			String[] parts = line.split("\t");
+			if (parts.length != 2) file.parseError();
+			map.put(parts[0], Double.parseDouble(parts[1]));
 		}
-		return null;
+		file.close();
+		return map;
 	}
 
 	/**

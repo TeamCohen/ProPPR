@@ -109,7 +109,8 @@ public class TuprologAdapter {
 	public static LogicProgramState tuprologToProppr(TuprologLogicProgramState state, VarData data) {
 		Goal[] queryGoalsArr = termToGoalArray(state.getQueryGoals(), data);
 		Goal[] goalsArr = termToGoalArray(state.getGoals(), data);
-		ProPPRLogicProgramState ret = new ProPPRLogicProgramState(state.getOriginalGoals(), queryGoalsArr, goalsArr, new RenamingSubstitution(0), -1);
+//		ProPPRLogicProgramState ret = new ProPPRLogicProgramState(state.getOriginalGoals(), queryGoalsArr, goalsArr, new RenamingSubstitution(0), -1);
+		ProPPRLogicProgramState ret = new ProPPRLogicProgramState(state.getOriginalGoals(), queryGoalsArr, goalsArr, 0, -1);
 		// FIXME *depth*
 		log.debug(state);
 		log.debug(ret);

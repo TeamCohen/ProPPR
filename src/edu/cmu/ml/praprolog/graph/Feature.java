@@ -6,7 +6,6 @@ import java.util.Map;
 
 import edu.cmu.ml.praprolog.prove.Goal;
 
-
 /**
  * Encodes a named feature value suitable for use as a key or a set member.
  * @author krivard
