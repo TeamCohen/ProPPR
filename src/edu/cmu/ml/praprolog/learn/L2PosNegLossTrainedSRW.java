@@ -61,8 +61,11 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 
 		for (T x : example.getNegList()) {
+			Map<String,Double> dx = d.get(x);
+			double px = p.get(x);
 			for (String f : trainableFeatures) {
-				if (Dictionary.safeContains(d,x,f)) Dictionary.increment(derivFparamVec, f, beta*d.get(x).get(f)/(1-p.get(x)));
+				if (Dictionary.safeContains(d,x,f)) 
+					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
 			}
 		}
 		for (String f : trainableFeatures) {

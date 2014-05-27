@@ -39,12 +39,15 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		
 		//introduce the regularizer
 		TObjectDoubleHashMap<String> derivFparamVec = new TObjectDoubleHashMap<String>();
-		for (String f : paramVec.keySet()) derivFparamVec.put(f,derivRegularization(f,paramVec));
+		for (String f : localFeatures(paramVec,example)) {
+			derivFparamVec.put(f,derivRegularization(f,paramVec));
+		}
+		
+		Set<String> trainables = trainableFeatures(localFeatures(paramVec,example)); 
 		
 		//compute gradient
 		double pmax = 0;
 
-		Set<String> trainables = trainableFeatures(paramVec); 
 		for (int x : example.getPosList()) {
 			TObjectDoubleHashMap<String> dx = d.get(x);
 			double px = p.get(x);
@@ -55,8 +58,9 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 				}
 			}
 		}
-		
-            	double h = pmax + delta;
+
+		//negative instance booster
+    	double h = pmax + delta;
 		double beta = 1;
 		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 		
