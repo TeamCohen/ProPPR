@@ -15,7 +15,7 @@ public abstract class ParamVector<T> implements Map<String,Double> {
 	protected abstract T newValue(Double value);
 	
 	@Override
-	public  Set<String> keySet() {
+	public Set<String> keySet() {
 		return getBackingStore().keySet();
 	}
 	
@@ -28,10 +28,8 @@ public abstract class ParamVector<T> implements Map<String,Double> {
 		return getBackingStore().containsValue(value);
 	}
 	@Override
-	public Set<java.util.Map.Entry<String, Double>> entrySet() {
-		// need to convert T to Double forall entries
-		throw new UnsupportedOperationException("Not yet implemented!");
-	}
+	public abstract Set<java.util.Map.Entry<String, Double>> entrySet();
+	
 	@Override
 	public Double get(Object key) {
 		return getWeight(getBackingStore().get(key));
@@ -58,7 +56,9 @@ public abstract class ParamVector<T> implements Map<String,Double> {
 	}
 	@Override
 	public Double put(String key, Double value) {
-		return getWeight(getBackingStore().put(key,newValue(value)));
+		T nv = this.newValue(value);
+		this.getBackingStore().put(key,nv);
+		return getWeight(nv);
 	}
 	@Override
 	public synchronized void putAll(Map<? extends String, ? extends Double> m) {

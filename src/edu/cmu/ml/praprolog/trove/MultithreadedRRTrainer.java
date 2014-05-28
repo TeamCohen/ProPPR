@@ -16,6 +16,8 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
+import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class MultithreadedRRTrainer extends Trainer {
 	private static final Logger log = Logger.getLogger(MultithreadedRRTrainer.class);
@@ -28,13 +30,13 @@ public class MultithreadedRRTrainer extends Trainer {
 	}
 
 	@Override
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, 
-				new ConcurrentHashMap<String,Double>(
+				new SimpleParamVector(new ConcurrentHashMap<String,Double>(
 						edu.cmu.ml.praprolog.MultithreadedRRTrainer.DEFAULT_CAPACITY,
 						edu.cmu.ml.praprolog.MultithreadedRRTrainer.DEFAULT_LOAD,
-						this.nthreads), 
+						this.nthreads)), 
 				numEpochs, traceLosses);
 	}
 	

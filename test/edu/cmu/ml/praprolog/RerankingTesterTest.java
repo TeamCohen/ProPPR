@@ -15,6 +15,8 @@ import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class RerankingTesterTest {
 	double EPSILON=1e-10;
@@ -27,7 +29,7 @@ public class RerankingTesterTest {
 						Component.ALPHA_DEFAULT));
 		Prover prover = new DprProver();
 		
-		Map<String,Double> params = Dictionary.load("testcases/textcattoy/params.wts.gold");
+		ParamVector params = new SimpleParamVector(Dictionary.load("testcases/textcattoy/params.wts.gold"));
 		
 		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
 		

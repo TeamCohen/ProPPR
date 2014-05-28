@@ -16,7 +16,9 @@ import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.FileBackedIterable;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParsedFile;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class Trainer {
 	public static final String MAJOR_DELIM="\t";
@@ -110,27 +112,27 @@ public class Trainer {
 	}
 
 
-	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample> iteratorFactory) {
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample> iteratorFactory) {
 		return this.trainParametersOnCookedIterator(iteratorFactory, false);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample> importCookedExamples, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, 5, traceLosses);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new TreeMap<String,Double>(), numEpochs, traceLosses);
+		return trainParametersOnCookedIterator(importCookedExamples, new SimpleParamVector(new TreeMap<String,Double>()), numEpochs, traceLosses);
 	}
 
-	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample> examples, 
-			Map<String, Double> initialParamVec, 
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample> examples, 
+			ParamVector initialParamVec, 
 			int numEpochs, 
 			boolean traceLosses) {
 		log.info("Training on cooked examples...");
 		double previousAvgLoss = Double.MAX_VALUE;
 		long start = System.currentTimeMillis();
 		this.epoch = 0;
-		Map<String,Double> paramVec = initialParamVec;
+		ParamVector paramVec = initialParamVec;
 		if (paramVec.size() == 0) {
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}

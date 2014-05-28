@@ -11,6 +11,8 @@ import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
+
 import org.apache.log4j.Logger;
 
 import java.util.HashMap;
@@ -19,13 +21,13 @@ import java.util.Map;
 public class RerankingQueryAnswerer extends QueryAnswerer {
 	private static final Logger log = Logger.getLogger(RerankingQueryAnswerer.class);
 
-	protected Map<String,Double> params = null;
+	protected ParamVector params = null;
 	protected SRW<PosNegRWExample<String>> srw;
 	public RerankingQueryAnswerer(SRW<PosNegRWExample<String>> walker) {
 		this.srw = walker;
 	}
 	@Override
-	public void addParams(LogicProgram program, Map<String,Double> params, WeightingScheme wScheme) {
+	public void addParams(LogicProgram program, ParamVector params, WeightingScheme wScheme) {
 		// weightingScheme is only used by the SRW, which got a copy during configuration
 		this.params = params;
 	}

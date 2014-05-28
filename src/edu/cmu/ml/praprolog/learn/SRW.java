@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
 
 /**
  *  Supervised random walk with reset on a graph, following
@@ -119,7 +120,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return RWR result vector mapping nodes to values
 	 */
-	public <T> Map<T,Double> rwrUsingFeatures(AnnotatedGraph<T> g, Map<T,Double> startVec, Map<String,Double> paramVec) {
+	public <T> Map<T,Double> rwrUsingFeatures(AnnotatedGraph<T> g, Map<T,Double> startVec, ParamVector paramVec) {
 		Map<T,Double> vec = startVec;
 		for(int i=0; i<maxT; i++) {
 			vec = walkOnceUsingFeatures(g,vec,paramVec);
@@ -133,22 +134,22 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return Mapping from new set of node names to updated values.
 	 */
-	public <T> Map<T,Double> walkOnceUsingFeatures(AnnotatedGraph<T> g, Map<T,Double> vec, Map<String,Double> paramVec) {
+	public <T> Map<T,Double> walkOnceUsingFeatures(AnnotatedGraph<T> g, Map<T,Double> vec, ParamVector paramVec) {
 		Map<T,Double> nextVec = new TreeMap<T,Double>();
 		int k=-1;
 		for (Map.Entry<T, Double> u : vec.entrySet()) { k++;
-		if (k>0 && k%100 == 0) log.debug("Walked from "+k+" nodes...");
-		double z = totalEdgeWeight(g,u.getKey(),paramVec);
-		if (z==0) {
-			log.info("0 total edge weight at u="+u+"; skipping");
-			continue;
-		}
-		for (Map.Entry<T, Double> e : g.nearNative(u.getKey()).entrySet()) {
-			T v = e.getKey();
-			double ew = edgeWeight(g,u.getKey(),v,paramVec);
-			double inc = u.getValue() * ew / z;
-			Dictionary.increment(nextVec,v,inc);
-		}
+			if (k>0 && k%100 == 0) log.debug("Walked from "+k+" nodes...");
+			double z = totalEdgeWeight(g,u.getKey(),paramVec);
+			if (z==0) {
+				log.info("0 total edge weight at u="+u+"; skipping");
+				continue;
+			}
+			for (Map.Entry<T, Double> e : g.nearNative(u.getKey()).entrySet()) {
+				T v = e.getKey();
+				double ew = edgeWeight(g,u.getKey(),v,paramVec);
+				double inc = u.getValue() * ew / z;
+				Dictionary.increment(nextVec,v,inc);
+			}
 		}
 		if (nextVec.size() == 0) {
 			log.warn("NO entries in nextVec after walkOnceUsingFeatures :(");
@@ -167,7 +168,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps edge feature names to nonnegative values.
 	 * @return Mapping from each outgoing node from the random walk of the query and each feature relevant to the outgoing edge, to the derivative value. 
 	 */
-	public <T> Map<T, Map<String, Double>> derivRWRbyParams(AnnotatedGraph<T> graph, Map<T, Double> queryVec, Map<String, Double> paramVec) {
+	public <T> Map<T, Map<String, Double>> derivRWRbyParams(AnnotatedGraph<T> graph, Map<T, Double> queryVec, ParamVector paramVec) {
 		Map<T,Double> p = queryVec;
 		Map<T,Map<String,Double>> d = new TreeMap<T,Map<String,Double>>();
 		for (int i=0; i<maxT; i++) {
@@ -201,7 +202,7 @@ public class SRW<E extends RWExample> {
 	 * @return Mapping from feature names to derivative values.
 	 */
 	protected <T> Map<String, Double> derivWalkProbByParams(AnnotatedGraph<T> graph,
-			T u, T v, Map<String, Double> paramVec) {
+			T u, T v, ParamVector paramVec) {
 
 		double edgeUV = this.edgeWeight(graph, u, v, paramVec);
 		// vector of edge weights - one for each active feature
@@ -230,34 +231,13 @@ public class SRW<E extends RWExample> {
 	 * @return Mapping from features names to the derivative value.
 	 */
 	protected <T> Map<String,Double> derivEdgeWeightByParams(AnnotatedGraph<T> graph, T u,
-			T v, Map<String, Double> paramVec) {
+			T v, ParamVector paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
 			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
 		}
 		return result;
 	}
-
-	//	/**
-	//	 * The function wraps the derivative of edge weight.
-	//	 * @param weight: edge weight.
-	//	 * @return wrapped derivative of the edge weight.
-	//	 */
-	//	public double derivEdgeWeightFunction(double weight) {
-	//		
-	//		//WW: replace with sigmoid function's derivative.
-	//		//return Math.exp(weight);
-	//		//return derivSigmoid(weight);
-	//		return derivTanh(weight);
-	//	}
-	//
-	//	public double derivSigmoid(double value) {
-	//		return sigmoid(value) * (1 - sigmoid(value));
-	//       }
-	//
-	//	public double derivTanh(double value) {
-	//		return (1- tanh(value)*tanh(value));
-	//       }
 
 	/**
 	 * Builds a set of features in the specified set that are not on the untrainedFeatures list.
@@ -276,7 +256,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps from features names to nonnegative values.
 	 * @return
 	 */
-	public Set<String> trainableFeatures(Map<String, Double> paramVec) {
+	public <X> Set<String> trainableFeatures(Map<String,X> paramVec) {
 		return trainableFeatures(paramVec.keySet());
 	}
 	/**
@@ -294,7 +274,7 @@ public class SRW<E extends RWExample> {
 	}
 
 	/** Allow subclasses to filter feature list **/
-	public Set<String> localFeatures(Map<String,Double> paramVec, E example) {
+	public Set<String> localFeatures(ParamVector paramVec, E example) {
 		return paramVec.keySet();
 	}
 
@@ -316,7 +296,7 @@ public class SRW<E extends RWExample> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public void trainOnExample(Map<String, Double> paramVec, E example) {
+	public void trainOnExample(ParamVector paramVec, E example) {
 		addDefaultWeights(example.getGraph(),paramVec);
 		Map<String,Double> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
@@ -324,42 +304,9 @@ public class SRW<E extends RWExample> {
 		}
 		double rate = Math.pow(this.epoch,-2) * this.eta / example.length();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
-		// since paramVec is restricted to nonnegative values, we automatically adjust the rate
-		// by looking at the current values and the current gradient, and reduce the rate as necessary.
-		// 
-		// unfortunately, this means we need locked access to the paramVec, since if someone fusses with it
-		// between when we set the rate and when we apply it, we could end up pushing the paramVec too far.
-		// :(
-		//		synchronized(paramVec) { 
-		//			for (Map.Entry<String,Double>f : grad.entrySet()) { //String f = fEntry.getKey(); 
-		//				if (Math.abs(f.getValue()) > 0) { 
-		//					double pf = Dictionary.safeGet(paramVec,f.getKey());
-		//					double smallEnough = pf / f.getValue();
-		//					double largeEnough = (pf - MAX_PARAM_VALUE) / f.getValue();
-		//					if (f.getValue() > 0) {
-		//						if (largeEnough > smallEnough) 
-		//							throw new IllegalStateException("Gradient for feature "+f.getKey()+" out of range");
-		//						rate = Math.min(rate, smallEnough);
-		//						rate = Math.max(rate, largeEnough);
-		//					} else {
-		//						if (largeEnough < smallEnough) 
-		//							throw new IllegalStateException("Gradient for feature "+f.getKey()+" out of range");
-		//						rate = Math.max(rate, smallEnough);
-		//						rate = Math.min(rate, largeEnough);
-		//					}
-		//					
-		//				}
-		//			}
-		//			if (log.isDebugEnabled()) log.debug("adjusted rate "+rate);
 		for (Map.Entry<String, Double> f : grad.entrySet()) {
-			//				log.debug(String.format("%s %f %f [%f]", f,Dictionary.safeGet(paramVec,f),grad.get(f),rate*grad.get(f)));
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
-			//				if (paramVec.get(f.getKey()) < 0) {
-			//					throw new IllegalStateException("Parameter weight "+f.getKey()+" can't be negative");
-			//				} else if (paramVec.get(f.getKey()) > MAX_PARAM_VALUE)
-			//					throw new IllegalStateException("Parameter weight "+f.getKey()+" can't trigger Infinity");
 		}
-		//		}
 	}
 
 	/**
@@ -367,7 +314,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec
 	 * @param exampleIt
 	 */
-	public double averageLoss(Map<String,Double> paramVec, Iterable<E> exampleIt) {
+	public double averageLoss(ParamVector paramVec, Iterable<E> exampleIt) {
 		double totLoss = 0;
 		double numTest = 0;
 		for (E example : exampleIt) { 
@@ -388,7 +335,7 @@ public class SRW<E extends RWExample> {
 	 * @param example
 	 * @return
 	 */
-	public Map<String,Double> gradient(Map<String,Double> paramVec, E example) {
+	public Map<String,Double> gradient(ParamVector paramVec, E example) {
 		throw new UnsupportedOperationException("whoops");
 	}
 
@@ -397,7 +344,13 @@ public class SRW<E extends RWExample> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public double empiricalLoss(Map<String, Double> paramVec, E example) {
+	public double empiricalLoss(ParamVector paramVec, E example) {
 		throw new UnsupportedOperationException("whoops");
 	}
+
+	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
+	public ParamVector setupParams(ParamVector paramVec) { return paramVec; }
+	
+	/** Give the learner the opportunity to do additional parameter processing **/
+	public void cleanupParams(ParamVector paramVec) {}
 }

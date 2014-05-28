@@ -16,6 +16,7 @@ import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph.GraphFormatException;
 import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
@@ -29,7 +30,7 @@ public class RerankingTester extends Tester {
 	}
 	
 	@Override
-	public void setParams(Map<String,Double> params, WeightingScheme wScheme) {
+	public void setParams(ParamVector params, WeightingScheme wScheme) {
 		this.params = params;
 	}
 	
