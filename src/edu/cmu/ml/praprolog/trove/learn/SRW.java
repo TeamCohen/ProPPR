@@ -14,6 +14,7 @@ import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
@@ -134,7 +135,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return RWR result vector mapping nodes to values
 	 */
-	public  TIntDoubleMap rwrUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap startVec, Map<String,Double> paramVec) {
+	public  TIntDoubleMap rwrUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap startVec, ParamVector paramVec) {
 		TIntDoubleMap vec = startVec;
 		for(int i=0; i<maxT; i++) {
 			vec = walkOnceUsingFeatures(g,vec,paramVec);
@@ -148,7 +149,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return Mapping from new set of node names to updated values.
 	 */
-	public  TIntDoubleMap walkOnceUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap vec, Map<String,Double> paramVec) {
+	public  TIntDoubleMap walkOnceUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap vec, ParamVector paramVec) {
 		TIntDoubleMap nextVec = new TIntDoubleHashMap();
 		int k=-1;
 		for (TIntDoubleIterator u = vec.iterator(); u.hasNext(); ) { 
@@ -185,7 +186,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps edge feature names to nonnegative values.
 	 * @return Mapping from each outgoing node from the random walk of the query and each feature relevant to the outgoing edge, to the derivative value. 
 	 */
-	public  TIntObjectMap<TObjectDoubleHashMap<String>> derivRWRbyParams(AnnotatedTroveGraph graph, TIntDoubleMap queryVec, Map<String, Double> paramVec) {
+	public  TIntObjectMap<TObjectDoubleHashMap<String>> derivRWRbyParams(AnnotatedTroveGraph graph, TIntDoubleMap queryVec, ParamVector paramVec) {
 		TIntDoubleMap p = queryVec;
 		TIntObjectMap<TObjectDoubleHashMap<String>> d = new TIntObjectHashMap<TObjectDoubleHashMap<String>>();
 		for (int i=0; i<maxT; i++) {
@@ -221,7 +222,7 @@ public class SRW<E extends RWExample> {
 	 * @return Mapping from feature names to derivative values.
 	 */
 	protected  TObjectDoubleHashMap<String> derivWalkProbByParams(AnnotatedTroveGraph graph,
-			int u, int v, Map<String, Double> paramVec) {
+			int u, int v, ParamVector paramVec) {
 
 		double edgeUV = this.edgeWeight(graph, u, v, paramVec);
 		// vector of edge weights - one for each active feature
@@ -250,7 +251,7 @@ public class SRW<E extends RWExample> {
 	 * @return Mapping from features names to the derivative value.
 	 */
 	protected  TObjectDoubleMap<String> derivEdgeWeightByParams(AnnotatedTroveGraph graph, int u,
-			int v, Map<String, Double> paramVec) {
+			int v, ParamVector paramVec) {
 		TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>();
 		for (Feature f : graph.phi(u, v)) {
 			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
@@ -297,7 +298,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps from features names to nonnegative values.
 	 * @return
 	 */
-	public Set<String> trainableFeatures(Map<String, Double> paramVec) {
+	public Set<String> trainableFeatures(ParamVector paramVec) {
 		return trainableFeatures(paramVec.keySet());
 	}
 	/**
@@ -315,7 +316,7 @@ public class SRW<E extends RWExample> {
 	}
 
 	/** Allow subclasses to filter feature list **/
-	public Set<String> localFeatures(Map<String,Double> paramVec, E example) {
+	public Set<String> localFeatures(ParamVector paramVec, E example) {
 		return paramVec.keySet();
 	}
 
@@ -338,7 +339,7 @@ public class SRW<E extends RWExample> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public void trainOnExample(Map<String, Double> paramVec, E example) {
+	public void trainOnExample(ParamVector paramVec, E example) {
 		addDefaultWeights(example.getGraph(),paramVec);
 		TObjectDoubleHashMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
@@ -394,7 +395,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec
 	 * @param exampleIt
 	 */
-	public double averageLoss(Map<String,Double> paramVec, Iterable<E> exampleIt) {
+	public double averageLoss(ParamVector paramVec, Iterable<E> exampleIt) {
 		double totLoss = 0;
 		double numTest = 0;
 		for (E example : exampleIt) { 
@@ -415,7 +416,7 @@ public class SRW<E extends RWExample> {
 	 * @param example
 	 * @return
 	 */
-	public TObjectDoubleHashMap<String> gradient(Map<String,Double> paramVec, E example) {
+	public TObjectDoubleHashMap<String> gradient(ParamVector paramVec, E example) {
 		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
 	}
 	/**
@@ -423,10 +424,14 @@ public class SRW<E extends RWExample> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public double empiricalLoss(Map<String, Double> paramVec,
-			E example) {
+	public double empiricalLoss(ParamVector paramVec, E example) {
 		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
 	}
 
 
+	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
+	public ParamVector setupParams(ParamVector paramVec) { return paramVec; }
+	
+	/** Give the learner the opportunity to do additional parameter processing **/
+	public void cleanupParams(ParamVector paramVec) {}
 }

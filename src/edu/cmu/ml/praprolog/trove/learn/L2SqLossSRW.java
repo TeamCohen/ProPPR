@@ -2,12 +2,14 @@ package edu.cmu.ml.praprolog.trove.learn;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.trove.learn.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
@@ -48,7 +50,8 @@ public class L2SqLossSRW extends SRW<PairwiseRWExample> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public double empiricalLoss(Map<String, Double> paramVec,
+	@Override
+	public double empiricalLoss(ParamVector paramVec,
 			PairwiseRWExample example) {
 		TIntDoubleMap vec = this.rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
 		double loss = 0;
@@ -70,11 +73,13 @@ public class L2SqLossSRW extends SRW<PairwiseRWExample> {
         @param example
         @return Map from edge features to values
 	 */
-	public TObjectDoubleHashMap<String> gradient(Map<String,Double> paramVec, PairwiseRWExample example) {
+	@Override
+	public TObjectDoubleHashMap<String> gradient(ParamVector paramVec, PairwiseRWExample example) {
 		TIntDoubleMap p = this.rwrUsingFeatures(example.getGraph(),example.getQueryVec(),paramVec);
 		TIntObjectMap<TObjectDoubleHashMap<String>> d = this.derivRWRbyParams(example.getGraph(),example.getQueryVec(),paramVec);
 		TObjectDoubleHashMap<String> derivFparamVec = new TObjectDoubleHashMap<String>();
-		for (String f : paramVec.keySet()) {
+		Set<String> features = paramVec.keySet();
+		for (String f : features) {
 			derivFparamVec.put(f, derivRegularization(f,paramVec));
 		}
 		
@@ -96,9 +101,9 @@ public class L2SqLossSRW extends SRW<PairwiseRWExample> {
 	}
 	
 
-	public Map<String, Double> train(List<PairwiseRWExample> trainingExamples, Map<String, Double> initialParamVec) {
+	public Map<String, Double> train(List<PairwiseRWExample> trainingExamples, ParamVector initialParamVec) {
 		this.epoch = 0;
-		Map<String,Double> paramVec = initialParamVec;
+		ParamVector paramVec = initialParamVec;
 		for (int i=0; i<NUM_EPOCHS; i++) {
 			this.epoch++;
 //			int ex=0;

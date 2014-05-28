@@ -22,7 +22,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class RerankingTester extends Tester {
 	private static final Logger log = Logger.getLogger(RerankingTester.class);
-	protected Map<String,Double> params = null;
+	protected ParamVector params = null;
 	protected SRW<PosNegRWExample> srw;
 	public RerankingTester(Prover p, LogicProgram lp, SRW<PosNegRWExample> walker) {
 		super(p, lp);

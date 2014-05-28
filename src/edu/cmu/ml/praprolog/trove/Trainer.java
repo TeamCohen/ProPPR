@@ -89,11 +89,11 @@ public class Trainer {
 
     /** Return the batch gradient of the data
      */
-    public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples,Map<String,Double> paramVec) {
+    public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples,ParamVector paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
 		if (paramVec==null) {
-		    paramVec = new TreeMap<String,Double>();
+		    paramVec = new SimpleParamVector();
 		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		int k=0;
@@ -132,7 +132,7 @@ public class Trainer {
 		double previousAvgLoss = Double.MAX_VALUE;
 		long start = System.currentTimeMillis();
 		this.epoch = 0;
-		ParamVector paramVec = initialParamVec;
+		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0) {
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
@@ -154,7 +154,7 @@ public class Trainer {
 
 				k++;
 			}
-			cleanUpExamples(i);
+			cleanUpExamples(i,paramVec);
 			//			log.info(k+" examples processed");
 			if(traceLosses) {
 			    // wwc - added some more tracing here
@@ -190,7 +190,7 @@ public class Trainer {
 	protected double totalNegLossThisEpoch;
 
 	protected int numExamplesThisEpoch;
-	protected void doExample(int k, PosNegRWExample x, Map<String,Double> paramVec, boolean traceLosses) {
+	protected void doExample(int k, PosNegRWExample x, ParamVector paramVec, boolean traceLosses) {
 		log.debug("example "+x.toString()+" ...");
 		this.learner.trainOnExample(paramVec, x);
 		if (traceLosses) {
@@ -207,9 +207,9 @@ public class Trainer {
 		totalNegLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
-	protected void cleanUpExamples(int epoch) {}
+	protected void cleanUpExamples(int epoch, ParamVector paramVec) {}
 
-	protected void setUpEpochs(Map<String,Double> paramVec) {}
+	protected void setUpEpochs(ParamVector paramVec) {}
 
 	//////////////////////////// Running /////////////////////////////
 //	private static final String USAGE = "Usage:\n\tcookedExampleFile outputParamFile [options]\n"
