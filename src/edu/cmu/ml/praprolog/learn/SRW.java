@@ -32,11 +32,13 @@ public class SRW<E extends RWExample> {
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
+	public static final int DEFAULT_RATE_LENGTH = 1;
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected double delta;
 	protected int epoch;
+//	protected double regularize;
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
@@ -49,6 +51,7 @@ public class SRW<E extends RWExample> {
 		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
 		this.weightingScheme = wScheme;
+//		this.updateRegularizer();
 	}
 
 
@@ -302,12 +305,23 @@ public class SRW<E extends RWExample> {
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
 		}
-		double rate = Math.pow(this.epoch,-2) * this.eta / example.length();
+		double rate = learningRate();//Math.pow(this.epoch,-2) * this.eta / example.length();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
 		for (Map.Entry<String, Double> f : grad.entrySet()) {
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
 			log.debug(f.getKey()+"->"+paramVec.get(f.getKey()));
 		}
+	}
+	
+	protected double learningRate() {
+		return Math.pow(this.epoch,-2) * this.eta;
+	}
+
+	/**
+	 * Increase the epoch count
+	 */
+	public void setEpoch(int e) {
+		this.epoch = e;
 	}
 
 	/**

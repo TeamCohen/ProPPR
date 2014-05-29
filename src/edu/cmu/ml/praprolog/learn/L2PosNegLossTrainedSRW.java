@@ -70,10 +70,10 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
 			}
 		}
-		for (String f : trainableFeatures) {
-			double derivF = Dictionary.safeGet(derivFparamVec, f);
-			derivFparamVec.put(f,  derivF / example.length());
-		}
+//		for (String f : trainableFeatures) {
+//			double derivF = Dictionary.safeGet(derivFparamVec, f);
+//			derivFparamVec.put(f,  derivF / example.length());
+//		}
 		return derivFparamVec;
 	}
 
@@ -84,7 +84,6 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	 * @return
 	 */
 	protected Double derivRegularization(String f, ParamVector paramVec) {
-		// added 2* (kmm)
 		return untrainedFeatures.contains(f) ? 0.0 : 2*mu*Dictionary.safeGet(paramVec, f);
 	}
 

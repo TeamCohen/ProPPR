@@ -140,6 +140,7 @@ public class Trainer<T> {
 		setUpEpochs(paramVec);
 		for (int i=0; i<numEpochs; i++) {
 			this.epoch++;
+			this.learner.setEpoch(epoch);
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
 			setUpExamples(i);
@@ -218,7 +219,7 @@ public class Trainer<T> {
 	////////////////////////// Run ////////////////////////////////////////
 
 	public static void main(String[] args) {
-		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_PARAMS | Configuration.USE_DEFERREDPROGRAM;
+		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_SRW | Configuration.USE_LEARNINGSET | Configuration.USE_PARAMS | Configuration.USE_DEFERREDPROGRAM;
 		log.info(String.format("flags: 0x%x",flags));
 		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
 

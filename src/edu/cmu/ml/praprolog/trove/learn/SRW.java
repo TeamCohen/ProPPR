@@ -345,51 +345,25 @@ public class SRW<E extends RWExample> {
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
 		}
-		double rate = Math.pow(this.epoch,-2) * this.eta / example.length();
+		double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
-		// since paramVec is restricted to nonnegative values, we automatically adjust the rate
-		// by looking at the current values and the current gradient, and reduce the rate as necessary.
-		// 
-		// unfortunately, this means we need locked access to the paramVec, since if someone fusses with it
-		// between when we set the rate and when we apply it, we could end up pushing the paramVec too far.
-		// :(
-		//		synchronized(paramVec) { 
-		//			for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) { //String f = fEntry.getKey();
-		//				f.advance();
-		////				if (f.value() > 0) { 
-		////					rate = Math.min(rate, Dictionary.safeGet(paramVec,f.key()) / f.value());
-		////				}
-		//				if (Math.abs(f.value()) > 0) { 
-		//					double pf = Dictionary.safeGet(paramVec,f.key());
-		//					double smallEnough = pf / f.value();
-		//					double largeEnough = (pf - MAX_PARAM_VALUE) / f.value();
-		//					if (f.value() > 0) {
-		//						if (largeEnough > smallEnough) 
-		//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
-		//						rate = Math.min(rate, smallEnough);
-		//						rate = Math.max(rate, largeEnough);
-		//					} else {
-		//						if (largeEnough < smallEnough) 
-		//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
-		//						rate = Math.max(rate, smallEnough);
-		//						rate = Math.min(rate, largeEnough);
-		//					}
-		//					
-		//				}
-		//			}
-		//			if (log.isDebugEnabled()) log.debug("adjusted rate "+rate);
 		for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
 			f.advance();
-			//				log.debug(String.format("%s %f %f [%f]", f,Dictionary.safeGet(paramVec,f),grad.get(f),rate*grad.get(f)));
 			Dictionary.increment(paramVec, f.key(), - rate * f.value());
-			//				if (paramVec.get(f.key()) < 0) {
-			//					throw new IllegalStateException("Parameter weight "+f.key()+" can't be negative");
-			//				} else if (paramVec.get(f.key()) > MAX_PARAM_VALUE)
-			//					throw new IllegalStateException("Parameter weight "+f.key()+" can't trigger Infinity");
 		}
-		//		}
+	}
+	
+	protected double learningRate() {
+		return Math.pow(this.epoch,-2) * this.eta;
 	}
 
+	/**
+	 * Increase the epoch count
+	 */
+	public void setEpoch(int e) {
+		this.epoch = e;
+	}
+	
 	/**
 	 * [originally from SRW even though SRW lacks empiricalLoss]
 	 * @param paramVec

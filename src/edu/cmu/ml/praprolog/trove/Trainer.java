@@ -139,7 +139,8 @@ public class Trainer {
 		setUpEpochs(paramVec);
 		for (int i=0; i<numEpochs; i++) {
 			this.epoch++;
-			//learner.setEpoch(this.epoch); // wwc does NOT seem to help: TODO why not?
+			learner.setEpoch(this.epoch); 
+			// wwc does NOT seem to help: TODO why not?
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
 			setUpExamples(i);
