@@ -306,6 +306,7 @@ public class SRW<E extends RWExample> {
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
 		for (Map.Entry<String, Double> f : grad.entrySet()) {
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
+			log.debug(f.getKey()+"->"+paramVec.get(f.getKey()));
 		}
 	}
 
