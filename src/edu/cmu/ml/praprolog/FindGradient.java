@@ -14,6 +14,7 @@ import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class FindGradient {
@@ -32,7 +33,7 @@ public class FindGradient {
 		log.info("Training model parameters...");
 		Map<String,Double> batchGradient;
 		if (c.trove) {
-		    Map<String,Double> paramVec = null;
+			ParamVector paramVec = null;
 			Trainer trainer = (Trainer) c.trainer;
 			if (c.epochs>0) {
 			    paramVec = trainer.trainParametersOnCookedIterator(new CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);

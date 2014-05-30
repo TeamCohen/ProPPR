@@ -14,6 +14,7 @@ import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
@@ -134,7 +135,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return RWR result vector mapping nodes to values
 	 */
-	public  TIntDoubleMap rwrUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap startVec, Map<String,Double> paramVec) {
+	public  TIntDoubleMap rwrUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap startVec, ParamVector paramVec) {
 		TIntDoubleMap vec = startVec;
 		for(int i=0; i<maxT; i++) {
 			vec = walkOnceUsingFeatures(g,vec,paramVec);
@@ -148,7 +149,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return Mapping from new set of node names to updated values.
 	 */
-	public  TIntDoubleMap walkOnceUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap vec, Map<String,Double> paramVec) {
+	public  TIntDoubleMap walkOnceUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap vec, ParamVector paramVec) {
 		TIntDoubleMap nextVec = new TIntDoubleHashMap();
 		int k=-1;
 		for (TIntDoubleIterator u = vec.iterator(); u.hasNext(); ) { 
@@ -185,7 +186,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps edge feature names to nonnegative values.
 	 * @return Mapping from each outgoing node from the random walk of the query and each feature relevant to the outgoing edge, to the derivative value. 
 	 */
-	public  TIntObjectMap<TObjectDoubleHashMap<String>> derivRWRbyParams(AnnotatedTroveGraph graph, TIntDoubleMap queryVec, Map<String, Double> paramVec) {
+	public  TIntObjectMap<TObjectDoubleHashMap<String>> derivRWRbyParams(AnnotatedTroveGraph graph, TIntDoubleMap queryVec, ParamVector paramVec) {
 		TIntDoubleMap p = queryVec;
 		TIntObjectMap<TObjectDoubleHashMap<String>> d = new TIntObjectHashMap<TObjectDoubleHashMap<String>>();
 		for (int i=0; i<maxT; i++) {
@@ -221,7 +222,7 @@ public class SRW<E extends RWExample> {
 	 * @return Mapping from feature names to derivative values.
 	 */
 	protected  TObjectDoubleHashMap<String> derivWalkProbByParams(AnnotatedTroveGraph graph,
-			int u, int v, Map<String, Double> paramVec) {
+			int u, int v, ParamVector paramVec) {
 
 		double edgeUV = this.edgeWeight(graph, u, v, paramVec);
 		// vector of edge weights - one for each active feature
@@ -250,7 +251,7 @@ public class SRW<E extends RWExample> {
 	 * @return Mapping from features names to the derivative value.
 	 */
 	protected  TObjectDoubleMap<String> derivEdgeWeightByParams(AnnotatedTroveGraph graph, int u,
-			int v, Map<String, Double> paramVec) {
+			int v, ParamVector paramVec) {
 		TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>();
 		for (Feature f : graph.phi(u, v)) {
 			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
@@ -297,7 +298,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps from features names to nonnegative values.
 	 * @return
 	 */
-	public Set<String> trainableFeatures(Map<String, Double> paramVec) {
+	public Set<String> trainableFeatures(ParamVector paramVec) {
 		return trainableFeatures(paramVec.keySet());
 	}
 	/**
@@ -315,7 +316,7 @@ public class SRW<E extends RWExample> {
 	}
 
 	/** Allow subclasses to filter feature list **/
-	public Set<String> localFeatures(Map<String,Double> paramVec, E example) {
+	public Set<String> localFeatures(ParamVector paramVec, E example) {
 		return paramVec.keySet();
 	}
 
@@ -338,63 +339,37 @@ public class SRW<E extends RWExample> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public void trainOnExample(Map<String, Double> paramVec, E example) {
+	public void trainOnExample(ParamVector paramVec, E example) {
 		addDefaultWeights(example.getGraph(),paramVec);
 		TObjectDoubleHashMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
 		}
-		double rate = Math.pow(this.epoch,-2) * this.eta / example.length();
+		double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
-		// since paramVec is restricted to nonnegative values, we automatically adjust the rate
-		// by looking at the current values and the current gradient, and reduce the rate as necessary.
-		// 
-		// unfortunately, this means we need locked access to the paramVec, since if someone fusses with it
-		// between when we set the rate and when we apply it, we could end up pushing the paramVec too far.
-		// :(
-		//		synchronized(paramVec) { 
-		//			for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) { //String f = fEntry.getKey();
-		//				f.advance();
-		////				if (f.value() > 0) { 
-		////					rate = Math.min(rate, Dictionary.safeGet(paramVec,f.key()) / f.value());
-		////				}
-		//				if (Math.abs(f.value()) > 0) { 
-		//					double pf = Dictionary.safeGet(paramVec,f.key());
-		//					double smallEnough = pf / f.value();
-		//					double largeEnough = (pf - MAX_PARAM_VALUE) / f.value();
-		//					if (f.value() > 0) {
-		//						if (largeEnough > smallEnough) 
-		//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
-		//						rate = Math.min(rate, smallEnough);
-		//						rate = Math.max(rate, largeEnough);
-		//					} else {
-		//						if (largeEnough < smallEnough) 
-		//							throw new IllegalStateException("Gradient for feature "+f.key()+" out of range");
-		//						rate = Math.max(rate, smallEnough);
-		//						rate = Math.min(rate, largeEnough);
-		//					}
-		//					
-		//				}
-		//			}
-		//			if (log.isDebugEnabled()) log.debug("adjusted rate "+rate);
 		for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
 			f.advance();
-			//				log.debug(String.format("%s %f %f [%f]", f,Dictionary.safeGet(paramVec,f),grad.get(f),rate*grad.get(f)));
 			Dictionary.increment(paramVec, f.key(), - rate * f.value());
-			//				if (paramVec.get(f.key()) < 0) {
-			//					throw new IllegalStateException("Parameter weight "+f.key()+" can't be negative");
-			//				} else if (paramVec.get(f.key()) > MAX_PARAM_VALUE)
-			//					throw new IllegalStateException("Parameter weight "+f.key()+" can't trigger Infinity");
 		}
-		//		}
+	}
+	
+	protected double learningRate() {
+		return Math.pow(this.epoch,-2) * this.eta;
 	}
 
+	/**
+	 * Increase the epoch count
+	 */
+	public void setEpoch(int e) {
+		this.epoch = e;
+	}
+	
 	/**
 	 * [originally from SRW even though SRW lacks empiricalLoss]
 	 * @param paramVec
 	 * @param exampleIt
 	 */
-	public double averageLoss(Map<String,Double> paramVec, Iterable<E> exampleIt) {
+	public double averageLoss(ParamVector paramVec, Iterable<E> exampleIt) {
 		double totLoss = 0;
 		double numTest = 0;
 		for (E example : exampleIt) { 
@@ -415,7 +390,7 @@ public class SRW<E extends RWExample> {
 	 * @param example
 	 * @return
 	 */
-	public TObjectDoubleHashMap<String> gradient(Map<String,Double> paramVec, E example) {
+	public TObjectDoubleHashMap<String> gradient(ParamVector paramVec, E example) {
 		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
 	}
 	/**
@@ -423,10 +398,14 @@ public class SRW<E extends RWExample> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public double empiricalLoss(Map<String, Double> paramVec,
-			E example) {
+	public double empiricalLoss(ParamVector paramVec, E example) {
 		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
 	}
 
 
+	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
+	public ParamVector setupParams(ParamVector paramVec) { return paramVec; }
+	
+	/** Give the learner the opportunity to do additional parameter processing **/
+	public void cleanupParams(ParamVector paramVec) {}
 }

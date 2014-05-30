@@ -25,7 +25,9 @@ import edu.cmu.ml.praprolog.prove.TracingDfsProver;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParamsFile;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class Tester extends ExampleThawing {
 	private static final Logger log = Logger.getLogger(Tester.class);
@@ -169,7 +171,7 @@ public class Tester extends ExampleThawing {
 //		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
 		if (c.paramsFile != null) {
 			ParamsFile file = new ParamsFile(c.paramsFile);
-			c.tester.setParams(Dictionary.load(file), c.weightingScheme);
+			c.tester.setParams(new SimpleParamVector(Dictionary.load(file)), c.weightingScheme);
 			file.check(c);
 		}
 
@@ -180,7 +182,7 @@ public class Tester extends ExampleThawing {
 		System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
 	
 	}
-	public void setParams(Map<String, Double> paramVec, WeightingScheme wScheme) {
+	public void setParams(ParamVector paramVec, WeightingScheme wScheme) {
 		this.masterProgram.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(paramVec, wScheme));
 	}
 }

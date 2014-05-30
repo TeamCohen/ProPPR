@@ -23,6 +23,8 @@ import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
 import edu.cmu.ml.praprolog.util.FileBackedIterable;
 import edu.cmu.ml.praprolog.util.ParamsFile;
 import edu.cmu.ml.praprolog.util.ParsedFile;
+import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class Trainer<T> {
 	protected SRW<PosNegRWExample<T>> learner;
@@ -90,11 +92,11 @@ public class Trainer<T> {
 	
     /** Return the batch gradient of the data
      */
-    public Map<String,Double> findGradient(Collection<PosNegRWExample<T>> examples,Map<String,Double> paramVec) {
+    public Map<String,Double> findGradient(Collection<PosNegRWExample<T>> examples,ParamVector paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
 		if (paramVec==null) {
-		    paramVec = new TreeMap<String,Double>();
+		    paramVec = new SimpleParamVector();//TreeMap<String,Double>();
 		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		int k=0;
@@ -112,32 +114,33 @@ public class Trainer<T> {
 		*/
 	}
 
-	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample<T>> examples) {
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample<T>> examples) {
 		return this.trainParametersOnCookedIterator(examples, false);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample<T>> examples, boolean traceLosses) {
 		return trainParametersOnCookedIterator(examples, 5, traceLosses);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample<T>> examples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(examples, new TreeMap<String,Double>(), numEpochs, traceLosses);
+		return trainParametersOnCookedIterator(examples, new SimpleParamVector(), numEpochs, traceLosses);
 	}
-	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample<T>> examples, 
-			Map<String, Double> initialParamVec, 
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample<T>> examples, 
+			ParamVector initialParamVec, 
 			int numEpochs, 
 			boolean traceLosses) {
 		log.info("Training on cooked examples...");
 		double previousAvgLoss = Double.MAX_VALUE;
 		long start = System.currentTimeMillis();
 		this.epoch = 0;
-		Map<String,Double> paramVec = initialParamVec;
+		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0) {
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		setUpEpochs(paramVec);
 		for (int i=0; i<numEpochs; i++) {
 			this.epoch++;
+			this.learner.setEpoch(epoch);
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
 			setUpExamples(i);
@@ -152,7 +155,7 @@ public class Trainer<T> {
 
 				k++;
 			}
-			cleanUpExamples(i);
+			cleanUpExamples(i, paramVec);
 //			log.info(k+" examples processed");
 			if(traceLosses) {
 				// wwc - added some more tracing here
@@ -189,7 +192,7 @@ public class Trainer<T> {
 	protected double totalPosLossThisEpoch;
 	protected double totalNegLossThisEpoch;
 	protected int numExamplesThisEpoch;
-	protected void doExample(int k, PosNegRWExample<T> x, Map<String,Double> paramVec, boolean traceLosses) {
+	protected void doExample(int k, PosNegRWExample<T> x, ParamVector paramVec, boolean traceLosses) {
 		log.debug("example "+x.toString()+" ...");
 		this.learner.trainOnExample(paramVec, x);
 		if (traceLosses) {
@@ -206,15 +209,17 @@ public class Trainer<T> {
 		totalNegLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
-	protected void cleanUpExamples(int epoch) {}
+	protected void cleanUpExamples(int epoch, ParamVector paramVec) {
+		this.learner.cleanupParams(paramVec);
+	}
 
-	protected void setUpEpochs(Map<String,Double> paramVec) {}
+	protected void setUpEpochs(ParamVector paramVec) {}
 	//	protected void cleanUpEpochs() {}
 
 	////////////////////////// Run ////////////////////////////////////////
 
 	public static void main(String[] args) {
-		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_PARAMS | Configuration.USE_DEFERREDPROGRAM;
+		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_SRW | Configuration.USE_LEARNINGSET | Configuration.USE_PARAMS | Configuration.USE_DEFERREDPROGRAM;
 		log.info(String.format("flags: 0x%x",flags));
 		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
 

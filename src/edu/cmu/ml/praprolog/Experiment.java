@@ -15,6 +15,7 @@ import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class Experiment {
@@ -42,7 +43,7 @@ public class Experiment {
 		
 		// train parameters on the cooked training data
 		log.info("Training model parameters...");
-		Map<String,Double> paramVec = null;
+		ParamVector paramVec = null;
 		if (c.trove) {
 			Trainer trainer = (Trainer) c.trainer;
 			paramVec = trainer.trainParametersOnCookedIterator(new edu.cmu.ml.praprolog.trove.learn.CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);

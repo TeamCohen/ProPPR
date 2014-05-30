@@ -16,7 +16,9 @@ import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.FileBackedIterable;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParsedFile;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class Trainer {
 	public static final String MAJOR_DELIM="\t";
@@ -87,11 +89,11 @@ public class Trainer {
 
     /** Return the batch gradient of the data
      */
-    public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples,Map<String,Double> paramVec) {
+    public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples,ParamVector paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
 		if (paramVec==null) {
-		    paramVec = new TreeMap<String,Double>();
+		    paramVec = new SimpleParamVector();
 		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		int k=0;
@@ -110,34 +112,35 @@ public class Trainer {
 	}
 
 
-	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample> iteratorFactory) {
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample> iteratorFactory) {
 		return this.trainParametersOnCookedIterator(iteratorFactory, false);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample> importCookedExamples, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, 5, traceLosses);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new TreeMap<String,Double>(), numEpochs, traceLosses);
+		return trainParametersOnCookedIterator(importCookedExamples, new SimpleParamVector(new TreeMap<String,Double>()), numEpochs, traceLosses);
 	}
 
-	public Map<String,Double> trainParametersOnCookedIterator(Iterable<PosNegRWExample> examples, 
-			Map<String, Double> initialParamVec, 
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample> examples, 
+			ParamVector initialParamVec, 
 			int numEpochs, 
 			boolean traceLosses) {
 		log.info("Training on cooked examples...");
 		double previousAvgLoss = Double.MAX_VALUE;
 		long start = System.currentTimeMillis();
 		this.epoch = 0;
-		Map<String,Double> paramVec = initialParamVec;
+		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0) {
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		setUpEpochs(paramVec);
 		for (int i=0; i<numEpochs; i++) {
 			this.epoch++;
-			//learner.setEpoch(this.epoch); // wwc does NOT seem to help: TODO why not?
+			learner.setEpoch(this.epoch); 
+			// wwc does NOT seem to help: TODO why not?
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
 			setUpExamples(i);
@@ -152,7 +155,7 @@ public class Trainer {
 
 				k++;
 			}
-			cleanUpExamples(i);
+			cleanUpExamples(i,paramVec);
 			//			log.info(k+" examples processed");
 			if(traceLosses) {
 			    // wwc - added some more tracing here
@@ -188,7 +191,7 @@ public class Trainer {
 	protected double totalNegLossThisEpoch;
 
 	protected int numExamplesThisEpoch;
-	protected void doExample(int k, PosNegRWExample x, Map<String,Double> paramVec, boolean traceLosses) {
+	protected void doExample(int k, PosNegRWExample x, ParamVector paramVec, boolean traceLosses) {
 		log.debug("example "+x.toString()+" ...");
 		this.learner.trainOnExample(paramVec, x);
 		if (traceLosses) {
@@ -205,9 +208,9 @@ public class Trainer {
 		totalNegLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
-	protected void cleanUpExamples(int epoch) {}
+	protected void cleanUpExamples(int epoch, ParamVector paramVec) {}
 
-	protected void setUpEpochs(Map<String,Double> paramVec) {}
+	protected void setUpEpochs(ParamVector paramVec) {}
 
 	//////////////////////////// Running /////////////////////////////
 //	private static final String USAGE = "Usage:\n\tcookedExampleFile outputParamFile [options]\n"

@@ -18,6 +18,8 @@ import edu.cmu.ml.praprolog.learn.PairwiseRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 /**
  * These tests are on a graph without reset links in it.
  * @author krivard
@@ -73,7 +75,7 @@ public class SRWTest extends RedBlueGraph {
 		TreeMap<String,Double> startVec = new TreeMap<String,Double>();
 		startVec.put("r0",1.0);
 		Map<String,Double> baseLineVec = myRWR(startVec,g,maxT);
-		TreeMap<String,Double>uniformWeightVec = new TreeMap<String,Double>();
+		ParamVector uniformWeightVec = new SimpleParamVector();
 		uniformWeightVec.put("fromb",1.0);
 		uniformWeightVec.put("tob",1.0);
 		uniformWeightVec.put("fromr",1.0);

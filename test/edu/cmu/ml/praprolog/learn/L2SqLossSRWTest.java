@@ -6,12 +6,15 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.learn.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class L2SqLossSRWTest extends SRWTest {
 	public void initSrw() {
@@ -21,9 +24,9 @@ public class L2SqLossSRWTest extends SRWTest {
 	@Test
 	public void testGradient() {
 		
-		TreeMap<String,Double> startVec = new TreeMap<String,Double>();
+		ParamVector startVec = new SimpleParamVector();//new TreeMap<String,Double>();
 		startVec.put("r0",1.0);
-		Map<String,Double> baseLineVec = brGraphs.get(0).rwr(startVec);
+		ParamVector baseLineVec = new SimpleParamVector(brGraphs.get(0).rwr(startVec));
 		
 		Map<String,Double> blues = bluePart(baseLineVec);
 		Map<String,Double> reds = redPart(baseLineVec);
@@ -34,14 +37,14 @@ public class L2SqLossSRWTest extends SRWTest {
 			}
 		}
 		
-		TreeMap<String,Double>uniformWeightVec = new TreeMap<String,Double>();
+		ParamVector uniformWeightVec = new SimpleParamVector();//new TreeMap<String,Double>();
 		String[] names = {"fromb","tob","fromr","tor"};
 		for (String n : names) uniformWeightVec.put(n,1.0);
 		
 		L2SqLossSRW srw = (L2SqLossSRW) this.srw;
 		double baselineLoss = srw.empiricalLoss(uniformWeightVec, new PairwiseRWExample(brGraphs.get(0), startVec, trainingPairs));
 		
-		Map<String,Double> biasedWeightVec = (Map<String, Double>) uniformWeightVec.clone();
+		ParamVector biasedWeightVec = new SimpleParamVector(); biasedWeightVec.putAll(uniformWeightVec);
 		biasedWeightVec.put("tob", 10.0);
 		biasedWeightVec.put("tor", 0.1);
 		double biasedLoss = srw.empiricalLoss(biasedWeightVec, new PairwiseRWExample(brGraphs.get(0), startVec, trainingPairs));
@@ -61,7 +64,7 @@ public class L2SqLossSRWTest extends SRWTest {
 		assertTrue("gradient @ fromr "+gradient.get("fromr"),gradient.get("fromr") > 0);
 		
 		double eps = .001;
-		TreeMap<String,Double> nearlyUniformWeightVec = new TreeMap<String,Double>();
+		ParamVector nearlyUniformWeightVec = new SimpleParamVector();
 		for (String f : gradient.keySet()) nearlyUniformWeightVec.put(f,1.0-eps*gradient.get(f));
 		double improvedBaselineLoss = srw.empiricalLoss(nearlyUniformWeightVec, new PairwiseRWExample(brGraphs.get(0), startVec, trainingPairs));
 		assertTrue("baselineLoss "+baselineLoss+" should be > improvedBaselineLoss "+improvedBaselineLoss, baselineLoss > improvedBaselineLoss);
@@ -114,7 +117,7 @@ public class L2SqLossSRWTest extends SRWTest {
 //		query.put("b2", 1.0); 
 //		testGen.add(new PairwiseRWExample(g, query, trainingPairs));
 		
-		Map<String,Double> uniformWeightVec = new TreeMap<String,Double>();
+		ParamVector uniformWeightVec = new SimpleParamVector();
 		uniformWeightVec.put("fromb", 1.0);
 		uniformWeightVec.put("tob", 1.0);
 		uniformWeightVec.put("fromr", 1.0);
@@ -126,10 +129,11 @@ public class L2SqLossSRWTest extends SRWTest {
 		System.err.println("originalLoss "+originalLoss);
 //		if(true)return;
 		
-		Map<String,Double> learnedWeightVec = brSRW.train(trainGen,uniformWeightVec);
+		ParamVector learnedWeightVec = brSRW.train(trainGen,uniformWeightVec);
 		double learnedLoss = brSRW.averageLoss(learnedWeightVec,trainGen);
 		assertTrue(String.format("learnedLoss %f !< originalLoss %f",learnedLoss,originalLoss),learnedLoss < originalLoss);
-		for (String f : learnedWeightVec.keySet()) {
+		Set<String> features = learnedWeightVec.keySet(); 
+		for (String f : features) {
 			if (f.endsWith("b")) assertTrue(String.format("Feature %s %f !< 1.0",f,learnedWeightVec.get(f)),learnedWeightVec.get(f) < 1.0);
 			else assertTrue(String.format("Feature %s %f !> 1.0",f,learnedWeightVec.get(f)),learnedWeightVec.get(f) > 1.0);
 		}

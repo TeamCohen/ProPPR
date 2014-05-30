@@ -13,10 +13,11 @@ import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
+import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class RerankingTester extends Tester {
 	private static final Logger log = Logger.getLogger(RerankingTester.class);
-	protected Map<String,Double> params = null;
+	protected ParamVector params = null;
 	protected SRW<PosNegRWExample<String>> srw;
 	public RerankingTester(Prover p, LogicProgram lp, SRW<PosNegRWExample<String>> walker) {
 		super(p, lp);
@@ -24,7 +25,7 @@ public class RerankingTester extends Tester {
 	}
 	
 	@Override
-	public void setParams(Map<String,Double> params, WeightingScheme wScheme) {
+	public void setParams(ParamVector params, WeightingScheme wScheme) {
 		// weightingScheme is only used by the SRW, which got a copy during configuration
 		this.params = params;
 	}

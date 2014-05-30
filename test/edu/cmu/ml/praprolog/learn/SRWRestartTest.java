@@ -15,6 +15,8 @@ import edu.cmu.ml.praprolog.learn.L2SqLossSRW;
 import edu.cmu.ml.praprolog.learn.PairwiseRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 /**
  * These tests are on a graph which includes reset links.
@@ -51,10 +53,10 @@ public class SRWRestartTest extends SRWTest {
 	public void testBiasedRWR() {
 		int maxT = 10;
 		
-		TreeMap<String,Double> startVec = new TreeMap<String,Double>();
+		Map<String,Double> startVec = new TreeMap<String,Double>();
 		startVec.put("r0",1.0);
-		Map<String,Double> baseLineVec = brGraphs.get(0).rwr(startVec);
-		TreeMap<String,Double> biasedWeightVec = new TreeMap<String,Double>();
+		ParamVector baseLineVec = new SimpleParamVector(brGraphs.get(0).rwr(startVec));
+		ParamVector biasedWeightVec = new SimpleParamVector();//new TreeMap<String,Double>();
 		biasedWeightVec.put("fromb",1.0);
 		biasedWeightVec.put("tob",10.0);
 		biasedWeightVec.put("fromr",1.0);
@@ -88,7 +90,7 @@ public class SRWRestartTest extends SRWTest {
 			examples[i] = xx;
 		}
 		
-		TreeMap<String,Double> weightVec = new TreeMap<String,Double>();
+		ParamVector weightVec = new SimpleParamVector();
 		weightVec.put("fromb",1.01);
 		weightVec.put("tob",1.0);
 		weightVec.put("fromr",1.03);
