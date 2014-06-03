@@ -1,0 +1,8 @@
+edge(V1,V2) :- distr(V1,V2,K),hasprop(V1,W1),hasprop(V2,W2),compact(W1,W2,K) #parentr.
+compact(W1,W2,K) :- #comp(W1,W2,K).
+
+edge(V1,V2) :- distl(V1,V2,K),hasprop(V1,W1),hasprop(V2,W2),compactl(W1,W2,K) #parentl.
+compactl(W1,W2,K) :- #compl(W1,W2,K).
+
+edge(V1,V2) :- distrt(V1,V2,K),hasprop(V1,W1),hasprop(V2,W2),compactroot(W1,W2,K) #parentroot.
+compactroot(W1,W2,K) :- #comproot(W1,W2,K).

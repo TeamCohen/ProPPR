@@ -1,0 +1,4 @@
+pre.train pairs 11.0 errors 11.0 errorRate 1.0 map 0.8181818181818182
+pre.test pairs 7.0 errors 7.0 errorRate 1.0 map 0.7142857142857143
+post.train pairs 11.0 errors 0.0 errorRate 0.0 map 1.0
+post.test pairs 7.0 errors 1.0 errorRate 0.14285714285714285 map 0.9285714285714286

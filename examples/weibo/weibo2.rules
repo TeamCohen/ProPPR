@@ -1,0 +1,40 @@
+edge(V1,V2) :- adjacent(V1,V2) #adj.
+edge(V1,V2) :- skipone(V1,V2) #skipone.
+edge(V1,V2) :- skiptwo(V1,V2) #skiptwo.
+edge(V1,V2) :- skipthree(V1,V2) #skipthree.
+
+edge(V1,V2) :- haswordinverse(W1,V1),adjacent(V1,V2),hasword(V2,W2),keyword(W1),keypword(W2) #parentword.
+edge(V1,V2) :- hasposinverse(W1,V1),adjacent(V1,V2),haspos(V2,W2),keypos(W1),keyppos(W2) #pos.
+
+edge(V1,V2) :- haswordinverse(W1,V1),skipone(V1,V2),hasword(V2,W2),keysoword(W1),keypsoword(W2) #skiponeword.
+edge(V1,V2) :- hasposinverse(W1,V1),skipone(V1,V2),haspos(V2,W2),keysopos(W1),keypsopos(W2) #skiponepos.
+
+edge(V1,V2) :- haswordinverse(W1,V1),skiptwo(V1,V2),hasword(V2,W2),keystword(W1),keypstword(W2) #skiptwoword.
+edge(V1,V2) :- hasposinverse(W1,V1),skiptwo(V1,V2),haspos(V2,W2),keystpos(W1),keypstpos(W2) #skiptwopos.
+
+edge(V1,V2) :- haswordinverse(W1,V1),skipthree(V1,V2),hasword(V2,W2),keysthword(W1),keypsthword(W2) #skipthword.
+edge(V1,V2) :- hasposinverse(W1,V1),skipthree(V1,V2),haspos(V2,W2),keysthpos(W1),keypsthpos(W2) #skipthpos.
+
+keyword(W) :- # kw(W).
+keypword(W) :- # kpw(W).
+
+keypos(W) :- # kp(W).
+keyppos(W) :- # kpp(W).
+
+keysoword(W) :- # ksow(W).
+keypsoword(W) :- # kpsow(W).
+
+keysopos(W) :- # ksop(W).
+keypsopos(W) :- # kpsop(W).
+
+keystword(W) :- # kstw(W).
+keypstword(W) :- # kpstw(W).
+
+keystpos(W) :- # kstp(W).
+keypstpos(W) :- # kpstp(W).
+
+keysthword(W) :- # ksthw(W).
+keypsthword(W) :- # kpsthw(W).
+
+keysthpos(W) :- # ksthp(W).
+keypsthpos(W) :- # kpsthp(W).

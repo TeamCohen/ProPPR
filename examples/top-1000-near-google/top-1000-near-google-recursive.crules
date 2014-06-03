@@ -1,0 +1,334 @@
+concept_acquired,-1,-2 & concept_acquiredby,-1,-2 # id,google/top-1000-near-google-recursive.rules_01 # A,B
+concept_acquired,-1,-2 & concept_companyeconomicsector,-1,-3 & concept_economicsectorcompany,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_02 # A,C,B
+concept_acquired,-1,-2 & fact_concept_acquired,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_03 # A,C
+concept_acquiredby,-1,-2 & concept_acquired,-1,-2 # id,google/top-1000-near-google-recursive.rules_04 # A,B
+concept_agentactsinlocation,-1,-2 & fact_concept_agentactsinlocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_05 # A,B
+concept_agentactsinlocation,-1,-2 & concept_proxyof,-1,-3 & concept_citysportsteams,-3,-4 & concept_proxyof,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_06 # A,D,B,C
+concept_agentactsinlocation,-1,-2 & fact_concept_agentactsinlocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_07 # A,D
+concept_agentbelongstoorganization,-1,-2 & concept_agentcontrols,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_08 # A,B
+concept_agentbelongstoorganization,-1,-2 & fact_concept_agentbelongstoorganization,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_09 # A,B
+concept_agentcollaborateswithagent,-1,-2 & concept_controlledbyagent,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_10 # A,B
+concept_agentcollaborateswithagent,-1,-2 & fact_concept_agentcollaborateswithagent,-1,-2 # id,google/top-1000-near-google-recursive.rules_11 # A,B
+concept_agentcollaborateswithagent,-1,-2 & fact_concept_agentcollaborateswithagent,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_12 # A,B
+concept_agentcompeteswithagent,-1,-2 & concept_animaltypehasanimal,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_13 # A,B
+concept_agentcompeteswithagent,-1,-2 & fact_concept_agentcompeteswithagent,-1,-2 # id,google/top-1000-near-google-recursive.rules_14 # A,B
+concept_agentcompeteswithagent,-1,-2 & fact_concept_agentcompeteswithagent,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_15 # A,B
+concept_agentcontributedtocreativework,-1,-2 & concept_creativeworkcontributedtobyagent,-1,-2 # id,google/top-1000-near-google-recursive.rules_16 # A,B
+concept_agentcontrols,-1,-2 & concept_controlledbyagent,-1,-2 # id,google/top-1000-near-google-recursive.rules_17 # A,B
+concept_agentcontrols,-1,-2 & concept_superpartof,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_18 # A,B
+concept_agentcontrols,-1,-2 & fact_concept_agentcontrols,-1,-2 # id,google/top-1000-near-google-recursive.rules_19 # A,B
+concept_agentcontrols,-1,-2 & fact_concept_agentcontrols,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_20 # A,B
+concept_agentcreated,-1,-2 & concept_agentcontributedtocreativework,-1,-3 & concept_relatedto,-3,-4 & concept_agentcontributedtocreativework,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_21 # A,D,B,C
+concept_agentcreated,-1,-2 & fact_concept_agentcreated,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_22 # A,D
+concept_agenthaswebsite,-1,-2 & fact_concept_agenthaswebsite,-1,-2 # id,google/top-1000-near-google-recursive.rules_23 # A,B
+concept_agenthaswebsite,-1,-2 & concept_organizationterminatedperson,-1,-3 & concept_personbelongstoorganization,-3,-4 & concept_agentcompeteswithagent,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_24 # A,D,B,C
+concept_agenthaswebsite,-1,-2 & fact_concept_agenthaswebsite,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_25 # A,D
+concept_agentinteractswithagent,-1,-2 & concept_agentinteractswithagent,-1,-2 # id,google/top-1000-near-google-recursive.rules_26 # A,B
+concept_agentinvolvedwithitem,-1,-2 & fact_concept_agentinvolvedwithitem,-1,-2 # id,google/top-1000-near-google-recursive.rules_27 # A,B
+concept_agentinvolvedwithitem,-1,-2 & concept_agentcompeteswithagent,-1,-3 & concept_agentinvolvedwithitem,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_28 # A,C,B
+concept_agentinvolvedwithitem,-1,-2 & fact_concept_agentinvolvedwithitem,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_29 # A,C
+concept_agentowns,-1,-2 & concept_ownedbyagent,-1,-2 # id,google/top-1000-near-google-recursive.rules_30 # A,B
+concept_agentparticipatedinevent,-1,-2 & fact_concept_agentparticipatedinevent,-1,-2 # id,google/top-1000-near-google-recursive.rules_31 # A,B
+concept_agentparticipatedinevent,-1,-2 & concept_agentcompeteswithagent,-1,-3 & concept_agentcompeteswithagent,-3,-4 & concept_agentcompeteswithagent,-4,-5 & concept_agentparticipatedinevent,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_32 # A,E,B,C,D
+concept_agentparticipatedinevent,-1,-2 & fact_concept_agentparticipatedinevent,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_33 # A,E
+concept_agriculturalproductcamefromcountry,-1,-2 & concept_inverseofagriculturalproductcamefromcountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_34 # A,B
+concept_agriculturalproductcamefromcountry,-1,-2 & fact_concept_agriculturalproductcamefromcountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_35 # A,B
+concept_agriculturalproductcamefromcountry,-1,-2 & concept_inverseofagriculturalproductincludingagriculturalproduct,-1,-3 & concept_agriculturalproductgrowinginstateorprovince,-3,-4 & concept_geopoliticallocationcontainsstate,-4,-5 & concept_statelocatedincountry,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_36 # A,E,B,C,D
+concept_agriculturalproductcamefromcountry,-1,-2 & fact_concept_agriculturalproductcamefromcountry,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_37 # A,E
+concept_agriculturalproductcontainchemical,-1,-2 & concept_inverseofagriculturalproductcontainchemical,-1,-2 # id,google/top-1000-near-google-recursive.rules_38 # A,B
+concept_agriculturalproductcookedwithagriculturalproduct,-1,-2 & concept_inverseofagriculturalproductcookedwithagricultureproduct,-1,-2 # id,google/top-1000-near-google-recursive.rules_39 # A,B
+concept_agriculturalproductgrowinginstateorprovince,-1,-2 & fact_concept_agriculturalproductgrowinginstateorprovince,-1,-2 # id,google/top-1000-near-google-recursive.rules_40 # A,B
+concept_agriculturalproductgrowinginstateorprovince,-1,-2 & concept_agriculturalproducttoattractinsect,-1,-3 & concept_animalsuchasinsect,-3,-4 & concept_inverseofagriculturalproducttoattractinsect,-4,-5 & concept_atlocation,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_41 # A,E,B,C,D
+concept_agriculturalproductgrowinginstateorprovince,-1,-2 & fact_concept_agriculturalproductgrowinginstateorprovince,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_42 # A,E
+concept_agriculturalproductincludingagriculturalproduct,-1,-2 & concept_inverseofagriculturalproductincludingagriculturalproduct,-1,-2 # id,google/top-1000-near-google-recursive.rules_43 # A,B
+concept_agriculturalproductproducedbyfarm,-1,-2 & concept_farmproducesagriculturalproduct,-1,-2 # id,google/top-1000-near-google-recursive.rules_44 # A,B
+concept_agriculturalproducttoattractinsect,-1,-2 & concept_inverseofagriculturalproducttoattractinsect,-1,-2 # id,google/top-1000-near-google-recursive.rules_45 # A,B
+concept_airportincity,-1,-2 & concept_mutualproxyfor,-1,-3 & concept_proxyfor,-3,-4 & concept_competeswith,-4,-5 & concept_organizationactsinlocation,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_46 # A,E,B,C,D
+concept_airportincity,-1,-2 & fact_concept_airportincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_47 # A,E
+concept_animalistypeofanimal,-1,-2 & concept_animaltypehasanimal,-1,-2 # id,google/top-1000-near-google-recursive.rules_48 # A,B
+concept_animalsuchasinsect,-1,-2 & concept_inverseofanimalsuchasinsect,-1,-2 # id,google/top-1000-near-google-recursive.rules_49 # A,B
+concept_animaltypehasanimal,-1,-2 & concept_animalistypeofanimal,-1,-2 # id,google/top-1000-near-google-recursive.rules_50 # A,B
+concept_atdate,-1,-2 & fact_concept_atdate,-1,-2 # id,google/top-1000-near-google-recursive.rules_51 # A,B
+concept_atdate,-1,-2 & concept_proxyfor,-1,-3 & concept_mutualproxyfor,-3,-4 & concept_atdate,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_52 # A,D,B,C
+concept_atdate,-1,-2 & fact_concept_atdate,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_53 # A,D
+concept_athletebeatathlete,-1,-2 & concept_inverseofathletebeatathlete,-1,-2 # id,google/top-1000-near-google-recursive.rules_54 # A,B
+concept_athleteledsportsteam,-1,-2 & concept_athleteplaysinleague,-1,-3 & concept_organizationhasperson,-3,-4 & concept_athleteplaysforteam,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_55 # A,D,B,C
+concept_athleteledsportsteam,-1,-2 & fact_concept_athleteledsportsteam,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_56 # A,D
+concept_athleteplaysforteam,-1,-2 & concept_teammember,-1,-2 # id,google/top-1000-near-google-recursive.rules_57 # A,B
+concept_athleteplaysforteam,-1,-2 & fact_concept_athleteplaysforteam,-1,-2 # id,google/top-1000-near-google-recursive.rules_58 # A,B
+concept_athleteplaysforteam,-1,-2 & concept_athleteplayssport,-1,-3 & concept_sportteam,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_59 # A,C,B
+concept_athleteplaysforteam,-1,-2 & fact_concept_athleteplaysforteam,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_60 # A,C
+concept_athleteplaysinleague,-1,-2 & fact_concept_athleteplaysinleague,-1,-2 # id,google/top-1000-near-google-recursive.rules_61 # A,B
+concept_athleteplaysinleague,-1,-2 & concept_athleteplaysforteam,-1,-3 & concept_teammember,-3,-4 & concept_athleteplaysinleague,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_62 # A,D,B,C
+concept_athleteplaysinleague,-1,-2 & fact_concept_athleteplaysinleague,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_63 # A,D
+concept_athleteplayssport,-1,-2 & concept_players,-1,-2 # id,google/top-1000-near-google-recursive.rules_64 # A,B
+concept_athleteplayssport,-1,-2 & fact_concept_athleteplayssport,-1,-2 # id,google/top-1000-near-google-recursive.rules_65 # A,B
+concept_athleteplayssport,-1,-2 & concept_athletebeatathlete,-1,-3 & concept_athleteplayssport,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_66 # A,C,B
+concept_athleteplayssport,-1,-2 & fact_concept_athleteplayssport,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_67 # A,C
+concept_atlocation,-1,-2 & concept_locatedat,-1,-2 # id,google/top-1000-near-google-recursive.rules_68 # A,B
+concept_atlocation,-1,-2 & concept_subpartof,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_69 # A,B
+concept_atlocation,-1,-2 & fact_concept_atlocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_70 # A,B
+concept_atlocation,-1,-2 & fact_concept_atlocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_71 # A,B
+concept_attractionofcity,-1,-2 & fact_concept_attractionofcity,-1,-2 # id,google/top-1000-near-google-recursive.rules_72 # A,B
+concept_attractionofcity,-1,-2 & concept_stadiumhometeam,-1,-3 & concept_proxyof,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_73 # A,C,B
+concept_attractionofcity,-1,-2 & fact_concept_attractionofcity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_74 # A,C
+concept_automakerproducesmodel,-1,-2 & concept_acquiredby,-1,-3 & concept_synonymfor,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_75 # A,C,B
+concept_automakerproducesmodel,-1,-2 & fact_concept_automakerproducesmodel,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_76 # A,C
+concept_automobilemakercardealersinstateorprovince,-1,-2 & concept_inverseofautomobilemakercardealersinstateorprovince,-1,-2 # id,google/top-1000-near-google-recursive.rules_77 # A,B
+concept_automobilemakercardealersinstateorprovince,-1,-2 & fact_concept_automobilemakercardealersinstateorprovince,-1,-2 # id,google/top-1000-near-google-recursive.rules_78 # A,B
+concept_automobilemakercardealersinstateorprovince,-1,-2 & concept_automobilemakerdealersincountry,-1,-3 & concept_inverseofautomobilemakerdealersincountry,-3,-4 & concept_automobilemakercardealersinstateorprovince,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_79 # A,D,B,C
+concept_automobilemakercardealersinstateorprovince,-1,-2 & fact_concept_automobilemakercardealersinstateorprovince,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_80 # A,D
+concept_automobilemakerdealersincity,-1,-2 & concept_automobilemakercardealersinstateorprovince,-1,-3 & concept_inverseofautomobilemakercardealersinstateorprovince,-3,-4 & concept_hasofficeincity,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_81 # A,D,B,C
+concept_automobilemakerdealersincity,-1,-2 & fact_concept_automobilemakerdealersincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_82 # A,D
+concept_automobilemakerdealersincountry,-1,-2 & concept_inverseofautomobilemakerdealersincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_83 # A,B
+concept_automobilemakerdealersincountry,-1,-2 & fact_concept_automobilemakerdealersincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_84 # A,B
+concept_automobilemakerdealersincountry,-1,-2 & concept_automobilemakercardealersinstateorprovince,-1,-3 & concept_inverseofautomobilemakercardealersinstateorprovince,-3,-4 & concept_automobilemakerdealersincountry,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_85 # A,D,B,C
+concept_automobilemakerdealersincountry,-1,-2 & fact_concept_automobilemakerdealersincountry,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_86 # A,D
+concept_bankbankincountry,-1,-2 & fact_concept_bankbankincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_87 # A,B
+concept_bankbankincountry,-1,-2 & concept_agentcollaborateswithagent,-1,-3 & concept_agentcontrols,-3,-4 & concept_subpartof,-4,-5 & concept_bankbankincountry,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_88 # A,E,B,C,D
+concept_bankbankincountry,-1,-2 & fact_concept_bankbankincountry,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_89 # A,E
+concept_beveragemadefrombeverage,-1,-2 & concept_inverseofbeveragemadefrombeverage,-1,-2 # id,google/top-1000-near-google-recursive.rules_90 # A,B
+concept_beveragemadefrombeverage,-1,-2 & fact_concept_beveragemadefrombeverage,-1,-2 # id,google/top-1000-near-google-recursive.rules_91 # A,B
+concept_beveragemadefrombeverage,-1,-2 & concept_inverseofbeveragemadefrombeverage,-1,-3 & concept_beveragemadefrombeverage,-3,-4 & concept_agriculturalproductcontainchemical,-4,-5 & concept_inverseofagriculturalproductcontainchemical,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_92 # A,E,B,C,D
+concept_beveragemadefrombeverage,-1,-2 & fact_concept_beveragemadefrombeverage,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_93 # A,E
+concept_buildinglocatedincity,-1,-2 & concept_attractionofcity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_94 # A,B
+concept_buildinglocatedincity,-1,-2 & fact_concept_buildinglocatedincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_95 # A,B
+concept_ceoof,-1,-2 & concept_companyceo,-1,-2 # id,google/top-1000-near-google-recursive.rules_96 # A,B
+concept_ceoof,-1,-2 & concept_personterminatedbyorganization,-1,-3 & concept_companyceo,-3,-4 & concept_personterminatedbyorganization,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_97 # A,D,B,C
+concept_ceoof,-1,-2 & fact_concept_ceoof,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_98 # A,D
+concept_cityhashospital,-1,-2 & concept_hospitalincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_99 # A,B
+concept_cityhastransportation,-1,-2 & concept_transportationincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_100 # A,B
+concept_citylocatedincountry,-1,-2 & fact_concept_citylocatedincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_101 # A,B
+concept_citylocatedincountry,-1,-2 & concept_citylocatedinstate,-1,-3 & concept_statelocatedincountry,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_102 # A,C,B
+concept_citylocatedincountry,-1,-2 & fact_concept_citylocatedincountry,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_103 # A,C
+concept_citylocatedingeopoliticallocation,-1,-2 & concept_geopoliticallocationcontainscity,-1,-2 # id,google/top-1000-near-google-recursive.rules_104 # A,B
+concept_citylocatedingeopoliticallocation,-1,-2 & concept_proxyfor,-1,-3 & concept_proxyof,-3,-4 & concept_atlocation,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_105 # A,D,B,C
+concept_citylocatedingeopoliticallocation,-1,-2 & fact_concept_citylocatedingeopoliticallocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_106 # A,D
+concept_citylocatedinstate,-1,-2 & fact_concept_citylocatedinstate,-1,-2 # id,google/top-1000-near-google-recursive.rules_107 # A,B
+concept_citylocatedinstate,-1,-2 & concept_mutualproxyfor,-1,-3 & concept_mutualproxyfor,-3,-4 & concept_atlocation,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_108 # A,D,B,C
+concept_citylocatedinstate,-1,-2 & fact_concept_citylocatedinstate,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_109 # A,D
+concept_cityoforganizationheadquarters,-1,-2 & concept_organizationheadquarteredincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_110 # A,B
+concept_cityparks,-1,-2 & concept_parkincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_111 # A,B
+concept_cityradiostation,-1,-2 & concept_radiostationincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_112 # A,B
+concept_citysportsteams,-1,-2 & concept_teamplaysincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_113 # A,B
+concept_coachesteam,-1,-2 & concept_teamcoach,-1,-2 # id,google/top-1000-near-google-recursive.rules_114 # A,B
+concept_companyalsoknownas,-1,-2 & concept_organizationacronymhasname,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_115 # A,B
+concept_companyalsoknownas,-1,-2 & fact_concept_companyalsoknownas,-1,-2 # id,google/top-1000-near-google-recursive.rules_116 # A,B
+concept_companyalsoknownas,-1,-2 & fact_concept_companyalsoknownas,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_117 # A,B
+concept_companyceo,-1,-2 & concept_ceoof,-1,-2 # id,google/top-1000-near-google-recursive.rules_118 # A,B
+concept_companyeconomicsector,-1,-2 & concept_economicsectorcompany,-1,-2 # id,google/top-1000-near-google-recursive.rules_119 # A,B
+concept_companyeconomicsector,-1,-2 & fact_concept_companyeconomicsector,-1,-2 # id,google/top-1000-near-google-recursive.rules_120 # A,B
+concept_companyeconomicsector,-1,-2 & concept_agentcompeteswithagent,-1,-3 & concept_agentcompeteswithagent,-3,-4 & concept_companyeconomicsector,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_121 # A,D,B,C
+concept_companyeconomicsector,-1,-2 & fact_concept_companyeconomicsector,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_122 # A,D
+concept_competeswith,-1,-2 & fact_concept_competeswith,-1,-2 # id,google/top-1000-near-google-recursive.rules_123 # A,B
+concept_competeswith,-1,-2 & concept_companyeconomicsector,-1,-3 & concept_economicsectorcompany,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_124 # A,C,B
+concept_competeswith,-1,-2 & fact_concept_competeswith,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_125 # A,C
+concept_controlledbyagent,-1,-2 & concept_agentcontrols,-1,-2 # id,google/top-1000-near-google-recursive.rules_126 # A,B
+concept_countryalsoknownas,-1,-2 & fact_concept_countryalsoknownas,-1,-2 # id,google/top-1000-near-google-recursive.rules_127 # A,B
+concept_countryalsoknownas,-1,-2 & concept_countrylanguage,-1,-3 & concept_languageofcountry,-3,-4 & concept_countryalsoknownas,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_128 # A,D,B,C
+concept_countryalsoknownas,-1,-2 & fact_concept_countryalsoknownas,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_129 # A,D
+concept_countrycurrency,-1,-2 & fact_concept_countrycurrency,-1,-2 # id,google/top-1000-near-google-recursive.rules_130 # A,B
+concept_countrycurrency,-1,-2 & concept_countrylanguage,-1,-3 & concept_languageofcountry,-3,-4 & concept_countrycurrency,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_131 # A,D,B,C
+concept_countrycurrency,-1,-2 & fact_concept_countrycurrency,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_132 # A,D
+concept_countrylanguage,-1,-2 & concept_languageofcountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_133 # A,B
+concept_countrylocatedingeopoliticallocation,-1,-2 & concept_geopoliticallocationcontainsstate,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_134 # A,B
+concept_countrylocatedingeopoliticallocation,-1,-2 & fact_concept_countrylocatedingeopoliticallocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_135 # A,B
+concept_countryproducesproduct,-1,-2 & concept_productproducedincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_136 # A,B
+concept_countrystates,-1,-2 & concept_statelocatedincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_137 # A,B
+concept_creativeworkcontributedtobyagent,-1,-2 & concept_agentcontributedtocreativework,-1,-2 # id,google/top-1000-near-google-recursive.rules_138 # A,B
+concept_dateoforganzationdissolution,-1,-2 & concept_organizationdissolvedatdate,-1,-2 # id,google/top-1000-near-google-recursive.rules_139 # A,B
+concept_economicsectorcompany,-1,-2 & concept_companyeconomicsector,-1,-2 # id,google/top-1000-near-google-recursive.rules_140 # A,B
+concept_farmproducesagriculturalproduct,-1,-2 & concept_agriculturalproductproducedbyfarm,-1,-2 # id,google/top-1000-near-google-recursive.rules_141 # A,B
+concept_geopoliticallocationcontainscity,-1,-2 & concept_citylocatedingeopoliticallocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_142 # A,B
+concept_geopoliticallocationcontainsstate,-1,-2 & concept_statelocatedingeopoliticallocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_143 # A,B
+concept_hasofficeincity,-1,-2 & concept_organizationheadquarteredincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_144 # A,B
+concept_hasofficeincity,-1,-2 & fact_concept_hasofficeincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_145 # A,B
+concept_hasofficeincity,-1,-2 & fact_concept_hasofficeincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_146 # A,B
+concept_headquarteredin,-1,-2 & concept_newspaperincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_147 # A,B
+concept_headquarteredin,-1,-2 & fact_concept_headquarteredin,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_148 # A,B
+concept_hospitalincity,-1,-2 & concept_cityhashospital,-1,-2 # id,google/top-1000-near-google-recursive.rules_149 # A,B
+concept_inverseofagriculturalproductcamefromcountry,-1,-2 & concept_agriculturalproductcamefromcountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_150 # A,B
+concept_inverseofagriculturalproductcontainchemical,-1,-2 & concept_agriculturalproductcontainchemical,-1,-2 # id,google/top-1000-near-google-recursive.rules_151 # A,B
+concept_inverseofagriculturalproductcookedwithagricultureproduct,-1,-2 & concept_agriculturalproductcookedwithagriculturalproduct,-1,-2 # id,google/top-1000-near-google-recursive.rules_152 # A,B
+concept_inverseofagriculturalproductincludingagriculturalproduct,-1,-2 & concept_agriculturalproductincludingagriculturalproduct,-1,-2 # id,google/top-1000-near-google-recursive.rules_153 # A,B
+concept_inverseofagriculturalproducttoattractinsect,-1,-2 & concept_agriculturalproducttoattractinsect,-1,-2 # id,google/top-1000-near-google-recursive.rules_154 # A,B
+concept_inverseofanimalsuchasinsect,-1,-2 & concept_animalsuchasinsect,-1,-2 # id,google/top-1000-near-google-recursive.rules_155 # A,B
+concept_inverseofathletebeatathlete,-1,-2 & concept_athletebeatathlete,-1,-2 # id,google/top-1000-near-google-recursive.rules_156 # A,B
+concept_inverseofautomobilemakercardealersinstateorprovince,-1,-2 & concept_automobilemakercardealersinstateorprovince,-1,-2 # id,google/top-1000-near-google-recursive.rules_157 # A,B
+concept_inverseofautomobilemakerdealersincountry,-1,-2 & concept_automobilemakerdealersincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_158 # A,B
+concept_inverseofbeveragemadefrombeverage,-1,-2 & concept_beveragemadefrombeverage,-1,-2 # id,google/top-1000-near-google-recursive.rules_159 # A,B
+concept_inverseofweaponmadeincountry,-1,-2 & concept_weaponmadeincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_160 # A,B
+concept_istallerthan,-1,-2 & fact_concept_istallerthan,-1,-2 # id,google/top-1000-near-google-recursive.rules_161 # A,B
+concept_istallerthan,-1,-2 & concept_atdate,-1,-3 & concept_proxyfor,-3,-4 & concept_statelocatedincountry,-4,-5 & concept_istallerthan,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_162 # A,E,B,C,D
+concept_istallerthan,-1,-2 & fact_concept_istallerthan,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_163 # A,E
+concept_itemexistsatlocation,-1,-2 & concept_locationofitemexistence,-1,-2 # id,google/top-1000-near-google-recursive.rules_164 # A,B
+concept_itemexistsatlocation,-1,-2 & fact_concept_itemexistsatlocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_165 # A,B
+concept_itemexistsatlocation,-1,-2 & concept_agriculturalproductincludingagriculturalproduct,-1,-3 & concept_agriculturalproductproducedbyfarm,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_166 # A,C,B
+concept_itemexistsatlocation,-1,-2 & fact_concept_itemexistsatlocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_167 # A,C
+concept_itemfoundinroom,-1,-2 & concept_roomcancontainitem,-1,-2 # id,google/top-1000-near-google-recursive.rules_168 # A,B
+concept_journalistwritesforpublication,-1,-2 & concept_agentcontributedtocreativework,-1,-3 & concept_relatedto,-3,-4 & concept_agentcollaborateswithagent,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_169 # A,D,B,C
+concept_journalistwritesforpublication,-1,-2 & fact_concept_journalistwritesforpublication,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_170 # A,D
+concept_languageofcity,-1,-2 & fact_concept_languageofcity,-1,-2 # id,google/top-1000-near-google-recursive.rules_171 # A,B
+concept_languageofcity,-1,-2 & concept_languageofcountry,-1,-3 & concept_proxyof,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_172 # A,C,B
+concept_languageofcity,-1,-2 & fact_concept_languageofcity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_173 # A,C
+concept_languageofcountry,-1,-2 & concept_countrylanguage,-1,-2 # id,google/top-1000-near-google-recursive.rules_174 # A,B
+concept_languageofcountry,-1,-2 & fact_concept_languageofcountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_175 # A,B
+concept_languageofcountry,-1,-2 & concept_languageofuniversity,-1,-3 & concept_relatedto,-3,-4 & concept_languageschoolincity,-4,-5 & concept_citylocatedincountry,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_176 # A,E,B,C,D
+concept_languageofcountry,-1,-2 & fact_concept_languageofcountry,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_177 # A,E
+concept_languageofuniversity,-1,-2 & fact_concept_languageofuniversity,-1,-2 # id,google/top-1000-near-google-recursive.rules_178 # A,B
+concept_languageofuniversity,-1,-2 & concept_languageofcountry,-1,-3 & concept_countrylanguage,-3,-4 & concept_languageofuniversity,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_179 # A,D,B,C
+concept_languageofuniversity,-1,-2 & fact_concept_languageofuniversity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_180 # A,D
+concept_languageschoolincity,-1,-2 & fact_concept_languageschoolincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_181 # A,B
+concept_languageschoolincity,-1,-2 & concept_languageofcity,-1,-3 & concept_atlocation,-3,-4 & concept_locatedat,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_182 # A,D,B,C
+concept_languageschoolincity,-1,-2 & fact_concept_languageschoolincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_183 # A,D
+concept_leaguestadiums,-1,-2 & concept_leagueteams,-1,-3 & concept_agentactsinlocation,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_184 # A,C,B
+concept_leaguestadiums,-1,-2 & fact_concept_leaguestadiums,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_185 # A,C
+concept_leagueteams,-1,-2 & concept_teamplaysinleague,-1,-2 # id,google/top-1000-near-google-recursive.rules_186 # A,B
+concept_locatedat,-1,-2 & concept_atlocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_187 # A,B
+concept_locationactedinbyorganization,-1,-2 & concept_organizationactsinlocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_188 # A,B
+concept_locationlocatedwithinlocation,-1,-2 & concept_countryalsoknownas,-1,-3 & concept_atlocation,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_189 # A,C,B
+concept_locationlocatedwithinlocation,-1,-2 & fact_concept_locationlocatedwithinlocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_190 # A,C
+concept_locationofitemexistence,-1,-2 & concept_itemexistsatlocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_191 # A,B
+concept_locationrepresentedbypolitician,-1,-2 & concept_politicianrepresentslocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_192 # A,B
+concept_museumincity,-1,-2 & concept_locatedat,-1,-3 & concept_superpartof,-3,-4 & concept_athleteplaysforteam,-4,-5 & concept_teamplaysincity,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_193 # A,E,B,C,D
+concept_museumincity,-1,-2 & fact_concept_museumincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_194 # A,E
+concept_mutualproxyfor,-1,-2 & fact_concept_mutualproxyfor,-1,-2 # id,google/top-1000-near-google-recursive.rules_195 # A,B
+concept_mutualproxyfor,-1,-2 & concept_subpartof,-1,-3 & concept_mutualproxyfor,-3,-4 & concept_mutualproxyfor,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_196 # A,D,B,C
+concept_mutualproxyfor,-1,-2 & fact_concept_mutualproxyfor,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_197 # A,D
+concept_newspaperincity,-1,-2 & fact_concept_newspaperincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_198 # A,B
+concept_newspaperincity,-1,-2 & concept_worker,-1,-3 & concept_worksfor,-3,-4 & concept_hasofficeincity,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_199 # A,D,B,C
+concept_newspaperincity,-1,-2 & fact_concept_newspaperincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_200 # A,D
+concept_officeheldbypolitician,-1,-2 & concept_politicianholdsoffice,-1,-2 # id,google/top-1000-near-google-recursive.rules_201 # A,B
+concept_organizationacronymhasname,-1,-2 & concept_organizationnamehasacronym,-1,-2 # id,google/top-1000-near-google-recursive.rules_202 # A,B
+concept_organizationacronymhasname,-1,-2 & fact_concept_organizationacronymhasname,-1,-2 # id,google/top-1000-near-google-recursive.rules_203 # A,B
+concept_organizationacronymhasname,-1,-2 & concept_companyalsoknownas,-1,-3 & concept_organizationnamehasacronym,-3,-4 & concept_companyalsoknownas,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_204 # A,D,B,C
+concept_organizationacronymhasname,-1,-2 & fact_concept_organizationacronymhasname,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_205 # A,D
+concept_organizationactsinlocation,-1,-2 & concept_locationactedinbyorganization,-1,-2 # id,google/top-1000-near-google-recursive.rules_206 # A,B
+concept_organizationdissolvedatdate,-1,-2 & concept_dateoforganzationdissolution,-1,-2 # id,google/top-1000-near-google-recursive.rules_207 # A,B
+concept_organizationhasofficialwebsite,-1,-2 & concept_organizationleadbyperson,-1,-3 & concept_personterminatedbyorganization,-3,-4 & concept_agenthaswebsite,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_208 # A,D,B,C
+concept_organizationhasofficialwebsite,-1,-2 & fact_concept_organizationhasofficialwebsite,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_209 # A,D
+concept_organizationhasperson,-1,-2 & concept_personbelongstoorganization,-1,-2 # id,google/top-1000-near-google-recursive.rules_210 # A,B
+concept_organizationheadquarteredincity,-1,-2 & concept_cityoforganizationheadquarters,-1,-2 # id,google/top-1000-near-google-recursive.rules_211 # A,B
+concept_organizationhiredperson,-1,-2 & concept_controlledbyagent,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_212 # A,B
+concept_organizationhiredperson,-1,-2 & fact_concept_organizationhiredperson,-1,-2 # id,google/top-1000-near-google-recursive.rules_213 # A,B
+concept_organizationhiredperson,-1,-2 & fact_concept_organizationhiredperson,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_214 # A,B
+concept_organizationleadbyperson,-1,-2 & concept_personleadsorganization,-1,-2 # id,google/top-1000-near-google-recursive.rules_215 # A,B
+concept_organizationnamehasacronym,-1,-2 & concept_organizationacronymhasname,-1,-2 # id,google/top-1000-near-google-recursive.rules_216 # A,B
+concept_organizationterminatedperson,-1,-2 & concept_organizationhiredperson,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_217 # A,B
+concept_organizationterminatedperson,-1,-2 & concept_personterminatedbyorganization,-1,-2 # id,google/top-1000-near-google-recursive.rules_218 # A,B
+concept_organizationterminatedperson,-1,-2 & fact_concept_organizationterminatedperson,-1,-2 # id,google/top-1000-near-google-recursive.rules_219 # A,B
+concept_organizationterminatedperson,-1,-2 & fact_concept_organizationterminatedperson,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_220 # A,B
+concept_ownedbyagent,-1,-2 & concept_agentowns,-1,-2 # id,google/top-1000-near-google-recursive.rules_221 # A,B
+concept_parkincity,-1,-2 & concept_cityparks,-1,-2 # id,google/top-1000-near-google-recursive.rules_222 # A,B
+concept_personbelongstoorganization,-1,-2 & concept_organizationhasperson,-1,-2 # id,google/top-1000-near-google-recursive.rules_223 # A,B
+concept_personbelongstoorganization,-1,-2 & fact_concept_personbelongstoorganization,-1,-2 # id,google/top-1000-near-google-recursive.rules_224 # A,B
+concept_personbelongstoorganization,-1,-2 & concept_agentcontrols,-1,-3 & concept_organizationhasperson,-3,-4 & concept_agentcontrols,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_225 # A,D,B,C
+concept_personbelongstoorganization,-1,-2 & fact_concept_personbelongstoorganization,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_226 # A,D
+concept_personhascitizenship,-1,-2 & fact_concept_personhascitizenship,-1,-2 # id,google/top-1000-near-google-recursive.rules_227 # A,B
+concept_personhascitizenship,-1,-2 & concept_personhasjobposition,-1,-3 & concept_relatedto,-3,-4 & concept_personhascitizenship,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_228 # A,D,B,C
+concept_personhascitizenship,-1,-2 & fact_concept_personhascitizenship,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_229 # A,D
+concept_personhasjobposition,-1,-2 & fact_concept_personhasjobposition,-1,-2 # id,google/top-1000-near-google-recursive.rules_230 # A,B
+concept_personhasjobposition,-1,-2 & concept_proxyfor,-1,-3 & concept_geopoliticallocationcontainsstate,-3,-4 & concept_locationrepresentedbypolitician,-4,-5 & concept_politicianholdsoffice,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_231 # A,E,B,C,D
+concept_personhasjobposition,-1,-2 & fact_concept_personhasjobposition,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_232 # A,E
+concept_personhasresidenceingeopoliticallocation,-1,-2 & concept_politicianrepresentslocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_233 # A,B
+concept_personhasresidenceingeopoliticallocation,-1,-2 & fact_concept_personhasresidenceingeopoliticallocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_234 # A,B
+concept_personleadscity,-1,-2 & concept_personterminatedbyorganization,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_235 # A,B
+concept_personleadscity,-1,-2 & fact_concept_personleadscity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_236 # A,B
+concept_personleadsgeopoliticalorganization,-1,-2 & concept_politicianrepresentslocation,-1,-3 & concept_proxyof,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_237 # A,C,B
+concept_personleadsgeopoliticalorganization,-1,-2 & fact_concept_personleadsgeopoliticalorganization,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_238 # A,C
+concept_personleadsorganization,-1,-2 & concept_organizationleadbyperson,-1,-2 # id,google/top-1000-near-google-recursive.rules_239 # A,B
+concept_personleadsorganization,-1,-2 & concept_personbelongstoorganization,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_240 # A,B
+concept_personleadsorganization,-1,-2 & fact_concept_personleadsorganization,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_241 # A,B
+concept_personterminatedbyorganization,-1,-2 & concept_organizationterminatedperson,-1,-2 # id,google/top-1000-near-google-recursive.rules_242 # A,B
+concept_players,-1,-2 & concept_athleteplayssport,-1,-2 # id,google/top-1000-near-google-recursive.rules_243 # A,B
+concept_politicianholdsoffice,-1,-2 & concept_officeheldbypolitician,-1,-2 # id,google/top-1000-near-google-recursive.rules_244 # A,B
+concept_politicianholdsoffice,-1,-2 & fact_concept_politicianholdsoffice,-1,-2 # id,google/top-1000-near-google-recursive.rules_245 # A,B
+concept_politicianholdsoffice,-1,-2 & concept_politicianrepresentslocation,-1,-3 & concept_locationrepresentedbypolitician,-3,-4 & concept_politicianholdsoffice,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_246 # A,D,B,C
+concept_politicianholdsoffice,-1,-2 & fact_concept_politicianholdsoffice,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_247 # A,D
+concept_politicianrepresentslocation,-1,-2 & concept_locationrepresentedbypolitician,-1,-2 # id,google/top-1000-near-google-recursive.rules_248 # A,B
+concept_politicianrepresentslocation,-1,-2 & fact_concept_politicianrepresentslocation,-1,-2 # id,google/top-1000-near-google-recursive.rules_249 # A,B
+concept_politicianrepresentslocation,-1,-2 & concept_politicianholdsoffice,-1,-3 & concept_officeheldbypolitician,-3,-4 & concept_politicianrepresentslocation,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_250 # A,D,B,C
+concept_politicianrepresentslocation,-1,-2 & fact_concept_politicianrepresentslocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_251 # A,D
+concept_politicianusendorsedbypoliticianus,-1,-2 & concept_politicianusendorsespoliticianus,-1,-2 # id,google/top-1000-near-google-recursive.rules_252 # A,B
+concept_politicianusendorsespoliticianus,-1,-2 & concept_politicianusendorsedbypoliticianus,-1,-2 # id,google/top-1000-near-google-recursive.rules_253 # A,B
+concept_politicianusholdsoffice,-1,-2 & concept_agentinteractswithagent,-1,-3 & concept_politicianholdsoffice,-3,-4 & concept_synonymfor,-4,-5 & concept_synonymfor,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_254 # A,E,B,C,D
+concept_politicianusholdsoffice,-1,-2 & fact_concept_politicianusholdsoffice,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_255 # A,E
+concept_producedby,-1,-2 & concept_producesproduct,-1,-2 # id,google/top-1000-near-google-recursive.rules_256 # A,B
+concept_producesproduct,-1,-2 & concept_producedby,-1,-2 # id,google/top-1000-near-google-recursive.rules_257 # A,B
+concept_productproducedincountry,-1,-2 & concept_countryproducesproduct,-1,-2 # id,google/top-1000-near-google-recursive.rules_258 # A,B
+concept_proxyfor,-1,-2 & concept_proxyof,-1,-2 # id,google/top-1000-near-google-recursive.rules_259 # A,B
+concept_proxyfor,-1,-2 & fact_concept_proxyfor,-1,-2 # id,google/top-1000-near-google-recursive.rules_260 # A,B
+concept_proxyfor,-1,-2 & concept_subpartof,-1,-3 & concept_superpartof,-3,-4 & concept_mutualproxyfor,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_261 # A,D,B,C
+concept_proxyfor,-1,-2 & fact_concept_proxyfor,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_262 # A,D
+concept_proxyof,-1,-2 & concept_proxyfor,-1,-2 # id,google/top-1000-near-google-recursive.rules_263 # A,B
+concept_radiostationincity,-1,-2 & concept_cityradiostation,-1,-2 # id,google/top-1000-near-google-recursive.rules_264 # A,B
+concept_relatedto,-1,-2 & concept_relatedto,-1,-2 # id,google/top-1000-near-google-recursive.rules_265 # A,B
+concept_roomcancontainitem,-1,-2 & concept_itemfoundinroom,-1,-2 # id,google/top-1000-near-google-recursive.rules_266 # A,B
+concept_sportfansincountry,-1,-2 & fact_concept_sportfansincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_267 # A,B
+concept_sportfansincountry,-1,-2 & concept_sportschoolincountry,-1,-3 & concept_countrylanguage,-3,-4 & concept_languageschoolincity,-4,-5 & concept_citylocatedincountry,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_268 # A,E,B,C,D
+concept_sportfansincountry,-1,-2 & fact_concept_sportfansincountry,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_269 # A,E
+concept_sporthassportsteamposition,-1,-2 & concept_sportsteampositionforsport,-1,-2 # id,google/top-1000-near-google-recursive.rules_270 # A,B
+concept_sportschoolincountry,-1,-2 & fact_concept_sportschoolincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_271 # A,B
+concept_sportschoolincountry,-1,-2 & concept_sportfansincountry,-1,-3 & concept_inverseofagriculturalproductcamefromcountry,-3,-4 & concept_agriculturalproductcookedwithagriculturalproduct,-4,-5 & concept_agriculturalproductcamefromcountry,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_272 # A,E,B,C,D
+concept_sportschoolincountry,-1,-2 & fact_concept_sportschoolincountry,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_273 # A,E
+concept_sportsgamesport,-1,-2 & concept_sportsportsgameexample,-1,-2 # id,google/top-1000-near-google-recursive.rules_274 # A,B
+concept_sportsgameteam,-1,-2 & concept_sportsgamesport,-1,-3 & concept_players,-3,-4 & concept_athleteplaysforteam,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_275 # A,D,B,C
+concept_sportsgameteam,-1,-2 & fact_concept_sportsgameteam,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_276 # A,D
+concept_sportsportsgameexample,-1,-2 & concept_sportsgamesport,-1,-2 # id,google/top-1000-near-google-recursive.rules_277 # A,B
+concept_sportsteampositionforsport,-1,-2 & concept_sporthassportsteamposition,-1,-2 # id,google/top-1000-near-google-recursive.rules_278 # A,B
+concept_sportteam,-1,-2 & concept_teamplayssport,-1,-2 # id,google/top-1000-near-google-recursive.rules_279 # A,B
+concept_sportusesstadium,-1,-2 & fact_concept_sportusesstadium,-1,-2 # id,google/top-1000-near-google-recursive.rules_280 # A,B
+concept_sportusesstadium,-1,-2 & concept_sporthassportsteamposition,-1,-3 & concept_relatedto,-3,-4 & concept_relatedto,-4,-5 & concept_teamhomestadium,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_281 # A,E,B,C,D
+concept_sportusesstadium,-1,-2 & fact_concept_sportusesstadium,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_282 # A,E
+concept_stadiumhometeam,-1,-2 & concept_teamhomestadium,-1,-2 # id,google/top-1000-near-google-recursive.rules_283 # A,B
+concept_stadiumlocatedincity,-1,-2 & concept_stadiumhometeam,-1,-3 & concept_teamcoach,-3,-4 & concept_worksfor,-4,-5 & concept_teamplaysincity,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_284 # A,E,B,C,D
+concept_stadiumlocatedincity,-1,-2 & fact_concept_stadiumlocatedincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_285 # A,E
+concept_statehascapital,-1,-2 & concept_statelocatedincountry,-1,-3 & concept_geopoliticallocationcontainscity,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_286 # A,C,B
+concept_statehascapital,-1,-2 & fact_concept_statehascapital,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_287 # A,C
+concept_statelocatedincountry,-1,-2 & concept_countrystates,-1,-2 # id,google/top-1000-near-google-recursive.rules_288 # A,B
+concept_statelocatedingeopoliticallocation,-1,-2 & concept_geopoliticallocationcontainsstate,-1,-2 # id,google/top-1000-near-google-recursive.rules_289 # A,B
+concept_statelocatedingeopoliticallocation,-1,-2 & concept_locationofitemexistence,-1,-3 & concept_itemexistsatlocation,-3,-4 & concept_statelocatedincountry,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_290 # A,D,B,C
+concept_statelocatedingeopoliticallocation,-1,-2 & fact_concept_statelocatedingeopoliticallocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_291 # A,D
+concept_subpartof,-1,-2 & concept_atlocation,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_292 # A,B
+concept_subpartof,-1,-2 & concept_superpartof,-1,-2 # id,google/top-1000-near-google-recursive.rules_293 # A,B
+concept_subpartof,-1,-2 & fact_concept_subpartof,-1,-2 # id,google/top-1000-near-google-recursive.rules_294 # A,B
+concept_subpartof,-1,-2 & fact_concept_subpartof,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_295 # A,B
+concept_subpartoforganization,-1,-2 & concept_agentcontrols,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_296 # A,B
+concept_subpartoforganization,-1,-2 & fact_concept_subpartoforganization,-1,-2 # id,google/top-1000-near-google-recursive.rules_297 # A,B
+concept_subpartoforganization,-1,-2 & fact_concept_subpartoforganization,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_298 # A,B
+concept_superpartof,-1,-2 & concept_subpartof,-1,-2 # id,google/top-1000-near-google-recursive.rules_299 # A,B
+concept_synonymfor,-1,-2 & concept_synonymfor,-1,-2 # id,google/top-1000-near-google-recursive.rules_300 # A,B
+concept_teamalsoknownas,-1,-2 & concept_teamplaysagainstteam,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_301 # A,B
+concept_teamalsoknownas,-1,-2 & fact_concept_teamalsoknownas,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_302 # A,B
+concept_teamcoach,-1,-2 & concept_coachesteam,-1,-2 # id,google/top-1000-near-google-recursive.rules_303 # A,B
+concept_teamhomestadium,-1,-2 & concept_stadiumhometeam,-1,-2 # id,google/top-1000-near-google-recursive.rules_304 # A,B
+concept_teamhomestadium,-1,-2 & fact_concept_teamhomestadium,-1,-2 # id,google/top-1000-near-google-recursive.rules_305 # A,B
+concept_teamhomestadium,-1,-2 & concept_teamplayssport,-1,-3 & concept_sportusesstadium,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_306 # A,C,B
+concept_teamhomestadium,-1,-2 & fact_concept_teamhomestadium,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_307 # A,C
+concept_teammember,-1,-2 & concept_athleteplaysforteam,-1,-2 # id,google/top-1000-near-google-recursive.rules_308 # A,B
+concept_teamplaysagainstteam,-1,-2 & fact_concept_teamplaysagainstteam,-1,-2 # id,google/top-1000-near-google-recursive.rules_309 # A,B
+concept_teamplaysagainstteam,-1,-2 & concept_teamplayssport,-1,-3 & concept_sportteam,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_310 # A,C,B
+concept_teamplaysagainstteam,-1,-2 & fact_concept_teamplaysagainstteam,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_311 # A,C
+concept_teamplaysincity,-1,-2 & concept_citysportsteams,-1,-2 # id,google/top-1000-near-google-recursive.rules_312 # A,B
+concept_teamplaysincity,-1,-2 & fact_concept_teamplaysincity,-1,-2 # id,google/top-1000-near-google-recursive.rules_313 # A,B
+concept_teamplaysincity,-1,-2 & concept_teamhomestadium,-1,-3 & concept_locationactedinbyorganization,-3,-4 & concept_proxyof,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_314 # A,D,B,C
+concept_teamplaysincity,-1,-2 & fact_concept_teamplaysincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_315 # A,D
+concept_teamplaysinleague,-1,-2 & concept_leagueteams,-1,-2 # id,google/top-1000-near-google-recursive.rules_316 # A,B
+concept_teamplaysinleague,-1,-2 & concept_teamplaysagainstteam,-1,-3 & concept_agentcollaborateswithagent,-3,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_317 # A,C,B
+concept_teamplaysinleague,-1,-2 & fact_concept_teamplaysinleague,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_318 # A,C
+concept_teamplayssport,-1,-2 & concept_sportteam,-1,-2 # id,google/top-1000-near-google-recursive.rules_319 # A,B
+concept_teamplayssport,-1,-2 & fact_concept_teamplayssport,-1,-2 # id,google/top-1000-near-google-recursive.rules_320 # A,B
+concept_teamplayssport,-1,-2 & concept_agentcompeteswithagent,-1,-3 & concept_teamplayssport,-3,-4 & concept_sportsportsgameexample,-4,-5 & concept_relatedto,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_321 # A,E,B,C,D
+concept_teamplayssport,-1,-2 & fact_concept_teamplayssport,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_322 # A,E
+concept_televisionstationaffiliatedwith,-1,-2 & fact_concept_televisionstationaffiliatedwith,-1,-2 # id,google/top-1000-near-google-recursive.rules_323 # A,B
+concept_televisionstationaffiliatedwith,-1,-2 & concept_hasofficeincity,-1,-3 & concept_locatedat,-3,-4 & concept_televisionstationaffiliatedwith,-4,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_324 # A,D,B,C
+concept_televisionstationaffiliatedwith,-1,-2 & fact_concept_televisionstationaffiliatedwith,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_325 # A,D
+concept_televisionstationincity,-1,-2 & concept_subpartoforganization,-1,-3 & concept_companyeconomicsector,-3,-4 & concept_relatedto,-4,-5 & concept_hasofficeincity,-5,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_326 # A,E,B,C,D
+concept_televisionstationincity,-1,-2 & fact_concept_televisionstationincity,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_327 # A,E
+concept_transportationincity,-1,-2 & concept_cityhastransportation,-1,-2 # id,google/top-1000-near-google-recursive.rules_328 # A,B
+concept_weaponmadeincountry,-1,-2 & concept_inverseofweaponmadeincountry,-1,-2 # id,google/top-1000-near-google-recursive.rules_329 # A,B
+concept_worker,-1,-2 & concept_worksfor,-1,-2 # id,google/top-1000-near-google-recursive.rules_330 # A,B
+concept_worksfor,-1,-2 & concept_athleteplaysforteam,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_331 # A,B
+concept_worksfor,-1,-2 & concept_worker,-1,-2 # id,google/top-1000-near-google-recursive.rules_332 # A,B
+concept_worksfor,-1,-2 & fact_concept_worksfor,-1,-2 # id,google/top-1000-near-google-recursive.rules_333 # A,B
+concept_worksfor,-1,-2 & fact_concept_worksfor,-1,-2 & isLabel,-2 # id,google/top-1000-near-google-recursive.rules_334 # A,B
