@@ -118,7 +118,7 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 			assertFalse(f+" q nan",paramVecQ.get(f).isNaN());
 			assertFalse(f+" q inf",paramVecQ.get(f).isInfinite());
 			// accurate to 2% since most param values ~=1
-			assertEquals(f,paramVecRR.get(f),paramVecQ.get(f),0.02);
+			assertEquals(f,paramVecRR.get(f),paramVecQ.get(f),0.025);
 		}
 	}
 }
