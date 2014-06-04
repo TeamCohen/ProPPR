@@ -54,6 +54,6 @@ echo -e "else" >> Makefile.in
 echo -e "CP:=.:\${PROPPR}/bin:\${PROPPR}/conf/:\${PROPPR}/lib/*" >> Makefile.in
 echo -e "endif" >> Makefile.in
 
-echo -e "SCRIPTS=\$(shell pwd)/scripts
+echo -e "SCRIPTS=\$(shell pwd)/scripts" >> Makefile.in
 
 echo "Done."
