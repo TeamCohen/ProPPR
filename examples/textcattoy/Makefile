@@ -1,13 +1,8 @@
-ifeq ($(strip $(CP)),)
-PROPPR=/home/krivard/git/rinkitink/ProPPR
-CP:=.:${PROPPR}/bin:${PROPPR}/conf/:${PROPPR}/lib/*
+include ../Makefile.in
 
-endif
-ifeq ($(strip $(SCRIPTS)),)
-SCRIPTS:=/home/krivard/ProPPR-examples/scripts
-endif
-
+ifeq ($(strip $(JOPTS)),)
 JOPTS=-Xmx500M
+endif
 
 ### PARAMETERS ###
 ifeq ($(strip $(PROVER)),)
