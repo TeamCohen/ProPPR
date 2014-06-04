@@ -50,8 +50,7 @@ test.data: all.data
 	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
 	cat $*.results; \
 
-%.train %.params: %.data
-	cd ../Praprolog/; ./scripts/compile.sh ../$(DIR)/;cd ../$(DIR); \
+%.train %.params: %.data $(P)
 	$(JM).Trainer \
 			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
 			 --strict --train $*.data --test $*.data --srw $(SRW1) --output train.grounded \
