@@ -41,26 +41,29 @@ test.data: all.data
 ##### experiments
 
 %.run: $(P) %.data train.data
-	$(JM).Experiment --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
+	$(JM).Experiment \
+			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
 			 --strict --train train.data --test $*.data --srw $(SRW1) --output train.grounded \
 			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
-			 --solutions $*.answers --queries $*.data --notest; \
+			 --solutions $*.answers --queries $*.data --notest
 
 	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
 	cat $*.results; \
 
-%.train train.params: train.data %.data
+%.train %.params: %.data
 	cd ../Praprolog/; ./scripts/compile.sh ../$(DIR)/;cd ../$(DIR); \
-	$(JM).Trainer --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
-			 --strict --train train.data --test $*.data --srw $(SRW1) --output train.grounded \
+	$(JM).Trainer \
+			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
+			 --strict --train $*.data --test $*.data --srw $(SRW1) --output train.grounded \
 			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
-			 --solutions $*.answers --queries $*.data --notest; \
+			 --solutions $*.answers --queries $*.data --notest
 
 %.query: %.data train.params
-	$(JM).QueryAnswerer --programFiles $(P):all.cfacts --prover $(PR) \
+	$(JM).QueryAnswerer \
+			 --programFiles $(P):all.cfacts --prover $(PR) \
 			 --strict --srw $(SRW1) --output $*.answers \
 			 --params train.params --threads $(TH) --weightingScheme $(WT) --queries $*.data --unnormalized; \
-	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
+	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results
 	cat $*.results; \
 
 
