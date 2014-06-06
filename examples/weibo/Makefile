@@ -5,8 +5,14 @@ SCRIPTS=scripts
 JM=java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog
 PSTEM=weibo1
 P=$(PSTEM).crules
-#SRW1=l2plocal:0.001:2
-SRW1=l2p:0.001:2
+L2PLOCAL=l2plocal:0.001:2
+L2P=l2p:0.001:2
+#SRW1=$(L2P)
+ifeq ($(SRW),l2plocal)
+SRW1=$(L2PLOCAL)
+else
+SRW1=$(L2P)
+endif
 WT=tanh
 TRSIZE=12700
 EPOCHS=10
@@ -64,8 +70,4 @@ test.data: all.data
 			 --params train.params --threads $(TH) --weightingScheme $(WT) --queries $*.data --unnormalized; \
 	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results
 	cat $*.results; \
-
-
-
-
 
