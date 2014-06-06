@@ -1,3 +1,5 @@
+include ../Makefile.in
+
 ifeq ($(strip $(CP)),)
 CP:=.:/home/krivard/lib/proPPR.jar:../
 endif
@@ -6,8 +8,14 @@ SCRIPTS:=/home/krivard/ProPPR-examples/scripts
 endif
 
 ### PARAMETERS ###
+ifeq ($(strip $(EPSILON)),)
+EPSILON=1e-5
+endif
+ifeq ($(strip $(ALPHA)),)
+ALPHA=0.01
+endif
 ifeq ($(strip $(PROVER)),)
-PROVER=dpr:1e-5
+PROVER=dpr:$(EPSILON):$(ALPHA)
 endif
 ifeq ($(strip $(THREADS)),)
 THREADS=1

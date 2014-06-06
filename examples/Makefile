@@ -9,12 +9,19 @@ JOPTS=-Xmx6G
 PROVER=dpr:1e-5
 THREADS=1
 
+### DATASETS
+FAST:=textcattoy top-1000-near-google webkb
+SLOW:=cora weibo
+ALL:=$(FAST) $(SLOW)
+
 
 ### TARGETS
 
-default: textcattoy.results top-1000-near-google.results cora.results
+default: $(addsuffix .results,$(FAST))
 
-clean: textcattoy.clean top-1000-near-google.clean cora.clean
+fast.clean: $(addsuffix .clean,$(FAST))
+
+clean: $(addsuffix .clean,$(ALL))
 
 %.results:
 	cd $*; CP=${CP} $(MAKE) $(MFLAGS)

@@ -5,8 +5,14 @@ JOPTS=-Xmx500M
 endif
 
 ### PARAMETERS ###
+ifeq ($(strip $(EPSILON)),)
+EPSILON=1e-5
+endif
+ifeq ($(strip $(ALPHA)),)
+ALPHA=0.01
+endif
 ifeq ($(strip $(PROVER)),)
-PROVER=dpr:1e-5
+PROVER=dpr:$(EPSILON):$(ALPHA)
 endif
 ifeq ($(strip $(THREADS)),)
 THREADS=1
@@ -35,7 +41,7 @@ pre.%.Tester.log: %.examples
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} | tee pre.$*.Tester.log
 
 post.%.Tester.log: %.examples params.wts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts | tee post.$*.Tester.log
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts --tester rt | tee post.$*.Tester.log
 
 params.wts: ${TRAIN}.examples.cooked
 #	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS}
