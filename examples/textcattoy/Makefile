@@ -17,7 +17,9 @@ endif
 ifeq ($(strip $(THREADS)),)
 THREADS=1
 endif
-
+ifeq ($(strip $(EPOCHS)),)
+EPOCHS=100
+endif
 ### DATASET
 TRAIN=train
 TEST=test
@@ -45,7 +47,7 @@ post.%.Tester.log: %.examples params.wts
 
 params.wts: ${TRAIN}.examples.cooked
 #	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS}
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw l2plocal --epochs 100
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw l2plocal --epochs ${EPOCHS}
 
 %.examples.cooked: %.examples
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}

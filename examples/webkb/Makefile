@@ -13,6 +13,9 @@ endif
 ifeq ($(strip $(THREADS)),)
 THREADS=3
 endif
+ifeq ($(strip $(EPOCHS)),)
+EPOCHS=10
+endif
 
 ### DATASET
 PROGRAM:=webkb0.crules:webkb.graph:webkb.cfacts
@@ -38,7 +41,7 @@ post.%.Tester.log: test_%.data %.params
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params $*.params --tester rt | tee post.$*.Tester.log
 
 %.params: train_no_%.data.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw l2plocal --epochs 10
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw l2plocal --epochs ${EPOCHS}
 
 train_no_%.data.cooked: train_no_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}

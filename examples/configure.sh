@@ -9,7 +9,8 @@ then
     echo -e "  --threads nthreads            Ideally #cores - 1"
     echo -e "  --alpha value                 Set DPR reset hyperparameter"
     echo -e "  --epsilon value               Set DPR error bound hyperparameter"
-    echo -e "  --mu value                    Set SRW ? hyperparameter"
+    echo -e "  --mu value                    Set SRW regularization hyperparameter"
+    echo -e "  --epochs value                Set number of training epochs"
     exit 0
 fi
 
@@ -40,6 +41,9 @@ do
     elif [ "--mu" = "$NAME" ]
     then
 	echo -e "MU=$VALUE" >> Makefile.in
+    elif [ "--epochs" = "$NAME" ]
+    then
+	echo -e "EPOCHS=$VALUE" >> Makefile.in
     else
 	echo -e "Unrecognized option: $NAME"
     fi
@@ -67,7 +71,7 @@ echo -e "CP:=.:\${PROPPR}/bin:\${PROPPR}/conf/:\${PROPPR}/lib/*" >> Makefile.in
 echo -e "endif" >> Makefile.in
 
 echo -e "ifeq (\$(strip \$(ALPHA)),)" >> Makefile.in
-echo -e "ALPHA=0.2" >> Makefile.in
+echo -e "ALPHA=0.1" >> Makefile.in
 echo -e "endif" >> Makefile.in
 
 echo -e "SCRIPTS=\$(shell pwd)/scripts" >> Makefile.in
