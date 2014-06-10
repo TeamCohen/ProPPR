@@ -10,11 +10,20 @@ endif
 ifeq ($(strip $(PROVER)),)
 PROVER=dpr:$(EPSILON):$(ALPHA)
 endif
-ifeq ($(strip $(THREADS)),)
-THREADS=3
-endif
 ifeq ($(strip $(EPOCHS)),)
 EPOCHS=10
+endif
+ifeq ($(strip $(MU)),)
+MU=0.001
+endif
+ifeq ($(strip $(ETA)),)
+ETA=1.0
+endif
+ifeq ($(strip $(SRW)),)
+SRW=l2plocal:$(MU):$(ETA)
+endif
+ifeq ($(strip $(THREADS)),)
+THREADS=3
 endif
 
 ### DATASET
@@ -38,10 +47,11 @@ pre.%.Tester.log: test_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} | tee pre.$*.Tester.log
 
 post.%.Tester.log: test_%.data %.params
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params $*.params --tester rt | tee post.$*.Tester.log
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params $*.params --tester rt --srw $(SRW) | tee post.$*.Tester.log
 
 %.params: train_no_%.data.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw l2plocal --epochs ${EPOCHS}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
+
 
 train_no_%.data.cooked: train_no_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}
