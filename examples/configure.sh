@@ -46,6 +46,7 @@ do
 	echo -e "EPOCHS=$VALUE" >> Makefile.in
     else
 	echo -e "Unrecognized option: $NAME"
+	exit 0
     fi
     shift
     shift
@@ -56,24 +57,43 @@ then
     echo -e "Unrecognized option: $1"
 fi
 
-echo -e "ifeq (\$(strip \$(JOPTS)),)" >> Makefile.in
-echo -e "JOPTS=" >> Makefile.in
-echo -e "endif" >> Makefile.in
+cat <<EOF >> Makefile.in
+SCRIPTS=$(shell pwd)/scripts
+#### JVM
+ifeq ($(strip $(JOPTS)),)
+JOPTS=
+endif
+ifeq ($(suffix $(PROPPR)),'jar')
+CP:=.:${PROPPR}
+else
+CP:=.:${PROPPR}/bin:${PROPPR}/conf/:${PROPPR}/lib/*
+endif
+#### Hyperparameters
+ifeq ($(strip $(EPSILON)),)
+EPSILON=1e-5
+endif
+ifeq ($(strip $(ALPHA)),)
+ALPHA=0.01
+endif
+ifeq ($(strip $(PROVER)),)
+PROVER=dpr:$(EPSILON):$(ALPHA)
+endif
+ifeq ($(strip $(MU)),)
+MU=0.001
+endif
+ifeq ($(strip $(ETA)),)
+ETA=1.0
+endif
+ifeq ($(strip $(SRW)),)
+SRW=l2plocal:$(MU):$(ETA)
+endif
+ifeq ($(strip $(THREADS)),)
+THREADS=3
+endif
+ifeq ($(strip $(EPOCHS)),)
+EPOCHS=20
+endif
 
-echo -e "ifeq (\$(strip \$(THREADS)),)" >> Makefile.in
-echo -e "THREADS=4" >> Makefile.in
-echo -e "endif" >> Makefile.in
-
-echo -e "ifeq (\$(suffix \$(PROPPR)),'jar')" >> Makefile.in
-echo -e "CP:=.:\${PROPPR}" >> Makefile.in
-echo -e "else" >> Makefile.in
-echo -e "CP:=.:\${PROPPR}/bin:\${PROPPR}/conf/:\${PROPPR}/lib/*" >> Makefile.in
-echo -e "endif" >> Makefile.in
-
-echo -e "ifeq (\$(strip \$(ALPHA)),)" >> Makefile.in
-echo -e "ALPHA=0.1" >> Makefile.in
-echo -e "endif" >> Makefile.in
-
-echo -e "SCRIPTS=\$(shell pwd)/scripts" >> Makefile.in
+EOF
 
 echo "Done."

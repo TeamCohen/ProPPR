@@ -1,31 +1,5 @@
 include ../Makefile.in
 
-### PARAMETERS ###
-ifeq ($(strip $(EPSILON)),)
-EPSILON=1e-5
-endif
-ifeq ($(strip $(ALPHA)),)
-ALPHA=0.01
-endif
-ifeq ($(strip $(PROVER)),)
-PROVER=dpr:$(EPSILON):$(ALPHA)
-endif
-ifeq ($(strip $(EPOCHS)),)
-EPOCHS=10
-endif
-ifeq ($(strip $(MU)),)
-MU=0.001
-endif
-ifeq ($(strip $(ETA)),)
-ETA=1.0
-endif
-ifeq ($(strip $(SRW)),)
-SRW=l2plocal:$(MU):$(ETA)
-endif
-ifeq ($(strip $(THREADS)),)
-THREADS=3
-endif
-
 ### DATASET
 PROGRAM:=webkb0.crules:webkb.graph:webkb.cfacts
 SUBSETS:=wisc wash texas cornell

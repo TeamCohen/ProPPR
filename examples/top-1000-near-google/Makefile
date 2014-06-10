@@ -1,29 +1,5 @@
 include ../Makefile.in
 
-ifeq ($(strip $(CP)),)
-CP:=.:/home/krivard/lib/proPPR.jar:../
-endif
-ifeq ($(strip $(SCRIPTS)),)
-SCRIPTS:=/home/krivard/ProPPR-examples/scripts
-endif
-
-### PARAMETERS ###
-ifeq ($(strip $(EPSILON)),)
-EPSILON=1e-5
-endif
-ifeq ($(strip $(ALPHA)),)
-ALPHA=0.01
-endif
-ifeq ($(strip $(PROVER)),)
-PROVER=dpr:$(EPSILON):$(ALPHA)
-endif
-ifeq ($(strip $(THREADS)),)
-THREADS=1
-endif
-ifeq ($(strip $(EPOCHS)),)
-EPOCHS=10
-endif
-
 ### DATASET
 
 TRAIN=${NAME}.train
@@ -49,10 +25,10 @@ pre.%.Tester.log: %.examples
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --tester rt --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} | tee pre.$*.Tester.log
 
 post.%.Tester.log: %.examples params.wts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --tester rt --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts | tee post.$*.Tester.log
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --tester rt --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts --srw $(SRW) | tee post.$*.Tester.log
 
 params.wts: ${TRAIN}.examples.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --epochs ${EPOCHS}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
 
 %.examples.cooked: %.examples
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}

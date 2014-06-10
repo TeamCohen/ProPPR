@@ -7,7 +7,7 @@ fi
 
 NAME="mu"
 mkdir -p ${NAME}_tuning
-for value in 10 20 40 60 80 100;
+for value in .0005 .005 .05 .00005 .00001; #.001 .01 .0001
 do
     make fast.clean
     ./configure.sh --proppr $PROPPR --threads 3 --$NAME $value
