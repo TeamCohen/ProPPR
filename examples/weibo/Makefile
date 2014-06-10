@@ -22,6 +22,8 @@ default: dev.run
 clean:
 	rm -f train.data dev.data test.data all.data train.results dev.results test.results train.answers dev.answers test.answers
 
+clean-post: clean
+
 ##### generating data files
 
 all.data: all all.allowed

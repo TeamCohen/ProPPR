@@ -1,13 +1,14 @@
-PROPPR=/home/krivard/git/rinkitink/ProPPR
-CP:=.:${PROPPR}/bin:${PROPPR}/conf/:${PROPPR}/lib/*
+include Makefile.in
+#PROPPR=/home/krivard/git/rinkitink/ProPPR
+#CP:=.:${PROPPR}/bin:${PROPPR}/conf/:${PROPPR}/lib/*
 SCRIPTS:=/home/krivard/ProPPR-examples/scripts
 
 ### JAVA SETTINGS
-JOPTS=-Xmx6G
+#JOPTS=-Xmx6G
 
 ### PROPPR PARAMETERS
-PROVER=dpr:1e-5
-THREADS=1
+#PROVER=dpr:1e-5
+#THREADS=1
 
 ### DATASETS
 FAST:=textcattoy top-1000-near-google webkb
@@ -21,6 +22,8 @@ default: $(addsuffix .results,$(FAST))
 
 fast.clean: $(addsuffix .clean,$(FAST))
 
+fast.clean-post: $(addsuffix .clean-post,$(FAST))
+
 clean: $(addsuffix .clean,$(ALL))
 
 %.results:
@@ -28,3 +31,6 @@ clean: $(addsuffix .clean,$(ALL))
 
 %.clean:
 	cd $*; CP=${CP} $(MAKE) $(MFLAGS) clean
+
+%.clean-post:
+	cd $*; CP=${CP} $(MAKE) $(MFLAGS) clean-post
