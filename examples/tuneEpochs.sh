@@ -7,9 +7,9 @@ then
 fi
 
 mkdir -p epoch_tuning
-for epoch in 10 20 40 60 80 100;
+for epoch in 80 100;#10 20 40 60 80 100;
 do
-    make fast.clean
+    make clean.fast
     ./configure.sh --proppr $PROPPR --threads 3 --epochs $epoch
     make
     for dataset in textcattoy top-1000-near-google webkb;

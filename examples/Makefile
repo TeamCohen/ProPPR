@@ -9,15 +9,13 @@ ALL:=$(FAST) $(SLOW)
 
 default: $(addsuffix .results,$(FAST))
 
-all: $(addsuffix .results.$(ALL))
+all: $(addsuffix .results,$(ALL))
 
 clean: fast.clean
 
-fast.clean: $(addsuffix .clean,$(FAST))
+clean.fast: $(addsuffix .clean,$(FAST))
 
-fast.clean-post: $(addsuffix .clean-post,$(FAST))
-
-all.clean: $(addsuffix .clean,$(ALL))
+clean.all: $(addsuffix .clean,$(ALL))
 
 %.results:
 	cd $*; CP=${CP} $(MAKE) $(MFLAGS)

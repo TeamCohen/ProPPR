@@ -57,40 +57,40 @@ then
     echo -e "Unrecognized option: $1"
 fi
 
-cat <<EOF >> Makefile.in
-SCRIPTS=$(shell pwd)/scripts
+cat  >> Makefile.in <<EOF
+SCRIPTS=\$(shell pwd)/scripts
 #### JVM
-ifeq ($(strip $(JOPTS)),)
+ifeq (\$(strip \$(JOPTS)),)
 JOPTS=
 endif
-ifeq ($(suffix $(PROPPR)),'jar')
-CP:=.:${PROPPR}
+ifeq (\$(suffix \$(PROPPR)),'jar')
+CP:=.:\${PROPPR}
 else
-CP:=.:${PROPPR}/bin:${PROPPR}/conf/:${PROPPR}/lib/*
+CP:=.:\${PROPPR}/bin:\${PROPPR}/conf/:\${PROPPR}/lib/*
 endif
 #### Hyperparameters
-ifeq ($(strip $(EPSILON)),)
+ifeq (\$(strip \$(EPSILON)),)
 EPSILON=1e-5
 endif
-ifeq ($(strip $(ALPHA)),)
+ifeq (\$(strip \$(ALPHA)),)
 ALPHA=0.01
 endif
-ifeq ($(strip $(PROVER)),)
-PROVER=dpr:$(EPSILON):$(ALPHA)
+ifeq (\$(strip \$(PROVER)),)
+PROVER=dpr:\$(EPSILON):\$(ALPHA)
 endif
-ifeq ($(strip $(MU)),)
+ifeq (\$(strip \$(MU)),)
 MU=0.001
 endif
-ifeq ($(strip $(ETA)),)
+ifeq (\$(strip \$(ETA)),)
 ETA=1.0
 endif
-ifeq ($(strip $(SRW)),)
-SRW=l2plocal:$(MU):$(ETA)
+ifeq (\$(strip \$(SRW)),)
+SRW=l2plocal:\$(MU):\$(ETA)
 endif
-ifeq ($(strip $(THREADS)),)
+ifeq (\$(strip \$(THREADS)),)
 THREADS=3
 endif
-ifeq ($(strip $(EPOCHS)),)
+ifeq (\$(strip \$(EPOCHS)),)
 EPOCHS=20
 endif
 
