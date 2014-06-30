@@ -14,6 +14,7 @@ import org.apache.commons.cli.PermissiveParser;
 import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.*;
 import org.apache.commons.cli.*;
@@ -165,6 +166,7 @@ public class Configuration {
                 if (value.equals("linear")) weightingScheme = new LinearWeightingScheme();
                 else if (value.equals("sigmoid")) weightingScheme = new SigmoidWeightingScheme();
                 else if (value.equals("tanh")) weightingScheme = new TanhWeightingScheme();
+                else if (value.equals("ReLU")) weightingScheme = new ReLUWeightingScheme();
                 else {
                     System.err.println("Unrecognized weighting scheme " + value);
                     this.usageOptions(options, flags);
