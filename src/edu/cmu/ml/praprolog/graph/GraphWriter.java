@@ -12,7 +12,6 @@ import edu.cmu.ml.praprolog.prove.Goal;
 import edu.cmu.ml.praprolog.prove.LogicProgramState;
 
 /**
- * Currently (16 jan 2013) unused?
  * @author krivard
  *
  */
@@ -49,13 +48,9 @@ private static final Logger log = Logger.getLogger(GraphWriter.class);
 	public void writeEdge(Object u, Object v, List<Feature> f) {
 		String uid = this.intern(u);
 		String vid = this.intern(v);
-//		if (id == 348) {
-//			u.equals(nodes.get(1));
-//		}
 		this.graph.addDirectedEdge(uid,vid,f);
 		if(log.isDebugEnabled()) {
 			log.debug("id "+id);id++;
-//			log.debug("add: "+u+" -> "+f.toString()+" -> "+v);
 			log.debug("update: "+this.graph.getNumNodes()+" "+this.graph.getNumEdges());
 		}
 	}
@@ -70,4 +65,5 @@ private static final Logger log = Logger.getLogger(GraphWriter.class);
 	public int getNumNodes() {
 		return nodeCtr;
 	}
+	public ArrayList<Object> getNodes() { return this.nodes; }
 }

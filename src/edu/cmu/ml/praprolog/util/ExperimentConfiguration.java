@@ -16,6 +16,7 @@ import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.learn.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
@@ -106,7 +107,8 @@ public class ExperimentConfiguration extends Configuration {
 				.withDescription("Default: tanh\n"
 						+ "Available options:\n"
 						+ "tanh\n"
-						+ "sigmoid")
+						+ "sigmoid\n"
+						+ "ReLU")
 						.create());
 		options.addOption(
 				OptionBuilder

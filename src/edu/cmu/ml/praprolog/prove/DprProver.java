@@ -19,20 +19,20 @@ import edu.cmu.ml.praprolog.util.Dictionary;
  */
 public class DprProver extends Prover {
 	private static final Logger log = Logger.getLogger(DprProver.class);
-        public static final double EPS_DEFAULT = 0.0001, MINALPH_DEFAULT=0.1;
-        public static int ADJUST_ALPHA = 1;
-        public static int BOOST_ALPHA = 2;
-        public static int THROW_ALPHA_ERRORS = 3;
-        public static final int STRATEGY_DEFAULT=THROW_ALPHA_ERRORS;
+	public static final double EPS_DEFAULT = 0.0001, MINALPH_DEFAULT=0.1;
+	public static int ADJUST_ALPHA = 1;
+	public static int BOOST_ALPHA = 2;
+	public static int THROW_ALPHA_ERRORS = 3;
+	public static final int STRATEGY_DEFAULT=THROW_ALPHA_ERRORS;
 	private final double epsilon;
-        // not final, we might change it with the ADJUST_ALPHA strategy!
+	// not final, we might change it with the ADJUST_ALPHA strategy!
 	private double minAlpha;
 	private final double stayProbability;
 	private final double moveProbability;
-        private final int minAlphaErrorStrategy;
-        // for timing traces
+	private final int minAlphaErrorStrategy;
+	// for timing traces
 	private long start, last;
-        // for debug
+	// for debug
 	private Backtrace backtrace = new Backtrace(log);
 
 	@Override
@@ -44,35 +44,35 @@ public class DprProver extends Prover {
 	public DprProver() { this(false); }
 
 	public DprProver(boolean lazyWalk) {
-	    this(lazyWalk,EPS_DEFAULT,MINALPH_DEFAULT,STRATEGY_DEFAULT);
+		this(lazyWalk,EPS_DEFAULT,MINALPH_DEFAULT,STRATEGY_DEFAULT);
 	}
 	public DprProver(double epsilon, double minalpha) {
-	    this(false, epsilon, minalpha,STRATEGY_DEFAULT);
+		this(false, epsilon, minalpha,STRATEGY_DEFAULT);
 	}
-        public DprProver(double epsilon, double minalpha,int strat) {
-	    this(false, epsilon, minalpha,strat);
+	public DprProver(double epsilon, double minalpha,int strat) {
+		this(false, epsilon, minalpha,strat);
 	}
-        public DprProver(boolean lazyWalk, double epsilon, double minalpha) {
-	    this( (lazyWalk?0.5:0.0),epsilon,minalpha,STRATEGY_DEFAULT);
+	public DprProver(boolean lazyWalk, double epsilon, double minalpha) {
+		this( (lazyWalk?0.5:0.0),epsilon,minalpha,STRATEGY_DEFAULT);
 	}
-        public DprProver(boolean lazyWalk, double epsilon, double minalpha, int strat) {
-	    this( (lazyWalk?0.5:0.0),epsilon,minalpha,strat);
+	public DprProver(boolean lazyWalk, double epsilon, double minalpha, int strat) {
+		this( (lazyWalk?0.5:0.0),epsilon,minalpha,strat);
 	}
-        protected DprProver(double stayP, double eps, double mina) {
-	    this( stayP,eps,mina,STRATEGY_DEFAULT);
+	protected DprProver(double stayP, double eps, double mina) {
+		this( stayP,eps,mina,STRATEGY_DEFAULT);
 	}
-        protected DprProver(double stayP, double eps, double mina,int strat) {
-	    this.epsilon = eps;
-	    this.minAlpha = mina;
-	    this.stayProbability = stayP;
-	    this.moveProbability = 1.0-stayProbability;
-	    this.minAlphaErrorStrategy = strat;
+	protected DprProver(double stayP, double eps, double mina,int strat) {
+		this.epsilon = eps;
+		this.minAlpha = mina;
+		this.stayProbability = stayP;
+		this.moveProbability = 1.0-stayProbability;
+		this.minAlphaErrorStrategy = strat;
 	}
-	
+
 	public Prover copy() {
-	    return new DprProver(this.stayProbability, this.epsilon, this.minAlpha, this.minAlphaErrorStrategy);
+		return new DprProver(this.stayProbability, this.epsilon, this.minAlpha, this.minAlphaErrorStrategy);
 	}
-	
+
 	@Override
 	public Map<LogicProgramState, Double> proveState(LogicProgram lp, LogicProgramState state0, GraphWriter gw) {
 
@@ -113,6 +113,7 @@ public class DprProver extends Prover {
 					log.info("push "+pushCounter+"->"+(pushCounter+1)+" "+r.size()+" r-states u "+u);
 					last = now;
 				}
+				if (log.isDebugEnabled()) log.debug("PUSHPATH include "+(pushCounter+1)+" "+u);
 			}
 			pushCounter += 1;
 			double ru = r.get(u);
@@ -133,33 +134,34 @@ public class DprProver extends Prover {
 				double localAlpha = unNormalizedAlpha / z;
 
 				if (localAlpha < this.minAlpha) {
-				    log.warn("minAlpha problem, strategy="+minAlphaErrorStrategy);
-				    if (minAlphaErrorStrategy==ADJUST_ALPHA) {
-					log.warn("decreasing minAlpha from "+minAlpha+" to "+localAlpha);
-					this.minAlpha = localAlpha;
-				    } else if (minAlphaErrorStrategy==BOOST_ALPHA) {
-					// figure out how much we need to increment the unNormalizedAlpha to get to minAlpha
-					if (log.isDebugEnabled()) {
-					    log.debug("minAlpha issue: minAlpha="+this.minAlpha+" localAlpha="+localAlpha
-						      +" max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
+					log.warn("minAlpha problem, strategy="+minAlphaErrorStrategy);
+					if (minAlphaErrorStrategy==ADJUST_ALPHA) {
+						log.warn("decreasing minAlpha from "+minAlpha+" to "+localAlpha);
+						this.minAlpha = localAlpha;
+					} else if (minAlphaErrorStrategy==BOOST_ALPHA) {
+						// figure out how much we need to increment the unNormalizedAlpha to get to minAlpha
+						if (log.isDebugEnabled()) {
+							log.debug("minAlpha issue: minAlpha="+this.minAlpha+" localAlpha="+localAlpha
+									+" max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
+						}
+						// figure out how much to boost
+						double nonresetWeightSum = z - unNormalizedAlpha;
+						double amountToBoost = (this.minAlpha*(nonresetWeightSum + unNormalizedAlpha) - unNormalizedAlpha)/(1.0 - this.minAlpha);
+						z += amountToBoost;
+						unNormalizedAlpha += amountToBoost;
+						localAlpha = unNormalizedAlpha/z;
+						log.warn("boosted to localAlpha="+localAlpha+"; unAlpha="+unNormalizedAlpha+"; z="+z);
+					} else {
+						log.warn("max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
+						log.warn("ru="+ru+"; degu="+deg.get(u)+"; u="+u);
+						throw new MinAlphaException(minAlpha,localAlpha,u);
 					}
-					// figure out how much to boost
-					double nonresetWeightSum = z - unNormalizedAlpha;
-					double amountToBoost = (this.minAlpha*(nonresetWeightSum + unNormalizedAlpha) - unNormalizedAlpha)/(1.0 - this.minAlpha);
-					z += amountToBoost;
-					unNormalizedAlpha += amountToBoost;
-					localAlpha = unNormalizedAlpha/z;
-					log.warn("boosted to localAlpha="+localAlpha+"; unAlpha="+unNormalizedAlpha+"; z="+z);
-				    } else {
-					log.warn("max outlink weight="+m+"; numouts="+outs.size()+"; unAlpha="+restart.getWeight()+"; z="+z);
-					log.warn("ru="+ru+"; degu="+deg.get(u)+"; u="+u);
-					throw new MinAlphaException(minAlpha,localAlpha,u);
-				    }
 				}
 				Dictionary.increment(p,u,minAlpha * ru,"(elided)");
 				r.put(u, r.get(u) * stayProbability * (1.0-minAlpha));
 
 				for (LogicProgramOutlink o : outs) {
+					if (log.isDebugEnabled()) log.debug("PUSHPATH candidate "+(pushCounter+1)+" "+u+" -> "+o.getState());
 					includeState(o,r,deg,z,ru,lp);
 				}
 				// include the reset state with weight (alph - minAlpha):
@@ -177,13 +179,15 @@ public class DprProver extends Prover {
 				backtrace.print(e);
 			}
 			backtrace.pop(u);
+		} else {
+			if (log.isDebugEnabled()) log.debug("PUSHPATH exclude "+(pushCounter+1)+" "+u);
 		}
 		return pushCounter;
 	}
 	private void includeState(LogicProgramOutlink o, Map<LogicProgramState, Double> r,
 			Map<LogicProgramState, Integer> deg, double z, double ru, LogicProgram lp) throws LogicProgramException {
 		backtrace.push(o.getState());
-		
+
 		boolean followup = !r.containsKey(o.getState());
 		double old = Dictionary.safeGet(r, o.getState());
 		Dictionary.increment(r, o.getState(), moveProbability * (o.getWeight() / z) * ru,"(elided)");
