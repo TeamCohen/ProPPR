@@ -16,9 +16,13 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
+import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	private static final Logger log = Logger.getLogger(MultithreadedRRTrainer.class);
+	public static final int DEFAULT_CAPACITY = 16;
+	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
 	protected TrainingRun currentTrainingRun;
 	
@@ -29,13 +33,13 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	}
 
 	@Override
-	public Map<String, Double> trainParametersOnCookedIterator(
+	public ParamVector trainParametersOnCookedIterator(
 			Iterable<PosNegRWExample<T>> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new ConcurrentHashMap<String,Double>(), numEpochs, traceLosses);
+		return trainParametersOnCookedIterator(importCookedExamples, new SimpleParamVector(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)), numEpochs, traceLosses);
 	}
 	
 	@Override
-	protected void setUpEpochs(Map<String,Double> paramVec) {
+	protected void setUpEpochs(ParamVector paramVec) {
 		currentTrainingRun = new TrainingRun(paramVec);
 	}
 	
@@ -51,7 +55,7 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	}
 
 	@Override
-	protected void doExample(int k, PosNegRWExample<T> x, Map<String,Double> paramVec, boolean traceLosses) {
+	protected void doExample(int k, PosNegRWExample<T> x, ParamVector paramVec, boolean traceLosses) {
 //		if (currentTrainingRun.trainers == null) {
 //			throw new IllegalStateException("template called out of order! Call setUpExamples() first");
 //		}
@@ -61,7 +65,7 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	}
 	
 	@Override
-	protected void cleanUpExamples(int epoch) {
+	protected void cleanUpExamples(int epoch, ParamVector paramVec) {
 //		int n=0;
 		int nX = currentTrainingRun.queue.size();
 		currentTrainingRun.executor = Executors.newFixedThreadPool(nthreads);
@@ -86,9 +90,10 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 			}
 		}
 		currentTrainingRun.executor = null;
+		super.cleanUpExamples(epoch, paramVec);
 	}
 	
-	public synchronized void traceLosses(SRW<PosNegRWExample<T>> learner, Map<String,Double> paramVec, PosNegRWExample<T> example) {
+	public synchronized void traceLosses(SRW<PosNegRWExample<T>> learner, ParamVector paramVec, PosNegRWExample<T> example) {
 		totalLossThisEpoch += learner.empiricalLoss(paramVec, example); 
 		numExamplesThisEpoch += example.length();
 	}
@@ -96,10 +101,10 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 	public class TrainingRun {
 		public Queue<Future> futures;
 		public ExecutorService executor;
-		public TrainingRun(Map<String, Double> p) {
+		public TrainingRun(ParamVector p) {
 			paramVec = p;
 		}
-		public Map<String,Double> paramVec;
+		public ParamVector paramVec;
 		public List<TrainerExample> queue = new ArrayList<TrainerExample>();
 	}
 	

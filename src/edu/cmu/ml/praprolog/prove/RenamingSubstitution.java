@@ -96,6 +96,7 @@ public class RenamingSubstitution {
 	 * @param b
 	 */
 	public void put(Argument a, Argument b) {
+		if (b==null) throw new IllegalArgumentException("Not allowed to assign a null substitution for "+a);
 		this.dict.put(a, b);
 	}
 	protected Argument applyToAtom(Argument arg, int renamedP1) {

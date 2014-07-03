@@ -8,9 +8,10 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph.GraphFormatException;
+import edu.cmu.ml.praprolog.util.FileBackedIterable;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 
-public class CookedExampleStreamer<T> implements Iterable<PosNegRWExample<T>>, Iterator<PosNegRWExample<T>> {
+public class CookedExampleStreamer<T> implements Iterable<PosNegRWExample<T>>, Iterator<PosNegRWExample<T>>, FileBackedIterable {
 	private static final Logger log = Logger.getLogger(CookedExampleStreamer.class);
 	public static final String MAJOR_DELIM="\t";
 	public static final String MINOR_DELIM=",";
@@ -73,6 +74,13 @@ public class CookedExampleStreamer<T> implements Iterable<PosNegRWExample<T>>, I
 	@Override
 	public Iterator<PosNegRWExample<T>> iterator() {
 		return this;
+	}
+	
+	
+	@Override
+	public void wrap() {
+		if (this.hasNext()) return;
+		this.file.reset();
 	}
 
 }

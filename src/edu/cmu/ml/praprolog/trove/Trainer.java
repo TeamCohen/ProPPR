@@ -15,7 +15,10 @@ import edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.FileBackedIterable;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParsedFile;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class Trainer {
 	public static final String MAJOR_DELIM="\t";
@@ -34,63 +37,63 @@ public class Trainer {
 		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 
-	/**
-	 * Generate the cooked examples stored in this file.
-	 * @param cookedExamplesFile
-	 * @return
-	 */
-	public Collection<PosNegRWExample> importCookedExamples(String cookedExamplesFile) {
-		log.info("Importing cooked examples from "+cookedExamplesFile);
-		Collection<PosNegRWExample> result = null;
-		result = importCookedExamples(new ParsedFile(cookedExamplesFile));
-		log.info("Imported "+result.size()+" examples");
-		return result;
-	}
-	public Collection<PosNegRWExample> importCookedExamples(ParsedFile file) {
-		ArrayList<PosNegRWExample> result = null;
-		result = new ArrayList<PosNegRWExample>();
-		for(String line : file){
-			log.debug("Imporing example from line "+file.getLineNumber());
-			AnnotatedTroveGraph g = new AnnotatedTroveGraph();
-
-			String[] parts = line.trim().split(MAJOR_DELIM,5);
-
-			TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
-			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(u, 1.0);
-
-//			String[] rawPosList = parts[2].split(MINOR_DELIM);
-//			String[] rawNegList = parts[3].split(MINOR_DELIM);
-			String[] rawPosList, rawNegList;
-			if (parts[2].length()>0) rawPosList = parts[2].split(MINOR_DELIM);
-			else rawPosList = new String[0];
-			if (parts[3].length()>0) rawNegList = parts[3].split(MINOR_DELIM);
-			else rawNegList = new String[0];
-			//				int[] posList = g.keyToId(rawPosList);
-			//				int[] negList = g.keyToId(rawNegList);
-			if (rawPosList.length + rawNegList.length == 0) {
-				log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
-				continue;
-			}
-			try {
-				g = AnnotatedTroveGraph.fromStringParts(parts[4],g);
-				result.add(new PosNegRWExample(g,queryVec,rawPosList,rawNegList));
-			} catch (GraphFormatException e) {
-				file.parseError("["+e.getMessage()+"]");
-			}
-
-		}
-		file.close();
-		log.debug(TroveGraph.nextIdPeek());
-		return result;
-	}
+//	/**
+//	 * Generate the cooked examples stored in this file.
+//	 * @param cookedExamplesFile
+//	 * @return
+//	 */
+//	public Collection<PosNegRWExample> importCookedExamples(String cookedExamplesFile) {
+//		log.info("Importing cooked examples from "+cookedExamplesFile);
+//		Collection<PosNegRWExample> result = null;
+//		result = importCookedExamples(new ParsedFile(cookedExamplesFile));
+//		log.info("Imported "+result.size()+" examples");
+//		return result;
+//	}
+//	public Collection<PosNegRWExample> importCookedExamples(ParsedFile file) {
+//		ArrayList<PosNegRWExample> result = null;
+//		result = new ArrayList<PosNegRWExample>();
+//		for(String line : file){
+//			log.debug("Imporing example from line "+file.getLineNumber());
+//			AnnotatedTroveGraph g = new AnnotatedTroveGraph();
+//
+//			String[] parts = line.trim().split(MAJOR_DELIM,5);
+//
+//			TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
+//			for(String u : parts[1].split(MINOR_DELIM)) queryVec.put(u, 1.0);
+//
+////			String[] rawPosList = parts[2].split(MINOR_DELIM);
+////			String[] rawNegList = parts[3].split(MINOR_DELIM);
+//			String[] rawPosList, rawNegList;
+//			if (parts[2].length()>0) rawPosList = parts[2].split(MINOR_DELIM);
+//			else rawPosList = new String[0];
+//			if (parts[3].length()>0) rawNegList = parts[3].split(MINOR_DELIM);
+//			else rawNegList = new String[0];
+//			//				int[] posList = g.keyToId(rawPosList);
+//			//				int[] negList = g.keyToId(rawNegList);
+//			if (rawPosList.length + rawNegList.length == 0) {
+//				log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
+//				continue;
+//			}
+//			try {
+//				g = AnnotatedTroveGraph.fromStringParts(parts[4],g);
+//				result.add(new PosNegRWExample(g,queryVec,rawPosList,rawNegList));
+//			} catch (GraphFormatException e) {
+//				file.parseError("["+e.getMessage()+"]");
+//			}
+//
+//		}
+//		file.close();
+//		log.debug(TroveGraph.nextIdPeek());
+//		return result;
+//	}
 
     /** Return the batch gradient of the data
      */
-    public Map<String,Double> findGradient(Collection<PosNegRWExample> examples,Map<String,Double> paramVec) {
+    public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples,ParamVector paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
 		if (paramVec==null) {
-		    paramVec = new TreeMap<String,Double>();
+		    paramVec = new SimpleParamVector();
 		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		int k=0;
@@ -109,37 +112,39 @@ public class Trainer {
 	}
 
 
-	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample> iteratorFactory) {
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample> iteratorFactory) {
 		return this.trainParametersOnCookedIterator(iteratorFactory, false);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample> importCookedExamples, boolean traceLosses) {
+	public ParamVector trainParametersOnCookedIterator(
+			Iterable<PosNegRWExample> importCookedExamples, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, 5, traceLosses);
 	}
-	public Map<String, Double> trainParametersOnCookedIterator(
-			Collection<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
-		return trainParametersOnCookedIterator(importCookedExamples, new TreeMap<String,Double>(), numEpochs, traceLosses);
+	public ParamVector trainParametersOnCookedIterator(
+			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
+		return trainParametersOnCookedIterator(importCookedExamples, new SimpleParamVector(new TreeMap<String,Double>()), numEpochs, traceLosses);
 	}
 
-	public Map<String,Double> trainParametersOnCookedIterator(Collection<PosNegRWExample> examples, 
-			Map<String, Double> initialParamVec, 
+	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample> examples, 
+			ParamVector initialParamVec, 
 			int numEpochs, 
 			boolean traceLosses) {
 		log.info("Training on cooked examples...");
 		double previousAvgLoss = Double.MAX_VALUE;
 		long start = System.currentTimeMillis();
 		this.epoch = 0;
-		Map<String,Double> paramVec = initialParamVec;
+		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0) {
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		setUpEpochs(paramVec);
 		for (int i=0; i<numEpochs; i++) {
 			this.epoch++;
-			//learner.setEpoch(this.epoch); // wwc does NOT seem to help: TODO why not?
+			learner.setEpoch(this.epoch); 
+			// wwc does NOT seem to help: TODO why not?
 			log.info("epoch "+epoch+" ...");
 			int k=0; long starttime = System.currentTimeMillis(); long lasttime = starttime;
-			setUpExamples(i,examples);
+			setUpExamples(i);
+			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 			for (PosNegRWExample x : examples) {
 				if (System.currentTimeMillis() - lasttime > 30000) {
 					lasttime = System.currentTimeMillis();
@@ -150,7 +155,7 @@ public class Trainer {
 
 				k++;
 			}
-			cleanUpExamples(i);
+			cleanUpExamples(i,paramVec);
 			//			log.info(k+" examples processed");
 			if(traceLosses) {
 			    // wwc - added some more tracing here
@@ -186,7 +191,7 @@ public class Trainer {
 	protected double totalNegLossThisEpoch;
 
 	protected int numExamplesThisEpoch;
-	protected void doExample(int k, PosNegRWExample x, Map<String,Double> paramVec, boolean traceLosses) {
+	protected void doExample(int k, PosNegRWExample x, ParamVector paramVec, boolean traceLosses) {
 		log.debug("example "+x.toString()+" ...");
 		this.learner.trainOnExample(paramVec, x);
 		if (traceLosses) {
@@ -197,15 +202,15 @@ public class Trainer {
 		}
 	}
 
-	protected void setUpExamples(int epoch, Collection<PosNegRWExample> examples) {
+	protected void setUpExamples(int epoch) {
 		totalLossThisEpoch = 0;
 		totalPosLossThisEpoch = 0;
 		totalNegLossThisEpoch = 0;
 		numExamplesThisEpoch = 0;
 	}
-	protected void cleanUpExamples(int epoch) {}
+	protected void cleanUpExamples(int epoch, ParamVector paramVec) {}
 
-	protected void setUpEpochs(Map<String,Double> paramVec) {}
+	protected void setUpEpochs(ParamVector paramVec) {}
 
 	//////////////////////////// Running /////////////////////////////
 //	private static final String USAGE = "Usage:\n\tcookedExampleFile outputParamFile [options]\n"

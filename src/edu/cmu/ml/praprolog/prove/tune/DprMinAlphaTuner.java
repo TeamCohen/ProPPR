@@ -109,8 +109,9 @@ public class DprMinAlphaTuner {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		int flags = (Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_PARAMS) & ~Configuration.USE_PROVER;
 		CustomConfiguration c = new CustomConfiguration(args, 
-				(Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_PARAMS) & ~Configuration.USE_PROVER) {
+				flags) {
 			public double startAlpha;
 			public double epsilon;
 			@Override
@@ -147,6 +148,7 @@ public class DprMinAlphaTuner {
 				return null;
 			}
 		};
+		if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
 		log.info("Tuning with initial alpha "+(Double) c.getCustomSetting(null));
 
 		Map<String,Double> params = null;

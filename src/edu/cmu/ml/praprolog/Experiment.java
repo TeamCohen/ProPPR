@@ -1,6 +1,7 @@
 package edu.cmu.ml.praprolog;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -14,13 +15,14 @@ import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class Experiment {
 	private static final Logger log = Logger.getLogger(Experiment.class);
 	public static void main(String[] args) {
 		ExperimentConfiguration c = new ExperimentConfiguration(args, 
-				Configuration.USE_DEFAULTS | Configuration.USE_TRAINTEST | Configuration.USE_LEARNINGSET);
+				Configuration.USE_DEFAULTS | Configuration.USE_TRAINTEST | Configuration.USE_LEARNINGSET | ExperimentConfiguration.USE_QUERYANSWERER);
 		
 		System.out.println(c.toString());
 		
@@ -41,10 +43,10 @@ public class Experiment {
 		
 		// train parameters on the cooked training data
 		log.info("Training model parameters...");
-		Map<String,Double> paramVec = null;
+		ParamVector paramVec = null;
 		if (c.trove) {
 			Trainer trainer = (Trainer) c.trainer;
-			paramVec = trainer.trainParametersOnCookedIterator(trainer.importCookedExamples(c.outputFile), c.epochs, c.traceLosses);
+			paramVec = trainer.trainParametersOnCookedIterator(new edu.cmu.ml.praprolog.trove.learn.CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);
 		} else {
 			edu.cmu.ml.praprolog.Trainer<String> trainer = (edu.cmu.ml.praprolog.Trainer<String>) c.trainer;
 			paramVec = trainer.trainParametersOnCookedIterator(
@@ -59,16 +61,31 @@ public class Experiment {
 //			Dictionary.save(paramVec, c.paramsFile);
 		}
 		
-		// test trained parameters
-		log.info("Testing on "+c.testFile+"...");
-		c.tester.setParams(paramVec, c.weightingScheme);
-		TestResults results = c.tester.testExamples(c.testFile,c.strict);
-		if(!log.isInfoEnabled())  {
-			System.out.println("result= running time "+(System.currentTimeMillis() - start));
-			System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
-		} else {
-			log.info("result= running time "+(System.currentTimeMillis() - start));
-			log.info("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+		if (c.tester != null) {
+			// test trained parameters
+			log.info("Testing on "+c.testFile+"...");
+			c.tester.setParams(paramVec, c.weightingScheme);
+			TestResults results = c.tester.testExamples(c.testFile,c.strict);
+			if(!log.isInfoEnabled())  {
+				System.out.println("result= running time "+(System.currentTimeMillis() - start));
+				System.out.println("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+			} else {
+				log.info("result= running time "+(System.currentTimeMillis() - start));
+				log.info("result= pairs "+ results.pairTotal+" errors "+results.pairErrors+" errorRate "+results.errorRate+" map "+results.map);
+			}
+		}
+		
+		if (c.queryAnswerer != null) {
+	        log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
+
+            c.queryAnswerer.addParams(c.program, paramVec, c.weightingScheme);
+
+            try {
+				c.queryAnswerer.findSolutions(c.program, c.prover, c.queryFile, c.solutionsFile, c.normalize);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }

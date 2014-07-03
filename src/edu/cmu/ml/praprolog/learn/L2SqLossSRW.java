@@ -2,12 +2,14 @@ package edu.cmu.ml.praprolog.learn;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.learn.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 	private static final Logger log = Logger.getLogger(L2SqLossSRW.class);
@@ -36,7 +38,7 @@ public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 	 * @return
 	 */
 	public double derivRegularization(String f,Map<String,Double> paramVec) {
-		return (this.untrainedFeatures.contains(f)) ? 0 : paramVec.get(f)*this.mu;
+		return (this.untrainedFeatures.contains(f)) ? 0 : 2*paramVec.get(f)*this.mu;
 	}
 	
 	/**
@@ -44,7 +46,7 @@ public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public double empiricalLoss(Map<String, Double> paramVec,
+	public double empiricalLoss(ParamVector paramVec,
 			PairwiseRWExample<T> example) {
 		Map<T,Double> vec = this.rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
 		double loss = 0;
@@ -66,17 +68,19 @@ public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
         @param example
         @return Map from edge features to values
 	 */
-	public Map<String,Double> gradient(Map<String,Double> paramVec, PairwiseRWExample<T> example) {
+	public Map<String,Double> gradient(ParamVector paramVec, PairwiseRWExample<T> example) {
 		Map<T,Double> p = this.rwrUsingFeatures(example.getGraph(),example.getQueryVec(),paramVec);
 		Map<T,Map<String,Double>> d = this.derivRWRbyParams(example.getGraph(),example.getQueryVec(),paramVec);
 		Map<String,Double> derivFparamVec = new TreeMap<String,Double>();
-		for (String f : paramVec.keySet()) {
+		Set<String> allFeatures = paramVec.keySet();
+		for (String f : allFeatures) {
 			derivFparamVec.put(f, derivRegularization(f,paramVec));
 		}
 		
+		Set<String> trainableFeatures = trainableFeatures(paramVec);
 		for (HiLo<T> hl : example.getHiLoList()) {
 			double delta = Dictionary.safeGet(p, hl.getLo()) - Dictionary.safeGet(p,hl.getHi());
-			for (String f : trainableFeatures(paramVec)) {
+			for (String f : trainableFeatures) {
 				double del = derivLoss(delta) * (Dictionary.safeGetGet(d, hl.getLo(), f) - Dictionary.safeGetGet(d, hl.getHi(), f));
 				Dictionary.increment(derivFparamVec, f, del);
 			}
@@ -92,9 +96,9 @@ public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 	}
 	
 
-	public Map<String, Double> train(List<PairwiseRWExample<T>> trainingExamples, Map<String, Double> initialParamVec) {
+	public ParamVector train(List<PairwiseRWExample<T>> trainingExamples, ParamVector initialParamVec) {
 		this.epoch = 0;
-		Map<String,Double> paramVec = initialParamVec;
+		ParamVector paramVec = initialParamVec;
 		for (int i=0; i<NUM_EPOCHS; i++) {
 			this.epoch++;
 //			int ex=0;

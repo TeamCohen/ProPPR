@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 /**
  * File utility with support for automatically skipping blank lines and #-comments.
  * 
@@ -17,34 +19,60 @@ import java.util.Map;
  *
  */
 public class ParsedFile implements Iterable<String>, Iterator<String> {
+	private static final Logger log = Logger.getLogger(ParsedFile.class);
+	private static final boolean DEFAULT_STRICT=true;
+	private boolean cheating=false;
 	private String filename;
 	private LineNumberReader reader;
 	private String peek;
 	private int dataLine=-2;
-	private boolean closed = false;
+	private boolean closed;
+	private boolean strict;
 	public ParsedFile(String filename) {
-		this.filename = filename;
+		this(filename,DEFAULT_STRICT);
+	}
+	public ParsedFile(String filename, boolean strict) {
+		this.strict = strict;
+		this.init(filename);
+	}
+	
+	public ParsedFile(File file) {
+		this(file,DEFAULT_STRICT);
+	}
+	public ParsedFile(File file, boolean strict) {
+		this.strict=strict;
 		try {
-			reader = new LineNumberReader(new FileReader(filename));
-			this.next();
+			this.init(file.getCanonicalPath());
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
 	
-	public ParsedFile(File file) {
+	private void init(String filename) {
+		this.filename = filename;
 		try {
-			this.filename = file.getCanonicalPath();
-			reader = new LineNumberReader(new FileReader(file));
+			reader = new LineNumberReader(new FileReader(filename));
+			closed = false;
 			this.next();
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
 
+	/**
+	 * Used primarily for unit tests (only supports up to 1024 bytes)
+	 * @param stringReader
+	 */
 	public ParsedFile(StringReader stringReader) {
 		this.filename = stringReader.getClass().getCanonicalName() + stringReader.hashCode();
 		this.reader = new LineNumberReader(stringReader);
+
+		this.cheating=true;
+		try {
+			this.reader.mark(1024);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		this.next();
 	}
 
@@ -52,7 +80,11 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 		parseError(null);
 	}
 	public void parseError(String msg) {
-		throw new IllegalArgumentException("Unparsable line "+filename+":"+reader.getLineNumber()+":"
+		if (this.strict)
+			throw new IllegalArgumentException("Unparsable line "+filename+":"+reader.getLineNumber()+":"
+					+ (msg!=null ? ("\n"+msg) : "")
+					+ "\n"+peek);
+		log.error("Unparsable line "+filename+":"+reader.getLineNumber()+":"
 				+ (msg!=null ? ("\n"+msg) : "")
 				+ "\n"+peek);
 	}
@@ -135,6 +167,20 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 
 	public String getFileName() {
 		return this.filename;
+	}
+	
+	/** Reset the iterator back to the beginning of the file */
+	public void reset() {
+		if (this.cheating) {
+			try {
+				this.reader.reset();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			this.close();
+			this.init(this.filename);
+		}
 	}
 
 }

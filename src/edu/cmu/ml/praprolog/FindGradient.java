@@ -7,12 +7,14 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
+import edu.cmu.ml.praprolog.trove.learn.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParamsFile;
 
 public class FindGradient {
@@ -31,12 +33,12 @@ public class FindGradient {
 		log.info("Training model parameters...");
 		Map<String,Double> batchGradient;
 		if (c.trove) {
-		    Map<String,Double> paramVec = null;
+			ParamVector paramVec = null;
 			Trainer trainer = (Trainer) c.trainer;
 			if (c.epochs>0) {
-			    paramVec = trainer.trainParametersOnCookedIterator(trainer.importCookedExamples(c.outputFile), c.epochs, c.traceLosses);
+			    paramVec = trainer.trainParametersOnCookedIterator(new CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);
 			}
-			batchGradient = trainer.findGradient(trainer.importCookedExamples(c.outputFile),paramVec);
+			batchGradient = trainer.findGradient(new CookedExampleStreamer(c.outputFile),paramVec);
 		} else {
 		    throw new UnsupportedOperationException("non-trove implementation? it's in the mail.");
 		}

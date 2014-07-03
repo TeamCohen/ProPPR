@@ -68,6 +68,7 @@ public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 			log.error("Interrupted?",e);
 		}
 		writer.close();
+		reportStatistics(empty);
 	}
 
 	protected ExecutorService graphKeyWritingPool = null;

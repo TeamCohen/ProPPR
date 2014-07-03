@@ -61,9 +61,13 @@ public class ExampleCooker extends ExampleThawing {
 		}
 	}
 	
+
+    /** Single-threaded baseline method to ground examples.
+     */
+
 	public void cookExamples(File dataFile, Writer writer) throws IOException {
 		int k=0, empty=0;
-		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).load()) {
+		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).stream()) {
 			k++;
 //			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
 			try {	
@@ -94,6 +98,7 @@ public class ExampleCooker extends ExampleThawing {
 	
 	long lastPrint = System.currentTimeMillis();
 	int nwritten=0;
+
 	protected String serializeCookedExample(RawPosNegExample rawX, PosNegRWExample<String> x) {
 		
 		if (log.isInfoEnabled()) {
@@ -142,15 +147,7 @@ public class ExampleCooker extends ExampleThawing {
 	protected Prover getProver() {
 		return this.prover;
 	}
-
-
-	protected void saveGraphKey(RawPosNegExample rawX, GraphWriter writer) {
-		try {
-			this.graphKeyWriter.write(serializeGraphKey(rawX,writer));
-		} catch (IOException e) {
-			throw new IllegalStateException("Couldn't write to graph key file "+this.graphKeyFile.getName(),e);
-		}
-	}
+	
 
 	/**
 	 * Run the prover to convert a raw example to a random-walk example
@@ -181,9 +178,34 @@ public class ExampleCooker extends ExampleThawing {
 		}
 		Map<String,Double> queryVector = new HashMap<String,Double>();
 		queryVector.put(writer.getId(x.getQueryState()), 1.0);
-		
 		if (this.graphKeyFile!= null) { saveGraphKey(rawX, writer); }
+		updateStatistics(rawX,rawX.getPosList().length,rawX.getNegList().length,posIds.size(),negIds.size());
 		return new PosNegRWExample<String>(writer.getGraph(), queryVector, posIds, negIds);
+	}
+	// statistics
+        static int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
+        static RawPosNegExample worstX = null;
+        static double smallestFractionCovered = 1.0;
+
+        protected synchronized static void updateStatistics(RawPosNegExample rawX,int npos,int nneg,int covpos,int covneg) {
+	    // keep track of some statistics - synchronized for multithreading
+	    totalPos += npos;
+	    totalNeg += nneg;
+	    coveredPos += covpos;
+	    coveredNeg += covneg;
+	    double fractionCovered = covpos/(double)npos;
+	    if (fractionCovered < smallestFractionCovered) {
+		worstX = rawX;
+		smallestFractionCovered = fractionCovered;
+	    }
+	}
+	
+        protected void reportStatistics(int empty) {
+	    if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
+	    log.info("totalPos: " + totalPos + " totalNeg: "+totalNeg+" coveredPos: "+coveredPos+" coveredNeg: "+coveredNeg);
+	    if (totalPos>0) log.info("For positive examples " + coveredPos + "/" + totalPos + " proveable [" + ((100.0*coveredPos)/totalPos) + "%]");
+	    if (totalNeg>0) log.info("For negative examples " + coveredNeg + "/" + totalNeg + " proveable [" + ((100.0*coveredNeg)/totalNeg) + "%]");
+	    if (worstX!=null) log.info("Example with fewest ["+100.0*smallestFractionCovered+"%] pos examples covered: "+worstX.getQuery());
 	}
 
 	public static class ExampleCookerConfiguration extends CustomConfiguration {
@@ -217,8 +239,10 @@ public class ExampleCooker extends ExampleThawing {
 	}
 	
 	public static void main(String ... args) {
-		ExampleCookerConfiguration c = new ExampleCookerConfiguration(args, Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT);
-		
+		int flags = Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT;
+		ExampleCookerConfiguration c = new ExampleCookerConfiguration(args, flags);
+		if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
+				
 		ExampleCooker cooker = null;
 		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
 		else cooker = new ModularMultiExampleCooker(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)), c.nthreads); 
@@ -226,7 +250,7 @@ public class ExampleCooker extends ExampleThawing {
 		long start = System.currentTimeMillis();
 		if (c.getCustomSetting("graphKey") != null) cooker.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
 		cooker.cookExamples(c.dataFile, c.outputFile);
-		System.out.println(System.currentTimeMillis()-start);
+		System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
 		System.out.println("Done.");
 		
 	}

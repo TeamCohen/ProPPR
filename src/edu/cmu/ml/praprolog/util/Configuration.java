@@ -14,6 +14,7 @@ import org.apache.commons.cli.PermissiveParser;
 import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.*;
 import org.apache.commons.cli.*;
@@ -29,11 +30,16 @@ public class Configuration {
     public static final int USE_THREADS = 0x10;
     public static final int USE_TRAIN = 0x20;
     public static final int USE_TEST = 0x40;
+    /** epochs, traceLosses */
     public static final int USE_LEARNINGSET = 0x80;
+    /** */
     public static final int USE_QUERIES = 0x100;
     public static final int USE_PARAMS = 0x200;
     public static final int USE_SRW = 0x400;
     public static final int USE_COMPLEX_FEATURES = 0x800;
+    public static final int USE_NOTEST = 0x1000;
+    public static final int USE_SOLUTIONS = 0x2000;
+    public static final int USE_DEFERREDPROGRAM = 0x4000;
     // combo flags:
     /** programFiles, prover, threads **/
     public static final int USE_DEFAULTS = 0x19;
@@ -54,6 +60,7 @@ public class Configuration {
     public boolean traceLosses = false;
     public String paramsFile = null;
     public WeightingScheme weightingScheme = null;
+    public boolean force = false;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -62,6 +69,7 @@ public class Configuration {
 		return (flags & flag) > 0;
 	}
 	
+	private Configuration() {}
 	public Configuration(String[] args) { this(args, new DprProver()); }
 	public Configuration(String[] args, int flags) { this(args, new DprProver(), flags, DEFAULT_COMBINE); }
 	public Configuration(String[] args, Prover dflt) { this(args, dflt, USE_DEFAULTS, DEFAULT_COMBINE); }
@@ -158,12 +166,15 @@ public class Configuration {
                 if (value.equals("linear")) weightingScheme = new LinearWeightingScheme();
                 else if (value.equals("sigmoid")) weightingScheme = new SigmoidWeightingScheme();
                 else if (value.equals("tanh")) weightingScheme = new TanhWeightingScheme();
+                else if (value.equals("ReLU")) weightingScheme = new ReLUWeightingScheme();
                 else {
                     System.err.println("Unrecognized weighting scheme " + value);
                     this.usageOptions(options, flags);
                 }
             }
         }
+        
+        if (line.hasOption("force")) this.force = true;
     }
 
     /**
@@ -174,7 +185,6 @@ public class Configuration {
         options.addOption(
                 OptionBuilder
                         .withLongOpt("programFiles")
-                        .isRequired(isOn(flags, USE_PROGRAMFILES))
                         .withArgName("file:...:file")
                         .hasArgs()
                         .withValueSeparator(':')
@@ -197,25 +207,26 @@ public class Configuration {
                         .hasArg()
                         .withDescription("Cooked training examples. Format: query\\tkeys,,\\tposList,,\\tnegList,,\\tgraph")
                         .create());
-        options.addOption(
-                OptionBuilder
-                        .withLongOpt("queries")
-                        .isRequired(isOn(flags, USE_QUERIES))
-                        .withArgName("file")
-                        .hasArg()
-                        .withDescription("Queries.  Format f a a")
-                        .create());
-        options.addOption(
-                OptionBuilder
-                        .withLongOpt("prover")
-                        .withArgName("class[:arg:...:arg]")
-                        .hasArg()
-                        .withDescription("Default: " + this.prover.getClass().getSimpleName() + "\n"
-                                         + "Available options:\n"
-                                         + "ppr[:depth] (default depth=5)\n"
-                                         + "dpr[:eps[:alph[:strat]]] (default eps=1E-4, alph=0.1, strategy=throw(boost,adjust))\n"
-                                         + "tr[:depth] (default depth=5)")
-                        .create());
+        if(isOn(flags, USE_QUERIES))
+	        options.addOption(
+	                OptionBuilder
+	                        .withLongOpt("queries")
+	                        .withArgName("file")
+	                        .hasArg()
+	                        .withDescription("Queries. Format f a a")
+	                        .create());
+        if(isOn(flags, USE_PROVER))
+	        options.addOption(
+		                OptionBuilder
+		                        .withLongOpt("prover")
+		                        .withArgName("class[:arg:...:arg]")
+		                        .hasArg()
+		                        .withDescription("Default: " + this.prover.getClass().getSimpleName() + "\n"
+		                                         + "Available options:\n"
+		                                         + "ppr[:depth] (default depth=5)\n"
+		                                         + "dpr[:eps[:alph[:strat]]] (default eps=1E-4, alph=0.1, strategy=throw(boost,adjust))\n"
+		                                         + "tr[:depth] (default depth=5)")
+		                        .create());
         if (isOn(flags, USE_THREADS)) options.addOption(
                 OptionBuilder
                         .withLongOpt("threads")
@@ -232,15 +243,16 @@ public class Configuration {
                             .hasArg()
                             .withDescription("Training examples. Format: f a a\\t{+|-}f a a\\t...")
                             .create());
-        if (isOn(flags, USE_TEST))
+        if (isOn(flags, USE_TEST)) {
             options.addOption(
-                    OptionBuilder
-                            .withLongOpt("test")
-                            .isRequired()
-                            .withArgName("file")
-                            .hasArg()
-                            .withDescription("Testing examples. Format: f a a\\t{+|-}f a a\\t...")
-                            .create());
+            		OptionBuilder
+			            .withLongOpt("test")
+			            .isRequired(!isOn(flags,USE_NOTEST))
+			            .withArgName("file")
+			            .hasArg()
+			            .withDescription("Testing examples. Format: f a a\\t{+|-}f a a\\t...")
+			            .create());
+        }
         if (isOn(flags, USE_PARAMS))
             options.addOption(
                     OptionBuilder
@@ -272,6 +284,11 @@ public class Configuration {
                             .withDescription("Properties file for complex features")
                             .create());
         }
+        options.addOption(
+        	OptionBuilder
+        		.withLongOpt("force")
+        		.withDescription("Ignore errors and run anyway")
+        		.create());
     }
 
     protected void constructUsageSyntax(StringBuilder syntax, int flags) {
@@ -348,4 +365,15 @@ public class Configuration {
         }
         return sb.substring(1).split("\\s");
     }
+	public static void missing(int options, int flags) {
+		System.err.println("Missing required option:");
+		switch(options) {
+			case USE_PROGRAMFILES:System.err.println("\tprogramFiles"); break;
+			default: throw new UnsupportedOperationException("Bad programmer! Add handling to Configuration.missing for flag "+options);
+		}
+		Configuration c = new Configuration();
+		Options o = new Options();
+		c.addOptions(o, flags);
+		c.usageOptions(o, flags);
+	}
 }

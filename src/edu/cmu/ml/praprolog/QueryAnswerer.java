@@ -8,8 +8,11 @@ import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ExperimentConfiguration;
+import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParamsFile;
 import edu.cmu.ml.praprolog.util.ParsedFile;
+import edu.cmu.ml.praprolog.util.SimpleParamVector;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -66,6 +69,10 @@ public class QueryAnswerer {
             if (line.hasOption("unnormalized")) this.normalize = false;
             this.rerank = false;
             if (line.hasOption("reranked")) this.rerank = true;
+            if (!line.hasOption("queries")) {
+            	System.err.println("\nMissing required option: queries\n");
+            	usageOptions(options, flags);
+            }
         }
     }
 
@@ -73,7 +80,7 @@ public class QueryAnswerer {
 	public Map<LogicProgramState,Double> getSolutions(Prover prover,Goal query,LogicProgram program) {
 		return prover.proveState(program, new ProPPRLogicProgramState(query));
 	}
-	public void addParams(LogicProgram program, Map<String,Double> params, WeightingScheme wScheme) {
+	public void addParams(LogicProgram program, ParamVector params, WeightingScheme wScheme) {
 		program.setFeatureDictWeighter(InnerProductWeighter.fromParamVec(params, wScheme));
 	}
 
@@ -133,7 +140,7 @@ public class QueryAnswerer {
         log.info("Running queries from " + c.queryFile + "; saving results to " + c.outputFile);
         if (c.paramsFile != null) {
         	ParamsFile file = new ParamsFile(c.paramsFile);
-            qa.addParams(c.program, Dictionary.load(file), c.weightingScheme);
+            qa.addParams(c.program, new SimpleParamVector(Dictionary.load(file)), c.weightingScheme);
             file.check(c);
         }
         qa.findSolutions(c.program, c.prover, c.queryFile, c.outputFile, c.normalize);
