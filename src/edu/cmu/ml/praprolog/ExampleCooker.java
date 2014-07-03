@@ -144,6 +144,14 @@ public class ExampleCooker extends ExampleThawing {
 		return key.toString();
 	}
 	
+	protected void saveGraphKey(RawPosNegExample rawX, GraphWriter writer) {
+		try {
+			this.graphKeyWriter.write(serializeGraphKey(rawX,writer));
+		} catch (IOException e) {
+			throw new IllegalStateException("Couldn't write to graph key file "+this.graphKeyFile.getName(),e);
+		}
+	}
+	
 	protected Prover getProver() {
 		return this.prover;
 	}
