@@ -11,7 +11,7 @@ default: $(addsuffix .results,$(FAST))
 
 all: $(addsuffix .results,$(ALL))
 
-clean: fast.clean
+clean: clean.fast
 
 clean.fast: $(addsuffix .clean,$(FAST))
 
