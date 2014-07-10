@@ -21,7 +21,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 
-	private LossData cumloss;
+	protected LossData cumloss;
 	
 	
 	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
@@ -67,7 +67,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
-			this.addLoss(LOSS.LOG, -Math.log(checkProb(px)));
+			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(px)));
 		}
 
 		//negative instance booster
@@ -82,7 +82,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 				if (Dictionary.safeContains(d,x,f)) 
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
 			}
-			this.addLoss(LOSS.LOG, -Math.log(checkProb(1.0-px)));
+			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(1.0-px)));
 		}
 		return derivFparamVec;
 	}
@@ -96,7 +96,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	protected Double derivRegularization(String f, ParamVector paramVec) {
 		double value = Dictionary.safeGet(paramVec, f);
 		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*mu*value;
-		this.addLoss(LOSS.REGULARIZATION, this.mu * Math.pow(value,2));
+		this.cumloss.add(LOSS.REGULARIZATION, this.mu * Math.pow(value,2));
 		return ret;
 		//		return untrainedFeatures.contains(f) ? 0.0 : 2*mu*Dictionary.safeGet(paramVec, f);
 	}
@@ -124,9 +124,6 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		return prob;
 	}
 
-	protected void addLoss(LOSS type, double loss) {
-		Dictionary.increment(this.cumloss.loss, type, loss);
-	}
 	@Override
 	public LossData cumulativeLoss() {
 		return cumloss.copy();

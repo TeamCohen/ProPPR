@@ -30,7 +30,7 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		double value = Dictionary.safeGet(paramVec,f);
 		// ...and record pending regularization loss
-		this.addLoss(LOSS.REGULARIZATION, (gap - 1) * this.mu * Math.pow(value, 2));
+		this.cumloss.add(LOSS.REGULARIZATION, (gap - 1) * this.mu * Math.pow(value, 2));
 		return ret;
 		//				if (untrainedFeatures.contains(f)) return 0.0;
 		//		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), ((MuParamVector)paramVec).getLast(f));
@@ -72,6 +72,7 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 			double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap - 1);
 			double weightDecay = value * (powerTerm - 1);
 			Dictionary.increment(paramVec, f, weightDecay);
+			this.cumloss.add(LOSS.REGULARIZATION, weightDecay);
 		}
 	}
 }

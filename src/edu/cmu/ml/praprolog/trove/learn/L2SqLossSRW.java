@@ -97,7 +97,7 @@ public class L2SqLossSRW extends SRW<PairwiseRWExample> {
 				double del = derivLoss(delta) * (Dictionary.safeGet(d, hl.getLo(), f) - Dictionary.safeGet(d, hl.getHi(), f));
 				Dictionary.increment(derivFparamVec, f, del);
 			}
-			this.addLoss(LOSS.L2, this.loss(delta));
+			this.cumloss.add(LOSS.L2, this.loss(delta));
 		}
 		
 		for (String f : trainableFeatures(derivFparamVec.keySet())) {
@@ -126,9 +126,6 @@ public class L2SqLossSRW extends SRW<PairwiseRWExample> {
 		return paramVec;
 	}
 	
-	protected void addLoss(LOSS type, double loss) {
-		Dictionary.increment(this.cumloss.loss, type, loss);
-	}
 	@Override
 	public LossData cumulativeLoss() {
 		return cumloss.copy();

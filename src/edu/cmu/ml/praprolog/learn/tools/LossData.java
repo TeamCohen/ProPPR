@@ -2,15 +2,19 @@ package edu.cmu.ml.praprolog.learn.tools;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class LossData {
-	public Map<LOSS,Double> loss=new HashMap<LOSS,Double>();
+	public Map<LOSS,Double> loss=new ConcurrentHashMap<LOSS,Double>();
 	public enum LOSS {
 		REGULARIZATION,
 		LOG,
 		L2
+	}
+	public synchronized void add(LOSS type, double loss) {
+		Dictionary.increment(this.loss, type, loss);
 	}
 	public void clear() {
 		this.loss.clear();
