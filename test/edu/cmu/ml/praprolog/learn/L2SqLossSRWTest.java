@@ -12,7 +12,8 @@ import java.util.TreeMap;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
-import edu.cmu.ml.praprolog.learn.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
+import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
 

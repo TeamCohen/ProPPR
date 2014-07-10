@@ -1,4 +1,4 @@
-package edu.cmu.ml.praprolog.trove.learn;
+package edu.cmu.ml.praprolog.trove.learn.tools;
 
 import java.util.ArrayList;
 import java.util.List;

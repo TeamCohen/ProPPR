@@ -3,7 +3,7 @@ package edu.cmu.ml.praprolog.prove;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 
 public abstract class FeatureDictWeighter {
 	protected Map<Goal,Double> weights = new HashMap<Goal,Double>();

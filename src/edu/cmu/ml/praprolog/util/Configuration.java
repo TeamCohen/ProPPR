@@ -11,11 +11,11 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PermissiveParser;
 
-import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
-import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
-import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
-import edu.cmu.ml.praprolog.learn.ReLUWeightingScheme;
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.*;
 import org.apache.commons.cli.*;
 
@@ -99,8 +99,7 @@ public class Configuration {
 		    retrieveSettings(line,flags,options);
 			
 		} catch( Exception exp ) {
-			System.err.println("\n"+exp.getMessage()+"\n");
-			usageOptions(options,flags);
+			usageOptions(options,flags,exp.getMessage());
 		}
 	}
 	protected File getExistingFileOption(CommandLine line, String name) {
@@ -154,8 +153,7 @@ public class Configuration {
 				}
 				this.prover = new TracingDfsProver(depth);
 			}else {
-				System.err.println("No prover definition for '"+values[0]+"'");
-			    usageOptions(options,flags);
+			    usageOptions(options,flags,"No prover definition for '"+values[0]+"'");
 			}
 		}
 
@@ -168,8 +166,7 @@ public class Configuration {
                 else if (value.equals("tanh")) weightingScheme = new TanhWeightingScheme();
                 else if (value.equals("ReLU")) weightingScheme = new ReLUWeightingScheme();
                 else {
-                    System.err.println("Unrecognized weighting scheme " + value);
-                    this.usageOptions(options, flags);
+                    this.usageOptions(options, flags, "Unrecognized weighting scheme " + value);
                 }
             }
         }
@@ -307,6 +304,13 @@ public class Configuration {
      * Calls System.exit(0)
      */
     protected void usageOptions(Options options, int flags) {
+    	usageOptions(options,flags,null);
+    }
+
+    /**
+     * Calls System.exit(0)
+     */
+    protected void usageOptions(Options options, int flags, String msg) {
         HelpFormatter formatter = new HelpFormatter();
         int width = 80;
 
@@ -316,12 +320,18 @@ public class Configuration {
                 width = Integer.parseInt(swidth);
             } catch (NumberFormatException e) {}
         }
-        formatter.setWidth(width);
-        formatter.setLeftPadding(0);
-        formatter.setDescPadding(2);
+//        formatter.setWidth(width);
+//        formatter.setLeftPadding(0);
+//        formatter.setDescPadding(2);
         StringBuilder syntax = new StringBuilder();
         constructUsageSyntax(syntax, flags);
-        formatter.printHelp(syntax.toString(), options);
+        String printMsg = "";
+        if (msg != null) printMsg = ("\nBAD USAGE:" + msg +"\n\n");
+//        formatter.printHelp(syntax.toString(), options);
+        PrintWriter pw = new PrintWriter(System.err);
+        formatter.printHelp(pw, width, syntax.toString(), printMsg, options, 0, 2, printMsg);
+        pw.flush();
+        pw.close();
         System.exit(0);
     }
 
@@ -366,14 +376,14 @@ public class Configuration {
         return sb.substring(1).split("\\s");
     }
 	public static void missing(int options, int flags) {
-		System.err.println("Missing required option:");
+		StringBuilder sb = new StringBuilder("Missing required option:\n");
 		switch(options) {
-			case USE_PROGRAMFILES:System.err.println("\tprogramFiles"); break;
+			case USE_PROGRAMFILES:sb.append("\tprogramFiles"); break;
 			default: throw new UnsupportedOperationException("Bad programmer! Add handling to Configuration.missing for flag "+options);
 		}
 		Configuration c = new Configuration();
 		Options o = new Options();
 		c.addOptions(o, flags);
-		c.usageOptions(o, flags);
+		c.usageOptions(o, flags, sb.toString());
 	}
 }

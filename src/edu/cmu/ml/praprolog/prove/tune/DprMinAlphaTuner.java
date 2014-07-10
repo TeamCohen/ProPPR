@@ -9,7 +9,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.DprProver;
 import edu.cmu.ml.praprolog.prove.Goal;

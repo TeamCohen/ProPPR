@@ -8,8 +8,8 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
-import edu.cmu.ml.praprolog.learn.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
+import edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
 import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
@@ -46,7 +46,7 @@ public class Experiment {
 		ParamVector paramVec = null;
 		if (c.trove) {
 			Trainer trainer = (Trainer) c.trainer;
-			paramVec = trainer.trainParametersOnCookedIterator(new edu.cmu.ml.praprolog.trove.learn.CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);
+			paramVec = trainer.trainParametersOnCookedIterator(new edu.cmu.ml.praprolog.trove.learn.tools.CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);
 		} else {
 			edu.cmu.ml.praprolog.Trainer<String> trainer = (edu.cmu.ml.praprolog.Trainer<String>) c.trainer;
 			paramVec = trainer.trainParametersOnCookedIterator(

@@ -11,6 +11,7 @@ then
     echo -e "  --epsilon value               Set DPR error bound hyperparameter"
     echo -e "  --mu value                    Set SRW regularization hyperparameter"
     echo -e "  --epochs value                Set number of training epochs"
+    echo -e "  --tester value                Set tester variant"
     exit 0
 fi
 
@@ -44,6 +45,9 @@ do
     elif [ "--epochs" = "$NAME" ]
     then
 	echo -e "EPOCHS=$VALUE" >> Makefile.in
+    elif [ "--tester" = "$NAME" ]
+    then
+	echo -e "TESTER=$VALUE" >> Makefile.in
     else
 	echo -e "Unrecognized option: $NAME"
 	exit 0
@@ -92,6 +96,9 @@ THREADS=3
 endif
 ifeq (\$(strip \$(EPOCHS)),)
 EPOCHS=20
+endif
+ifeq (\$(strip \$(TESTER)),)
+TESTER=rt
 endif
 
 EOF

@@ -20,7 +20,7 @@ import edu.cmu.ml.praprolog.Trainer;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph.GraphFormatException;
 import edu.cmu.ml.praprolog.graph.Feature;
-import edu.cmu.ml.praprolog.learn.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 
 public class AnnotatedGraphTest {
 	AnnotatedGraph g;

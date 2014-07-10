@@ -3,6 +3,7 @@ package edu.cmu.ml.praprolog.learn;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -12,9 +13,10 @@ import org.junit.Test;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.L2SqLossSRW;
-import edu.cmu.ml.praprolog.learn.PairwiseRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
-import edu.cmu.ml.praprolog.learn.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.learn.tools.LossData;
+import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
+import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
@@ -101,8 +103,9 @@ public class SRWRestartTest extends SRWTest {
 			L2SqLossSRW<String> mysrw = (L2SqLossSRW<String>) this.srw;
 			double preLoss = mysrw.empiricalLoss(weightVec, examples[i]);
 			mysrw.trainOnExample(weightVec,examples[i]);
-			double postLoss = mysrw.empiricalLoss(weightVec,examples[i]);
-			assertTrue(String.format("preloss %f postloss %f",preLoss,postLoss), preLoss == 0 || preLoss > postLoss);
+			double postLoss = mysrw.empiricalLoss(weightVec, examples[i]);
+			assertTrue(String.format("preloss %f postloss %f",preLoss,postLoss), 
+					preLoss == 0 || preLoss > postLoss);
 		}
 	}
 }

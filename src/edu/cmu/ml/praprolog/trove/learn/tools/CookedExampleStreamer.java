@@ -1,4 +1,4 @@
-package edu.cmu.ml.praprolog.trove.learn;
+package edu.cmu.ml.praprolog.trove.learn.tools;
 
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -35,15 +35,15 @@ public class CookedExampleStreamer implements Iterable<PosNegRWExample>,
 		
 		AnnotatedTroveGraph g = new AnnotatedTroveGraph();
 		
-		String[] parts = line.trim().split(edu.cmu.ml.praprolog.learn.CookedExampleStreamer.MAJOR_DELIM, 5);
+		String[] parts = line.trim().split(edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer.MAJOR_DELIM, 5);
 		
 		TreeMap<String, Double> queryVec = new TreeMap<String,Double>();
-		for(String u : parts[1].split(edu.cmu.ml.praprolog.learn.CookedExampleStreamer.MINOR_DELIM)) queryVec.put(u, 1.0);
+		for(String u : parts[1].split(edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer.MINOR_DELIM)) queryVec.put(u, 1.0);
 
 		String[] rawPosList, rawNegList;
-		if (parts[2].length()>0) rawPosList = parts[2].split(edu.cmu.ml.praprolog.learn.CookedExampleStreamer.MINOR_DELIM);
+		if (parts[2].length()>0) rawPosList = parts[2].split(edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer.MINOR_DELIM);
 		else rawPosList = new String[0];
-		if (parts[3].length()>0) rawNegList = parts[3].split(edu.cmu.ml.praprolog.learn.CookedExampleStreamer.MINOR_DELIM);
+		if (parts[3].length()>0) rawNegList = parts[3].split(edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer.MINOR_DELIM);
 		else rawNegList = new String[0];
 		if (rawPosList.length + rawNegList.length == 0) {
 			log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");

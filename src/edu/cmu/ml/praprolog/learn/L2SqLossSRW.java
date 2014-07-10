@@ -7,19 +7,27 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.learn.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.learn.tools.LossData;
+import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
+import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
+import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 	private static final Logger log = Logger.getLogger(L2SqLossSRW.class);
 	protected double margin=0.01;
+	private LossData cumloss;
+	
+	public L2SqLossSRW() {
+		this.cumloss = new LossData();
+	}
 	/**
 	 * The loss associated with a difference in ranking scores of diff.
 	 * @param diff
 	 * @return
 	 */
-	public double loss(double diff) {
+	private double loss(double diff) {
 		return (diff+margin)<0 ? 0 : 0.5*diff*diff;
 	}
 	/**
@@ -41,23 +49,24 @@ public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 		return (this.untrainedFeatures.contains(f)) ? 0 : 2*paramVec.get(f)*this.mu;
 	}
 	
-	/**
-	 * The empirical loss of the current ranking. [This method originally from PairwiseLossTrainedSRW]
-	 * @param weightVec
-	 * @param pairwiseRWExample
-	 */
-	public double empiricalLoss(ParamVector paramVec,
-			PairwiseRWExample<T> example) {
-		Map<T,Double> vec = this.rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-		double loss = 0;
-		    
-		for (HiLo<T> hl : example.getHiLoList()) {
-			// zero loss if lo < hi (===if lo-hi < 0); proportional to sqdifference otherwise
-			double delta = this.loss(Dictionary.safeGet(vec, hl.getLo()) - Dictionary.safeGet(vec, hl.getHi())); 
-			loss += delta;
-		}
-		return loss;
-	}
+//	/**
+//	 * The empirical loss of the current ranking. [This method originally from PairwiseLossTrainedSRW]
+//	 * @param weightVec
+//	 * @param pairwiseRWExample
+//	 */
+//	public double empiricalLoss(ParamVector paramVec,
+//			PairwiseRWExample<T> example) {
+//		Map<T,Double> vec = this.rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
+//		double loss = 0;
+//		    
+//		for (HiLo<T> hl : example.getHiLoList()) {
+//			// zero loss if lo < hi (===if lo-hi < 0); proportional to sqdifference otherwise
+//			double delta = this.loss(Dictionary.safeGet(vec, hl.getLo()) - Dictionary.safeGet(vec, hl.getHi())); 
+//			loss += delta;
+//		}
+//		return loss;
+//	}
+	
 	/**
 	 * Compute the local gradient of the parameters, associated
         with a particular start vector and a particular desired
@@ -84,6 +93,7 @@ public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 				double del = derivLoss(delta) * (Dictionary.safeGetGet(d, hl.getLo(), f) - Dictionary.safeGetGet(d, hl.getHi(), f));
 				Dictionary.increment(derivFparamVec, f, del);
 			}
+			this.addLoss(LOSS.L2, this.loss(delta));
 		}
 		
 		for (String f : trainableFeatures(derivFparamVec)) {
@@ -106,10 +116,21 @@ public class L2SqLossSRW<T> extends SRW<PairwiseRWExample<T>> {
 				if (log.isDebugEnabled()) log.debug(String.format("epoch: %d length: %s train: %s",epoch, example.length(),example.toString()));
 				trainOnExample(paramVec, example);
 			}
-			double trainLoss = averageLoss(paramVec,trainingExamples);
-			if (log.isInfoEnabled()) log.info(String.format("epoch: %d trainLoss: %f",epoch, trainLoss));
+//			double trainLoss = averageLoss(paramVec,trainingExamples);
+//			if (log.isInfoEnabled()) log.info(String.format("epoch: %d trainLoss: %f",epoch, trainLoss));
 		}
 		return paramVec;
 	}
 	
+	protected void addLoss(LOSS type, double loss) {
+		Dictionary.increment(this.cumloss.loss, type, loss);
+	}
+	@Override
+	public LossData cumulativeLoss() {
+		return cumloss.copy();
+	}
+	@Override
+	public void clearLoss() {
+		cumloss.clear(); // ?
+	}
 }

@@ -1,4 +1,4 @@
-package edu.cmu.ml.praprolog.learn;
+package edu.cmu.ml.praprolog.learn.tools;
 
 public class TanhWeightingScheme extends WeightingScheme {
 

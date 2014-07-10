@@ -14,8 +14,8 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
-import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
+import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
 import edu.cmu.ml.praprolog.util.ParamVector;
@@ -88,7 +88,7 @@ public class MultithreadedTrainer<T> extends Trainer<T> {
 			try {
 				Thread th = currentTrainingRun.threads.get(0);
 				if (log.isDebugEnabled()) log.debug("Joining thread "+th.getName());
-				th.join(); // will finish adding any new threads in uncaughtexceptionhandlers before returning
+				th.join(); // will finish adding any new threads in uncaughtExceptionHandlers before returning
 				currentTrainingRun.threads.remove(0);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -100,7 +100,7 @@ public class MultithreadedTrainer<T> extends Trainer<T> {
 	}
 	
 	public synchronized void traceLosses(SRW<PosNegRWExample<T>> learner, ParamVector paramVec, PosNegRWExample<T> example) {
-		totalLossThisEpoch += learner.empiricalLoss(paramVec, example); 
+//		totalLossThisEpoch += learner.empiricalLoss(paramVec, example); 
 		numExamplesThisEpoch += example.length();
 	}
 	
@@ -176,74 +176,4 @@ public class MultithreadedTrainer<T> extends Trainer<T> {
 			}
 		}
 	}
-	
-	/////////////////////////////////////// Run ///////////////////////////////////////////
-	
-	private static final String USAGE = "Usage:\n\tcookedExampleFile outputParamFile [options]\n"
-			+"\t\t--epochs {int}   Number of epochs (default 5)\n"
-			+"\t\t--traceLosses    Turn on traceLosses (default off)\n"
-			+"\t\t                   NB: example count for losses is sum(x.length() for x in examples)\n"
-			+"\t\t                   and won't match `wc -l cookedExampleFile`\n"
-			+"\t\t--threads {int}  Number of threads (default 4)\n"
-			+"\t\t--rr             Use round-robin scheduling (default:queue)\n"
-			+"\t\t--string         Use String graph keys (this is the default)\n"
-			+"\t\t--int            Use Integer graph keys (default:--string)\n"
-			+"\t\t                   NB: This doesn't actually help...\n"; 
-	private static void usage() {
-		System.err.println(USAGE);
-		System.exit(0);
-	}
-//	public static void main(String[] args) {
-//		if (args.length < 2) {
-//			usage();
-//		}
-//		
-//		String cookedExampleFile = args[0];
-//		String outputParamFile   = args[1];
-//		int epochs = 5;
-//		int threads = 4;
-//		boolean traceLosses = false;
-//		boolean roundRobin = false;
-//		String graphType = AnnotatedGraphFactory.STRING;
-//		if (args.length > 2) {
-//			for (int i=2; i<args.length; i++) {
-//				if ("--epochs".equals(args[i])) {
-//					if (i+1<args.length) epochs = Integer.parseInt(args[++i]);
-//					else usage();
-//				} else if ("--traceLosses".equals(args[i])) {
-//					traceLosses = true;
-//				} else if ("--threads".equals(args[i])) {
-//					if (i+1<args.length) threads = Integer.parseInt(args[++i]);
-//					else usage();
-//				} else if ("--rr".equals(args[i])) {
-//					roundRobin = true;
-//				} else if ("--string".equals(args[i])) {
-//					graphType = AnnotatedGraphFactory.STRING;
-//				} else if ("--int".equals(args[i])) {
-//					graphType = AnnotatedGraphFactory.INT;
-//				} else usage();
-//			}
-//		}
-//		
-////		L2PosNegLossTrainedSRW<String> srw = new L2PosNegLossTrainedSRW<String>();
-////		Trainer<String> trainer = new MultithreadedTrainer<String>(srw,threads);
-////		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-////				trainer.importCookedExamples(cookedExampleFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
-////				epochs,
-////				traceLosses);
-//		L2PosNegLossTrainedSRW srw = new L2PosNegLossTrainedSRW();
-//		Trainer trainer = null;
-//		if (roundRobin) {
-//			trainer = new MultithreadedRRTrainer(srw,threads);
-//		} else {
-//			trainer = new MultithreadedTrainer(srw,threads);
-//		}
-////		Trainer trainer = new MultithreadedTrainer(srw,threads);
-//		Map<String,Double> paramVec = trainer.trainParametersOnCookedIterator(
-//				trainer.importCookedExamples(cookedExampleFile, 
-//					new AnnotatedGraphFactory(graphType)),
-//				epochs,
-//				traceLosses);
-//		Dictionary.save(paramVec, outputParamFile);
-//	}
 }

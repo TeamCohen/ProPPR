@@ -12,13 +12,13 @@ import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
 import edu.cmu.ml.praprolog.QueryAnswerer;
 import edu.cmu.ml.praprolog.RerankingQueryAnswerer;
-import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
-import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
-import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
-import edu.cmu.ml.praprolog.learn.ReLUWeightingScheme;
-import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.Component;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
 import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
@@ -249,8 +249,8 @@ public class ExperimentConfiguration extends Configuration {
 				this.tester = null; // don't use a Tester
 			} else { // ...and we need to test,
 				if (isOn(flags,USE_TEST) && !line.hasOption("test")) { // ...but the user hasn't specified a file...
-					System.err.println("Missing required option: one of\n\t--test <file>\n\t--notest"); // give up
-					usageOptions(options, flags);
+					// give up
+					usageOptions(options, flags,"Missing required option: one of\n\t--test <file>\n\t--notest");
 				}
 			}
 		}
@@ -276,7 +276,9 @@ public class ExperimentConfiguration extends Configuration {
 									this.program, 
 									(edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw);
 						}
-					} 
+					} else {
+						this.usageOptions(options, flags,"No tester called '"+values[0]+"'");
+					}
 				}
 			} else this.tester = new Tester(this.prover, this.program);
 		}
@@ -291,8 +293,7 @@ public class ExperimentConfiguration extends Configuration {
 			else if (values[0].equals("rqa"))
 				this.queryAnswerer = new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) this.srw);
 			else {
-				System.err.println("No queryAnswerer option '"+values[0]+"'");
-				usageOptions(options, flags);
+				usageOptions(options, flags,"No queryAnswerer option '"+values[0]+"'");
 			}
 			if (values.length > 1) {
 				this.normalize = values[1].equals("norm");
@@ -301,8 +302,7 @@ public class ExperimentConfiguration extends Configuration {
 			if (line.hasOption("solutions")) {
 				this.solutionsFile = line.getOptionValue("solutions");
 			} else {
-				System.err.println("Missing required option: solutions");
-				usageOptions(options,flags);
+				usageOptions(options,flags,"Missing required option: solutions");
 			}
 		}
 	}
@@ -336,8 +336,7 @@ public class ExperimentConfiguration extends Configuration {
 					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 				}
 			} else {
-				System.err.println("No srw definition for '"+values+"'");
-				usageOptions(options,flags);
+				usageOptions(options,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
 			if (this.trove) {

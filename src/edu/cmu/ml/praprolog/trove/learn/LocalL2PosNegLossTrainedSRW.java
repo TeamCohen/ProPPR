@@ -3,8 +3,9 @@ package edu.cmu.ml.praprolog.trove.learn;
 import java.util.Map;
 import java.util.Set;
 
-import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.MuParamVector;
 import edu.cmu.ml.praprolog.util.ParamVector;
@@ -22,10 +23,19 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 	}	
 	@Override
 	protected Double derivRegularization(String f, ParamVector paramVec) {
-		if (untrainedFeatures.contains(f)) return 0.0;
-		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), ((MuParamVector)paramVec).getLast(f));
-		double factorTerm = (1 - powerTerm) / this.learningRate();
-		return factorTerm * Dictionary.safeGet(paramVec,f);
+		// NB superclass records regularization loss for this clock cycle
+		Double ret = super.derivRegularization(f, paramVec);
+		// apply remaining weight decay to this parameter
+		// theta_f = theta_f * (1 - 2 mu lambda ) ^ (k_f - 1)
+		int gap = ((MuParamVector)paramVec).getLast(f);
+		double value = Dictionary.safeGet(paramVec,f);
+		// ...and record pending regularization loss
+		this.addLoss(LOSS.REGULARIZATION, (gap - 1) * this.mu * Math.pow(value, 2));
+		return ret;
+		//				if (untrainedFeatures.contains(f)) return 0.0;
+		//		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), ((MuParamVector)paramVec).getLast(f));
+		//		double factorTerm = (1 - powerTerm) / this.learningRate();
+		//		return factorTerm * Dictionary.safeGet(paramVec,f);
 	}
 	
 	@Override
@@ -50,5 +60,18 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 		}
 		((MuParamVector)paramVec).setLast(paramVec.keySet());
 		
+	}
+	
+	@Override
+	public void prepareGradient(ParamVector paramVec, PosNegRWExample example) {
+		for (String f : localFeatures(paramVec,example)) {
+			int gap = ((MuParamVector)paramVec).getLast(f);
+			double value = Dictionary.safeGet(paramVec,f);
+			// use gap-1 here because superclass will apply regularization for this clock cycle
+			// during the gradient() call
+			double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap - 1);
+			double weightDecay = value * (powerTerm - 1);
+			Dictionary.increment(paramVec, f, weightDecay);
+		}
 	}
 }

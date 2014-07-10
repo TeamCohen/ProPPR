@@ -7,8 +7,8 @@ import org.apache.log4j.Logger;
 
 import com.skjegstad.utils.BloomFilter;
 
-import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 /**

@@ -8,10 +8,12 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.learn.SigmoidWeightingScheme;
-import edu.cmu.ml.praprolog.learn.TanhWeightingScheme;
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LossData;
+import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
+import edu.cmu.ml.praprolog.trove.learn.tools.RWExample;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
@@ -89,26 +91,6 @@ public class SRW<E extends RWExample> {
 		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
 	}
 
-	//	/**
-	//	 * The function wraps the product of edge weight and feature.
-	//	 * @param p product of edge weight and feature.
-	//	 * @return 
-	//	 */
-	//	public double edgeWeightFunction(double product) {
-	//		//WW: We found exp to have the overflow issue, replace by sigmoid.
-	//		//return Math.exp(product);
-	//		//return sigmoid(product);
-	//		return tanh(product);
-	//	}
-	//
-	//	public double sigmoid(double x){
-	//		return 1/(1 + Math.exp(-x));
-	//       }
-	//
-	//	public double tanh(double x){
-	//		return ( Math.exp(x) -  Math.exp(-x))/( Math.exp(x) +  Math.exp(-x));
-	//	}
-	//	
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
 	 * @param g
@@ -259,28 +241,6 @@ public class SRW<E extends RWExample> {
 		return result;
 	}
 
-	//	/**
-	//	 * The function wraps the derivative of edge weight.
-	//	 * @param weight: edge weight.
-	//	 * @return wrapped derivative of the edge weight.
-	//	 */
-	//	public double derivEdgeWeightFunction(double weight) {
-	//		
-	//		//WW: replace with sigmoid function's derivative.
-	//		//return Math.exp(weight);
-	//		//return derivSigmoid(weight);
-	//		return derivTanh(weight);
-	//	}
-	//
-	//	public double derivSigmoid(double value) {
-	//		return sigmoid(value) * (1 - sigmoid(value));
-	//       }
-	//
-	//	public double derivTanh(double value) {
-	//		return (1- tanh(value)*tanh(value));
-	//       }
-
-
 	/**
 	 * Builds a set of features in the specified set that are not on the untrainedFeatures list.
 	 * @param candidates feature names
@@ -298,7 +258,7 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps from features names to nonnegative values.
 	 * @return
 	 */
-	public Set<String> trainableFeatures(ParamVector paramVec) {
+	public <X> Set<String> trainableFeatures(ParamVector paramVec) {
 		return trainableFeatures(paramVec.keySet());
 	}
 	/**
@@ -341,6 +301,7 @@ public class SRW<E extends RWExample> {
 	 */
 	public void trainOnExample(ParamVector paramVec, E example) {
 		addDefaultWeights(example.getGraph(),paramVec);
+		prepareGradient(paramVec,example);
 		TObjectDoubleHashMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
@@ -363,9 +324,60 @@ public class SRW<E extends RWExample> {
 	public void setEpoch(int e) {
 		this.epoch = e;
 	}
+
+
+	/**
+	 * Perform any pre-gradient parameter vector updates that may be necessary.
+	 * @param paramVec
+	 * @param example
+	 */
+	public void prepareGradient(ParamVector paramVec, E example) {}
 	
 	/**
-	 * [originally from SRW even though SRW lacks empiricalLoss]
+	 * Compute the local gradient of the parameters, associated
+	 *  with a particular start vector and a particular desired
+	 *  ranking as encoded in the example.
+	 * @param paramVec
+	 * @param example
+	 * @return
+	 */
+	public TObjectDoubleHashMap<String> gradient(ParamVector paramVec, E example) {
+		throw new UnsupportedOperationException("Bad programmer! Must override in subclass.");
+	}
+	
+	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
+	public ParamVector setupParams(ParamVector paramVec) { return paramVec; }
+	
+	/** Give the learner the opportunity to do additional parameter processing **/
+	public void cleanupParams(ParamVector paramVec) {}
+
+	/**
+	 * Reset the loss-tracking state of this walker.
+	 */
+	public void clearLoss() {
+		throw new UnsupportedOperationException("Bad programmer! Must override in subclass.");}
+	/**
+	 * Retrieve the current loss accumulated across all calls to gradient().
+	 * @return
+	 */
+	public LossData cumulativeLoss() { 
+		throw new UnsupportedOperationException("Bad programmer! Must override in subclass."); }
+	
+	/**
+	 * Determine the loss over the specified example using the specified parameters. Clears loss tracking before and after, so this is really not threadsafe at all...
+	 * @param paramVec
+	 * @param example
+	 * @return
+	 */
+	public double empiricalLoss(ParamVector paramVec, E example) {
+		this.clearLoss();
+		this.gradient(paramVec,example);
+		double loss = cumulativeLoss().total();
+		this.clearLoss();
+		return loss;
+	}
+	/**
+	 * Really super not threadsafe at all!!!
 	 * @param paramVec
 	 * @param exampleIt
 	 */
@@ -381,31 +393,4 @@ public class SRW<E extends RWExample> {
 		}
 		return totLoss / numTest;
 	}
-	/**
-	 * Compute the local gradient of the parameters, associated
-	 *  with a particular start vector and a particular desired
-	 *  ranking as encoded in the example.
-	 *  
-	 * @param paramVec
-	 * @param example
-	 * @return
-	 */
-	public TObjectDoubleHashMap<String> gradient(ParamVector paramVec, E example) {
-		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
-	}
-	/**
-	 * The empirical loss of the current ranking. [This method originally from PairwiseLossTrainedSRW]
-	 * @param weightVec
-	 * @param pairwiseRWExample
-	 */
-	public double empiricalLoss(ParamVector paramVec, E example) {
-		throw new UnsupportedOperationException("Never call directly on SRW; use a subclass");
-	}
-
-
-	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
-	public ParamVector setupParams(ParamVector paramVec) { return paramVec; }
-	
-	/** Give the learner the opportunity to do additional parameter processing **/
-	public void cleanupParams(ParamVector paramVec) {}
 }

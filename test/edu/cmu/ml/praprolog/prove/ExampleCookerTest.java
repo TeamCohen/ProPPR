@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.ExampleCooker;
-import edu.cmu.ml.praprolog.learn.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class ExampleCookerTest {

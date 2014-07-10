@@ -11,6 +11,11 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.learn.tools.LossData;
+import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
+import edu.cmu.ml.praprolog.learn.tools.RWExample;
+import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
@@ -38,7 +43,6 @@ public class SRW<E extends RWExample> {
 	protected double eta;
 	protected double delta;
 	protected int epoch;
-//	protected double regularize;
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
@@ -51,7 +55,6 @@ public class SRW<E extends RWExample> {
 		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
 		this.weightingScheme = wScheme;
-//		this.updateRegularizer();
 	}
 
 
@@ -79,26 +82,6 @@ public class SRW<E extends RWExample> {
 	public <T> double edgeWeight(AnnotatedGraph<T> g, T u, T v,  Map<String,Double> p) {
 		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
 	}
-
-	//	/**
-	//	 * The function wraps the product of edge weight and feature.
-	//	 * @param p product of edge weight and feature.
-	//	 * @return 
-	//	 */
-	//	public double edgeWeightFunction(double product) {
-	//		//WW: We found exp to have the overflow issue, replace by sigmoid.
-	//		//return Math.exp(product);
-	//		//return sigmoid(product);
-	//		return tanh(product);
-	//	}
-	//
-	//	public double sigmoid(double x){
-	//		return 1/(1 + Math.exp(-x));
-	//       }
-	//
-	//	public double tanh(double x){
-	//		return ( Math.exp(x) -  Math.exp(-x))/( Math.exp(x) +  Math.exp(-x));
-	//	}
 
 	/**
 	 * The sum of the unnormalized weights of all outlinks from u.
@@ -301,11 +284,12 @@ public class SRW<E extends RWExample> {
 	 */
 	public void trainOnExample(ParamVector paramVec, E example) {
 		addDefaultWeights(example.getGraph(),paramVec);
+		prepareGradient(paramVec,example);
 		Map<String,Double> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
 		}
-		double rate = learningRate();//Math.pow(this.epoch,-2) * this.eta / example.length();
+		double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
 		for (Map.Entry<String, Double> f : grad.entrySet()) {
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
@@ -324,8 +308,59 @@ public class SRW<E extends RWExample> {
 		this.epoch = e;
 	}
 
+
 	/**
-	 * [originally from SRW even though SRW lacks empiricalLoss]
+	 * Perform any pre-gradient parameter vector updates that may be necessary.
+	 * @param paramVec
+	 * @param example
+	 */
+	public void prepareGradient(ParamVector paramVec, E example) {}
+	
+	/**
+	 * Compute the local gradient of the parameters, associated
+	 *  with a particular start vector and a particular desired
+	 *  ranking as encoded in the example.
+	 * @param paramVec
+	 * @param example
+	 * @return
+	 */
+	public Map<String,Double> gradient(ParamVector paramVec, E example) {
+		throw new UnsupportedOperationException("Bad programmer! Must override in subclass.");
+	}
+
+	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
+	public ParamVector setupParams(ParamVector paramVec) { return paramVec; }
+	
+	/** Give the learner the opportunity to do additional parameter processing **/
+	public void cleanupParams(ParamVector paramVec) {}
+	
+	/**
+	 * Reset the loss-tracking state of this walker.
+	 */
+	public void clearLoss() {
+		throw new UnsupportedOperationException("Bad programmer! Must override in subclass.");}
+	/**
+	 * Retrieve the current loss accumulated across all calls to gradient()
+	 * @return
+	 */
+	public LossData cumulativeLoss() { 
+		throw new UnsupportedOperationException("Bad programmer! Must override in subclass."); }
+	
+	/**
+	 * Determine the loss over the specified example using the specified parameters. Clears loss tracking before and after, so this is really not threadsafe at all...
+	 * @param paramVec
+	 * @param example
+	 * @return
+	 */
+	public double empiricalLoss(ParamVector paramVec, E example) {
+		this.clearLoss();
+		this.gradient(paramVec,example);
+		double loss = cumulativeLoss().total();
+		this.clearLoss();
+		return loss;
+	}
+	/**
+	 * Really super not threadsafe at all!!!
 	 * @param paramVec
 	 * @param exampleIt
 	 */
@@ -341,31 +376,4 @@ public class SRW<E extends RWExample> {
 		}
 		return totLoss / numTest;
 	}
-	/**
-	 * Compute the local gradient of the parameters, associated
-	 *  with a particular start vector and a particular desired
-	 *  ranking as encoded in the example.
-	 *  
-	 * @param paramVec
-	 * @param example
-	 * @return
-	 */
-	public Map<String,Double> gradient(ParamVector paramVec, E example) {
-		throw new UnsupportedOperationException("whoops");
-	}
-
-	/**
-	 * The empirical loss of the current ranking. [This method originally from PairwiseLossTrainedSRW]
-	 * @param weightVec
-	 * @param pairwiseRWExample
-	 */
-	public double empiricalLoss(ParamVector paramVec, E example) {
-		throw new UnsupportedOperationException("whoops");
-	}
-
-	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
-	public ParamVector setupParams(ParamVector paramVec) { return paramVec; }
-	
-	/** Give the learner the opportunity to do additional parameter processing **/
-	public void cleanupParams(ParamVector paramVec) {}
 }

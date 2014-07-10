@@ -6,7 +6,10 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LossData;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
+import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
@@ -18,12 +21,17 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 
+	private LossData cumloss;
+	
+	
 	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		super(maxT,mu,eta,wScheme,delta);
+		this.cumloss = new LossData();
 	}
 
 	public L2PosNegLossTrainedSRW() {
 		super();
+		this.cumloss = new LossData();
 	}
 
 	/**
@@ -35,14 +43,15 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	 */
 	public TObjectDoubleHashMap<String> gradient(ParamVector paramVec, PosNegRWExample example) {
 		
-		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-		TIntObjectMap<TObjectDoubleHashMap<String>> d = derivRWRbyParams(example.getGraph(), example.getQueryVec(), paramVec);
-		
-		//introduce the regularizer
+		// compute regularization
 		TObjectDoubleHashMap<String> derivFparamVec = new TObjectDoubleHashMap<String>();
 		for (String f : localFeatures(paramVec,example)) {
 			derivFparamVec.put(f,derivRegularization(f,paramVec));
 		}
+		
+		// compute p
+		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
+		TIntObjectMap<TObjectDoubleHashMap<String>> d = derivRWRbyParams(example.getGraph(), example.getQueryVec(), paramVec);
 		
 		Set<String> trainableFeatures = trainableFeatures(localFeatures(paramVec,example)); 
 		
@@ -58,6 +67,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
+			this.addLoss(LOSS.LOG, -Math.log(checkProb(px)));
 		}
 
 		//negative instance booster
@@ -72,11 +82,8 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 				if (Dictionary.safeContains(d,x,f)) 
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
 			}
+			this.addLoss(LOSS.LOG, -Math.log(checkProb(1.0-px)));
 		}
-//		int length = example.length();
-//		for (String f : trainableFeatures) {
-//			derivFparamVec.put(f, Dictionary.safeGet(derivFparamVec, f) / length);
-//		}
 		return derivFparamVec;
 	}
 
@@ -87,31 +94,45 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	 * @return
 	 */
 	protected Double derivRegularization(String f, ParamVector paramVec) {
-		return untrainedFeatures.contains(f) ? 0.0 : 2*mu*Dictionary.safeGet(paramVec, f);
+		double value = Dictionary.safeGet(paramVec, f);
+		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*mu*value;
+		this.addLoss(LOSS.REGULARIZATION, this.mu * Math.pow(value,2));
+		return ret;
+		//		return untrainedFeatures.contains(f) ? 0.0 : 2*mu*Dictionary.safeGet(paramVec, f);
 	}
 
-	public double empiricalLoss(ParamVector paramVec,
-			PosNegRWExample example) {
-		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-		double loss = 0;
-		for (int x : example.getPosList()) 
-		{
-			double prob = Dictionary.safeGet(p,x);
-			loss -= Math.log(checkProb(prob));
-		}
-		for (int x : example.getNegList()) 
-			loss -= Math.log(1.0-Dictionary.safeGet(p,x));
-		return loss;
-	}
+//	public double empiricalLoss(ParamVector paramVec,
+//			PosNegRWExample example) {
+//		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
+//		double loss = 0;
+//		for (int x : example.getPosList()) 
+//		{
+//			double prob = Dictionary.safeGet(p,x);
+//			loss -= Math.log(checkProb(prob));
+//		}
+//		for (int x : example.getNegList()) 
+//			loss -= Math.log(1.0-Dictionary.safeGet(p,x));
+//		return loss;
+//	}
 
 	public double checkProb(double prob)
 	{
-	     if(prob == 0)
-           {
-	      prob = bound;
-	    }
-	    return prob;
+		if(prob <= 0)
+		{
+			prob = bound;
+		}
+		return prob;
 	}
 
-	
+	protected void addLoss(LOSS type, double loss) {
+		Dictionary.increment(this.cumloss.loss, type, loss);
+	}
+	@Override
+	public LossData cumulativeLoss() {
+		return cumloss.copy();
+	}
+	@Override
+	public void clearLoss() {
+		cumloss.clear(); // ?
+	}
 }

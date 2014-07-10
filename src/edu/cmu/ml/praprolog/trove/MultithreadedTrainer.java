@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW;
-import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
+import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
@@ -102,7 +102,7 @@ public class MultithreadedTrainer extends Trainer {
 	}
 	
 	public synchronized void traceLosses(SRW<PosNegRWExample> learner, ParamVector paramVec, PosNegRWExample example) {
-		totalLossThisEpoch += learner.empiricalLoss(paramVec, example); 
+//		totalLossThisEpoch += learner.empiricalLoss(paramVec, example); 
 		numExamplesThisEpoch += example.length();
 	}
 	

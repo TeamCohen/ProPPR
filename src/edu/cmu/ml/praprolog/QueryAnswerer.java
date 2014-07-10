@@ -1,8 +1,8 @@
 package edu.cmu.ml.praprolog;
 
-import edu.cmu.ml.praprolog.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.SRW;
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.*;
 import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
 import edu.cmu.ml.praprolog.util.Configuration;
@@ -70,8 +70,7 @@ public class QueryAnswerer {
             this.rerank = false;
             if (line.hasOption("reranked")) this.rerank = true;
             if (!line.hasOption("queries")) {
-            	System.err.println("\nMissing required option: queries\n");
-            	usageOptions(options, flags);
+            	usageOptions(options, flags,"Missing required option: queries");
             }
         }
     }

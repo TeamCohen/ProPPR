@@ -14,8 +14,8 @@ import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.trove.learn.PosNegRWExample;
 import edu.cmu.ml.praprolog.trove.learn.SRW;
+import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
@@ -104,7 +104,7 @@ public class MultithreadedRRTrainer extends Trainer {
 	}
 	
 	public synchronized void traceLosses(SRW<PosNegRWExample> learner, ParamVector paramVec, PosNegRWExample example) {
-		totalLossThisEpoch += learner.empiricalLoss(paramVec, example); 
+//		totalLossThisEpoch += learner.empiricalLoss(paramVec, example); 
 		numExamplesThisEpoch += example.length();
 	}
 	

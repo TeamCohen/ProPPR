@@ -2,8 +2,8 @@ package edu.cmu.ml.praprolog.prove;
 
 import java.util.Map;
 
-import edu.cmu.ml.praprolog.learn.LinearWeightingScheme;
-import edu.cmu.ml.praprolog.learn.WeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 
 /**
  * Weight all features uniformly as 1.0
