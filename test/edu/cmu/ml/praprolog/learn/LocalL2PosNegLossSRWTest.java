@@ -14,6 +14,7 @@ public class LocalL2PosNegLossSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
 		srw = new LocalL2PosNegLossTrainedSRW();
+		srw.setMu(0);
 	}
 	@Override	
 	public ParamVector makeParams(Map<String,Double> foo) {

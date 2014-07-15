@@ -376,4 +376,28 @@ public class SRW<E extends RWExample> {
 		}
 		return totLoss / numTest;
 	}
+	public double getMu() {
+		return mu;
+	}
+	public void setMu(double mu) {
+		this.mu = mu;
+	}
+	public int getMaxT() {
+		return maxT;
+	}
+	public void setMaxT(int maxT) {
+		this.maxT = maxT;
+	}
+	public double getEta() {
+		return eta;
+	}
+	public void setEta(double eta) {
+		this.eta = eta;
+	}
+	public double getDelta() {
+		return delta;
+	}
+	public void setDelta(double delta) {
+		this.delta = delta;
+	}
 }
