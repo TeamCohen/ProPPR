@@ -25,12 +25,6 @@ public class LocalL2PosNegLossTrainedSRW<T> extends L2PosNegLossTrainedSRW<T> {
 	protected Double derivRegularization(String f, ParamVector paramVec) {
 		// NB superclass records regularization loss for this clock cycle
 		Double ret = super.derivRegularization(f, paramVec);
-		// apply remaining weight decay to this parameter
-		// theta_f = theta_f * (1 - 2 mu lambda ) ^ (k_f - 1)
-		int gap = ((MuParamVector)paramVec).getLast(f);
-		double value = Dictionary.safeGet(paramVec,f);
-		// ...and record pending regularization loss
-		this.cumloss.add(LOSS.REGULARIZATION, (gap - 1) * this.mu * Math.pow(value, 2));
 		return ret;
 	}
 	
