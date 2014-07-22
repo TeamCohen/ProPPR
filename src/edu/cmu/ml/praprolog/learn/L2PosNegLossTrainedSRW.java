@@ -17,9 +17,7 @@ import edu.cmu.ml.praprolog.util.ParamVector;
 public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
-	
 	protected LossData cumloss;
-
 
 	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		super(maxT,mu,eta,wScheme,delta);

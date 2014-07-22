@@ -45,5 +45,14 @@ public class Feature implements Comparable<Feature> {
 	public String toString() { 
 		return "F{"+featureName+":"+weight+"}"; 
 	}
+	
+	public static boolean contains(List<Feature> list, String feature) {
+		for(Feature f : list) {
+			if(feature.equals(f.featureName)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
 

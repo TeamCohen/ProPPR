@@ -1,43 +1,68 @@
 package edu.cmu.ml.praprolog.learn;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
+import edu.cmu.ml.praprolog.prove.DprProver;
+import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
+	public static final double DEFAULT_ALPHA=DprProver.MINALPH_DEFAULT;
+	public static final double DEFAULT_EPSILON=DprProver.EPS_DEFAULT;
+	public static final double DEFAULT_STAYPROB=DprProver.STAYPROB_DEFAULT;
 	
-	public static double alpha;
-	public static double epsilon;
-	public static double stayProb;
+	private double alpha;
+	private double epsilon;
+	private double stayProb;
+//	public ParamVector paramVec;
 	
-	public ParamVector paramVec;
-	Map<T,Double> p;
-	Map<T,Double> r;
-	Map<T,Map<String,Double>> dp;
-	Map<T,Map<String,Double>> dr;
-	PosNegRWExample<T> example;
-	
+//	Map<T,Double> p;
+//	Map<T,Double> r;
+//	Map<T,Map<String,Double>> dp;
+//	Map<T,Map<String,Double>> dr;
+//	PosNegRWExample<T> example;
 	public AprSRW() {
+		super();
+		init(DEFAULT_ALPHA,DEFAULT_EPSILON,DEFAULT_STAYPROB);
+	}
+	
+	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
+		super(maxT,mu,eta,wScheme,delta);
+		init(DEFAULT_ALPHA,DEFAULT_EPSILON,DEFAULT_STAYPROB);
+	}
+	
+	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta,
+			double ialpha, double iepsilon, double istayProb) {
+		super(maxT,mu,eta,wScheme,delta);
+		this.init(ialpha,iepsilon,istayProb);
+	}
+
+	private void init(double ialpha, double iepsilon, double istayProb) {
 		//set walk parameters here
-		alpha = .1;
-		epsilon = .0001;
-		stayProb = 0.0;
+		alpha = ialpha;
+		epsilon = iepsilon;
+		stayProb = istayProb;
 	}
 	
 	@Override
 	public Map<String, Double> gradient(ParamVector paramVec, PosNegRWExample<T> example) {
 		// startNode maps node->weight
-		Map<T,Double> startNode = example.getQueryVec();
+		Map<T,Double> query = example.getQueryVec();
+		if (query.size() > 1) throw new UnsupportedOperationException("Can't do multi-node queries");
+		T startNode = query.keySet().iterator().next();
 		
 		// gradient maps feature->gradient with respect to that feature
 		Map<String,Double> gradient = null;
 		
 		// maps storing the probability and remainder weights of the nodes:
-		p = new HashMap<T,Double>();
-		r = new HashMap<T,Double>();
+		HashMap<T,Double> p = new HashMap<T,Double>();
+		HashMap<T,Double> r = new HashMap<T,Double>();
 		
 		// initializing the above maps:
 		for(T node : example.getGraph().getNodes())
@@ -46,13 +71,11 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 			r.put(node, 0.0);
 		}
 		
-		for(T node : startNode.keySet())
-			if(startNode.get(node) != null)
-				r.put(node, startNode.get(node));
+		r.putAll(query);
 		
 		// maps storing the gradients of p and r for each node:
-		dp = new HashMap<T,Map<String,Double>>();
-		dr = new HashMap<T,Map<String,Double>>();
+		HashMap<T,Map<String,Double>> dp = new HashMap<T,Map<String,Double>>();
+		HashMap<T,Map<String,Double>> dr = new HashMap<T,Map<String,Double>>();
 		
 		// initializing the above maps:
 		for(T node : example.getGraph().getNodes())
@@ -67,21 +90,21 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 		}
 		
 		// initialize paramVec and example:
-		this.paramVec = paramVec;
-		this.example = example;
+//		this.paramVec = paramVec;
+//		this.example = example;
 		
 		// APR Algorithm:
-		int isDone = 0;
-		while(isDone < example.getGraph().getNumNodes())
+		int completeCount = 0;
+		while(completeCount < example.getGraph().getNumNodes())
 		{
-			isDone = 0;
+			completeCount = 0;
 			for(T node : example.getGraph().getNodes())
 			{
 				if(r.get(node) / (double) example.getGraph().nearNative(node).size() > epsilon)
 					while(r.get(node) / example.getGraph().nearNative(node).size() > epsilon)
-						push(node);
+						this.push(node, p, r, example.getGraph(), paramVec, dp, dr);
 				else
-					isDone++;
+					completeCount++;
 			}
 		}
 		
@@ -90,109 +113,112 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 		//		System.out.println(feature + ": " + dp.get(node).get(feature));
 		
 		// Returning the gradient of the specified node:
-		T start = null;
-		int i = 0;
-		for(T node : startNode.keySet())
-			if(startNode.get(node) == 1)
-				start = node;
-		gradient = dp.get(start);
+//		T start = null;
+//		for(T node : startNode.keySet())
+//			if(startNode.get(node) == 1)
+//				start = node;
+		gradient = dp.get(startNode);
 		
 		return gradient;
 	}
 	
+	private double dotP(List<Feature> phi, ParamVector paramVec) {
+		double dotP = 0;
+		for(Feature feature : phi)
+			dotP += paramVec.get(feature.featureName);
+		return dotP;
+	}
+	
 	/**
 	 * Simulates a single lazy random walk step on the input vertex
-	 * @param node the vertex to be 'pushed'
+	 * @param u the vertex to be 'pushed'
+	 * @param p
+	 * @param r
+	 * @param graph
+	 * @param paramVec
+	 * @param dp
+	 * @param dr
 	 */
-	public void push(T node)
+	public void push(T u, HashMap<T,Double> p, HashMap<T,Double> r, AnnotatedGraph<T> graph, ParamVector paramVec,
+			HashMap<T,Map<String,Double>> dp, HashMap<T,Map<String,Double>> dr)
 	{
 		// update p for the pushed node:
-		p.put(node, p.get(node) + alpha * r.get(node));
+		Dictionary.increment(p, u, alpha * r.get(u));
 		
 		// calculate the sum of the weights (raised to exp) of the edges adjacent to the input node:
 		double rowSum = 0;
-		for(T aNode : example.getGraph().nearNative(node).keySet())
+		for(T v : graph.nearNative(u).keySet())
 		{
-			double dotP = 0;
-			for(Feature feature : example.getGraph().phi(node, aNode))
-				dotP += paramVec.get(feature.featureName);
-			rowSum += Math.exp(dotP);
+			rowSum += Math.exp(dotP(graph.phi(u, v), paramVec));
 		}
 		
 		// calculate the gradients of the rowSums (needed for the calculation of the gradient of r):
 		Map<String, Double> drowSums = new HashMap<String, Double>();
-		for(String feature : example.getGraph().getFeatureSet())
+		for(String feature : graph.getFeatureSet())
 		{
 			// simultaneously update the dp for the pushed node:
-			dp.get(node).put(feature, dp.get(node).get(feature) + alpha * dr.get(node).get(feature));
+			Dictionary.increment(dp,u,feature,alpha * dr.get(u).get(feature));
 			double drowSum = 0;
-			for(T aNode : example.getGraph().nearNative(node).keySet())
+			for(T v : graph.nearNative(u).keySet())
 			{
-				boolean containsF = false;
-				for(Feature f : example.getGraph().phi(node, aNode))
-					if(feature.equals(f.featureName))
-						containsF = true;
-				//for(Feature f : example.getGraph().phi(aNode, node))
+				//for(Feature f : example.getGraph().phi(v, u))
 				//	if(feature.equals(f.featureName))
 				//		containsF = true;
-				if(containsF)
+				if(Feature.contains(graph.phi(v, u), feature))
 				{
-					double dotP = 0;
-					for(Feature f : example.getGraph().phi(node, aNode))
-						dotP += paramVec.get(f.featureName);
-					drowSum += Math.exp(dotP);
+					drowSum += Math.exp(dotP(graph.phi(u, v), paramVec));
 				}
 			}
 			drowSums.put(feature, drowSum);
 		}
 		
 		// update dr for the pushed vertex, storing dr temporarily for the calculation of dr for the other vertecies:
-		Map<String, Double> ndr = new HashMap<String, Double>();
-		for(String feature : example.getGraph().getFeatureSet())
+		Map<String, Double> prevdr = new HashMap<String, Double>();
+		for(String feature : graph.getFeatureSet())
 		{
-			ndr.put(feature, dr.get(node).get(feature));
-			dr.get(node).put(feature, dr.get(node).get(feature) * (1 - alpha) * stayProb);
+			prevdr.put(feature, dr.get(u).get(feature));
+			dr.get(u).put(feature, dr.get(u).get(feature) * (1 - alpha) * stayProb);
 		}
 		
-		// update dr for other vertecies:
-		for(T aNode : example.getGraph().nearNative(node).keySet())
+		// update dr for other vertices:
+		for(T v : graph.nearNative(u).keySet())
 		{
-			for(String feature : example.getGraph().getFeatureSet())
+			for(String feature : graph.getFeatureSet())
 			{
-				double dotP = 0;
-				int c = 0;//the gradient of dotP w/ respect to feature
-				for(Feature f : example.getGraph().phi(node, aNode))
-				{
-					dotP += paramVec.get(f.featureName);
-					if(f.featureName.equals(feature))
-						c = 1;
-				}
-				//for(Feature f : example.getGraph().phi(aNode, node))
+//				double dotP = 0;
+//				int c = 0;//the gradient of dotP w/ respect to feature
+//				for(Feature f : graph.phi(u, v))
+//				{
+//					dotP += paramVec.get(f.featureName);
+//					if(f.featureName.equals(feature))
+//						c = 1;
+//				}
+				//for(Feature f : example.getGraph().phi(v, node))
 				//{
 				//	dotP += paramVec.get(f.featureName);
 				//	if(f.featureName.equals(feature))
 				//		c = 1;
 				//}
-				dotP = Math.exp(dotP);
-				double aNdr = dr.get(aNode).get(feature);
+				double dotP = Math.exp(dotP(graph.phi(u, v), paramVec));
+				int c = Feature.contains(graph.phi(u, v), feature) ? 1 : 0;
+				double aNdr = dr.get(v).get(feature);
 				//if(feature.equals("fromr"))
 				//	System.out.println(c + " : " + drowSums.get(feature) + " : " + rowSum);
-				aNdr += (1-stayProb)*(1-alpha)*((ndr.get(feature)*dotP/rowSum)+(r.get(node)*((c*dotP*rowSum)-(dotP*drowSums.get(feature)))/(rowSum*rowSum)));
-				dr.get(aNode).put(feature, aNdr);
+				
+				// whoa this is pretty gross.
+				aNdr += (1-stayProb)*(1-alpha)*((prevdr.get(feature)*dotP/rowSum)+(r.get(u)*((c*dotP*rowSum)-(dotP*drowSums.get(feature)))/(rowSum*rowSum)));
+				dr.get(v).put(feature, aNdr);
 			}
 		}
 		
-		// update r for all affected vertecies:
-		double nr = r.get(node);
-		r.put(node, r.get(node) * stayProb * (1 - alpha));
-		for(T aNode : example.getGraph().nearNative(node).keySet())
+		// update r for all affected vertices:
+		double ru = r.get(u);
+		r.put(u, ru * stayProb * (1 - alpha));
+		for(T v : graph.nearNative(u).keySet())
 		{
-			// calculate edge weight on aNode:
-			double dotP = 0;
-			for(Feature f : example.getGraph().phi(node, aNode))
-				dotP += paramVec.get(f.featureName);
-			dotP = Math.exp(dotP);
-			r.put(aNode, r.get(aNode) + (1 - stayProb) * (1 - alpha) * (dotP / rowSum) * nr);
+			// calculate edge weight on v:
+			double dotP = Math.exp(dotP(graph.phi(u, v), paramVec));
+			r.put(v, r.get(v) + (1 - stayProb) * (1 - alpha) * (dotP / rowSum) * ru);
 		}
 	}
 }
