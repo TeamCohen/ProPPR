@@ -162,12 +162,16 @@ public class SRW<E extends RWExample> {
 			// dNext[u] is the vector deriv of the weight vector at u
 			Map<T,Map<String,Double>> dNext = new TreeMap<T,Map<String,Double>>();
 			for (T j : pNext.keySet()) {
+				double z = totalEdgeWeight(graph,j,paramVec);
+				double pj = Dictionary.safeGet(p, j);
 				for (T u : graph.nearNative(j).keySet()) {
 					Map<String,Double> dWP_ju = derivWalkProbByParams(graph,j,u,paramVec);
-					for (String f : trainableFeatures(graph.phi(j,u))) {
+					Set<String> features = new TreeSet<String>();
+					if(d.containsKey(j)) features.addAll(d.get(j).keySet());
+					features.addAll(dWP_ju.keySet());
+					for (String f : trainableFeatures(features)) {
 						Dictionary.increment(dNext, u, f, 
-								edgeWeight(graph,j,u,paramVec) * Dictionary.safeGetGet(d, j, f) 
-								+ Dictionary.safeGet(p, j) * dWP_ju.get(f));
+								edgeWeight(graph,j,u,paramVec)/z * Dictionary.safeGetGet(d, j, f) + pj * Dictionary.safeGet(dWP_ju, f));
 					}
 				}
 			}
@@ -189,22 +193,26 @@ public class SRW<E extends RWExample> {
 	 */
 	protected <T> Map<String, Double> derivWalkProbByParams(AnnotatedGraph<T> graph,
 			T u, T v, ParamVector paramVec) {
-
-		double edgeUV = this.edgeWeight(graph, u, v, paramVec);
-		// vector of edge weights - one for each active feature
-		Map<String,Double> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
-		Set<String> activeFeatures = derEdgeUV.keySet();
+		
 		double totEdgeWeightU = totalEdgeWeight(graph,u,paramVec);
-		double totDerEdgeUV = 0;
-		for (double w : derEdgeUV.values()) totDerEdgeUV += w;
-		Map<String,Double> derWalk = new TreeMap<String,Double>();
-		for (String f : trainableFeatures(activeFeatures)) {
-			// above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
-			double term2 = (edgeUV / totEdgeWeightU) * totDerEdgeUV;
-			double val = derEdgeUV.get(f) - term2;
-			derWalk.put(f, val / totEdgeWeightU);
-		}
-		return derWalk;
+        Map<String,Double> derWalk = new TreeMap<String,Double>();
+        if (totEdgeWeightU == 0) return derWalk;
+
+        Map<String,Double> totDerFeature = new TreeMap<String,Double>();
+        for (T k : graph.nearNative(u).keySet()) {
+            Map<String,Double> derEdgeUK = this.derivEdgeWeightByParams(graph,u,k,paramVec);
+            for (Map.Entry<String,Double> e : derEdgeUK.entrySet()) Dictionary.increment(totDerFeature, e.getKey(), e.getValue());
+        }
+
+        double edgeUV = this.edgeWeight(graph, u, v, paramVec);
+        Map<String,Double> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
+        for (String f : trainableFeatures(totDerFeature.keySet())) {
+            // above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
+            double term2 = (edgeUV / totEdgeWeightU) * Dictionary.safeGet(totDerFeature, f);
+            double val = Dictionary.safeGet(derEdgeUV, f) - term2;
+            Dictionary.increment(derWalk, f, val / totEdgeWeightU);
+        }
+        return derWalk;
 	}
 	/**
 	 * A dictionary d so that d[f] is the derivative of the
@@ -307,6 +315,7 @@ public class SRW<E extends RWExample> {
         double loss = empiricalLoss(paramVec, example);
         double perturbedLoss;
         for (Map.Entry<String, Double> f : grad.entrySet()) {
+			if (untrainedFeatures.contains(f.getKey())) continue;
             Dictionary.increment(perturbedParamVec, f.getKey(), epsilon);
             perturbedLoss = empiricalLoss(perturbedParamVec, example);
             log.debug(f.getKey() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (epsilon*f.getValue()));
