@@ -288,6 +288,7 @@ public class SRW<E extends RWExample> {
 		Map<String,Double> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
+			checkGradient(grad, paramVec, example);
 		}
 		double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
@@ -297,6 +298,22 @@ public class SRW<E extends RWExample> {
 		}
 	}
 	
+	/**
+	 * Check if first-order approximation is close
+	 */
+	protected void checkGradient(Map<String,Double> grad, ParamVector paramVec, E example) {
+		ParamVector perturbedParamVec = paramVec.copy();
+        double epsilon = 1.0e-10;
+        double loss = empiricalLoss(paramVec, example);
+        double perturbedLoss;
+        for (Map.Entry<String, Double> f : grad.entrySet()) {
+            Dictionary.increment(perturbedParamVec, f.getKey(), epsilon);
+            perturbedLoss = empiricalLoss(perturbedParamVec, example);
+            log.debug(f.getKey() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (epsilon*f.getValue()));
+            loss = perturbedLoss;
+        }
+	}	
+
 	protected double learningRate() {
 		return Math.pow(this.epoch,-2) * this.eta;
 	}
