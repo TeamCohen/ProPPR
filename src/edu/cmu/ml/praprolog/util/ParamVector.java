@@ -72,4 +72,10 @@ public abstract class ParamVector<T> implements Map<String,Double> {
 	public Double remove(Object key) {
 		return getWeight(getBackingStore().remove(key));
 	}
+
+	public ParamVector copy () {
+        ParamVector copy = new SimpleParamVector();
+        copy.putAll(this);
+        return copy;
+    }
 }
