@@ -400,4 +400,10 @@ public class SRW<E extends RWExample> {
 	public void setDelta(double delta) {
 		this.delta = delta;
 	}
+	public WeightingScheme getWeightingScheme() {
+		return weightingScheme;
+	}
+	public void setWeightingScheme(WeightingScheme weightingScheme) {
+		this.weightingScheme = weightingScheme;
+	}
 }
