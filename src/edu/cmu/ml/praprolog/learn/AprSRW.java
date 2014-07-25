@@ -160,7 +160,7 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 			for(String feature : graph.getFeatureSet())
 			{
 				double dotP = this.weightingScheme.edgeWeightFunction(unwrappedDotP.get(v));
-				double ddotP = this.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v)); //replaces dotP in c*dotP*rowSum
+				double ddotP = this.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 				int c = Feature.contains(graph.phi(u, v), feature) ? 1 : 0;
 				double vdr = dr.get(v).get(feature);
 				
