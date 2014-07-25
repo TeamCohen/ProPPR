@@ -8,6 +8,7 @@ import java.util.TreeMap;
 
 import org.junit.Test;
 
+import edu.cmu.ml.praprolog.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.MuParamVector;
@@ -18,6 +19,7 @@ public class AprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
 		srw = new AprSRW();
+		srw.setWeightingScheme(new ExpWeightingScheme());
 	}
 	@Override
 	public ParamVector makeParams(Map<String,Double> foo) {
@@ -60,9 +62,9 @@ public class AprSRWTest extends L2PosNegLossSRWTest {
 		System.err.println(Dictionary.buildString(gradient, new StringBuilder(), "\n").toString());
 
 		assertTrue("gradient @ tob "+gradient.get("tob"),gradient.get("tob") < 0);
-		assertTrue("gradient @ fromb "+gradient.get("fromb"),gradient.get("fromb") == 0);
+		assertTrue("gradient @ fromb "+gradient.get("fromb"),gradient.get("fromb") < 0);
 		assertTrue("gradient @ tor "+gradient.get("tor"),gradient.get("tor") > 0);
-		assertTrue("gradient @ fromr "+gradient.get("fromr"),gradient.get("fromr") == 0);
+		assertTrue("gradient @ fromr "+gradient.get("fromr"),gradient.get("fromr") > 0);
 
 		double eps = .001;
 		ParamVector nearlyUniformWeightVec = makeParams(new TreeMap<String,Double>());

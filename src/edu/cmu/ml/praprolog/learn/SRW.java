@@ -376,4 +376,10 @@ public class SRW<E extends RWExample> {
 		}
 		return totLoss / numTest;
 	}
+	public WeightingScheme getWeightingScheme() {
+		return weightingScheme;
+	}
+	public void setWeightingScheme(WeightingScheme weightingScheme) {
+		this.weightingScheme = weightingScheme;
+	}
 }
