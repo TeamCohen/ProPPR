@@ -15,6 +15,7 @@ import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.*;
 import org.apache.commons.cli.*;
@@ -165,6 +166,7 @@ public class Configuration {
                 else if (value.equals("sigmoid")) weightingScheme = new SigmoidWeightingScheme();
                 else if (value.equals("tanh")) weightingScheme = new TanhWeightingScheme();
                 else if (value.equals("ReLU")) weightingScheme = new ReLUWeightingScheme();
+                else if (value.equals("exp")) weightingScheme = new ExpWeightingScheme();
                 else {
                     this.usageOptions(options, flags, "Unrecognized weighting scheme " + value);
                 }
