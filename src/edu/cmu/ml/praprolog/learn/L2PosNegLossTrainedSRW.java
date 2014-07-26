@@ -58,7 +58,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		for (T x : example.getPosList()) {
 			if (log.isDebugEnabled()) log.debug("pos example "+x);
 			Map<String,Double> dx = d.get(x);
-			double px = p.get(x);
+			double px = checkProb(p.get(x));
 			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
@@ -66,7 +66,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
-			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(px)));
+			this.cumloss.add(LOSS.LOG, -Math.log(px));
 		}
 
 		//negative instance booster
@@ -79,7 +79,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 			double px = p.get(x);
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) 
-					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
+					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/checkProb(1-px));
 			}
 			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(1.0-px)));
 		}
