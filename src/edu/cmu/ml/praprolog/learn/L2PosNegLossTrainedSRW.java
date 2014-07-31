@@ -64,7 +64,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
-			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(px)));
+			this.cumloss.add(LOSS.LOG, -Math.log(clip(px)));
 		}
 
 		//negative instance booster
@@ -79,7 +79,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 				if (Dictionary.safeContains(d,x,f)) 
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
 			}
-			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(1.0-px)));
+			this.cumloss.add(LOSS.LOG, -Math.log(clip(1.0-px)));
 		}
 		return derivFparamVec;
 	}
@@ -110,7 +110,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 //		return loss;
 //	}
 
-	public double checkProb(double prob)
+	public double clip(double prob)
 	{
 		if(prob <= 0)
 		{

@@ -12,6 +12,7 @@ import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
 import edu.cmu.ml.praprolog.QueryAnswerer;
 import edu.cmu.ml.praprolog.RerankingQueryAnswerer;
+import edu.cmu.ml.praprolog.learn.AprSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
@@ -96,8 +97,9 @@ public class ExperimentConfiguration extends Configuration {
 						+ "Default mu=.001\n"
 						+ "Default eta=1.0\n"
 						+ "Available options:\n"
-						+ "l2p[:mu[:eta]] (L2PosNegLossTrainedSRW)\n"
-						+ "l2plocal[:mu[:eta]] (LocalL2PosNegLossTrainedSRW)")
+						+ "l2p[:mu[:eta[:delta]]] (L2PosNegLossTrainedSRW)\n"
+						+ "l2plocal[:mu[:eta[:delta]] (LocalL2PosNegLossTrainedSRW)\n"
+						+ "apr[:mu[:eta[:delta[:eps[:alph]]]]] (AprSRW; default eps=1E-4, alph=0.1)")
 						.create());
 		options.addOption(
 				OptionBuilder
@@ -116,11 +118,14 @@ public class ExperimentConfiguration extends Configuration {
 				.withArgName("class[:arg]")
 				.hasArgs()
 				.withValueSeparator(':')
-				.withDescription("Default: t\n"
+				.withDescription("Default: trove.t\n"
 						+ "Available options:\n"
 						+ "t Tester\n"
 						+ "mt[:threads] (default threads=3) MultithreadedTester\n"
-						+ "rt RerankingTester")
+						+ "rt RerankingTester\n"
+						+ "trove.t\n"
+						+ "trove.mt\n"
+						+ "trove.rt")
 						.create());
 		options.addOption(
 				OptionBuilder
@@ -223,23 +228,32 @@ public class ExperimentConfiguration extends Configuration {
 				threads = Integer.parseInt(values[1]);
 			}
 			if (values[0].equals("t")) {
-				this.trainer = new edu.cmu.ml.praprolog.Trainer<String>((edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw);
+				this.trainer = new edu.cmu.ml.praprolog.Trainer<String>(
+						(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw);
 			} else if (values[0].equals("mt")) {
-				this.trainer = new edu.cmu.ml.praprolog.MultithreadedTrainer<String>((edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw, threads);
+				this.trainer = new edu.cmu.ml.praprolog.MultithreadedTrainer<String>(
+						(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw, threads);
 			} else if (values[0].equals("mrr")) {
-				this.trainer = new edu.cmu.ml.praprolog.MultithreadedRRTrainer<String>((edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw, threads);
+				this.trainer = new edu.cmu.ml.praprolog.MultithreadedRRTrainer<String>(
+						(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw, threads);
 			} else if (values[0].equals("trove.t")) {
-				this.trainer = new Trainer( (L2PosNegLossTrainedSRW) this.srw);
+				this.trainer = new Trainer( 
+						(edu.cmu.ml.praprolog.trove.learn.SRW<edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample>) this.srw);
 			} else if (values[0].equals("trove.mt")) {
-				this.trainer = new MultithreadedTrainer( (L2PosNegLossTrainedSRW) this.srw, threads);				
+				this.trainer = new MultithreadedTrainer( 
+						(edu.cmu.ml.praprolog.trove.learn.SRW<edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample>) this.srw, threads);				
 			} else if (values[0].equals("trove.mrr")) {
-				this.trainer = new MultithreadedRRTrainer( (L2PosNegLossTrainedSRW) this.srw, threads);		
+				this.trainer = new MultithreadedRRTrainer( 
+						(edu.cmu.ml.praprolog.trove.learn.SRW<edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample>) this.srw, threads);		
 			}
 		} else {
-			this.trove = true;
-			this.setupSRW(line, flags, options);
-			troveSeed(line);
-			this.trainer = new MultithreadedRRTrainer( (L2PosNegLossTrainedSRW) this.srw, threads);	
+			if (isOn(flags,USE_TRAIN)) {
+				this.trove = true;
+				this.setupSRW(line, flags, options);
+				troveSeed(line);
+				this.trainer = new MultithreadedRRTrainer( 
+						(edu.cmu.ml.praprolog.trove.learn.SRW<edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample>) this.srw, threads);
+			}
 		}
 
 		threads = 3;
@@ -263,18 +277,19 @@ public class ExperimentConfiguration extends Configuration {
 					if (values.length > 1) threads = Integer.parseInt(values[1]);
 					if (values[0].equals("mt")) {
 						this.tester = new MultithreadedTester(this.prover, this.program, threads);
-					} else if (values[0].equals("rt")) {
+					} else if (values[0].endsWith("rt")) {
+						this.trove = values[0].startsWith("trove.");
 						if (this.srw == null) this.setupSRW(line,flags,options);
 						if (this.trove) {
 							this.tester = new edu.cmu.ml.praprolog.trove.RerankingTester(
 									this.prover, 
 									this.program, 
-									(edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW) this.srw);
+									(edu.cmu.ml.praprolog.trove.learn.SRW<edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample>) this.srw);
 						} else {
 							this.tester = new edu.cmu.ml.praprolog.RerankingTester(
 									this.prover, 
 									this.program, 
-									(edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>) this.srw);
+									(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw);
 						}
 					} else {
 						this.usageOptions(options, flags,"No tester called '"+values[0]+"'");
@@ -335,6 +350,16 @@ public class ExperimentConfiguration extends Configuration {
 				} else {
 					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 				}
+			} else if (values[0].equals("apr")) {
+//				if (this.trove) {
+//					throw new IllegalArgumentException("No trove implementation for AprSRW yet :(");
+//				} else {
+					double epsilon = AprSRW.DEFAULT_EPSILON;
+					double alpha = AprSRW.DEFAULT_ALPHA;
+					if (values.length > 4) epsilon = Double.parseDouble(values[4]);
+					if (values.length > 5) alpha = Double.parseDouble(values[5]);
+					this.srw = new edu.cmu.ml.praprolog.learn.AprSRW<String>(SRW.DEFAULT_MAX_T, mu, eta, weightingScheme, delta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
+//				}
 			} else {
 				usageOptions(options,flags,"No srw definition for '"+values[0]+"'");
 			}

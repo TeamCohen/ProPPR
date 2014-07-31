@@ -1,1 +1,8 @@
 Makefile.in
+*.results.txt
+*.log
+*.cooked
+*.rdata
+*.out
+*params.wts
+results.txt

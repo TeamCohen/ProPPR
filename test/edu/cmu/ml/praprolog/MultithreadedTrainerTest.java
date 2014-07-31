@@ -17,6 +17,7 @@ import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer;
+import edu.cmu.ml.praprolog.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 
@@ -25,8 +26,8 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 	public void testTrainParametersOnCookedIterator_smoke() {
 		MultithreadedTrainer<String> trainer = 
 				new MultithreadedTrainer<String>(new L2PosNegLossTrainedSRW<String>(), 4);
+		trainer.learner.setWeightingScheme(new ExpWeightingScheme());
 		
-
 		TreeMap<String,Double> startVec = new TreeMap<String,Double>();
 		startVec.put("r0",1.0);
 		
@@ -41,7 +42,6 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 		
 		Collection<PosNegRWExample<String>> examples = 
 				Collections.singleton(new PosNegRWExample<String>(brGraphs.get(0), startVec, pos,neg));
-		
 		
 		trainer.trainParametersOnCookedIterator(examples);
 	}

@@ -80,10 +80,7 @@ public class SRW<E extends RWExample> {
 	 * @return
 	 */
 	public <T> double edgeWeight(AnnotatedGraph<T> g, T u, T v,  Map<String,Double> p) {
-		double wt = this.weightingScheme.edgeWeight(p,g.phi(u, v));
-
-		if (Double.isInfinite(wt)) return Double.MAX_VALUE;
-		return wt;
+		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
 	}
 
 	/**
@@ -128,10 +125,6 @@ public class SRW<E extends RWExample> {
 		int k=-1;
 		for (Map.Entry<T, Double> u : vec.entrySet()) { k++;
 			if (k>0 && k%100 == 0) log.debug("Walked from "+k+" nodes...");
-			if (u.getValue() == 0) {
-				log.info("0 node weight at u="+u+"; skipping");
-				continue;
-			}
 			double z = totalEdgeWeight(g,u.getKey(),paramVec);
 			if (z==0) {
 				log.info("0 total edge weight at u="+u+"; skipping");
@@ -383,10 +376,36 @@ public class SRW<E extends RWExample> {
 		}
 		return totLoss / numTest;
 	}
+<<<<<<< HEAD
+	public double getMu() {
+		return mu;
+	}
+	public void setMu(double mu) {
+		this.mu = mu;
+	}
+	public int getMaxT() {
+		return maxT;
+	}
+	public void setMaxT(int maxT) {
+		this.maxT = maxT;
+	}
+	public double getEta() {
+		return eta;
+	}
+	public void setEta(double eta) {
+		this.eta = eta;
+	}
+	public double getDelta() {
+		return delta;
+	}
+	public void setDelta(double delta) {
+		this.delta = delta;
+=======
 	public WeightingScheme getWeightingScheme() {
 		return weightingScheme;
 	}
 	public void setWeightingScheme(WeightingScheme weightingScheme) {
 		this.weightingScheme = weightingScheme;
+>>>>>>> aprSrw
 	}
 }

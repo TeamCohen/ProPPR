@@ -12,6 +12,7 @@ then
     echo -e "  --mu value                    Set SRW regularization hyperparameter"
     echo -e "  --epochs value                Set number of training epochs"
     echo -e "  --tester value                Set tester variant"
+    echo -e "  --srw value[:arg...]          Set SRW"
     exit 0
 fi
 
@@ -48,6 +49,9 @@ do
     elif [ "--tester" = "$NAME" ]
     then
 	echo -e "TESTER=$VALUE" >> Makefile.in
+    elif [ "--srw" = "$NAME" ]
+    then
+	echo -e "SRW=$VALUE" >> Makefile.in
     else
 	echo -e "Unrecognized option: $NAME"
 	exit 0
@@ -99,6 +103,9 @@ EPOCHS=20
 endif
 ifeq (\$(strip \$(TESTER)),)
 TESTER=rt
+endif
+ifeq (\$(strip \$(TRAINER)),)
+TRAINER=trove.mrr
 endif
 
 EOF

@@ -99,7 +99,9 @@ public class Configuration {
 		    retrieveSettings(line,flags,options);
 			
 		} catch( Exception exp ) {
-			usageOptions(options,flags,exp.getMessage());
+			StringWriter sw = new StringWriter();
+			exp.printStackTrace(new PrintWriter(sw));
+			usageOptions(options,flags,exp.getMessage()+"\n"+sw.toString());
 		}
 	}
 	protected File getExistingFileOption(CommandLine line, String name) {

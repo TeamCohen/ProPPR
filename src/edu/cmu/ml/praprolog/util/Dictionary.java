@@ -316,8 +316,8 @@ public class Dictionary {
 	 * @param delim2
 	 * @return
 	 */
-	public static <K> StringBuilder buildString(Map<K,Map<K,Double>> map, StringBuilder sb, String delim1, String delim2) {
-		for(Map.Entry<K,Map<K,Double>>e : map.entrySet()) {
+	public static <K1,K2> StringBuilder buildString(Map<K1,Map<K2,Double>> map, StringBuilder sb, String delim1, String delim2) {
+		for(Map.Entry<K1,Map<K2,Double>>e : map.entrySet()) {
 			sb.append(delim1).append(e.getKey()).append(":");
 			buildString(e.getValue(),sb,delim2);
 		}
