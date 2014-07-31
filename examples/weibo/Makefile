@@ -53,7 +53,7 @@ test.data: all.data
 			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
 			 --strict --train train.data --test $*.data --srw $(SRW1) --output train.grounded \
 			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
-			 --solutions $*.answers --queries $*.data --notest
+			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
 
 	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
 	cat $*.results; \
@@ -63,7 +63,7 @@ test.data: all.data
 			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
 			 --strict --train $*.data --test $*.data --srw $(SRW1) --output train.grounded \
 			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
-			 --solutions $*.answers --queries $*.data --notest
+			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
 
 %.query: %.data train.params
 	$(JM).QueryAnswerer \

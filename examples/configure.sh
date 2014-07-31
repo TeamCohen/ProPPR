@@ -12,6 +12,7 @@ then
     echo -e "  --mu value                    Set SRW regularization hyperparameter"
     echo -e "  --epochs value                Set number of training epochs"
     echo -e "  --tester value                Set tester variant"
+    echo -e "  --trainer value                Set trainer variant"
     echo -e "  --srw value[:arg...]          Set SRW"
     exit 0
 fi
@@ -49,6 +50,9 @@ do
     elif [ "--tester" = "$NAME" ]
     then
 	echo -e "TESTER=$VALUE" >> Makefile.in
+    elif [ "--trainer" = "$NAME" ]
+    then
+	echo -e "TRAINER=$VALUE" >> Makefile.in
     elif [ "--srw" = "$NAME" ]
     then
 	echo -e "SRW=$VALUE" >> Makefile.in
