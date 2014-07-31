@@ -41,12 +41,10 @@ public class LocalL2PosNegLossTrainedSRW<T> extends L2PosNegLossTrainedSRW<T> {
 	
 	@Override
 	public void cleanupParams(ParamVector paramVec) { 
-		Set<Map.Entry<String, Double>> parameters = paramVec.entrySet(); 
-		for (Map.Entry<String, Double> e : parameters) {
+		for(String f : (Set<String>) paramVec.keySet()) {
 			// finish catching up the regularization:
 			// Bj = Bj - lambda * (Rj)
-			double once = this.derivRegularization(e.getKey(), paramVec);
-			e.setValue(e.getValue() - this.learningRate() * once);
+			prepareFeature(paramVec,f);
 		}
 		((MuParamVector)paramVec).setLast(paramVec.keySet());
 	}
@@ -54,14 +52,20 @@ public class LocalL2PosNegLossTrainedSRW<T> extends L2PosNegLossTrainedSRW<T> {
 	@Override
 	public void prepareGradient(ParamVector paramVec, PosNegRWExample<T> example) {
 		for (String f : localFeatures(paramVec,example)) {
-			int gap = ((MuParamVector)paramVec).getLast(f);
-			double value = Dictionary.safeGet(paramVec,f);
-			// use gap-1 here because superclass will apply regularization for this clock cycle
-			// during the gradient() call
-			double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap - 1);
-			double weightDecay = value * (powerTerm - 1);
-			Dictionary.increment(paramVec, f, weightDecay);
-			this.cumloss.add(LOSS.REGULARIZATION, weightDecay);
+			prepareFeature(paramVec,f);
 		}
+	}
+	
+	private void prepareFeature(ParamVector paramVec, String f) {
+		// use last-1 here because superclass will apply regularization for this clock cycle
+		// during the gradient() call
+		int gap = ((MuParamVector)paramVec).getLast(f);
+		if (gap==0) return;
+		double value = Dictionary.safeGet(paramVec,f);
+		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap);
+		double weightDecay = value * (powerTerm - 1);
+		Dictionary.increment(paramVec, f, weightDecay);
+		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu * Math.pow(value, 2));
+		
 	}
 }

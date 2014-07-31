@@ -20,6 +20,7 @@ import edu.cmu.ml.praprolog.util.SimpleParamVector;
 public class L2PosNegLossSRWTest extends SRWTest {
 	public void initSrw() {
 		srw = new L2PosNegLossTrainedSRW();
+		srw.setMu(0);
 	}
 	
 	public ParamVector makeParams(Map<String,Double> foo) {

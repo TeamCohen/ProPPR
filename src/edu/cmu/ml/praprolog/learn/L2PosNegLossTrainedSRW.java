@@ -85,7 +85,8 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	}
 
 	/**
-	 * [Originally from L2RegularizedLearner; Java doesn't do multiple inheritance]
+	 * Loss is mu * theta_f^2
+	 * d/df Loss is then 2 * mu * theta_f
 	 * @param f
 	 * @param paramVec
 	 * @return

@@ -120,6 +120,7 @@ public class QueryAnswerer {
                     writer.append(rank + "\t").append(soln.getValue().toString()).append("\t").append(soln.getKey());
                     writer.newLine();
                 }
+                writer.flush();
             }
         } finally {
             reader.close();

@@ -4,9 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class LossData {
+	private static final Logger log = Logger.getLogger(LossData.class);
 	public Map<LOSS,Double> loss=new ConcurrentHashMap<LOSS,Double>();
 	public enum LOSS {
 		REGULARIZATION,
@@ -14,6 +17,9 @@ public class LossData {
 		L2
 	}
 	public synchronized void add(LOSS type, double loss) {
+		if (loss<0) {
+			log.warn("decreasing "+type+" loss? "+loss);
+		}
 		Dictionary.increment(this.loss, type, loss);
 	}
 	public void clear() {
