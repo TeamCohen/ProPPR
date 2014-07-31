@@ -26,7 +26,6 @@ public class MultithreadedTrainerTest extends RedBlueGraph {
 	public void testTrainParametersOnCookedIterator_smoke() {
 		MultithreadedTrainer<String> trainer = 
 				new MultithreadedTrainer<String>(new L2PosNegLossTrainedSRW<String>(), 4);
-		trainer.learner.setWeightingScheme(new ExpWeightingScheme());
 		
 		TreeMap<String,Double> startVec = new TreeMap<String,Double>();
 		startVec.put("r0",1.0);
