@@ -14,6 +14,7 @@ import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.learn.tools.RWExample;
+import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
@@ -202,7 +203,8 @@ public class SRW<E extends RWExample> {
         Map<String,Double> totDerFeature = new TreeMap<String,Double>();
         for (T k : graph.nearNative(u).keySet()) {
             Map<String,Double> derEdgeUK = this.derivEdgeWeightByParams(graph,u,k,paramVec);
-            for (Map.Entry<String,Double> e : derEdgeUK.entrySet()) Dictionary.increment(totDerFeature, e.getKey(), e.getValue());
+            for (Map.Entry<String,Double> e : derEdgeUK.entrySet()) 
+            	Dictionary.increment(totDerFeature, e.getKey(), e.getValue());
         }
 
         double edgeUV = this.edgeWeight(graph, u, v, paramVec);
@@ -426,5 +428,9 @@ public class SRW<E extends RWExample> {
 	}
 	public void setDelta(double delta) {
 		this.delta = delta;
+	}
+	public void setWeightingScheme(WeightingScheme weightingScheme) {
+		this.weightingScheme = weightingScheme;
+		
 	}
 }
