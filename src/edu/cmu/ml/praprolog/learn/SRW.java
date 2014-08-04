@@ -67,7 +67,7 @@ public class SRW<E extends RWExample> {
 	public static <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> p) {
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
-				p.put(f,1.0+0.01*random.nextDouble());
+				p.put(f,weightingScheme.defaultWeight()+0.01*random.nextDouble());
 			}
 		}
 	}
@@ -170,6 +170,7 @@ public class SRW<E extends RWExample> {
 			Map<T,Map<String,Double>> dNext = new TreeMap<T,Map<String,Double>>();
 			for (T j : pNext.keySet()) {
 				double z = totalEdgeWeight(graph,j,paramVec);
+				if (z == 0) continue;
 				double pj = Dictionary.safeGet(p, j);
 				for (T u : graph.nearNative(j).keySet()) {
 					Map<String,Double> dWP_ju = derivWalkProbByParams(graph,j,u,paramVec);
@@ -208,7 +209,8 @@ public class SRW<E extends RWExample> {
         Map<String,Double> totDerFeature = new TreeMap<String,Double>();
         for (T k : graph.nearNative(u).keySet()) {
             Map<String,Double> derEdgeUK = this.derivEdgeWeightByParams(graph,u,k,paramVec);
-            for (Map.Entry<String,Double> e : derEdgeUK.entrySet()) Dictionary.increment(totDerFeature, e.getKey(), e.getValue());
+            for (Map.Entry<String,Double> e : derEdgeUK.entrySet()) 
+            	Dictionary.increment(totDerFeature, e.getKey(), e.getValue());
         }
 
         double edgeUV = this.edgeWeight(graph, u, v, paramVec);
@@ -235,7 +237,7 @@ public class SRW<E extends RWExample> {
 			T v, ParamVector paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
+			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(paramVec.get(f.featureName)));
 		}
 		return result;
 	}
