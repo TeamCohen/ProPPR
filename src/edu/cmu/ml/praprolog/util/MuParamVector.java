@@ -66,6 +66,13 @@ public class MuParamVector extends ParamVector<TimestampedWeight> {
 		this.count++;
 	}
 	
+	@Override
+	public ParamVector copy () {
+		MuParamVector copy = new MuParamVector();
+        copy.putAll(this);
+        return copy;
+    }
+	
 	/** Utility class so we can fake entry iteration over <String,Double>
 	 * 
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"

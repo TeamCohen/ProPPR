@@ -3,6 +3,8 @@ package edu.cmu.ml.praprolog;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -14,9 +16,11 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.Tester.ExampleSolutionScore;
 import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.prove.LogicProgram;
+import edu.cmu.ml.praprolog.prove.LogicProgramState;
 import edu.cmu.ml.praprolog.prove.Prover;
 import edu.cmu.ml.praprolog.prove.RawPosNegExample;
 import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
+import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
 
 public class MultithreadedTester extends Tester {
 	private static final Logger log = Logger.getLogger(MultithreadedTester.class);
@@ -60,6 +64,19 @@ public class MultithreadedTester extends Tester {
 		}
 		log.info("pairTotal "+pairTotal+" pairErrors "+pairErrors+" errorRate "+ (pairErrors/pairTotal) +" map "+ (apTotal/numAP) );
 		return new TestResults(pairTotal,pairErrors,pairErrors/pairTotal,apTotal/numAP);
+	}
+	
+	Map<Thread,Prover> provers = new TreeMap<Thread,Prover>();
+	protected Prover getProver() {
+		Thread t = Thread.currentThread();
+		if (!provers.containsKey(t)) 
+			provers.put(t, this.prover.copy());
+		return provers.get(t);
+	}
+	
+	@Override	
+	public Map<LogicProgramState,Double> getSolutions(ThawedPosNegExample x,LogicProgram program) {
+		return getProver().proveState(program, x.getQueryState(), null);
 	}
 	
 	public class TesterThread implements Callable<ExampleSolutionScore> {

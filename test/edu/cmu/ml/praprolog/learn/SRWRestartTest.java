@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.junit.Test;
@@ -43,7 +44,27 @@ public class SRWRestartTest extends SRWTest {
 			}
 		}
 	}
+	@Override
+	public Map<String,Double> makeGradient(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {
+		List<HiLo> trainingPairs = new ArrayList<HiLo>();
+		for (String p : pos) {
+			for (String n : neg) {
+				trainingPairs.add(new HiLo(p,n));
+			}
+		}
+		return srw.gradient(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
+	}
 	
+	@Override
+	public double makeLoss(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {		
+		List<HiLo> trainingPairs = new ArrayList<HiLo>();
+		for (String p : pos) {
+			for (String n : neg) {
+				trainingPairs.add(new HiLo(p,n));
+			}
+		}
+		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
+	}
 	@Override
 	public void testUniformRWR() {}
 	
@@ -55,13 +76,13 @@ public class SRWRestartTest extends SRWTest {
 	public void testBiasedRWR() {
 		int maxT = 10;
 		
-		Map<String,Double> startVec = new TreeMap<String,Double>();
-		startVec.put("r0",1.0);
+//		Map<String,Double> startVec = new TreeMap<String,Double>();
+//		startVec.put("r0",1.0);
 		ParamVector baseLineVec = new SimpleParamVector(brGraphs.get(0).rwr(startVec));
-		ParamVector biasedWeightVec = new SimpleParamVector();//new TreeMap<String,Double>();
-		biasedWeightVec.put("fromb",1.0);
+		ParamVector biasedWeightVec = new SimpleParamVector(uniformWeightVec);//new TreeMap<String,Double>();
+//		biasedWeightVec.put("fromb",1.0);
 		biasedWeightVec.put("tob",10.0);
-		biasedWeightVec.put("fromr",1.0);
+//		biasedWeightVec.put("fromr",1.0);
 		biasedWeightVec.put("tor",0.1);
 		biasedWeightVec.put("restart",1.0);
 		

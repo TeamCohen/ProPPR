@@ -19,23 +19,28 @@ import edu.cmu.ml.praprolog.learn.L2SqLossSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 
 public class TrainerTest {
 	private static final String COOKED_FILE = "testcases/toy.cooked";
 
 	@Test
 	public void test_stringvsint() {
+		SRW.seed(0);
 		int epochs = 20;
 		
 		L2PosNegLossTrainedSRW<Integer> srwInt = new L2PosNegLossTrainedSRW<Integer>();
+		srwInt.setWeightingScheme(new SigmoidWeightingScheme());
 		Trainer<Integer> trainerInt = new Trainer<Integer>(srwInt);
 		Map<String,Double> paramVecInt = trainerInt.trainParametersOnCookedIterator(
 				new CookedExampleStreamer<Integer>(COOKED_FILE, 
 						new AnnotatedGraphFactory<Integer>(AnnotatedGraphFactory.INT)),
 				epochs,
 				false);//tracelosses
-		
+
+		SRW.seed(0);
 		L2PosNegLossTrainedSRW<String> srwStr = new L2PosNegLossTrainedSRW<String>();
+		srwStr.setWeightingScheme(new SigmoidWeightingScheme());
 		Trainer<String> trainerStr = new Trainer<String>(srwStr);
 		Map<String,Double> paramVecStr = trainerStr.trainParametersOnCookedIterator(
 				new CookedExampleStreamer<String>(COOKED_FILE, 
@@ -53,7 +58,7 @@ public class TrainerTest {
 			assertFalse(f+" int nan",paramVecInt.get(f).isNaN());
 			assertFalse(f+" int inf",paramVecInt.get(f).isInfinite());
 			// accurate to 1% since most param values ~=1
-			assertEquals(f,paramVecStr.get(f),paramVecInt.get(f),0.01);
+			assertEquals(f +" ("+ (paramVecInt.get(f)-paramVecStr.get(f))+")",paramVecStr.get(f),paramVecInt.get(f),0.01);
 		}
 	}
 	

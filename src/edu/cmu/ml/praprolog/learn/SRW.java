@@ -14,6 +14,7 @@ import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.learn.tools.RWExample;
+import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
@@ -38,6 +39,7 @@ public class SRW<E extends RWExample> {
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
 	public static final int DEFAULT_RATE_LENGTH = 1;
+	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected double mu;
 	protected int maxT;
 	protected double eta;
@@ -46,7 +48,7 @@ public class SRW<E extends RWExample> {
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
-	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, new TanhWeightingScheme(), DEFAULT_DELTA); }
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA); }
 	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		this.maxT = maxT;
 		this.mu = mu;
@@ -64,7 +66,7 @@ public class SRW<E extends RWExample> {
 	 * @param graph
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 */
-	public static <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> p) {
+	public <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> p) {
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
 				p.put(f,weightingScheme.defaultWeight()+0.01*random.nextDouble());
@@ -237,7 +239,7 @@ public class SRW<E extends RWExample> {
 			T v, ParamVector paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(paramVec.get(f.featureName)));
+			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(Dictionary.safeGet(paramVec, f.featureName, this.weightingScheme.defaultWeight())));
 		}
 		return result;
 	}
