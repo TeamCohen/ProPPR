@@ -1,10 +1,4 @@
-ifeq ($(strip $(CP)),)
-#CP:=.:/home/krivard/lib/proPPR.jar:../
-CP:=.:../:/home/krivard/ProPPR/bin/:/home/krivard/ProPPR/lib/*
-endif
-ifeq ($(strip $(SCRIPTS)),)
-SCRIPTS:=/home/krivard/ProPPR-examples/scripts
-endif
+include ../Makefile.in
 
 ### PARAMETERS ###
 ifeq ($(strip $(PROVER)),)
