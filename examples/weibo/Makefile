@@ -8,11 +8,11 @@ P=$(PSTEM).crules
 L2PLOCAL=l2plocal:0.001:2
 L2P=l2p:0.001:2
 #SRW1=$(L2P)
-ifeq ($(SRW),l2plocal)
-SRW1=$(L2PLOCAL)
-else
-SRW1=$(L2P)
-endif
+#ifeq ($(SRW),l2plocal)
+#SRW1=$(L2PLOCAL)
+#else
+#SRW1=$(L2P)
+#endif
 WT=tanh
 TRSIZE=12700
 EPOCHS=10
@@ -51,7 +51,7 @@ test.data: all.data
 %.run: $(P) %.data train.data
 	$(JM).Experiment \
 			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
-			 --strict --train train.data --test $*.data --srw $(SRW1) --output train.grounded \
+			 --strict --train train.data --test $*.data --srw $(SRW) --output train.grounded \
 			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
 			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
 
@@ -61,14 +61,14 @@ test.data: all.data
 %.train %.params: %.data $(P)
 	$(JM).Trainer \
 			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
-			 --strict --train $*.data --test $*.data --srw $(SRW1) --output train.grounded \
+			 --strict --train $*.data --test $*.data --srw $(SRW) --output train.grounded \
 			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
 			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
 
 %.query: %.data train.params
 	$(JM).QueryAnswerer \
 			 --programFiles $(P):all.cfacts --prover $(PR) \
-			 --strict --srw $(SRW1) --output $*.answers \
+			 --strict --srw $(SRW) --output $*.answers \
 			 --params train.params --threads $(TH) --weightingScheme $(WT) --queries $*.data --unnormalized; \
 	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results
 	cat $*.results; \

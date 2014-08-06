@@ -1,10 +1,4 @@
-ifeq ($(strip $(CP)),)
-#CP:=.:/home/krivard/lib/proPPR.jar:../
-CP:=.:../:/home/krivard/ProPPR/bin/:/home/krivard/ProPPR/lib/*
-endif
-ifeq ($(strip $(SCRIPTS)),)
-SCRIPTS:=/home/krivard/ProPPR-examples/scripts
-endif
+include ../Makefile.in
 
 ### PARAMETERS ###
 ifeq ($(strip $(PROVER)),)
@@ -43,7 +37,7 @@ post.%.Tester.log: %.examples params.wts cora.graph
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --tester ${TESTER} --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts | tee post.$*.Tester.log
 
 params.wts: ${TRAIN}.examples.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --trainer ${TRAINER} --train $< --params $@ --threads ${THREADS} --epochs ${EPOCHS} --srw l2plocal
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --trainer ${TRAINER} --train $< --params $@ --threads ${THREADS} --epochs ${EPOCHS} --srw ${SRW}
 
 %.examples.cooked: %.examples cora.graph
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}
@@ -58,8 +52,9 @@ params.wts: ${TRAIN}.examples.cooked
 
 ### DATASET BUILDING
 
-cora.graph: train.raw
-	scripts/getGraph.sh $^ > $@
+cora.graph: train.raw test.raw
+	scripts/getGraph.sh train.raw > $@
+	scripts/getGraph.sh test.raw >> $@
 
 train.examples: train.raw
 	scripts/getData.pl $^ > $@
