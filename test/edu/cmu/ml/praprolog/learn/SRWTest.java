@@ -34,10 +34,6 @@ public class SRWTest extends RedBlueGraph {
 	private static final Logger log = Logger.getLogger(SRWTest.class);
 	protected SRW<PairwiseRWExample<String>> srw;
 	protected ParamVector uniformWeightVec, startVec;
-//	@Test @Ignore
-//	public void setupTest() {
-//		log.debug("\n"+brGraphs.get(0).graphVizDump());
-//	}
 	
 	@Override
 	public void setup() {
@@ -154,12 +150,10 @@ public class SRWTest extends RedBlueGraph {
 		ParamVector pert = uniformWeightVec.copy();
 		pert.put("fromb", pert.get("fromb")+1e-10);
 		srw.clearLoss();
-		Map<String,Double> epsGrad = makeGradient(srw, pert, startVec, pos, neg);// srw.gradient(pert, new PosNegRWExample(brGraphs.get(0), startVec, pos,neg));
+		Map<String,Double> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
 		double newLoss = srw.cumulativeLoss().total();
 		System.err.println(Dictionary.buildString(epsGrad, new StringBuilder(), "\n").toString());
 		
-//		System.err.println("old loss:" +origLoss+" new loss: "+newLoss);
-//		System.err.println("difference: "+(newLoss - origLoss));
 		assertEquals("first order approximation",0,newLoss-origLoss,1e-15);
 		
 		double eps = .001;

@@ -15,7 +15,10 @@ import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
@@ -67,22 +70,12 @@ public class L2SqLossSRWTest extends SRWTest {
 		query.put("b1",1.0);
 		trainGen.add(new PairwiseRWExample(g, query, trainingPairs));
 		
-//		List<PairwiseRWExample> testGen = new ArrayList<PairwiseRWExample>();
-//		query = new TreeMap<String,Double>();
-//		query.put("b2", 1.0); 
-//		testGen.add(new PairwiseRWExample(g, query, trainingPairs));
-		
-//		ParamVector uniformWeightVec = new SimpleParamVector();
-//		uniformWeightVec.put("fromb", 1.0);
-//		uniformWeightVec.put("tob", 1.0);
-//		uniformWeightVec.put("fromr", 1.0);
-//		uniformWeightVec.put("tor", 1.0);
-		
 		L2SqLossSRW brSRW = ((L2SqLossSRW) srw);
 		double originalLoss = brSRW.averageLoss(uniformWeightVec, trainGen);
 		
 		System.err.println("originalLoss "+originalLoss);
-//		if(true)return;
+		
+		double setpoint = brSRW.getWeightingScheme().defaultWeight();
 		
 		ParamVector learnedWeightVec = brSRW.train(trainGen,uniformWeightVec);
 		double learnedLoss = brSRW.averageLoss(learnedWeightVec,trainGen);
@@ -90,8 +83,14 @@ public class L2SqLossSRWTest extends SRWTest {
 		Set<String> features = learnedWeightVec.keySet(); 
 		System.err.println(Dictionary.buildString(learnedWeightVec, new StringBuilder(), "\n").toString());
 		for (String f : features) {
-			if (f.endsWith("b")) assertTrue(String.format("Feature %s %f !< 1.0",f,learnedWeightVec.get(f)),learnedWeightVec.get(f) < 1.0);
-			else assertTrue(String.format("Feature %s %f !> 1.0",f,learnedWeightVec.get(f)),learnedWeightVec.get(f) > 1.0);
+			if (f.equals("tor")) 
+				assertTrue(
+						String.format("Feature %s %f !> %f",f,learnedWeightVec.get(f),setpoint),
+						learnedWeightVec.get(f) > setpoint);
+			else
+				assertTrue(
+						String.format("Feature %s %f !< %f",f,learnedWeightVec.get(f),setpoint),
+						learnedWeightVec.get(f) < setpoint); 
 		}
 		/*
 		 *     def notestLearn2(self):
