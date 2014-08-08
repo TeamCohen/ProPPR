@@ -42,7 +42,9 @@ public class RedBlueGraph {
 
 	@Before
 	public void setup() {
-			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+			if (!Logger.getRootLogger().getAllAppenders().hasMoreElements()) {
+				BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+			}
 
 			brGraphs = new ArrayList<AnnotatedGraph<String>>();
 			Collections.addAll(brGraphs, new AnnotatedStringGraph(), new AnnotatedStringGraph(), new AnnotatedStringGraph());

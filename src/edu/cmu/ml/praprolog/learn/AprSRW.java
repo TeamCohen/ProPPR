@@ -38,12 +38,17 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 		init(DEFAULT_ALPHA,DEFAULT_EPSILON,DEFAULT_STAYPROB);
 	}
 	
+	public AprSRW(double ialpha, double iepsilon, double istayProb) {
+		super(); 
+		this.init(ialpha,iepsilon,istayProb);
+	}
 	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta,
 			double ialpha, double iepsilon, double istayProb) {
 		super(maxT,mu,eta,wScheme,delta);
 		this.init(ialpha,iepsilon,istayProb);
 	}
 
+	
 	private void init(double ialpha, double iepsilon, double istayProb) {
 		//set walk parameters here
 		alpha = ialpha;
@@ -197,7 +202,7 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 			double drowSum = 0;
 			for(T v : graph.nearNative(u).keySet())
 			{
-				if(Feature.contains(graph.phi(v, u), feature))
+				if(Feature.contains(graph.phi(u, v), feature))
 				{
 					drowSum += this.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 				}

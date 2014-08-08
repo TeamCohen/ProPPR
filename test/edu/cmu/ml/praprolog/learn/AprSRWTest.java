@@ -21,12 +21,12 @@ import edu.cmu.ml.praprolog.util.SimpleParamVector;
 public class AprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
-		srw = new AprSRW();
+		srw = new AprSRW(0.1,1e-5,0);
 	}
 	
 	@Override
 	public void defaultSrwSettings() {
 		super.defaultSrwSettings();
-		srw.setWeightingScheme(new SigmoidWeightingScheme());
+		srw.setWeightingScheme(new ExpWeightingScheme());
 	}
 }

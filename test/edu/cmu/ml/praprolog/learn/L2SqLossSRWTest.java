@@ -71,13 +71,13 @@ public class L2SqLossSRWTest extends SRWTest {
 		trainGen.add(new PairwiseRWExample(g, query, trainingPairs));
 		
 		L2SqLossSRW brSRW = ((L2SqLossSRW) srw);
-		double originalLoss = brSRW.averageLoss(uniformWeightVec, trainGen);
+		double originalLoss = brSRW.averageLoss(uniformParams, trainGen);
 		
 		System.err.println("originalLoss "+originalLoss);
 		
 		double setpoint = brSRW.getWeightingScheme().defaultWeight();
 		
-		ParamVector learnedWeightVec = brSRW.train(trainGen,uniformWeightVec);
+		ParamVector learnedWeightVec = brSRW.train(trainGen,uniformParams);
 		double learnedLoss = brSRW.averageLoss(learnedWeightVec,trainGen);
 		assertTrue(String.format("learnedLoss %f !< originalLoss %f",learnedLoss,originalLoss),learnedLoss < originalLoss);
 		Set<String> features = learnedWeightVec.keySet(); 
