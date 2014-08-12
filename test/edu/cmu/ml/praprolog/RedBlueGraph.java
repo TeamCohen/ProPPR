@@ -34,10 +34,15 @@ public class RedBlueGraph {
 	protected List<AnnotatedGraph<String>> brGraphs;
 	protected Set<String> reds;
 	protected Set<String> blues;
-	protected int magicNumber = 3;
+	protected int magicNumber;
 
 	public RedBlueGraph() {
+		this(3);
+	}
+	
+	public RedBlueGraph(int mn) {
 		super();
+		this.magicNumber = mn;
 	}
 
 	@Before

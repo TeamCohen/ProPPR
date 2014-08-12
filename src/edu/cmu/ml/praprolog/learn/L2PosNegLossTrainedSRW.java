@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.learn;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -55,8 +56,8 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 
 		for (T x : example.getPosList()) {
 			if (log.isDebugEnabled()) log.debug("pos example "+x);
-			Map<String,Double> dx = d.get(x);
-			double px = clip(p.get(x));
+			Map<String,Double> dx = Dictionary.safeGet(d,x,Collections.EMPTY_MAP);//d.get(x);
+			double px = clip(Dictionary.safeGet(p,x,weightingScheme.defaultWeight()));//p.get(x));
 			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
@@ -73,8 +74,8 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 
 		for (T x : example.getNegList()) {
-			Map<String,Double> dx = d.get(x);
-			double px = p.get(x);
+			Map<String,Double> dx = Dictionary.safeGet(d, x, Collections.EMPTY_MAP);//d.get(x);
+			double px = Dictionary.safeGet(p,x,weightingScheme.defaultWeight());//p.get(x);
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) 
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/clip(1-px));

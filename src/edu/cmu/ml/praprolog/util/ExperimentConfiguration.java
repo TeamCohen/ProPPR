@@ -12,6 +12,7 @@ import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
 import edu.cmu.ml.praprolog.MultithreadedTester;
 import edu.cmu.ml.praprolog.QueryAnswerer;
 import edu.cmu.ml.praprolog.RerankingQueryAnswerer;
+import edu.cmu.ml.praprolog.Trainer2;
 import edu.cmu.ml.praprolog.learn.AprSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
@@ -28,6 +29,7 @@ import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
 import edu.cmu.ml.praprolog.Tester;
 import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW;
+import edu.cmu.ml.praprolog.util.multithreading.Multithreading;
 
 public class ExperimentConfiguration extends Configuration {
 	/** queries, notest, srw **/
@@ -85,7 +87,8 @@ public class ExperimentConfiguration extends Configuration {
 						+ "mrr[:threads] (default threads=3)\n"
 						+ "trove.t\n"
 						+ "trove.mt[:threads] (default threads=3)\n"
-						+ "trove.mrr[:threads] (default threads=3)")
+						+ "trove.mrr[:threads] (default threads=3)\n"
+						+ "u[:threads[:throttle]] (default threads=3,throttle=-1)")
 						.create());
 		options.addOption(
 				OptionBuilder
@@ -245,6 +248,11 @@ public class ExperimentConfiguration extends Configuration {
 			} else if (values[0].equals("trove.mrr")) {
 				this.trainer = new MultithreadedRRTrainer( 
 						(edu.cmu.ml.praprolog.trove.learn.SRW<edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample>) this.srw, threads);		
+			} else if (values[0].equals("u")) {
+				int throttle=Multithreading.DEFAULT_THROTTLE;
+				if (values.length > 2) 
+					throttle = Integer.parseInt(values[2]);
+				this.trainer = new Trainer2((edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw, threads, throttle);
 			}
 		} else {
 			if (isOn(flags,USE_TRAIN)) {

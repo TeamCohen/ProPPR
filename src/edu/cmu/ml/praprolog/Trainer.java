@@ -30,7 +30,7 @@ import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class Trainer<T> {
 	protected SRW<PosNegRWExample<T>> learner;
-	private int epoch;
+	protected int epoch;
 	private static final Logger log = Logger.getLogger(Trainer.class);
 
 	public Trainer(SRW<PosNegRWExample<T>> learner) {
@@ -207,4 +207,6 @@ public class Trainer<T> {
 //			Dictionary.save(paramVec, c.paramsFile);
 		}
 	}
+
+
 }

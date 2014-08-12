@@ -48,12 +48,12 @@ public class GraphComponent extends GraphlikeComponent {
 	@Override
 	protected List<Argument> _indexGet(String functor, Argument srcConst) {
 		// TODO Auto-generated method stub
-		return Dictionary.safeGet(this.index, functor,srcConst,DEFAULT_INDEX);
+		return Dictionary.safeGetGet(this.index, functor,srcConst,DEFAULT_INDEX);
 	}
 	@Override
 	protected int _indexGetDegree(String functor, Argument srcConst) {
 		// TODO Auto-generated method stub
-		return Dictionary.safeGet(this.index, functor, srcConst, DEFAULT_INDEX).size();
+		return Dictionary.safeGetGet(this.index, functor, srcConst, DEFAULT_INDEX).size();
 	}
 	@Override
 	protected Map<Goal, Double> getFeatureDict() {

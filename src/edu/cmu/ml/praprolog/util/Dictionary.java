@@ -365,8 +365,14 @@ public class Dictionary {
 			K key, List<V> dflt) {
 		if (map.containsKey(key)) return map.get(key);
 		return dflt;
-	}	
-	public static <K,L,M> List<M> safeGet(
+	}
+	public static <K,L,M> Map<L,M> safeGet(
+			Map<K, Map<L,M>> map,
+			K key1, Map<L,M> dflt) {
+		if (map.containsKey(key1)) return  map.get(key1);
+		return dflt;
+	}
+	public static <K,L,M> List<M> safeGetGet(
 			Map<K, Map<L,List<M>>> map,
 			K key1, L key2, List<M> dflt) {
 		if (map.containsKey(key1)) return safeGet(map.get(key1),key2, dflt);//map.get(key);
