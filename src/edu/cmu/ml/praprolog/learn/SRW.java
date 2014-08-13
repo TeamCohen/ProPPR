@@ -14,6 +14,7 @@ import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.learn.tools.RWExample;
+import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
@@ -38,6 +39,7 @@ public class SRW<E extends RWExample> {
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
 	public static final int DEFAULT_RATE_LENGTH = 1;
+	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected double mu;
 	protected int maxT;
 	protected double eta;
@@ -46,7 +48,7 @@ public class SRW<E extends RWExample> {
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
-	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, new TanhWeightingScheme(), DEFAULT_DELTA); }
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA); }
 	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		this.maxT = maxT;
 		this.mu = mu;
@@ -64,10 +66,10 @@ public class SRW<E extends RWExample> {
 	 * @param graph
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 */
-	public static <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> p) {
+	public <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> p) {
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
-				p.put(f,1.0+0.01*random.nextDouble());
+				p.put(f,weightingScheme.defaultWeight()+0.01*random.nextDouble());
 			}
 		}
 	}
@@ -80,7 +82,10 @@ public class SRW<E extends RWExample> {
 	 * @return
 	 */
 	public <T> double edgeWeight(AnnotatedGraph<T> g, T u, T v,  Map<String,Double> p) {
-		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
+		double wt = this.weightingScheme.edgeWeight(p,g.phi(u, v));
+
+		if (Double.isInfinite(wt)) return Double.MAX_VALUE;
+		return wt;
 	}
 
 	/**
@@ -125,6 +130,10 @@ public class SRW<E extends RWExample> {
 		int k=-1;
 		for (Map.Entry<T, Double> u : vec.entrySet()) { k++;
 			if (k>0 && k%100 == 0) log.debug("Walked from "+k+" nodes...");
+			if (u.getValue() == 0) {
+				log.info("0 node weight at u="+u+"; skipping");
+				continue;
+			}
 			double z = totalEdgeWeight(g,u.getKey(),paramVec);
 			if (z==0) {
 				log.info("0 total edge weight at u="+u+"; skipping");
@@ -162,12 +171,17 @@ public class SRW<E extends RWExample> {
 			// dNext[u] is the vector deriv of the weight vector at u
 			Map<T,Map<String,Double>> dNext = new TreeMap<T,Map<String,Double>>();
 			for (T j : pNext.keySet()) {
+				double z = totalEdgeWeight(graph,j,paramVec);
+				if (z == 0) continue;
+				double pj = Dictionary.safeGet(p, j);
 				for (T u : graph.nearNative(j).keySet()) {
 					Map<String,Double> dWP_ju = derivWalkProbByParams(graph,j,u,paramVec);
-					for (String f : trainableFeatures(graph.phi(j,u))) {
+					Set<String> features = new TreeSet<String>();
+					if(d.containsKey(j)) features.addAll(d.get(j).keySet());
+					features.addAll(dWP_ju.keySet());
+					for (String f : trainableFeatures(features)) {
 						Dictionary.increment(dNext, u, f, 
-								edgeWeight(graph,j,u,paramVec) * Dictionary.safeGetGet(d, j, f) 
-								+ Dictionary.safeGet(p, j) * dWP_ju.get(f));
+								edgeWeight(graph,j,u,paramVec)/z * Dictionary.safeGetGet(d, j, f) + pj * Dictionary.safeGet(dWP_ju, f));
 					}
 				}
 			}
@@ -189,22 +203,27 @@ public class SRW<E extends RWExample> {
 	 */
 	protected <T> Map<String, Double> derivWalkProbByParams(AnnotatedGraph<T> graph,
 			T u, T v, ParamVector paramVec) {
-
-		double edgeUV = this.edgeWeight(graph, u, v, paramVec);
-		// vector of edge weights - one for each active feature
-		Map<String,Double> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
-		Set<String> activeFeatures = derEdgeUV.keySet();
+		
 		double totEdgeWeightU = totalEdgeWeight(graph,u,paramVec);
-		double totDerEdgeUV = 0;
-		for (double w : derEdgeUV.values()) totDerEdgeUV += w;
-		Map<String,Double> derWalk = new TreeMap<String,Double>();
-		for (String f : trainableFeatures(activeFeatures)) {
-			// above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
-			double term2 = (edgeUV / totEdgeWeightU) * totDerEdgeUV;
-			double val = derEdgeUV.get(f) - term2;
-			derWalk.put(f, val / totEdgeWeightU);
-		}
-		return derWalk;
+        Map<String,Double> derWalk = new TreeMap<String,Double>();
+        if (totEdgeWeightU == 0) return derWalk;
+
+        Map<String,Double> totDerFeature = new TreeMap<String,Double>();
+        for (T k : graph.nearNative(u).keySet()) {
+            Map<String,Double> derEdgeUK = this.derivEdgeWeightByParams(graph,u,k,paramVec);
+            for (Map.Entry<String,Double> e : derEdgeUK.entrySet()) 
+            	Dictionary.increment(totDerFeature, e.getKey(), e.getValue());
+        }
+
+        double edgeUV = this.edgeWeight(graph, u, v, paramVec);
+        Map<String,Double> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
+        for (String f : trainableFeatures(totDerFeature.keySet())) {
+            // above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
+            double term2 = (edgeUV / totEdgeWeightU) * Dictionary.safeGet(totDerFeature, f);
+            double val = Dictionary.safeGet(derEdgeUV, f) - term2;
+            Dictionary.increment(derWalk, f, val / totEdgeWeightU);
+        }
+        return derWalk;
 	}
 	/**
 	 * A dictionary d so that d[f] is the derivative of the
@@ -220,7 +239,7 @@ public class SRW<E extends RWExample> {
 			T v, ParamVector paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
+			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(Dictionary.safeGet(paramVec, f.featureName, this.weightingScheme.defaultWeight())));
 		}
 		return result;
 	}
@@ -288,6 +307,7 @@ public class SRW<E extends RWExample> {
 		Map<String,Double> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
+			checkGradient(grad, paramVec, example);
 		}
 		double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
@@ -297,6 +317,23 @@ public class SRW<E extends RWExample> {
 		}
 	}
 	
+	/**
+	 * Check if first-order approximation is close
+	 */
+	protected void checkGradient(Map<String,Double> grad, ParamVector paramVec, E example) {
+		ParamVector perturbedParamVec = paramVec.copy();
+        double epsilon = 1.0e-10;
+        double loss = empiricalLoss(paramVec, example);
+        double perturbedLoss;
+        for (Map.Entry<String, Double> f : grad.entrySet()) {
+			if (untrainedFeatures.contains(f.getKey())) continue;
+            Dictionary.increment(perturbedParamVec, f.getKey(), epsilon);
+            perturbedLoss = empiricalLoss(perturbedParamVec, example);
+            log.debug(f.getKey() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (epsilon*f.getValue()));
+            loss = perturbedLoss;
+        }
+	}	
+
 	protected double learningRate() {
 		return Math.pow(this.epoch,-2) * this.eta;
 	}
@@ -399,5 +436,11 @@ public class SRW<E extends RWExample> {
 	}
 	public void setDelta(double delta) {
 		this.delta = delta;
+	}
+	public WeightingScheme getWeightingScheme() {
+		return weightingScheme;
+	}
+	public void setWeightingScheme(WeightingScheme weightingScheme) {
+		this.weightingScheme = weightingScheme;
 	}
 }

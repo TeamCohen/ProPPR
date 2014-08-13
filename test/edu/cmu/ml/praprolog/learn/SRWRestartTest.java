@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.junit.Test;
@@ -17,6 +18,7 @@ import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
 import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
@@ -38,14 +40,37 @@ public class SRWRestartTest extends SRWTest {
 			AnnotatedGraph<String> g = brGraphs.get(k); //brGraph 0 resets to r0, brGraph 1 resets to r1, etc
 			for (String u : g.getNodes()) {
 				ArrayList<Feature> ff = new ArrayList<Feature>();
-				ff.add(new Feature("restart",1.0));
+				ff.addAll(g.phi(u, ri));
+				ff.add(new Feature("restart",this.srw.getWeightingScheme().defaultWeight()));
 				g.addDirectedEdge(u, ri, ff);
 			}
 		}
+		uniformParams.put("restart",this.srw.getWeightingScheme().defaultWeight());
+	}
+	@Override
+	public Map<String,Double> makeGradient(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {
+		List<HiLo> trainingPairs = new ArrayList<HiLo>();
+		for (String p : pos) {
+			for (String n : neg) {
+				trainingPairs.add(new HiLo(p,n));
+			}
+		}
+		return srw.gradient(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
 	}
 	
 	@Override
-	public void testUniformRWR() {}
+	public double makeLoss(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {		
+		List<HiLo> trainingPairs = new ArrayList<HiLo>();
+		for (String p : pos) {
+			for (String n : neg) {
+				trainingPairs.add(new HiLo(p,n));
+			}
+		}
+		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
+	}
+	
+//	@Override
+//	public void testUniformRWR() {}
 	
 
 	/**
@@ -55,21 +80,19 @@ public class SRWRestartTest extends SRWTest {
 	public void testBiasedRWR() {
 		int maxT = 10;
 		
-		Map<String,Double> startVec = new TreeMap<String,Double>();
-		startVec.put("r0",1.0);
-		ParamVector baseLineVec = new SimpleParamVector(brGraphs.get(0).rwr(startVec));
-		ParamVector biasedWeightVec = new SimpleParamVector();//new TreeMap<String,Double>();
-		biasedWeightVec.put("fromb",1.0);
-		biasedWeightVec.put("tob",10.0);
-		biasedWeightVec.put("fromr",1.0);
-		biasedWeightVec.put("tor",0.1);
-		biasedWeightVec.put("restart",1.0);
+//		Map<String,Double> startVec = new TreeMap<String,Double>();
+//		startVec.put("r0",1.0);
+		ParamVector baseLineRwr = new SimpleParamVector(brGraphs.get(0).rwr(startVec));
+		ParamVector biasedParams = makeBiasedVec();
 		
 		SRW<PairwiseRWExample<String>> mysrw = new SRW<PairwiseRWExample<String>>(maxT);
-		Map<String,Double> newVec = mysrw.rwrUsingFeatures(brGraphs.get(0), startVec, biasedWeightVec);
+		Map<String,Double> newRwr = mysrw.rwrUsingFeatures(brGraphs.get(0), startVec, biasedParams);
 		
-		lowerScores(bluePart(baseLineVec),bluePart(newVec));
-		lowerScores(redPart(newVec),redPart(baseLineVec));
+		System.err.println(Dictionary.buildString(baseLineRwr, new StringBuilder(), "\n"));
+		System.err.println(Dictionary.buildString(newRwr, new StringBuilder(), "\n"));
+		
+		lowerScores(bluePart(baseLineRwr),bluePart(newRwr));
+		lowerScores(redPart(newRwr),redPart(baseLineRwr));
 	}
 	
 	/**

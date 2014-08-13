@@ -316,8 +316,8 @@ public class Dictionary {
 	 * @param delim2
 	 * @return
 	 */
-	public static <K> StringBuilder buildString(Map<K,Map<K,Double>> map, StringBuilder sb, String delim1, String delim2) {
-		for(Map.Entry<K,Map<K,Double>>e : map.entrySet()) {
+	public static <K1,K2> StringBuilder buildString(Map<K1,Map<K2,Double>> map, StringBuilder sb, String delim1, String delim2) {
+		for(Map.Entry<K1,Map<K2,Double>>e : map.entrySet()) {
 			sb.append(delim1).append(e.getKey()).append(":");
 			buildString(e.getValue(),sb,delim2);
 		}
@@ -365,8 +365,14 @@ public class Dictionary {
 			K key, List<V> dflt) {
 		if (map.containsKey(key)) return map.get(key);
 		return dflt;
-	}	
-	public static <K,L,M> List<M> safeGet(
+	}
+	public static <K,L,M> Map<L,M> safeGet(
+			Map<K, Map<L,M>> map,
+			K key1, Map<L,M> dflt) {
+		if (map.containsKey(key1)) return  map.get(key1);
+		return dflt;
+	}
+	public static <K,L,M> List<M> safeGetGet(
 			Map<K, Map<L,List<M>>> map,
 			K key1, L key2, List<M> dflt) {
 		if (map.containsKey(key1)) return safeGet(map.get(key1),key2, dflt);//map.get(key);

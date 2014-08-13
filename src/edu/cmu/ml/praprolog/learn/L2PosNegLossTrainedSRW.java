@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.learn;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -17,9 +18,7 @@ import edu.cmu.ml.praprolog.util.ParamVector;
 public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
-	
 	protected LossData cumloss;
-
 
 	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		super(maxT,mu,eta,wScheme,delta);
@@ -57,8 +56,8 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 
 		for (T x : example.getPosList()) {
 			if (log.isDebugEnabled()) log.debug("pos example "+x);
-			Map<String,Double> dx = d.get(x);
-			double px = p.get(x);
+			Map<String,Double> dx = Dictionary.safeGet(d,x,Collections.EMPTY_MAP);//d.get(x);
+			double px = clip(Dictionary.safeGet(p,x,weightingScheme.defaultWeight()));//p.get(x));
 			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
@@ -66,7 +65,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
-			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(px)));
+			this.cumloss.add(LOSS.LOG, -Math.log(clip(px)));
 		}
 
 		//negative instance booster
@@ -75,13 +74,13 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 
 		for (T x : example.getNegList()) {
-			Map<String,Double> dx = d.get(x);
-			double px = p.get(x);
+			Map<String,Double> dx = Dictionary.safeGet(d, x, Collections.EMPTY_MAP);//d.get(x);
+			double px = Dictionary.safeGet(p,x,weightingScheme.defaultWeight());//p.get(x);
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) 
-					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
+					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/clip(1-px));
 			}
-			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(1.0-px)));
+			this.cumloss.add(LOSS.LOG, -Math.log(clip(1.0-px)));
 		}
 		return derivFparamVec;
 	}
@@ -113,7 +112,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 //		return loss;
 //	}
 
-	public double checkProb(double prob)
+	public double clip(double prob)
 	{
 		if(prob <= 0)
 		{

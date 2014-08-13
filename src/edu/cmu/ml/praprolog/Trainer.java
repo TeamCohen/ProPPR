@@ -30,7 +30,7 @@ import edu.cmu.ml.praprolog.util.SimpleParamVector;
 
 public class Trainer<T> {
 	protected SRW<PosNegRWExample<T>> learner;
-	private int epoch;
+	protected int epoch;
 	private static final Logger log = Logger.getLogger(Trainer.class);
 
 	public Trainer(SRW<PosNegRWExample<T>> learner) {
@@ -55,7 +55,7 @@ public class Trainer<T> {
 		}
 		int k=0;
 		for (PosNegRWExample<T> x : examples) {
-		    SRW.addDefaultWeights(x.getGraph(),paramVec);
+		    this.learner.addDefaultWeights(x.getGraph(),paramVec);
 		    this.learner.accumulateGradient(this.learner.gradient(paramVec, x),sumGradient);
 		    k++;
 		}
@@ -110,24 +110,6 @@ public class Trainer<T> {
 			     + " on "+ numExamplesThisEpoch +" examples");
 			    System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
 			    System.out.print(" : " + lossThisEpoch.loss.get(LOSS.REGULARIZATION));
-				// wwc - added some more tracing here
-//			    double avgLoss = (totalLossThisEpoch / numExamplesThisEpoch); 
-//			    System.out.print("avg training loss " + avgLoss
-//					     + " on "+ numExamplesThisEpoch +" examples");
-//			    System.out.print(" avg pos training loss " + (totalPosLossThisEpoch/numExamplesThisEpoch));
-//			    System.out.print(" avg neg training loss " + (totalNegLossThisEpoch/numExamplesThisEpoch));
-//			    if (totalNegLossThisEpoch>0) {
-//				System.out.print(" ratio of pos/neg training loss " + (totalPosLossThisEpoch/totalNegLossThisEpoch));
-//			    }
-//			    if (epoch>1) {
-//				System.out.println(" improved by " + (previousAvgLoss-avgLoss));
-//			    } else 
-//				System.out.println();
-//			    if (previousAvgLoss-avgLoss < 0.0) {
-//				System.out.println("WARNING: loss INCREASED by " + 
-//						   (avgLoss-previousAvgLoss) + " - what's THAT about?");
-//			    }
-//			    previousAvgLoss = avgLoss;
 			    if (epoch>1) {
 			    	LossData diff = lossLastEpoch.diff(lossThisEpoch);
 			    	System.out.println(" improved by " + diff.total()
@@ -225,4 +207,6 @@ public class Trainer<T> {
 //			Dictionary.save(paramVec, c.paramsFile);
 		}
 	}
+
+
 }

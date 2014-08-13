@@ -28,7 +28,7 @@ post.%.Tester.log: %.examples params.wts
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --tester $(TESTER) --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts --srw $(SRW) | tee post.$*.Tester.log
 
 params.wts: ${TRAIN}.examples.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --trainer ${TRAINER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS) | tee Trainer.log
 
 %.examples.cooked: %.examples
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}

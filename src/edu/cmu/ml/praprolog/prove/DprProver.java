@@ -24,6 +24,8 @@ public class DprProver extends Prover {
 	public static int BOOST_ALPHA = 2;
 	public static int THROW_ALPHA_ERRORS = 3;
 	public static final int STRATEGY_DEFAULT=THROW_ALPHA_ERRORS;
+	public static final double STAYPROB_DEFAULT = 0.0;
+	public static final double STAYPROB_LAZY = 0.5;
 	private final double epsilon;
 	// not final, we might change it with the ADJUST_ALPHA strategy!
 	private double minAlpha;
@@ -53,10 +55,10 @@ public class DprProver extends Prover {
 		this(false, epsilon, minalpha,strat);
 	}
 	public DprProver(boolean lazyWalk, double epsilon, double minalpha) {
-		this( (lazyWalk?0.5:0.0),epsilon,minalpha,STRATEGY_DEFAULT);
+		this( (lazyWalk?STAYPROB_LAZY:STAYPROB_DEFAULT),epsilon,minalpha,STRATEGY_DEFAULT);
 	}
 	public DprProver(boolean lazyWalk, double epsilon, double minalpha, int strat) {
-		this( (lazyWalk?0.5:0.0),epsilon,minalpha,strat);
+		this( (lazyWalk?STAYPROB_LAZY:STAYPROB_DEFAULT),epsilon,minalpha,strat);
 	}
 	protected DprProver(double stayP, double eps, double mina) {
 		this( stayP,eps,mina,STRATEGY_DEFAULT);

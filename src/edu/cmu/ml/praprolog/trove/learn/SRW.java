@@ -52,7 +52,7 @@ public class SRW<E extends RWExample> {
 		this(maxT, 
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_MU, 
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_ETA, 
-				new TanhWeightingScheme(),
+				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_WEIGHTING_SCHEME(),
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_DELTA); }
 	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
 		this.maxT = maxT;

@@ -34,15 +34,22 @@ public class RedBlueGraph {
 	protected List<AnnotatedGraph<String>> brGraphs;
 	protected Set<String> reds;
 	protected Set<String> blues;
-	protected int magicNumber = 3;
+	protected int magicNumber;
 
 	public RedBlueGraph() {
+		this(3);
+	}
+	
+	public RedBlueGraph(int mn) {
 		super();
+		this.magicNumber = mn;
 	}
 
 	@Before
 	public void setup() {
-			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+			if (!Logger.getRootLogger().getAllAppenders().hasMoreElements()) {
+				BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+			}
 
 			brGraphs = new ArrayList<AnnotatedGraph<String>>();
 			Collections.addAll(brGraphs, new AnnotatedStringGraph(), new AnnotatedStringGraph(), new AnnotatedStringGraph());
