@@ -63,6 +63,7 @@ public abstract class WordBelongsToPOSGroup extends ComplexFeature {
                 final Argument word = unifiedFeatInst.getArg(1);
                 if (sentenceID.isConstant() && word.isConstant()) {
                     for (GoalComponent c : facts) {
+			/*
                         for (Goal g : c.goalsMatching(goalComponentFunctorLookup, 3, sentenceID)) {
 
                             if (g.getArg(1).getName().equals(word.getName()) &&
@@ -71,6 +72,7 @@ public abstract class WordBelongsToPOSGroup extends ComplexFeature {
                                 return m;
                             }
                         }
+			*/
                     }
                 }
 

@@ -1,0 +1,111 @@
+Small things to do:
+
+30sec task:
+java edu.cmu.ml.praprolog.ExampleCookerWC --data google-1k-train.trainData --programFiles google-10k-train.cfacts:google-10k-fig.crules --output tmp.cooked --prover ppr:9
+
+this takes about 1min without threading:
+ java edu.cmu.ml.praprolog.ExampleCookerWC --data google-1k-train.trainData --programFiles google-10k-train.cfacts:google-10k-fig.crules --output tmp.cooked --prover dpr:0.0005:0.01:boost
+
+* Nomenclature: replace cooked with grounded
+* Efficiency: file based iterator over cooked graphs? can we use a
+simpler, no-object graph structure and/or proof structure?  Where is
+the space and time going?
+* Better documents (eg 'hard' rules, fixedWeight, escapes, ...) - see dorpbox
+* MinAlpha!
+* Assess recall directly
+
+* Fix compile scripts to run anywhere
+* Test for 'hard' rules and semantics for them
+* Demo problems/test problems
+* Empirical loss monitoring
+* Initialize params around zero (config file, maybe, not just params?)
+* Experiment with tanh*sqrt(double.max), sparse parameters
+* Extend util.Configuration to read also from a param file - DONE
+* untuneable weights - eg, a special feature names, like fixedWeight, eg
+   DONE but need to document this
+
+*  hard clauses - syntax is implemented but I need to work out what
+   the semantics should be.  I think the idea would be to treat them
+   as links with weight=1, which means that the score of a parent
+   would be copied the child in 'push', and that in SRW, hard edges
+   would be treated specially when computing the weights.
+
+   Simplest implementation that might be correct: let the DprProver
+   check if a state's leading goal is 'hard' and if so, it makes some
+   special-case calls to the graphWriter (adding unit-weight edges,
+   with a special feature 'hardEdge', and no other features).  Then in
+   the SRW the 'hardEdge' edges are treated specially - they are given
+   unit weight, and the 'hardEdge' parameter cannot be tuned.
+
+* BFS apr-style inference using Hadoop?
+* Bottom up, forward inference? maybe via EBG-like approach
+** Get top-scoring proofs of existing positive facts
+*** Alternate: just get proofs with a large upper-bound on scores
+** Convert to DB pattern queries
+** Add instances of these queries to a pool and increment their sums...
+
+
+* NELL and RiB in ProPPR
+
+  b(C,X) means "believe C(X)"
+  r(C,X,D) means "read C(X) in doc D"
+  learning is cyclic: seed beliefs ==> propagation/inference ==> training "classifier-abductive" theory ==> inference ==> more beliefs ==> training ... ==> ....
+
+Propagation/inference - NELL style, through label prop
+
+  b(C,X) :- sim(X,X'),b(C,X')
+  b(C,X) :- seed(C,X)
+
+Propagation/inference - NELL style, via ontology
+
+  b(C,X) :- domain(R,C), b(R, X/Y). 
+  b(C,Y) :- range(R,C), b(R, X/Y). 
+  b(C,X) :- subsetOf(C,C'),b(C',X).
+  b(R,X/Y) :- inverse(R,R'),b(R',Y/X).
+  b(R,X/X) :- reflective(C).
+  ...
+  % enforce negative constraints
+  conflict(X) :- b(C,X),mutex(C,C'),b(C',X).
+  conflict(X) :- b(R,X/X),irreflective(R).
+  ...
+
+Multi-view classifier-abductive theory for NELL:
+
+  b(C,X) :- isConcept(C), classifyAs(C,X).
+  classifyAs(C,X) :- classifyAsInView(C,X,cpl).
+  classifyAs(C,X) :- classifyAsInView(C,X,seal).
+  ...
+  classifyAsInView(C,X,V) :- # { f(F,C,V) : feature(V,X,F) }    
+
+Classifier-abductive micro-reading, where context(+X,+D,-T): groundedEntityOrEntityPair,docId -> context,
+using 
+
+  b(C,X) :- r(C,X,D). 
+  r(C,X,D) :- isConcept(C), contextFor(X,D,T), classifyAs(C,T).
+
+Distant-labeling via inference
+
+  r(C,X,D) :- b(C,X).
+  % force consistent interpretations
+  conflict(X,D) :- r(C,X,D),mutex(C,C'),r(C',X,D).
+  
+ISG discourse theory:
+
+  r(C,X,D) :- discourse(C,X,C',X'), r(C',X',D).
+  discourse(C,X,C',X) :-  # relatedConcepts(C,C').
+  discourse(C,X,C,X') :-  # relatedEntities(X,X').
+
+ISG/classifier-abductive theory for alignment to external database:
+
+  b(C,X) :- db(DB), align(C,X,C',X',DB), dbBelief(DB,C',X').
+  align(C,X,C',X') :- alignConcept(C,C',DB),alignEntity(X,X',DB).
+  alignConcept(C,C',DB) :- simToDBConcept(C,C',DB).
+  alignEntity(X,X',DB) :- simToDBEntity(X,X',DB).
+  alignConcept(C,C',DB) :- # ac(C,C',DB).
+  alignEntity(X,X',DB) :- # ae(X,X',DB).
+
+Propagation/inference theory for alignment to external databases:
+
+  alignConcept(C,C',DB) :- range(R,C),alignConcept(R,R',DB),range(R',C',DB).
+  ...
+

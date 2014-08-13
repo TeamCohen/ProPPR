@@ -142,6 +142,10 @@ public abstract class Component {
                     throw new IllegalArgumentException("Bad programmer: added a file extension entry to Component without adding handling code");
                 }
                 result[i - 1].setAlpha(alpha);
+
+            	if (arg.getValue().size() > 1) {
+		    log.info("Consolidation complete");
+            	}
             }
         }
         return result;
