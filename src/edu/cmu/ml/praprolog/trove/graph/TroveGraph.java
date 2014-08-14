@@ -196,6 +196,7 @@ public class TroveGraph {
 	}
 
 	public int getNumEdges() { return numEdges; }
+	public int getNumNodes() { return near.size(); }
 	
 }
 
