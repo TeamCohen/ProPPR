@@ -2,8 +2,8 @@ include ../Makefile.in
 
 ### DATASET
 
-TRAIN=${NAME}.train
-TEST=${NAME}.test
+TRAIN=train
+TEST=test
 NAME=top-1000-near-google
 PROGRAM=${NAME}-nonrecursive.crules:${NAME}.cfacts:${NAME}-fact.graph
 
@@ -19,7 +19,7 @@ results.txt: pre.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TRAIN}.resu
 	cat $^ > $@
 
 %.results.txt: %.Tester.log
-	tail -1 $< | awk '{print "$*",$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' > $@
+	tail -1 $< | awk '{print "$*","${NAME}",$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' > $@
 
 pre.%.Tester.log: %.examples
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --tester $(TESTER) --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} | tee pre.$*.Tester.log

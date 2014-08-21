@@ -1,7 +1,8 @@
 include ../Makefile.in
 
 ### DATASET
-PROGRAM:=webkb0.crules:webkb.graph:webkb.cfacts
+NAME=webkb
+PROGRAM:=${NAME}0.crules:${NAME}.graph:${NAME}.cfacts
 SUBSETS:=wisc wash texas cornell
 
 ### TARGETS
@@ -15,7 +16,7 @@ results.txt: $(addsuffix .results.txt,$(addprefix pre.,$(SUBSETS)) $(addprefix p
 	cat $^ > $@
 
 %.results.txt: %.Tester.log
-	tail -1 $< | awk '{print "$*",$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' > $@
+	tail -1 $< | awk '{print "$*","${NAME}",$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' > $@
 
 pre.%.Tester.log: test_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --tester ${TESTER} | tee pre.$*.Tester.log

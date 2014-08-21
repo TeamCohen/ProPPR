@@ -3,7 +3,8 @@ include ../Makefile.in
 ### DATASET
 TRAIN=train
 TEST=test
-PROGRAM=textcat.crules:toylabels.cfacts:toywords.graph
+NAME=textcattoy
+PROGRAM=${NAME}.crules:toylabels.cfacts:toywords.graph
 
 
 ### TARGETS
@@ -17,7 +18,7 @@ results.txt: pre.train.results.txt pre.test.results.txt post.train.results.txt p
 	cat $^ > $@
 
 %.results.txt: %.Tester.log
-	tail -1 $< | awk '{print "$*",$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' > $@
+	tail -1 $< | awk '{print "$*","${NAME}",$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' > $@
 
 pre.%.Tester.log: %.examples
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --tester $(TESTER) | tee pre.$*.Tester.log

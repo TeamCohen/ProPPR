@@ -1,0 +1,8 @@
+train_no_wisc.npositive=851
+train_no_wash.npositive=924
+train_no_texas.npositive=922
+train_no_cornell.npositive=941
+test_wisc.npositive=361
+test_wash.npositive=288
+test_texas.npositive=290
+test_cornell.npositive=271
