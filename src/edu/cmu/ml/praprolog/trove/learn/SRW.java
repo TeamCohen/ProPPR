@@ -284,13 +284,13 @@ public class SRW<E extends RWExample> {
 
 	/** Add the gradient vector to a second accumulator vector
 	 */
-	public void accumulateGradient(TObjectDoubleHashMap<String> grad, Map<String,Double> sumGradient) {
+	public void accumulateGradient(TObjectDoubleHashMap<String> grad, double exampleLength,Map<String,Double> sumGradient) {
 		for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
 			f.advance();
 			if (!sumGradient.containsKey(f.key())) {
 				sumGradient.put(f.key(), new Double(0.0));
 			}
-			sumGradient.put(f.key(), new Double(sumGradient.get(f.key()).doubleValue() + f.value()));
+			sumGradient.put(f.key(), new Double(sumGradient.get(f.key()).doubleValue() + f.value()/exampleLength));
 		}
 	}
 

@@ -54,11 +54,23 @@ public class Trainer<T> {
 		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
 		}
 		int k=0;
+
+              //WW: accumulate example-size normalized gradient
 		for (PosNegRWExample<T> x : examples) {
 		    this.learner.addDefaultWeights(x.getGraph(),paramVec);
-		    this.learner.accumulateGradient(this.learner.gradient(paramVec, x),sumGradient);
+		    this.learner.accumulateGradient(this.learner.gradient(paramVec, x),x.length(),sumGradient);
 		    k++;
 		}
+
+              //WW: renormalize by the total number of queries
+		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
+		    String feature = it.next();
+                  double unnormf = sumGradient.get(feature);
+                  double norm = unnormf / k;
+	           sumGradient.put(feature, norm);
+	           //System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
+		}
+
 		return sumGradient;
 	}
 
