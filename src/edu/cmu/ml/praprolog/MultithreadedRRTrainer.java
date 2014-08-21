@@ -87,6 +87,7 @@ public class MultithreadedRRTrainer<T> extends Trainer<T> {
 				log.warn("While waiting for example "+k,e);
 			} catch (ExecutionException e) {
 				log.warn("While waiting for example "+k,e);
+				e.printStackTrace();
 			}
 		}
 		currentTrainingRun.executor = null;

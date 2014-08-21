@@ -359,15 +359,15 @@ public class ExperimentConfiguration extends Configuration {
 					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
 				}
 			} else if (values[0].equals("apr")) {
-//				if (this.trove) {
-//					throw new IllegalArgumentException("No trove implementation for AprSRW yet :(");
-//				} else {
-					double epsilon = AprSRW.DEFAULT_EPSILON;
-					double alpha = AprSRW.DEFAULT_ALPHA;
-					if (values.length > 4) epsilon = Double.parseDouble(values[4]);
-					if (values.length > 5) alpha = Double.parseDouble(values[5]);
+				double epsilon = AprSRW.DEFAULT_EPSILON;
+				double alpha = AprSRW.DEFAULT_ALPHA;
+				if (values.length > 4) epsilon = Double.parseDouble(values[4]);
+				if (values.length > 5) alpha = Double.parseDouble(values[5]);
+				if (this.trove) {
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.AprSRW(SRW.DEFAULT_MAX_T, mu, eta, weightingScheme, delta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
+				} else {
 					this.srw = new edu.cmu.ml.praprolog.learn.AprSRW<String>(SRW.DEFAULT_MAX_T, mu, eta, weightingScheme, delta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
-//				}
+				}
 			} else {
 				usageOptions(options,flags,"No srw definition for '"+values[0]+"'");
 			}

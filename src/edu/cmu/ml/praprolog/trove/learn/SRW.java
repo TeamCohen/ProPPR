@@ -249,7 +249,7 @@ public class SRW<E extends RWExample> {
 	public Set<String> trainableFeatures(Set<String> candidates) {
 		TreeSet<String> result = new TreeSet<String>();
 		for (String f : candidates) {
-			if (!untrainedFeatures.contains(f)) result.add(f);
+			if (trainable(f)) result.add(f);
 		}
 		return result;
 	}
@@ -261,6 +261,10 @@ public class SRW<E extends RWExample> {
 	public <X> Set<String> trainableFeatures(ParamVector paramVec) {
 		return trainableFeatures(paramVec.keySet());
 	}
+	
+	public boolean trainable(String feature) {
+		return !untrainedFeatures.contains(feature);
+	}
 	/**
 	 * Builds a set of features in the names of the specified Feature set that are not on the untrainedFeatures list.
 	 * @param candidates Feature objects
@@ -270,7 +274,7 @@ public class SRW<E extends RWExample> {
 
 		TreeSet<String> result = new TreeSet<String>();
 		for (Feature f : candidates) {
-			if (!untrainedFeatures.contains(f.featureName)) result.add(f.featureName);
+			if (trainable(f.featureName)) result.add(f.featureName);
 		}
 		return result;
 	}
