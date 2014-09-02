@@ -24,7 +24,8 @@ public class UngroundedSolutionsTest {
 	@Test
 	public void test() throws IOException {
 		LogicProgram program = new LogicProgram(
-				Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),Component.ALPHA_DEFAULT));
+				Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),
+						Component.ALPHA_DEFAULT, null));
 		Prover p = new TracingDfsProver(10);
 
 		Map<LogicProgramState,Double> ans = p.proveState(program, new ProPPRLogicProgramState(Goal.decompile("grandparent,-1,-2")));

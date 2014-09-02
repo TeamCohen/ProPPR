@@ -325,7 +325,7 @@ public class ExampleCookerWC extends ExampleThawing {
 	ExampleCookerConfiguration c = new ExampleCookerConfiguration(args, flags);
 	if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
 				
-	ExampleCookerWC cooker = new ExampleCookerWC(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
+	ExampleCookerWC cooker = new ExampleCookerWC(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)));
 	long start = System.currentTimeMillis();
 	Writer outputWriter = new BufferedWriter(new FileWriter(c.outputFile));
 	cooker.cookExamples(c.dataFile, outputWriter, c.nthreads >= 1 ? c.nthreads : 1);

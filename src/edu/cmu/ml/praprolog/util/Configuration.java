@@ -62,6 +62,7 @@ public class Configuration {
     public String paramsFile = null;
     public WeightingScheme weightingScheme = null;
     public boolean force = false;
+	public Boolean ternaryIndex = null;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -112,6 +113,7 @@ public class Configuration {
 	}
 	protected void retrieveSettings(CommandLine line, int flags, Options options) {
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
+		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("ternaryIndex"))  this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue("ternaryIndex"));
 		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = getExistingFileOption(line,"data");
 		if (isOn(flags,USE_QUERIES) && line.hasOption("queries"))            this.queryFile = getExistingFileOption(line,"queries");
 		if ((isOn(flags,USE_OUTPUT) || isOn(flags,USE_TRAIN)) 
@@ -183,14 +185,23 @@ public class Configuration {
      * and adds Option objects to the Options object.
      */
     protected void addOptions(Options options, int flags) {
-        options.addOption(
-                OptionBuilder
-                        .withLongOpt("programFiles")
-                        .withArgName("file:...:file")
-                        .hasArgs()
-                        .withValueSeparator(':')
-                        .withDescription("Description of the logic program. Formats:\n\t\tcrules:goal,, & ... & goal,, # feature,, # variable,,\n\t\tcfacts:f\\ta\\ta")
-                        .create());
+    	if (isOn(flags, USE_PROGRAMFILES)) {
+	        options.addOption(
+	                OptionBuilder
+	                        .withLongOpt("programFiles")
+	                        .withArgName("file:...:file")
+	                        .hasArgs()
+	                        .withValueSeparator(':')
+	                        .withDescription("Description of the logic program. Formats:\n\t\tcrules:goal,, & ... & goal,, # feature,, # variable,,\n\t\tcfacts:f\\ta\\ta")
+	                        .create());
+	        options.addOption(
+	        		OptionBuilder
+	        				.withLongOpt("ternaryIndex")
+	        				.withArgName("true|false")
+	        				.hasArg()
+	        				.withDescription("Turn A1A2 index on/off in GoalComponent (default off/false)")
+	        				.create());
+    	}
         if (!isOn(flags, USE_TRAINTEST))
             options.addOption(
                     OptionBuilder

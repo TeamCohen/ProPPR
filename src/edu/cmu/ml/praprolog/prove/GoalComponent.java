@@ -16,6 +16,7 @@ import edu.cmu.ml.praprolog.util.SymbolTable;
 public class GoalComponent extends Component {
 	private static final Logger log = Logger.getLogger(GoalComponent.class);
 	public static final String FILE_EXTENSION=".cfacts";
+	public static final boolean DEFAULT_INDICES=false;
 	protected Map<Goal,Double> featureDict = new HashMap<Goal,Double>();
 	protected Map<FunctorArityKey,List<Goal>> indexF = new HashMap<FunctorArityKey,List<Goal>>();
 	protected Map<FunctorArityArgKey,List<Goal>> indexFA1 = new HashMap<FunctorArityArgKey,List<Goal>>();
@@ -27,14 +28,19 @@ public class GoalComponent extends Component {
 	int numUsesIndexFA1 = 0;
 	int numUsesIndexFA2 = 0;
 	int numUsesIndexFA1A2 = 0;
+	boolean useTernaryIndex;
 	protected String label;
 	public GoalComponent() {
 		this("goalComponent");
 	}
 	public GoalComponent(String label) {
+		this(label,DEFAULT_INDICES);
+	}
+	public GoalComponent(String label, boolean useTernaryIndex) {
 		label = Component.cleanLabel(label);
 		featureDict.put(new Goal("id",label), 1.0);
 		this.label = label;
+		this.useTernaryIndex = useTernaryIndex;
 	}
 
 	/**
@@ -52,7 +58,7 @@ public class GoalComponent extends Component {
 
 		Dictionary.safeAppend(this.indexF, keyf, goal);
 		Dictionary.safeAppend(this.indexFA1, keyfa1, goal);
-		if (goal.getArity() >= 2) {
+		if (useTernaryIndex && goal.getArity() > 2) {
 			FunctorArityArgKey keyfa2 = new FunctorArityArgKey(goal.getFunctor(), goal.getArity(), goal.getArg(1));
 			Dictionary.safeAppend(this.indexFA2, keyfa2, goal);
 			FunctorArityArg1Arg2Key keyfa1a2 = new FunctorArityArg1Arg2Key(goal.getFunctor(), goal.getArity(), goal.getArg(0), goal.getArg(1));
@@ -94,9 +100,9 @@ public class GoalComponent extends Component {
 
 	public static class FunctorArityArg1Arg2Key extends FunctorArityArgKey {
 		public final Argument arg2;
-		public FunctorArityArg1Arg2Key(String functor, int arity, Argument arg,Argument arg2) {
-			super(functor, arity,arg);
-			this.arg2 = arg;
+		public FunctorArityArg1Arg2Key(String functor, int arity, Argument arg, Argument arg2) {
+			super(functor, arity, arg);
+			this.arg2 = arg2;
 		}
 
 		public int hashCode() {
@@ -113,7 +119,7 @@ public class GoalComponent extends Component {
 	public List<Outlink> outlinks(LogicProgramState state) {
 		// maybe print stats
 		long now = System.currentTimeMillis();
-		if (now-lastPrint > 5000) {
+		if (useTernaryIndex && now-lastPrint > 5000) {
 			log.info("index usage for F / F,A1 / F,A2 / F,A1,A2: "
 					+ numUsesIndexF+"/"+numUsesIndexFA1+"/"+numUsesIndexFA2+"/"+numUsesIndexFA1A2 
 					+ " of "+numUsesGoalsMatching);
@@ -151,7 +157,7 @@ public class GoalComponent extends Component {
 					new FunctorArityArgKey(goal.getFunctor(), goal.getArity(), goal.getArg(0)),
 					Collections.<Goal> emptyList());
 		}
-		if (goal.getArity()>=2) {
+		if (useTernaryIndex && goal.getArity()>2) {
 			if (goal.getArg(0).isConstant() && goal.getArg(1).isConstant()) {
 				numUsesIndexFA1A2++;
 				return Dictionary.safeGet(this.indexFA1A2, 
@@ -192,7 +198,7 @@ public class GoalComponent extends Component {
 					new FunctorArityArgKey(functor, arity, arg1),
 					Collections.<Goal> emptyList());
 		}
-		if (arity>=2) {
+		if (useTernaryIndex && arity>2) {
 			if (arg1.isConstant()) {
 				numUsesIndexFA1++;
 				return Dictionary.safeGet(this.indexFA1, 
@@ -249,7 +255,10 @@ public class GoalComponent extends Component {
 	}
 
 	public static GoalComponent loadCompiled(List<String> files) {
-		GoalComponent result = new GoalComponent(files.get(0)+ (files.size() > 1 ? "+"+(files.size()-1)+"others" : ""));
+		return loadCompiled(files, DEFAULT_INDICES);
+	}
+	public static GoalComponent loadCompiled(List<String> files, boolean useTernaryIndex) {
+		GoalComponent result = new GoalComponent(files.get(0)+ (files.size() > 1 ? "+"+(files.size()-1)+"others" : ""), useTernaryIndex);
 		for (String filename : files) loadInto(result,filename);
 		return result;
 	}
@@ -265,7 +274,16 @@ public class GoalComponent extends Component {
 	 * @param filename
 	 */
 	public static GoalComponent loadCompiled(String filename) {
-		return loadCompiled(Collections.singletonList(filename));
+		return loadCompiled(filename,DEFAULT_INDICES);
+	}
+	/**
+	 * Returns a goal component loaded from a file, where each line contains
+        a single ground goal, stored as functor <TAB> arg1 <TAB> .....
+	 * @param filename
+	 * @param useTernaryIndex
+	 */
+	public static GoalComponent loadCompiled(String filename, boolean useTernaryIndex) {
+		return loadCompiled(Collections.singletonList(filename), useTernaryIndex);
 	}
 
 	@Override

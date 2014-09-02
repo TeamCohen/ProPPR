@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.prove;
 
+import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 import org.apache.log4j.Logger;
@@ -84,7 +85,7 @@ public abstract class Component {
         return this.outlinks(state).size();
     }
 
-    public static Component[] loadComponents(String[] programFiles, double alpha) {
+    public static Component[] loadComponents(String[] programFiles, double alpha, Configuration c) {
         HashMap<String, List<String>> args = new HashMap<String, List<String>>();
 
         // collect all files of each component type together
@@ -129,7 +130,8 @@ public abstract class Component {
             	
             	// consolidate all other multiples in a single component of that type
                 if (arg.getKey().equals(GoalComponent.FILE_EXTENSION)) {
-                    result[i++] = GoalComponent.loadCompiled(arg.getValue());
+                	if (c != null && c.ternaryIndex != null) result[i++] = GoalComponent.loadCompiled(arg.getValue(), c.ternaryIndex);
+                	else result[i++] = GoalComponent.loadCompiled(arg.getValue());
                 } else if (arg.getKey().equals(RuleComponent.FILE_EXTENSION)) {
                     result[i++] = RuleComponent.loadCompiled(arg.getValue());
                 } else if (arg.getKey().equals(GraphComponent.FILE_EXTENSION)) {

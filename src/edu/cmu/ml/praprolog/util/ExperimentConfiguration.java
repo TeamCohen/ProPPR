@@ -187,7 +187,7 @@ public class ExperimentConfiguration extends Configuration {
 
 		if (isOn(flags,Configuration.USE_PROGRAMFILES)) {
 			if (this.programFiles != null) 
-			this.program = new LogicProgram(Component.loadComponents(programFiles, this.alpha));
+				this.program = new LogicProgram(Component.loadComponents(programFiles, this.alpha, this));
 			else if (!isOn(flags,Configuration.USE_DEFERREDPROGRAM)) missing(Configuration.USE_PROGRAMFILES, flags);
 		}
 		

@@ -54,7 +54,7 @@ public class ExampleCookerTest {
 	public void doCookExampleTest(String msg, Prover p, int nodes, int edges, String key, double value, String npos, String nneg,double alpha) {
 		String[] programFiles = {"testcases/classify.crules","testcases/toy.cfacts"}; 
 		String data = null;//"testcases/toyTrain.cdata";
-		ExampleCooker cooker = new ExampleCooker(p, new LogicProgram(Component.loadComponents(programFiles,alpha)));
+		ExampleCooker cooker = new ExampleCooker(p, new LogicProgram(Component.loadComponents(programFiles,alpha,null)));
 		
 		ArrayList<String> pos = new ArrayList<String>(), neg = new ArrayList<String>();
 		pos.add("predict howard bird");

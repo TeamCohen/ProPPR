@@ -252,8 +252,8 @@ public class ExampleCooker extends ExampleThawing {
 		if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
 				
 		ExampleCooker cooker = null;
-		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
-		else cooker = new ModularMultiExampleCooker(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)), c.nthreads); 
+		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)));
+		else cooker = new ModularMultiExampleCooker(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)), c.nthreads); 
 				//MultithreadedExampleCooker(c.prover,c.programFiles,c.nthreads);
 		long start = System.currentTimeMillis();
 		if (c.getCustomSetting("graphKey") != null) cooker.useGraphKeyFile((File) c.getCustomSetting("graphKey"));

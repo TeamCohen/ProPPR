@@ -37,7 +37,7 @@ public class Prompt {
 				}});
 			bsh.println("prv set: "+bsh.get("prv"));
 			if (c.programFiles != null) {
-				bsh.set("lp", new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
+				bsh.set("lp", new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)));
 				bsh.println("lp set: "+bsh.get("lp"));
 			}
 			bsh.eval("help() { print(\"This is a beanshell, a command-line interpreter for java. A full beanshell manual is available at <http://www.beanshell.org/manual/contents.html>.\\n\\n"+
