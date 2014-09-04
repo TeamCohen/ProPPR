@@ -178,7 +178,7 @@ class ruleBuffer(object):
 			f.compile(variableSymtab)
 	
 	def __repr__(self):
-		return 'ruleBuffer(' + repr(self.lhs) + ',' + repr(self.rhs) + ',' + repr(self.features) + ',' + repr(self.ruleId) #+ repr(self.variableList) + ')'
+		return 'ruleBuffer(' + repr(self.lhs) + ',' + repr(self.rhs) + ',' + repr(self.features) + ',' + repr(self.ruleId)
 
 def compileLPToFile(inputFile,outputFile):
 	"""Convert a file containing a logic program to a simple, integer-based
@@ -254,42 +254,12 @@ def compileComponent(component,variableSymtab = None):
 		goal.compile(variableSymtab)
 	component._freeze()
 	return variableSymtab
-	#if component.index:
-	#	for key in component.index:
-	#		for r in component.index[key]:
-	#			compileRule(r)
-	#	component._freeze()
 
-#def decompileFile(inputFile):
-#	def stripTrailingChars(x): return x.strip()
-#	for k,line in enumerate(util.linesOf(inputFile)):
-#		ruleStr,featuresStr,varsString = map(stripTrailingChars,line.split("#"))
-#		variableList = varsString.strip().split(",")
-#		ruleGoals = [decompileGoalStr(goalStr,variableList) for goalStr in ruleStr.split("&")]
-#		featureGoals = [decompileGoalStr(goalStr,variableList) for goalStr in featuresStr.split("&")]
-#		rule = lpc.rule(ruleGoals[0],ruleGoals[1:],'',featureGoals)
-#		print str(rule)
-#			
-#def decompileGoalStr(goalStr,varList=string.ascii_uppercase):
-#	def intOrConstStr2Sym(s): 
-#		try:
-#			k = int(s)
-#			if k<0: return varList[-(k+1)]
-#			else: return s
-#		except ValueError:
-#			return s 
-#	symbols = map(intOrConstStr2Sym,goalStr.split(","))
-#	f = symbols[0]
-#	return lpc.goal(f,symbols[1:])
 
 if __name__ == "__main__":
-	if not sys.argv:
-		print "usage: foo.rules foo.crules"
-		print "usage: foo.crules > foo.rules"
-	if sys.argv[1].startswith("-"):
-		print "decompiling",sys.argv[2]
-		print "*** No longer supported ***"
-		#decompileFile(sys.argv[2])
+	if len(sys.argv)<3:
+		print "usage:"
+		print "\t",sys.argv[0],"foo.rules foo.crules"
 	else:
 		print "compiling",sys.argv[1],'to',sys.argv[2]
 		compileLPToFile(sys.argv[1],sys.argv[2])
