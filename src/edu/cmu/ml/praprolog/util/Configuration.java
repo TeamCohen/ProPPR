@@ -41,6 +41,7 @@ public class Configuration {
     public static final int USE_NOTEST = 0x1000;
     public static final int USE_SOLUTIONS = 0x2000;
     public static final int USE_DEFERREDPROGRAM = 0x4000;
+    public static final int USE_MAXT = 0x8000;
     // combo flags:
     /** programFiles, prover, threads **/
     public static final int USE_DEFAULTS = 0x19;

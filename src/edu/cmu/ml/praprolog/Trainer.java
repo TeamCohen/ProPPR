@@ -176,7 +176,13 @@ public class Trainer<T> {
 	////////////////////////// Run ////////////////////////////////////////
 
 	public static void main(String[] args) {
-		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TRAIN | Configuration.USE_SRW | Configuration.USE_LEARNINGSET | Configuration.USE_PARAMS | Configuration.USE_DEFERREDPROGRAM;
+		int flags = Configuration.USE_DEFAULTS 
+				| Configuration.USE_TRAIN 
+				| Configuration.USE_SRW 
+				| Configuration.USE_LEARNINGSET 
+				| Configuration.USE_PARAMS 
+				| Configuration.USE_DEFERREDPROGRAM
+				| Configuration.USE_MAXT;
 		log.info(String.format("flags: 0x%x",flags));
 		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
 

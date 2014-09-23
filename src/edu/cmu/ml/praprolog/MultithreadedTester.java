@@ -45,10 +45,12 @@ public class MultithreadedTester extends Tester {
 		}
 		executor.shutdown();
 		int id=0;
+		long start = System.currentTimeMillis();
 		while(futures.size() > 0) {
 			Future<ExampleSolutionScore> f = futures.pop();
 			try {
 				id++;
+				if((System.currentTimeMillis() - start)>2000 ) log.info(id+" examples tested...");
 				ExampleSolutionScore x = f.get();
 				pairTotal+=x.numPairs;
 				pairErrors+=x.numErrors;
