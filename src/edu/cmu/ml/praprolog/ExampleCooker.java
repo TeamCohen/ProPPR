@@ -44,10 +44,33 @@ public class ExampleCooker extends ExampleThawing {
 	public static final String COOKED_SUFFIX = ".cooked";
 	protected File graphKeyFile=null;
 	protected Writer graphKeyWriter=null;
+	protected CookingStatistics statistics=null;
 	public ExampleCooker(Prover p, LogicProgram program) {
 		super.init(p,program);
+		this.statistics = new CookingStatistics();
 	}
 	
+	public class CookingStatistics {
+		// statistics
+		int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
+		RawPosNegExample worstX = null;
+		double smallestFractionCovered = 1.0;
+		int nwritten=0;
+		
+		protected synchronized void updateStatistics(RawPosNegExample rawX,int npos,int nneg,int covpos,int covneg) {
+			// keep track of some statistics - synchronized for multithreading
+			totalPos += npos;
+			totalNeg += nneg;
+			coveredPos += covpos;
+			coveredNeg += covneg;
+			double fractionCovered = covpos/(double)npos;
+			if (fractionCovered < smallestFractionCovered) {
+				worstX = rawX;
+				smallestFractionCovered = fractionCovered;
+			}
+		}
+	}
+
 	public void cookExamples(File dataFile, String outputFile) {
 		BufferedWriter writer = null;
 		try {
@@ -60,16 +83,17 @@ public class ExampleCooker extends ExampleThawing {
 			e.printStackTrace();
 		}
 	}
-	
 
-    /** Single-threaded baseline method to ground examples.
-     */
+
+	/** Single-threaded baseline method to ground examples.
+	 */
 
 	public void cookExamples(File dataFile, Writer writer) throws IOException {
+		this.statistics = new CookingStatistics();
 		int k=0, empty=0;
 		for (RawPosNegExample rawX : new RawPosNegExampleStreamer(dataFile).stream()) {
 			k++;
-//			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
+			//			log.debug("raw example: "+rawX.getQuery()+" "+rawX.getPosList()+" "+rawX.getNegList());
 			try {	
 				if (log.isDebugEnabled()) {
 					log.debug("Free Memory Created "+k+" "+Runtime.getRuntime().freeMemory()+" / "+Runtime.getRuntime().totalMemory()+" "+System.currentTimeMillis());
@@ -95,55 +119,54 @@ public class ExampleCooker extends ExampleThawing {
 		}
 		if (empty>0) log.info("Skipped "+empty+" of "+k+" examples due to empty graphs");
 	}
-	
+
 	long lastPrint = System.currentTimeMillis();
-	int nwritten=0;
 
 	protected String serializeCookedExample(RawPosNegExample rawX, PosNegRWExample<String> x) {
-		
+
 		if (log.isInfoEnabled()) {
-			nwritten++;
+			statistics.nwritten++;
 			long now = System.currentTimeMillis();
 			if (now-lastPrint > 5000) {
-				log.info("Cooked "+nwritten+" examples");
+				log.info("Cooked "+statistics.nwritten+" examples");
 				lastPrint = now;
 			}
 		}
-		
+
 		if (x.length() == 0) {
-			log.warn("No positive or negative solutions for query "+nwritten+":"+rawX.getQuery().toSaveString()+"; skipping");
+			log.warn("No positive or negative solutions for query "+statistics.nwritten+":"+rawX.getQuery().toSaveString()+"; skipping");
 			return "";
 		}
-		
+
 		StringBuilder line = new StringBuilder();
 		line.append(rawX.getQuery().toSaveString())
-			.append("\t");
+		.append("\t");
 		Dictionary.buildString(x.getQueryVec().keySet(), line, ",");
 		line.append("\t");
 		Dictionary.buildString(x.getPosList(), line, ",");
 		line.append("\t");
 		Dictionary.buildString(x.getNegList(), line, ",");
 		line.append("\t")
-			.append(x.getGraph().toString())
-			.append("\n");
+		.append(x.getGraph().toString())
+		.append("\n");
 		return line.toString();
 	}
-	
+
 	protected String serializeGraphKey(RawPosNegExample rawX, GraphWriter gw) {
 		StringBuilder key = new StringBuilder();
 		String s = rawX.getQuery().toSaveString();
 		ArrayList<Object> states = gw.getNodes();
 		for (int i=1; i<states.size(); i++) {
 			key.append(s)
-				.append("\t")
-				.append(i)
-				.append("\t")
-				.append((LogicProgramState) states.get(i))
-				.append("\n");
+			.append("\t")
+			.append(i)
+			.append("\t")
+			.append((LogicProgramState) states.get(i))
+			.append("\n");
 		}
 		return key.toString();
 	}
-	
+
 	protected void saveGraphKey(RawPosNegExample rawX, GraphWriter writer) {
 		try {
 			this.graphKeyWriter.write(serializeGraphKey(rawX,writer));
@@ -151,11 +174,11 @@ public class ExampleCooker extends ExampleThawing {
 			throw new IllegalStateException("Couldn't write to graph key file "+this.graphKeyFile.getName(),e);
 		}
 	}
-	
+
 	protected Prover getProver() {
 		return this.prover;
 	}
-	
+
 
 	/**
 	 * Run the prover to convert a raw example to a random-walk example
@@ -187,33 +210,27 @@ public class ExampleCooker extends ExampleThawing {
 		Map<String,Double> queryVector = new HashMap<String,Double>();
 		queryVector.put(writer.getId(x.getQueryState()), 1.0);
 		if (this.graphKeyFile!= null) { saveGraphKey(rawX, writer); }
-		updateStatistics(rawX,rawX.getPosList().length,rawX.getNegList().length,posIds.size(),negIds.size());
+		statistics.updateStatistics(rawX,rawX.getPosList().length,rawX.getNegList().length,posIds.size(),negIds.size());
 		return new PosNegRWExample<String>(writer.getGraph(), queryVector, posIds, negIds);
 	}
-	// statistics
-        static int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
-        static RawPosNegExample worstX = null;
-        static double smallestFractionCovered = 1.0;
 
-        protected synchronized static void updateStatistics(RawPosNegExample rawX,int npos,int nneg,int covpos,int covneg) {
-	    // keep track of some statistics - synchronized for multithreading
-	    totalPos += npos;
-	    totalNeg += nneg;
-	    coveredPos += covpos;
-	    coveredNeg += covneg;
-	    double fractionCovered = covpos/(double)npos;
-	    if (fractionCovered < smallestFractionCovered) {
-		worstX = rawX;
-		smallestFractionCovered = fractionCovered;
-	    }
-	}
-	
-        protected void reportStatistics(int empty) {
-	    if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
-	    log.info("totalPos: " + totalPos + " totalNeg: "+totalNeg+" coveredPos: "+coveredPos+" coveredNeg: "+coveredNeg);
-	    if (totalPos>0) log.info("For positive examples " + coveredPos + "/" + totalPos + " proveable [" + ((100.0*coveredPos)/totalPos) + "%]");
-	    if (totalNeg>0) log.info("For negative examples " + coveredNeg + "/" + totalNeg + " proveable [" + ((100.0*coveredNeg)/totalNeg) + "%]");
-	    if (worstX!=null) log.info("Example with fewest ["+100.0*smallestFractionCovered+"%] pos examples covered: "+worstX.getQuery());
+	protected void reportStatistics(int empty) {
+		if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
+		log.info("totalPos: " + statistics.totalPos 
+				+ " totalNeg: "+statistics.totalNeg
+				+" coveredPos: "+statistics.coveredPos
+				+" coveredNeg: "+statistics.coveredNeg);
+		if (statistics.totalPos>0) 
+			log.info("For positive examples " + statistics.coveredPos 
+				+ "/" + statistics.totalPos 
+				+ " proveable [" + ((100.0*statistics.coveredPos)/statistics.totalPos) + "%]");
+		if (statistics.totalNeg>0) 
+			log.info("For negative examples " + statistics.coveredNeg 
+					+ "/" + statistics.totalNeg 
+					+ " proveable [" + ((100.0*statistics.coveredNeg)/statistics.totalNeg) + "%]");
+		if (statistics.worstX!=null) 
+			log.info("Example with fewest ["+100.0*statistics.smallestFractionCovered+"%] pos examples covered: "
+					+ statistics.worstX.getQuery());
 	}
 
 	public static class ExampleCookerConfiguration extends CustomConfiguration {
@@ -243,24 +260,24 @@ public class ExampleCooker extends ExampleThawing {
 			return keyFile;
 		}
 
-		
+
 	}
-	
+
 	public static void main(String ... args) {
 		int flags = Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT;
 		ExampleCookerConfiguration c = new ExampleCookerConfiguration(args, flags);
 		if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
-				
+
 		ExampleCooker cooker = null;
 		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)));
 		else cooker = new ModularMultiExampleCooker(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)), c.nthreads); 
-				//MultithreadedExampleCooker(c.prover,c.programFiles,c.nthreads);
+		//MultithreadedExampleCooker(c.prover,c.programFiles,c.nthreads);
 		long start = System.currentTimeMillis();
 		if (c.getCustomSetting("graphKey") != null) cooker.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
 		cooker.cookExamples(c.dataFile, c.outputFile);
 		System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
 		System.out.println("Done.");
-		
+
 	}
 
 	public void useGraphKeyFile(File keyFile) {
