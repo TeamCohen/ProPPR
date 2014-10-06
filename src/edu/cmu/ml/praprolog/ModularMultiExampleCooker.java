@@ -28,6 +28,7 @@ public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 
 	@Override
 	public void cookExamples(File dataFile, Writer writer) throws IOException {
+		this.statistics = new CookingStatistics();
 		ExecutorService cookingPool = Executors.newFixedThreadPool(this.nthreads);
 		ExecutorService writingPool = Executors.newFixedThreadPool(1);
 		if (this.graphKeyFile != null) setupGraphKeyWriter();

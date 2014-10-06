@@ -47,10 +47,12 @@ public class ExampleCooker extends ExampleThawing {
 	protected CookingStatistics statistics=null;
 	public ExampleCooker(Prover p, LogicProgram program) {
 		super.init(p,program);
-		this.statistics = new CookingStatistics();
 	}
 	
 	public class CookingStatistics {
+	    public CookingStatistics() {
+		log.info("Resetting cooking statistics...");
+	    }
 		// statistics
 		int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
 		RawPosNegExample worstX = null;
