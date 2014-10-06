@@ -46,6 +46,7 @@
 		<delete verbose="true">
 			<fileset dir="." includes="compiled*.pl"/>
 			<fileset dir="scripts" includes="*.pyc"/>
+			<fileset dir="src/scripts" includes="*.pyc"/>
 			<fileset dir="testcases/textcattoy">
 				<include name="log.log"/>
 				<include name="params.wts"/>
@@ -65,11 +66,11 @@
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
-            <src path="src"/>
+            <src path="src/java/main"/>
             <classpath refid="ProPPR.classpath"/>
         </javac>
     	<copy todir="${build}">
-    		<fileset dir="src">
+    		<fileset dir="src/java/main">
     			<exclude name="**/*.java"/>
     		</fileset>
     	</copy>
@@ -78,7 +79,7 @@
     <target depends="init" name="build-tests">
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
-            <src path="test"/>
+            <src path="src/java/test"/>
             <classpath refid="ProPPRTests.classpath"/>
         </javac>
     </target>
