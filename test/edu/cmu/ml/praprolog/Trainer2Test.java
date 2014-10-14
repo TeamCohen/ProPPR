@@ -4,10 +4,12 @@ import static org.junit.Assert.*;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.util.multithreading.Multithreading;
 
+@Ignore
 public class Trainer2Test extends TrainerTest {
 
 	@Override
