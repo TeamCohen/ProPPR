@@ -421,7 +421,7 @@ public class SRW<E extends RWExample> {
             double z, double rw, int queryNode) {
 
 		// temporarily hard-code here
-        double alpha = 0.1;
+        double alpha = 0.01;
         Set<String> nonRestartFeatureSet = new TreeSet<String>();
         int nonRestartNodeNum = 0;
         for (TIntDoubleIterator e = g.near(u).iterator(); e.hasNext(); ) {
