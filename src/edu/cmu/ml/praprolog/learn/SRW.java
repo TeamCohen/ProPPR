@@ -410,7 +410,7 @@ public class SRW<E extends RWExample> {
 	protected <T> void project2feasible (AnnotatedGraph<T> g,
             ParamVector paramVec, Map<T,Double> query) {
 		// temporarily hard-code here
-        double alpha = 0.1;
+        double alpha = 0.01;
         for (T u : g.getNodes()) {
         	for (T q : query.keySet()) {
 	            // if the node can restart
@@ -439,7 +439,7 @@ public class SRW<E extends RWExample> {
             double z, double rw, T queryNode) {
 
 		// temporarily hard-code here
-        double alpha = 0.1;
+        double alpha = 0.01;
         Set<String> nonRestartFeatureSet = new TreeSet<String>();
         int nonRestartNodeNum = 0;
         for (Map.Entry<T, Double> e : g.nearNative(u).entrySet()) {

@@ -391,7 +391,7 @@ public class SRW<E extends RWExample> {
 	protected <T> void project2feasible (AnnotatedTroveGraph g,
             ParamVector paramVec, TIntDoubleHashMap query) {
 		// temporarily hard-code here
-        double alpha = 0.1;
+        double alpha = 0.01;
         for (TIntIterator ui = g.getNodes().iterator(); ui.hasNext(); ) {
         	int u = ui.next();
         	for (int q : query.keys()) {
