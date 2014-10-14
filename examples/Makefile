@@ -1,8 +1,8 @@
 include Makefile.in
 
 ### DATASETS
-FAST:=textcattoy top-1000-near-google webkb
-SLOW:=cora weibo
+FAST:=textcattoy top-1000-near-google
+SLOW:=cora weibo webkb
 ALL:=$(FAST) $(SLOW)
 
 ### TARGETS

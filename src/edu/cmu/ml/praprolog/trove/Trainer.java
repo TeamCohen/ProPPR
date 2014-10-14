@@ -21,11 +21,23 @@ import edu.cmu.ml.praprolog.util.FileBackedIterable;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
+import edu.cmu.ml.praprolog.util.multithreading.Cleanup;
+import edu.cmu.ml.praprolog.util.multithreading.Multithreading;
+import edu.cmu.ml.praprolog.util.multithreading.Transformer;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class Trainer {
 	public static final String MAJOR_DELIM="\t";
 	public static final String MINOR_DELIM=",";
 	protected SRW<PosNegRWExample> learner;
+	public static final int DEFAULT_CAPACITY = 32;
+	public static final float DEFAULT_LOAD = (float) 0.75;
+	protected int nthreads = 32;
+	protected int throttle;
 	private int epoch;
 	private static final Logger log = Logger.getLogger(Trainer.class);
 
@@ -39,9 +51,10 @@ public class Trainer {
 		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 
-
+    
     /** Return the batch gradient of the data
      */
+	/*
     public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples,ParamVector paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
@@ -65,13 +78,166 @@ public class Trainer {
 		}
 
 		return sumGradient;
-		/*
-		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
-		    String feature = it.next();
-		    System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
-		}
-		*/
+		
+		//for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
+		//    String feature = it.next();
+		//    System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
+		//}
+		
 	}
+    */
+    
+    
+	public Map<String,Double> findGradient(Iterable<PosNegRWExample> examples, 
+			ParamVector initialParamVec) {
+		ParamVector paramVec = this.learner.setupParams(
+			(initialParamVec!=null) ? initialParamVec : new SimpleParamVector()
+		);
+		if (paramVec==null) {
+		    paramVec = new SimpleParamVector();
+		    for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
+		}
+
+		Map<String,Double> sumGradient = new TreeMap<String,Double>();
+
+		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
+		System.out.println("Multithreaded gradient finding ... #threads:" + this.nthreads);
+
+	    // run examples through Multithreading
+		m.executeJob(
+			this.nthreads, 
+			new FQTrainingExampleStreamer(examples, paramVec,sumGradient), 
+			new Transformer<FQTrainingExample,Integer>() {
+				@Override
+				public Callable<Integer> transformer(
+					FQTrainingExample in, int id) {
+					return new Train(in,id);
+				}
+			}, 
+			new Cleanup<Integer>() {
+				@Override
+				public Runnable cleanup(Future<Integer> in, int id) {
+					return new TraceLosses(in,id);
+				}
+			}, 
+			this.throttle);
+		
+		return sumGradient;
+
+	}
+	
+	/**
+	 * Stream over instances of this class
+	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+	 *
+	 */
+	private class FQTrainingExample {
+		PosNegRWExample x;
+		ParamVector paramVec;
+		SRW learner;
+		Map<String,Double> sumGradient;
+		
+		public FQTrainingExample(PosNegRWExample x, ParamVector paramVec, SRW learner, Map<String,Double> sumGradient) {
+			this.x = x;
+			this.paramVec = paramVec;
+			this.learner = learner;
+			this.sumGradient = sumGradient;
+		}
+	}
+
+	/**
+	 * Transforms from inputs to outputs
+	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+	 * @author William Wang ww@cmu.edu
+	 *
+	 */
+	
+	private class Train implements Callable<Integer> {
+		FQTrainingExample in;
+		int id;
+		public Train(FQTrainingExample in, int id) {
+			this.in = in;
+			this.id = id;
+		}
+		@Override
+		public Integer call() throws Exception {
+			log.debug("Training on example "+this.id);
+		    in.learner.addDefaultWeights(in.x.getGraph(),in.paramVec);
+		    in.learner.accumulateGradient(in.learner.gradient(in.paramVec, in.x),in.x.length(),in.sumGradient);
+			return in.x.length();
+		}
+	}
+
+	/**
+	 * Cleans up outputs from training (tracks some info for traceLosses)
+	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+	 *
+	 */
+	private class TraceLosses implements Runnable {
+		Future<Integer> in;
+		int id;
+		public TraceLosses(Future<Integer> in, int id) {
+			this.in = in;
+			this.id = id;
+		}
+		@Override
+		public void run() {
+			try {
+				log.debug("Cleaning up example "+this.id);
+				numExamplesThisEpoch += this.in.get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				log.error("Trouble with #"+id,e);
+			}
+		}
+	}
+	/**
+	 * Builds the streamer of all training inputs from the streamer of training examples. 
+	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+	 *
+	 */
+	private class FQTrainingExampleStreamer implements Iterable<FQTrainingExample>,Iterator<FQTrainingExample> {
+		Iterator<PosNegRWExample> examples;
+		ParamVector paramVec;
+		Map<String,Double> sumGradient;
+
+		public FQTrainingExampleStreamer(Iterable<PosNegRWExample> examples, ParamVector paramVec, Map<String,Double> sumGradient) {
+			this.examples = examples.iterator();
+			this.paramVec = paramVec;
+			this.sumGradient = sumGradient;
+		}
+		@Override
+		public Iterator<FQTrainingExample> iterator() {
+			return this;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return examples.hasNext();
+		}
+
+		@Override
+		public FQTrainingExample next() {
+			PosNegRWExample example = examples.next();
+			return new FQTrainingExample(example, paramVec, learner, sumGradient);
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("No removal of examples permitted during training!");
+		}
+		
+	}
+	
+
+	public void setThreads(int nthreads) {
+		this.nthreads = nthreads;
+	}
+	public void setThrottle(int throttle) {
+		this.throttle = throttle;
+	}
+    
 
 
 	public ParamVector trainParametersOnCookedIterator(Iterable<PosNegRWExample> iteratorFactory) {

@@ -1,27 +1,26 @@
-package edu.cmu.ml.praprolog.trove.learn;
+package edu.cmu.ml.praprolog.learn;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
-import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
+import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.MuParamVector;
 import edu.cmu.ml.praprolog.util.ParamVector;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
-	public LocalL2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+public class LocalL1PosNegLossTrainedSRW<T> extends L1PosNegLossTrainedSRW<T> {
+	public LocalL1PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 	}
-	public LocalL2PosNegLossTrainedSRW() { super(); }
+	public LocalL1PosNegLossTrainedSRW() { super(); }
 
 	@Override
-	public Set<String> localFeatures(ParamVector paramVec, PosNegRWExample example) {
+	public Set<String> localFeatures(ParamVector paramVec, PosNegRWExample<T> example) {
 		return example.getGraph().getFeatureSet();
-	}	
+	}
+	
 	@Override
 	protected Double derivRegularization(String f, ParamVector paramVec) {
 		// NB superclass records regularization loss for this clock cycle
@@ -30,8 +29,8 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 	}
 	
 	@Override
-	public TObjectDoubleHashMap<String> gradient(ParamVector paramVec, PosNegRWExample example) {
-		TObjectDoubleHashMap<String> ret = super.gradient(paramVec, example);
+	public Map<String, Double> gradient(ParamVector paramVec, PosNegRWExample<T> example) {
+		Map<String,Double> ret = super.gradient(paramVec, example);
 		((MuParamVector)paramVec).count();
 		((MuParamVector)paramVec).setLast(localFeatures(paramVec,example));
 		return ret;
@@ -51,7 +50,7 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 	}
 	
 	@Override
-	public void prepareGradient(ParamVector paramVec, PosNegRWExample example) {
+	public void prepareGradient(ParamVector paramVec, PosNegRWExample<T> example) {
 		for (String f : localFeatures(paramVec,example)) {
 			prepareFeature(paramVec,f);
 		}
@@ -62,12 +61,20 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 		// during the gradient() call
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;
-		double value = Dictionary.safeGet(paramVec,f);		                            
+		double value = Dictionary.safeGet(paramVec,f);
 
-              //L2
-		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap);
-		double weightDecay = value * (powerTerm - 1);
-		Dictionary.increment(paramVec, f, weightDecay);
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu * Math.pow(value, 2));              
+		//L1 with a proximal operator
+              //
+		//signum(w) * max(0.0, abs(w) - shrinkageVal)
+              
+              double shrinkageVal = gap * this.learningRate() * this.mu;
+              double weightDecay;
+              if((this.mu != 0) && (!Double.isInfinite(shrinkageVal))){
+ 		    weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - shrinkageVal);
+		    Dictionary.reset(paramVec, f, weightDecay);
+              }
+
+		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu);
+
 	}
 }
