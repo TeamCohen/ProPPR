@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.util;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
@@ -100,9 +101,13 @@ public class ExperimentConfiguration extends Configuration {
 						+ "Default mu=.001\n"
 						+ "Default eta=1.0\n"
 						+ "Available options:\n"
+						+ "l1p[:mu[:eta[:delta]]] (L1PosNegLossTrainedSRW)\n"
 						+ "l2p[:mu[:eta[:delta]]] (L2PosNegLossTrainedSRW)\n"
-						+ "l2plocal[:mu[:eta[:delta]] (LocalL2PosNegLossTrainedSRW)\n"
-						+ "apr[:mu[:eta[:delta[:eps[:alph]]]]] (AprSRW; default eps=1E-4, alph=0.1)")
+						+ "l1plocal[:mu[:eta[:delta]]] (LocalL1PosNegLossTrainedSRW)\n"
+						+ "l2plocal[:mu[:eta[:delta]]] (LocalL2PosNegLossTrainedSRW)\n"
+						+ "l1laplacianplocal[:mu[:eta[:delta[:affinity[:zeta]]]]] (LocalL1LaplacianPosNegLossTrainedSRW)\n"
+						+ "l1grouplassoplocal[:mu[:eta[:delta[:affinity[:zeta]]]]] (LocalL2GroupLassoPosNegLossTrainedSRW)\n"
+						+ "apr[:mu[:eta[:delta[:affinity[:zeta[:eps[:alph]]]]]]] (AprSRW; default eps=1E-4, alph=0.1)")
 						.create());
 		options.addOption(
 				OptionBuilder
@@ -334,6 +339,8 @@ public class ExperimentConfiguration extends Configuration {
 		double mu = SRW.DEFAULT_MU;
 		double eta = SRW.DEFAULT_ETA;
 		double delta = SRW.DEFAULT_DELTA;
+		String affgraph = SRW.DEFAULT_AFFGRAPH;
+		double zeta = SRW.DEFAULT_ZETA;
 
 		if (line.hasOption("srw")) {
 			String[] values = line.getOptionValues("srw");
@@ -346,36 +353,67 @@ public class ExperimentConfiguration extends Configuration {
 			if (values.length > 3) {
 				delta = Double.parseDouble(values[3]);
 			}
+			if (values.length > 4) {
+				affgraph = values[4];
+			}			
+			if (values.length > 5) {
+				zeta = Double.parseDouble(values[5]);
+			}			
+			
 			if (values[0].equals("l2p")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
+					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
 				}
-			} else if (values[0].equals("l2plocal")) {
+			} else if (values[0].equals("l1p")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.L1PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
+					this.srw = new edu.cmu.ml.praprolog.learn.L1PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+			       } 
+                     } else if (values[0].equals("l1plocal")) {
+				if (this.trove) {
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+				} else {
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+			       } 
+                     } else if (values[0].equals("l1plaplacianlocal")) {
+				if (this.trove) {
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1LaplacianPosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+				} else {
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1LaplacianPosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+			       } 
+                     } else if (values[0].equals("l1plocalgrouplasso")) {
+				if (this.trove) {
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1GroupLassoPosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+				} else {
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1GroupLassoPosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+			       } 
+                     } else if (values[0].equals("l2plocal")) {
+				if (this.trove) {
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
+				} else {
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
 				}
 			} else if (values[0].equals("apr")) {
 				double epsilon = AprSRW.DEFAULT_EPSILON;
 				double alpha = AprSRW.DEFAULT_ALPHA;
-				if (values.length > 4) epsilon = Double.parseDouble(values[4]);
-				if (values.length > 5) alpha = Double.parseDouble(values[5]);
+				if (values.length > 6) epsilon = Double.parseDouble(values[6]);
+				if (values.length > 7) alpha = Double.parseDouble(values[7]);
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.AprSRW(SRW.DEFAULT_MAX_T, mu, eta, weightingScheme, delta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.AprSRW(SRW.DEFAULT_MAX_T, mu, eta, weightingScheme, delta, affgraph, zeta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.AprSRW<String>(SRW.DEFAULT_MAX_T, mu, eta, weightingScheme, delta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
+					this.srw = new edu.cmu.ml.praprolog.learn.AprSRW<String>(SRW.DEFAULT_MAX_T, mu, eta, weightingScheme, delta, affgraph,zeta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
 				}
 			} else {
 				usageOptions(options,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
 			if (this.trove) {
-				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
+				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
 			} else {
-				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta);
+				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(SRW.DEFAULT_MAX_T,mu,eta,weightingScheme,delta,affgraph,zeta);
 			}
 		}
 	}

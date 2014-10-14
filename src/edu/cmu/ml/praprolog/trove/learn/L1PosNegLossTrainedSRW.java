@@ -18,19 +18,19 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
-	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
+public class L1PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
+	private static final Logger log = Logger.getLogger(L1PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 
 	protected LossData cumloss;
 	
 	
-	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public L1PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		this.cumloss = new LossData();
 	}
 
-	public L2PosNegLossTrainedSRW() {
+	public L1PosNegLossTrainedSRW() {
 		super();
 		this.cumloss = new LossData();
 	}
@@ -89,32 +89,17 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	}
 
 	/**
-	 * [Originally from L2RegularizedLearner; Java doesn't do multiple inheritance]
+	 * [Originally from L1RegularizedLearner; Java doesn't do multiple inheritance]
 	 * @param f
 	 * @param paramVec
 	 * @return
 	 */
 	protected Double derivRegularization(String f, ParamVector paramVec) {
 		double value = Dictionary.safeGet(paramVec, f);
-		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*mu*value;
-		this.cumloss.add(LOSS.REGULARIZATION, this.mu * Math.pow(value,2));
+		double ret = untrainedFeatures.contains(f) ? 0.0 : mu;
+		this.cumloss.add(LOSS.REGULARIZATION, this.mu);
 		return ret;
-		//		return untrainedFeatures.contains(f) ? 0.0 : 2*mu*Dictionary.safeGet(paramVec, f);
 	}
-
-//	public double empiricalLoss(ParamVector paramVec,
-//			PosNegRWExample example) {
-//		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-//		double loss = 0;
-//		for (int x : example.getPosList()) 
-//		{
-//			double prob = Dictionary.safeGet(p,x);
-//			loss -= Math.log(checkProb(prob));
-//		}
-//		for (int x : example.getNegList()) 
-//			loss -= Math.log(1.0-Dictionary.safeGet(p,x));
-//		return loss;
-//	}
 
 	public double checkProb(double prob)
 	{

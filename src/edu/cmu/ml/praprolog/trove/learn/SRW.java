@@ -1,5 +1,12 @@
 package edu.cmu.ml.praprolog.trove.learn;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -44,6 +51,10 @@ public class SRW<E extends RWExample> {
 	protected int maxT;
 	protected double eta;
 	protected double delta;
+	protected double zeta;
+	protected String affgraph;
+	protected Map<String,List<String>> affinity;
+	protected Map<String,Integer> diagonalDegree;
 	protected int epoch;
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
@@ -53,15 +64,57 @@ public class SRW<E extends RWExample> {
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_MU, 
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_ETA, 
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_WEIGHTING_SCHEME(),
-				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_DELTA); }
-	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
+				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_DELTA,
+				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_AFFGRAPH,
+				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_ZETA); }
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.epoch = 1;
+		this.zeta = zeta;
 		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
 		this.weightingScheme = wScheme;
+		this.affgraph = affgraph;
+              if(zeta>0){
+                  constructAffinity(affgraph);
+		    constructDegree();
+              }
+	}
+	
+	public void constructAffinity(String affgraph){	
+		//Construct the affinity matrix from the input
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(affgraph));
+		    affinity = new HashMap<String,List<String>>();
+		    String line = null;
+			while ((line = reader.readLine()) != null) {
+			    String[] items = line.split("\\t");
+			    if(!affinity.containsKey(items[0])){
+			    	List<String> pairs = new ArrayList<String>();
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			    else{
+			    	List<String> pairs = affinity.get(items[0]);
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}			
+	}
+	
+	public void constructDegree(){
+		diagonalDegree = new HashMap<String,Integer>();
+		for (String key : affinity.keySet()) {
+			diagonalDegree.put(key, affinity.get(key).size());
+		}
+		System.out.println("d size:" + diagonalDegree.size());
 	}
 
 	/**

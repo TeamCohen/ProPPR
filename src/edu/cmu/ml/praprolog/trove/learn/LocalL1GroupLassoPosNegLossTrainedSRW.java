@@ -12,11 +12,11 @@ import edu.cmu.ml.praprolog.util.MuParamVector;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
-	public LocalL2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW {
+	public LocalL1GroupLassoPosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 	}
-	public LocalL2PosNegLossTrainedSRW() { super(); }
+	public LocalL1GroupLassoPosNegLossTrainedSRW() { super(); }
 
 	@Override
 	public Set<String> localFeatures(ParamVector paramVec, PosNegRWExample example) {
@@ -62,12 +62,42 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 		// during the gradient() call
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;
-		double value = Dictionary.safeGet(paramVec,f);		                            
-
-              //L2
-		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap);
-		double weightDecay = value * (powerTerm - 1);
-		Dictionary.increment(paramVec, f, weightDecay);
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu * Math.pow(value, 2));              
+		double value = Dictionary.safeGet(paramVec,f);
+		
+              
+              double sumofsquares = 0;
+              String target = "#" + f;
+		if(diagonalDegree.containsKey(target)){
+	  	    double positive = this.diagonalDegree.get(target)*value;
+		    double negativeSum = 0;
+                  sumofsquares = value*value;
+		    List<String> sims = this.affinity.get(target);
+		    for (String s : sims) {
+                         double svalue = Dictionary.safeGet(paramVec,s);
+  			    negativeSum -= svalue;
+                         sumofsquares = sumofsquares + svalue*svalue;
+		    }
+		}
+ 
+              //Group Lasso
+              double weightDecay = 0;
+              if(this.zeta != 0){
+                  double grouplasso = 0.5 * Math.pow(sumofsquares,-0.5);
+                  if(!Double.isInfinite(grouplasso)){
+                      //System.out.println("f: " + f +" group lasso:" + grouplasso);
+                      weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - (gap * this.learningRate() * this.zeta * grouplasso));
+	      	        Dictionary.reset(paramVec, f, weightDecay);
+                  }
+              }              
+		
+		//L1
+		//signum(w) * max(0.0, abs(w) - shrinkageVal)
+              
+              double shrinkageVal = gap * this.learningRate() * this.mu;
+              if((this.mu != 0) && (!Double.isInfinite(shrinkageVal))){
+ 		    weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - shrinkageVal);
+		    Dictionary.reset(paramVec, f, weightDecay);
+              }
+		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu * value);              		
 	}
 }

@@ -225,7 +225,7 @@ public class Configuration {
 	                        .withLongOpt("queries")
 	                        .withArgName("file")
 	                        .hasArg()
-	                        .withDescription("Queries. Format f a a")
+	                        .withDescription("Queries. Same format as training files, but +/- examples are optional.")
 	                        .create());
         if(isOn(flags, USE_PROVER))
 	        options.addOption(

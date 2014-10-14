@@ -1,5 +1,11 @@
 package edu.cmu.ml.praprolog.learn;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -38,25 +44,72 @@ public class SRW<E extends RWExample> {
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
+	public static final double DEFAULT_ZETA=0;
+	public static final String DEFAULT_AFFGRAPH=null;
+	
 	public static final int DEFAULT_RATE_LENGTH = 1;
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected double delta;
+	protected double zeta;
+	protected String affgraph;
+	protected Map<String,List<String>> affinity;
+	protected Map<String,Integer> diagonalDegree;
 	protected int epoch;
 	protected Set<String> untrainedFeatures;
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
-	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA); }
-	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA, DEFAULT_AFFGRAPH, DEFAULT_ZETA); }
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.epoch = 1;
 		this.delta = delta;
+		this.zeta = zeta;
 		this.untrainedFeatures = new TreeSet<String>();
 		this.weightingScheme = wScheme;
+		this.affgraph = affgraph;
+              if(zeta>0){
+                  constructAffinity(affgraph);
+		    constructDegree();
+              }
+	}
+
+	public void constructAffinity(String affgraph){	
+		//Construct the affinity matrix from the input
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(affgraph));
+		    affinity = new HashMap<String,List<String>>();
+		    String line = null;
+			while ((line = reader.readLine()) != null) {
+			    String[] items = line.split("\\t");
+			    if(!affinity.containsKey(items[0])){
+			    	List<String> pairs = new ArrayList<String>();
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			    else{
+			    	List<String> pairs = affinity.get(items[0]);
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}			
+	}
+	
+	public void constructDegree(){
+		diagonalDegree = new HashMap<String,Integer>();
+		for (String key : affinity.keySet()) {
+			diagonalDegree.put(key, affinity.get(key).size());
+		}
+		System.out.println("d size:" + diagonalDegree.size());
 	}
 
 

@@ -1,11 +1,5 @@
 Small things to do:
 
-30sec task:
-java edu.cmu.ml.praprolog.ExampleCookerWC --data google-1k-train.trainData --programFiles google-10k-train.cfacts:google-10k-fig.crules --output tmp.cooked --prover ppr:9
-
-this takes about 1min without threading:
- java edu.cmu.ml.praprolog.ExampleCookerWC --data google-1k-train.trainData --programFiles google-10k-train.cfacts:google-10k-fig.crules --output tmp.cooked --prover dpr:0.0005:0.01:boost
-
 * Nomenclature: replace cooked with grounded
 * Efficiency: file based iterator over cooked graphs? can we use a
 simpler, no-object graph structure and/or proof structure?  Where is
@@ -44,6 +38,42 @@ the space and time going?
 ** Convert to DB pattern queries
 ** Add instances of these queries to a pool and increment their sums...
 
+==============================================================================
+
+* Hinton's relations
+
+If I read it right he used BP on a two-hidden-layer net (arrows are
+complete connectivity between all units in a set, Subject, Relation,
+Object are localist representations (one node per person), and
+*Features is distributed/latent representation.
+
+ [Subject] ==> [SubjectFeatures]    \
+				     [ObjectFeatures] ==> [Object]
+ [Relation] ==> [RelationFeatures]  /
+
+Possible ProPPR implementation: 
+
+  subjectFeature(sf1) :- 
+  subjectFeature(sf2) :- 
+  ...
+  relationFeature(rf1) :-
+  ...
+  objectFeature(of1) :- 
+  ...
+
+  # each path picks a SF/RF/OF triple and pushes weights 
+  # for it up or down
+
+  predict(Subject,Relation,Object) :-
+    subjectFeature(SF), aHasSubjectFeature(Subject,SF),
+    relationFeature(RF), aHasRelationFeature(Relation,RF),
+    objectFeature(OF), aCompatible(SF,RF),
+    person(Object), aFeatureOfObject(OF,Object).
+
+  aHasSubjectFeature(Sub,SF) :- # sf(Sub,SF).
+  aHasRelationFeature(Rel,RF) :- # rf(Rel,RF).
+  aCompatible(SF,RF,OF) :- # compat(SF,RF,OF).
+  aFeatureOfObject(OF,Object) :- # of(Object,OF).
 
 * NELL and RiB in ProPPR
 
