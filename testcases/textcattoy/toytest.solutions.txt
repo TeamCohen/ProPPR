@@ -1,0 +1,21 @@
+# proved 1	predict(pb,-2)	33 msec
+1	0.535588914752777	-2=c[pos]
+2	0.46441108524722285	-2=c[neg]
+# proved 2	predict(yc,-2)	37 msec
+1	0.5326675574698508	-2=c[pos]
+2	0.4673324425301493	-2=c[neg]
+# proved 3	predict(rb2,-2)	36 msec
+1	0.5391590898630138	-2=c[pos]
+2	0.4608409101369862	-2=c[neg]
+# proved 4	predict(rp,-2)	32 msec
+1	0.5370794051356935	-2=c[pos]
+2	0.46292059486430653	-2=c[neg]
+# proved 5	predict(bp,-2)	35 msec
+1	0.5311849991683988	-2=c[neg]
+2	0.4688150008316013	-2=c[pos]
+# proved 6	predict(he,-2)	34 msec
+1	0.5270645645547113	-2=c[neg]
+2	0.4729354354452887	-2=c[pos]
+# proved 7	predict(wt,-2)	39 msec
+1	0.5159888023783119	-2=c[neg]
+2	0.48401119762168804	-2=c[pos]
