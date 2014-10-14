@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.learn;
 
+import java.io.File;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -12,7 +13,7 @@ import edu.cmu.ml.praprolog.util.MuParamVector;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class LocalL1LaplacianPosNegLossTrainedSRW<T> extends L1PosNegLossTrainedSRW<T> {
-	public LocalL1LaplacianPosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public LocalL1LaplacianPosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 	}
 	public LocalL1LaplacianPosNegLossTrainedSRW() { super(); }

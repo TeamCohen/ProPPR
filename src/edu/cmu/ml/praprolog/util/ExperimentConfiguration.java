@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -349,7 +350,7 @@ public class ExperimentConfiguration extends Configuration {
 		double eta = SRW.DEFAULT_ETA;
 		double delta = SRW.DEFAULT_DELTA;
 		int maxT = SRW.DEFAULT_MAX_T;
-		String affgraph = SRW.DEFAULT_AFFGRAPH;
+		File affgraph = SRW.DEFAULT_AFFGRAPH;
 		double zeta = SRW.DEFAULT_ZETA;
 
 		if (line.hasOption("maxT")) {
@@ -367,7 +368,7 @@ public class ExperimentConfiguration extends Configuration {
 				delta = Double.parseDouble(values[3]);
 			}
 			if (values.length > 4) {
-				affgraph = values[4];
+				affgraph = this.getExistingFileOption(line, values[4]);
 			}			
 			if (values.length > 5) {
 				zeta = Double.parseDouble(values[5]);

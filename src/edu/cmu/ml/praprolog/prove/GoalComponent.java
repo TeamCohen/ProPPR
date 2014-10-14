@@ -38,7 +38,7 @@ public class GoalComponent extends Component {
 	}
 	public GoalComponent(String label, boolean useTernaryIndex) {
 		label = Component.cleanLabel(label);
-		featureDict.put(new Goal("id",label), 1.0);
+		featureDict.put(new Goal("db",label), 1.0);
 		this.label = label;
 		this.useTernaryIndex = useTernaryIndex;
 	}

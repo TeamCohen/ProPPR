@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.learn;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 		init(DEFAULT_ALPHA,DEFAULT_EPSILON,DEFAULT_STAYPROB);
 	}
 	
-	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		init(DEFAULT_ALPHA,DEFAULT_EPSILON,DEFAULT_STAYPROB);
 	}
@@ -42,7 +43,7 @@ public class AprSRW<T> extends SRW<PosNegRWExample<T>> {
 		super(); 
 		this.init(ialpha,iepsilon,istayProb);
 	}
-	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta,
+	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta,
 			double ialpha, double iepsilon, double istayProb) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		this.init(ialpha,iepsilon,istayProb);

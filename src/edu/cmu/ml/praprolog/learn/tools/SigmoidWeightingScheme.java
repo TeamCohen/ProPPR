@@ -20,4 +20,12 @@ public class SigmoidWeightingScheme extends WeightingScheme {
 
 	@Override
 	public String toString() { return "sigmoid"; }
+
+	@Override
+	public double projection(double rw, double alpha, int nonRestartNodeNum) {
+		return logit(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
+	}	
+	private double logit (double p) {
+		return Math.log(p / (1-p));
+	}
 }

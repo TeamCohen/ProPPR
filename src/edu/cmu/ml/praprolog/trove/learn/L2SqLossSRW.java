@@ -113,7 +113,7 @@ public class L2SqLossSRW extends SRW<PairwiseRWExample> {
 	public Map<String, Double> train(List<PairwiseRWExample> trainingExamples, ParamVector initialParamVec) {
 		this.epoch = 0;
 		ParamVector paramVec = initialParamVec;
-		for (int i=0; i<NUM_EPOCHS; i++) {
+		for (int i=0; i<edu.cmu.ml.praprolog.learn.SRW.NUM_EPOCHS; i++) {
 			this.epoch++;
 //			int ex=0;
 			for (PairwiseRWExample example : trainingExamples) { //ex++;

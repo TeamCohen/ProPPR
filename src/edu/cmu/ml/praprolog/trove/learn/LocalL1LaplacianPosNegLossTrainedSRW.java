@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.trove.learn;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,7 +14,7 @@ import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class LocalL1LaplacianPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW {
-	public LocalL1LaplacianPosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public LocalL1LaplacianPosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 	}
 	public LocalL1LaplacianPosNegLossTrainedSRW() { super(); }

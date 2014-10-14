@@ -1,6 +1,7 @@
 package edu.cmu.ml.praprolog.learn;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -39,22 +40,22 @@ public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
-	protected static final int NUM_EPOCHS = 5;
+	public static final int NUM_EPOCHS = 5;
 	public static final int DEFAULT_MAX_T=10;
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
 	public static final double DEFAULT_ZETA=0;
-	public static final String DEFAULT_AFFGRAPH=null;
-	
+	public static final File DEFAULT_AFFGRAPH=null;
 	public static final int DEFAULT_RATE_LENGTH = 1;
+	public static final double PERTURB_EPSILON=1e-10;
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected double delta;
 	protected double zeta;
-	protected String affgraph;
+	protected File affgraph;
 	protected Map<String,List<String>> affinity;
 	protected Map<String,Integer> diagonalDegree;
 	protected int epoch;
@@ -62,7 +63,7 @@ public class SRW<E extends RWExample> {
 	protected WeightingScheme weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
 	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA, DEFAULT_AFFGRAPH, DEFAULT_ZETA); }
-	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
@@ -72,18 +73,18 @@ public class SRW<E extends RWExample> {
 		this.untrainedFeatures = new TreeSet<String>();
 		this.weightingScheme = wScheme;
 		this.affgraph = affgraph;
-              if(zeta>0){
-                  constructAffinity(affgraph);
-		    constructDegree();
-              }
+		if(zeta>0){
+			affinity = constructAffinity(affgraph);
+			diagonalDegree = constructDegree(affinity);
+		}
 	}
 
-	public void constructAffinity(String affgraph){	
+	public static HashMap<String,List<String>> constructAffinity(File affgraph){	
 		//Construct the affinity matrix from the input
 		BufferedReader reader;
 		try {
 			reader = new BufferedReader(new FileReader(affgraph));
-		    affinity = new HashMap<String,List<String>>();
+			HashMap<String,List<String>> affinity = new HashMap<String,List<String>>();
 		    String line = null;
 			while ((line = reader.readLine()) != null) {
 			    String[] items = line.split("\\t");
@@ -98,18 +99,21 @@ public class SRW<E extends RWExample> {
 			    	affinity.put(items[0], pairs);
 			    }
 			}
+			return affinity;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}			
+		}
+		return null;
 	}
 	
-	public void constructDegree(){
-		diagonalDegree = new HashMap<String,Integer>();
+	public static HashMap<String,Integer> constructDegree(Map<String,List<String>> affinity){
+		HashMap<String,Integer> diagonalDegree = new HashMap<String,Integer>();
 		for (String key : affinity.keySet()) {
 			diagonalDegree.put(key, affinity.get(key).size());
 		}
-		System.out.println("d size:" + diagonalDegree.size());
+		log.debug("d size:" + diagonalDegree.size());
+		return diagonalDegree;
 	}
 
 
@@ -234,7 +238,11 @@ public class SRW<E extends RWExample> {
 					features.addAll(dWP_ju.keySet());
 					for (String f : trainableFeatures(features)) {
 						Dictionary.increment(dNext, u, f, 
-								edgeWeight(graph,j,u,paramVec)/z * Dictionary.safeGetGet(d, j, f) + pj * Dictionary.safeGet(dWP_ju, f));
+								edgeWeight(graph,j,u,paramVec)
+								/ z 
+								* Dictionary.safeGetGet(d, j, f) 
+								+ pj 
+								* Dictionary.safeGet(dWP_ju, f));
 					}
 				}
 			}
@@ -272,7 +280,8 @@ public class SRW<E extends RWExample> {
         Map<String,Double> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
         for (String f : trainableFeatures(totDerFeature.keySet())) {
             // above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
-            double term2 = (edgeUV / totEdgeWeightU) * Dictionary.safeGet(totDerFeature, f);
+            double term2 = (edgeUV / totEdgeWeightU) 
+            		* Dictionary.safeGet(totDerFeature, f);
             double val = Dictionary.safeGet(derEdgeUV, f) - term2;
             Dictionary.increment(derWalk, f, val / totEdgeWeightU);
         }
@@ -292,7 +301,10 @@ public class SRW<E extends RWExample> {
 			T v, ParamVector paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(Dictionary.safeGet(paramVec, f.featureName, this.weightingScheme.defaultWeight())));
+			result.put(f.featureName, 
+					this.weightingScheme.derivEdgeWeight(
+							Dictionary.safeGet(paramVec, f.featureName, 
+									this.weightingScheme.defaultWeight())));
 		}
 		return result;
 	}
@@ -372,7 +384,7 @@ public class SRW<E extends RWExample> {
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
 			log.debug(f.getKey()+"->"+paramVec.get(f.getKey()));
 		}
-		project2feasible(example.getGraph(), paramVec);
+		project2feasible(example.getGraph(), paramVec, example.getQueryVec());
 	}
 	
 	/**
@@ -380,14 +392,13 @@ public class SRW<E extends RWExample> {
 	 */
 	protected void checkGradient(Map<String,Double> grad, ParamVector paramVec, E example) {
 		ParamVector perturbedParamVec = paramVec.copy();
-        double epsilon = 1.0e-10;
         double loss = empiricalLoss(paramVec, example);
         double perturbedLoss;
         for (Map.Entry<String, Double> f : grad.entrySet()) {
 			if (untrainedFeatures.contains(f.getKey())) continue;
-            Dictionary.increment(perturbedParamVec, f.getKey(), epsilon);
+            Dictionary.increment(perturbedParamVec, f.getKey(), PERTURB_EPSILON);
             perturbedLoss = empiricalLoss(perturbedParamVec, example);
-            log.debug(f.getKey() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (epsilon*f.getValue()));
+            log.debug(f.getKey() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (PERTURB_EPSILON*f.getValue()));
             loss = perturbedLoss;
         }
 	}	
@@ -397,32 +408,35 @@ public class SRW<E extends RWExample> {
 	}
 
 	protected <T> void project2feasible (AnnotatedGraph<T> g,
-            ParamVector paramVec) {
+            ParamVector paramVec, Map<T,Double> query) {
 		// temporarily hard-code here
         double alpha = 0.1;
         for (T u : g.getNodes()) {
-
-            // if the node can restart
-            Feature f = g.phi(u, (T)"1").get(0);
-            if(f.featureName.equals("id(defaultRestart)") || f.featureName.equals("id(alphaBooster)")){
-            
-				// check & project for each node
-            	double z = totalEdgeWeight(g, u, paramVec);
-            	double rw = edgeWeight(g,u,(T)"1",paramVec);
-            	if (rw / z < alpha) {
-                	projectOneNode(g, u, paramVec, z, rw, weightingScheme.toString());
-					if (log.isDebugEnabled()) {
-                		z = totalEdgeWeight(g, u, paramVec);
-                		rw = edgeWeight(g,u,(T)"1",paramVec);
-	            		log.debug("Local alpha = " + rw / z);
+        	for (T q : query.keySet()) {
+	            // if the node can restart
+	        	List<Feature> restart = g.phi(u, q);
+	        	if (restart.isEmpty()) continue;
+	            Feature f = restart.get(0);
+	            if(f.featureName.equals("id(defaultRestart)") || f.featureName.equals("id(alphaBooster)")){
+	            
+					// check & project for each node
+	            	double z = totalEdgeWeight(g, u, paramVec);
+	            	double rw = edgeWeight(g,u,q,paramVec);
+	            	if (rw / z < alpha) {
+	                	projectOneNode(g, u, paramVec, z, rw, q);
+						if (log.isDebugEnabled()) {
+	                		z = totalEdgeWeight(g, u, paramVec);
+	                		rw = edgeWeight(g,u,q,paramVec);
+		            		log.debug("Local alpha = " + rw / z);
+						}
 					}
-				}
-            }
+	            }
+        	}
         }
     }
 
 	protected <T> void projectOneNode(AnnotatedGraph<T> g, T u, ParamVector paramVec,
-            double z, double rw, String scheme) {
+            double z, double rw, T queryNode) {
 
 		// temporarily hard-code here
         double alpha = 0.1;
@@ -430,39 +444,24 @@ public class SRW<E extends RWExample> {
         int nonRestartNodeNum = 0;
         for (Map.Entry<T, Double> e : g.nearNative(u).entrySet()) {
             T v = e.getKey();
-            if (!v.toString().equals("1")) {
+            if (!v.equals(queryNode)) {
                 nonRestartNodeNum ++;
                 for (Feature f : g.phi(u, v)) {
                     nonRestartFeatureSet.add(f.featureName);
                 }
             }
         }
-        double newValue = 0;
-		if (scheme.equals("exponential")) {
-        	newValue = Math.log(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
-		} else if (scheme.equals("ReLU")) {
-        	newValue = rw * (1 - alpha) / (alpha * nonRestartNodeNum);
-		} else if (scheme.equals("sigmoid")) {
-        	newValue = logit(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
-		} else if (scheme.equals("tanh")) {
-        	newValue = arcTanh(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
-		} else {
-			throw new UnsupportedOperationException("Unsupported scheme: " + scheme);
-		}
+        double newValue = weightingScheme.projection(rw,alpha,nonRestartNodeNum);
         for (String f : nonRestartFeatureSet) {
-            if (!f.endsWith(".graph')") && !f.endsWith(".cfacts')")) {
-				throw new UnsupportedOperationException("The assumption that minalpha only happens on fact/graph feature is violated. (" + f + ")");
+            if (!f.startsWith("db(")) {
+				throw new UnsupportedOperationException("The assumption that minalpha only happens on fact/db feature is violated. (" + f + ")");
             } else {
                 paramVec.put(f, newValue);
             }
         }
     }
-	private double logit (double p) {
-		return Math.log(p / (1-p));
-	}
-	private double arcTanh (double z) {
-		return 0.5 * (Math.log(1.0 + z) - Math.log(1.0 - z));
-	}
+
+
 
 	/**
 	 * Increase the epoch count

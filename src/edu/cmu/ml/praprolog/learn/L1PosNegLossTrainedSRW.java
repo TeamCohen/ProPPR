@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.learn;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,7 @@ public class L1PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 	protected LossData cumloss;
 
-	public L1PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public L1PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		this.cumloss = new LossData();
 	}

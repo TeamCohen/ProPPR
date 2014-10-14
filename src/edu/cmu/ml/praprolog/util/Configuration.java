@@ -108,7 +108,10 @@ public class Configuration {
 		}
 	}
 	protected File getExistingFileOption(CommandLine line, String name) {
-		File value = new File(line.getOptionValue(name));
+		return getExistingFileDirect(line,line.getOptionValue(name));
+	}
+	protected File getExistingFileDirect(CommandLine line, String filename) {
+		File value = new File(filename);
 		if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
 		return value;
 	}

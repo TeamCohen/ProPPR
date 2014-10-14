@@ -1,6 +1,7 @@
 package edu.cmu.ml.praprolog.trove.learn;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -21,10 +22,12 @@ import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
 import edu.cmu.ml.praprolog.trove.learn.tools.RWExample;
+import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
 import edu.cmu.ml.praprolog.graph.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
@@ -45,14 +48,13 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static Random random = new Random(); 
-	public static void seed(long seed) { random.setSeed(seed); } 	
-	protected static final int NUM_EPOCHS = 5;
+	public static void seed(long seed) { random.setSeed(seed); }
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected double delta;
 	protected double zeta;
-	protected String affgraph;
+	protected File affgraph;
 	protected Map<String,List<String>> affinity;
 	protected Map<String,Integer> diagonalDegree;
 	protected int epoch;
@@ -67,7 +69,7 @@ public class SRW<E extends RWExample> {
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_DELTA,
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_AFFGRAPH,
 				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_ZETA); }
-	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
@@ -77,44 +79,10 @@ public class SRW<E extends RWExample> {
 		this.untrainedFeatures = new TreeSet<String>();
 		this.weightingScheme = wScheme;
 		this.affgraph = affgraph;
-              if(zeta>0){
-                  constructAffinity(affgraph);
-		    constructDegree();
-              }
-	}
-	
-	public void constructAffinity(String affgraph){	
-		//Construct the affinity matrix from the input
-		BufferedReader reader;
-		try {
-			reader = new BufferedReader(new FileReader(affgraph));
-		    affinity = new HashMap<String,List<String>>();
-		    String line = null;
-			while ((line = reader.readLine()) != null) {
-			    String[] items = line.split("\\t");
-			    if(!affinity.containsKey(items[0])){
-			    	List<String> pairs = new ArrayList<String>();
-			    	pairs.add(items[1]);
-			    	affinity.put(items[0], pairs);
-			    }
-			    else{
-			    	List<String> pairs = affinity.get(items[0]);
-			    	pairs.add(items[1]);
-			    	affinity.put(items[0], pairs);
-			    }
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}			
-	}
-	
-	public void constructDegree(){
-		diagonalDegree = new HashMap<String,Integer>();
-		for (String key : affinity.keySet()) {
-			diagonalDegree.put(key, affinity.get(key).size());
+		if(zeta>0){
+			affinity = edu.cmu.ml.praprolog.learn.SRW.constructAffinity(affgraph);
+			diagonalDegree = edu.cmu.ml.praprolog.learn.SRW.constructDegree(affinity);
 		}
-		System.out.println("d size:" + diagonalDegree.size());
 	}
 
 	/**
@@ -123,11 +91,10 @@ public class SRW<E extends RWExample> {
 	 * @param graph
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 */
-	public static void addDefaultWeights(AnnotatedTroveGraph graph, Map<String,Double> p) {
-
+	public void addDefaultWeights(AnnotatedTroveGraph graph, Map<String,Double> p) {
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
-				p.put(f,1.0+0.01*random.nextDouble());
+				p.put(f,weightingScheme.defaultWeight()+0.01*random.nextDouble());
 			}
 		}
 	}
@@ -141,7 +108,10 @@ public class SRW<E extends RWExample> {
 	 * @return
 	 */
 	public  double edgeWeight(AnnotatedTroveGraph g, int u, int v,  Map<String,Double> p) {
-		return this.weightingScheme.edgeWeight(p,g.phi(u, v));
+		double wt = this.weightingScheme.edgeWeight(p,g.phi(u, v));
+
+		if (Double.isInfinite(wt)) return Double.MAX_VALUE;
+		return wt;
 	}
 
 	/**
@@ -191,6 +161,10 @@ public class SRW<E extends RWExample> {
 			u.advance();
 			k++;
 			if (k>0 && k%100 == 0) log.debug("Walked from "+k+" nodes...");
+			if (u.value() == 0) {
+				log.info("0 node weight at u="+u+"; skipping");
+				continue;
+			}
 			double z = totalEdgeWeight(g,u.key(),paramVec);
 			if (z==0) {
 				log.info("0 total edge weight at u="+u+"; skipping");
@@ -230,13 +204,22 @@ public class SRW<E extends RWExample> {
 			TIntObjectMap<TObjectDoubleHashMap<String>> dNext = new TIntObjectHashMap<TObjectDoubleHashMap<String>>();
 			for (TIntDoubleIterator j = pNext.iterator(); j.hasNext(); ) {
 				j.advance();
+				double z = totalEdgeWeight(graph,j.key(),paramVec);
+				if (z == 0) continue;
+				double pj = Dictionary.safeGet(p, j.key());
 				for (TIntDoubleIterator u = graph.near(j.key()).iterator(); u.hasNext(); ) {
 					u.advance();
 					TObjectDoubleHashMap<String> dWP_ju = derivWalkProbByParams(graph,j.key(),u.key(),paramVec);
-					for (String f : trainableFeatures(graph.phi(j.key(),u.key()))) {
+					Set<String> features = new TreeSet<String>();
+					if(d.containsKey(j.key())) features.addAll(d.get(j.key()).keySet());
+					features.addAll(dWP_ju.keySet());
+					for (String f : trainableFeatures(features)) {
 						Dictionary.increment(dNext, u.key(), f, 
-								edgeWeight(graph,j.key(),u.key(),paramVec) * Dictionary.safeGet(d, j.key(), f) 
-								+ Dictionary.safeGet(p, j.key()) * dWP_ju.get(f));
+								edgeWeight(graph,j.key(),u.key(),paramVec) 
+								/ z
+								* Dictionary.safeGet(d, j.key(), f) 
+								+ pj 
+								* Dictionary.safeGet(dWP_ju, f));
 					}
 				}
 			}
@@ -259,19 +242,27 @@ public class SRW<E extends RWExample> {
 	protected  TObjectDoubleHashMap<String> derivWalkProbByParams(AnnotatedTroveGraph graph,
 			int u, int v, ParamVector paramVec) {
 
+		double totEdgeWeightU = totalEdgeWeight(graph,u,paramVec);
+		TObjectDoubleHashMap<String> derWalk = new TObjectDoubleHashMap<String>();
+        if (totEdgeWeightU == 0) return derWalk;
+		
+        TObjectDoubleHashMap<String> totDerFeature = new TObjectDoubleHashMap<String>();
+        for (int k : graph.near(u).keys()) {
+        	for (TObjectDoubleIterator<String> e = this.derivEdgeWeightByParams(graph, u, k, paramVec).iterator(); e.hasNext(); ) {
+        		e.advance();
+        		Dictionary.increment(totDerFeature, e.key(), e.value());
+        	}
+        }
+        
 		double edgeUV = this.edgeWeight(graph, u, v, paramVec);
 		// vector of edge weights - one for each active feature
-		TObjectDoubleMap<String> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
-		Set<String> activeFeatures = derEdgeUV.keySet();
-		double totEdgeWeightU = totalEdgeWeight(graph,u,paramVec);
-		double totDerEdgeUV = 0;
-		for (double w : derEdgeUV.values()) totDerEdgeUV += w;
-		TObjectDoubleHashMap<String> derWalk = new TObjectDoubleHashMap<String>();
-		for (String f : trainableFeatures(activeFeatures)) {
+		TObjectDoubleHashMap<String> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
+		for (String f : trainableFeatures(totDerFeature.keySet())) {
 			// above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
-			double term2 = (edgeUV / totEdgeWeightU) * totDerEdgeUV;
-			double val = derEdgeUV.get(f) - term2;
-			derWalk.put(f, val / totEdgeWeightU);
+			double term2 = (edgeUV / totEdgeWeightU) 
+					* Dictionary.safeGet(totDerFeature, f);
+			double val = Dictionary.safeGet(derEdgeUV, f) - term2;
+			Dictionary.increment(derWalk, f, val / totEdgeWeightU);
 		}
 		return derWalk;
 	}
@@ -285,11 +276,14 @@ public class SRW<E extends RWExample> {
 	 * @param paramVec Maps edge feature names to nonnegative values.
 	 * @return Mapping from features names to the derivative value.
 	 */
-	protected  TObjectDoubleMap<String> derivEdgeWeightByParams(AnnotatedTroveGraph graph, int u,
+	protected  TObjectDoubleHashMap<String> derivEdgeWeightByParams(AnnotatedTroveGraph graph, int u,
 			int v, ParamVector paramVec) {
-		TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>();
+		TObjectDoubleHashMap<String> result = new TObjectDoubleHashMap<String>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(f.weight));
+			result.put(f.featureName, 
+					this.weightingScheme.derivEdgeWeight(
+							Dictionary.safeGet(paramVec, f.featureName,
+									this.weightingScheme.defaultWeight())));
 		}
 		return result;
 	}
@@ -362,19 +356,94 @@ public class SRW<E extends RWExample> {
 		TObjectDoubleHashMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
+			checkGradient(grad, paramVec, example);
 		}
 		double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
 		for (TObjectDoubleIterator<String>f = grad.iterator(); f.hasNext(); ) {
 			f.advance();
 			Dictionary.increment(paramVec, f.key(), - rate * f.value());
+			log.debug(f.key()+"->"+paramVec.get(f.key()));
 		}
+		project2feasible(example.getGraph(), paramVec, example.getQueryVec());
 	}
+	
+	/**
+	 * Check if first-order approximation is close
+	 */
+	protected void checkGradient(TObjectDoubleHashMap<String> grad, ParamVector paramVec, E example) {
+		ParamVector perturbedParamVec = paramVec.copy();
+        double loss = empiricalLoss(paramVec, example);
+        double perturbedLoss;
+        for (TObjectDoubleIterator f = grad.iterator(); f.hasNext(); ) {
+        	f.advance();
+			if (untrainedFeatures.contains(f.key())) continue;
+            Dictionary.increment(perturbedParamVec, f.key(), edu.cmu.ml.praprolog.learn.SRW.PERTURB_EPSILON);
+            perturbedLoss = empiricalLoss(perturbedParamVec, example);
+            log.debug(f.key() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (edu.cmu.ml.praprolog.learn.SRW.PERTURB_EPSILON*f.value()));
+            loss = perturbedLoss;
+        }
+	}	
 	
 	protected double learningRate() {
 		return Math.pow(this.epoch,-2) * this.eta;
 	}
+	protected <T> void project2feasible (AnnotatedTroveGraph g,
+            ParamVector paramVec, TIntDoubleHashMap query) {
+		// temporarily hard-code here
+        double alpha = 0.1;
+        for (TIntIterator ui = g.getNodes().iterator(); ui.hasNext(); ) {
+        	int u = ui.next();
+        	for (int q : query.keys()) {
+	            // if the node can restart
+	        	List<Feature> restart = g.phi(u, q);
+	        	if (restart.isEmpty()) continue;
+	            Feature f = restart.get(0);
+	            if(f.featureName.equals("id(defaultRestart)") || f.featureName.equals("id(alphaBooster)")){
+	            
+					// check & project for each node
+	            	double z = totalEdgeWeight(g, u, paramVec);
+	            	double rw = edgeWeight(g,u,q,paramVec);
+	            	if (rw / z < alpha) {
+	                	projectOneNode(g, u, paramVec, z, rw, q);
+						if (log.isDebugEnabled()) {
+	                		z = totalEdgeWeight(g, u, paramVec);
+	                		rw = edgeWeight(g,u,q,paramVec);
+		            		log.debug("Local alpha = " + rw / z);
+						}
+					}
+	            }
+        	}
+        }
+    }
 
+	protected <T> void projectOneNode(AnnotatedTroveGraph g, int u, ParamVector paramVec,
+            double z, double rw, int queryNode) {
+
+		// temporarily hard-code here
+        double alpha = 0.1;
+        Set<String> nonRestartFeatureSet = new TreeSet<String>();
+        int nonRestartNodeNum = 0;
+        for (TIntDoubleIterator e = g.near(u).iterator(); e.hasNext(); ) {
+        	e.advance();
+            int v = e.key();
+            if (v != queryNode) {
+                nonRestartNodeNum ++;
+                for (Feature f : g.phi(u, v)) {
+                    nonRestartFeatureSet.add(f.featureName);
+                }
+            }
+        }
+        double newValue = weightingScheme.projection(rw,alpha,nonRestartNodeNum);
+        for (String f : nonRestartFeatureSet) {
+            if (!f.startsWith("db(")) {
+				throw new UnsupportedOperationException("The assumption that minalpha only happens on fact/db feature is violated. (" + f + ")");
+            } else {
+                paramVec.put(f, newValue);
+            }
+        }
+    }
+	
 	/**
 	 * Increase the epoch count
 	 */
@@ -449,5 +518,35 @@ public class SRW<E extends RWExample> {
 			numTest += 1;
 		}
 		return totLoss / numTest;
+	}
+	public double getMu() {
+		return mu;
+	}
+	public void setMu(double mu) {
+		this.mu = mu;
+	}
+	public int getMaxT() {
+		return maxT;
+	}
+	public void setMaxT(int maxT) {
+		this.maxT = maxT;
+	}
+	public double getEta() {
+		return eta;
+	}
+	public void setEta(double eta) {
+		this.eta = eta;
+	}
+	public double getDelta() {
+		return delta;
+	}
+	public void setDelta(double delta) {
+		this.delta = delta;
+	}
+	public WeightingScheme getWeightingScheme() {
+		return weightingScheme;
+	}
+	public void setWeightingScheme(WeightingScheme weightingScheme) {
+		this.weightingScheme = weightingScheme;
 	}
 }

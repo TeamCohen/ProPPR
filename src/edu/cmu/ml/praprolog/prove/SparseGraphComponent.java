@@ -72,7 +72,7 @@ public class SparseGraphComponent extends GraphlikeComponent {
 			}
 		}
 		this.featureDict = new HashMap<Goal,Double>();
-		this.featureDict.put(new Goal("id",matrixDir),1.0);
+		this.featureDict.put(new Goal("db",matrixDir),1.0);
 		
 		long del = System.currentTimeMillis() - start;
 		if (del > LOGUPDATE_MS)

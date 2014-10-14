@@ -1,5 +1,6 @@
 package edu.cmu.ml.praprolog.trove.learn;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	protected LossData cumloss;
 	
 	
-	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		this.cumloss = new LossData();
 	}
