@@ -319,6 +319,7 @@ public class SRW<E extends RWExample> {
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
 			log.debug(f.getKey()+"->"+paramVec.get(f.getKey()));
 		}
+		project2feasible(example.getGraph(), paramVec);
 	}
 	
 	/**
@@ -340,6 +341,74 @@ public class SRW<E extends RWExample> {
 
 	protected double learningRate() {
 		return Math.pow(this.epoch,-2) * this.eta;
+	}
+
+	protected <T> void project2feasible (AnnotatedGraph<T> g,
+            ParamVector paramVec) {
+		// temporarily hard-code here
+        double alpha = 0.1;
+        for (T u : g.getNodes()) {
+
+            // if the node can restart
+            Feature f = g.phi(u, (T)"1").get(0);
+            if(f.featureName.equals("id(defaultRestart)") || f.featureName.equals("id(alphaBooster)")){
+            
+				// check & project for each node
+            	double z = totalEdgeWeight(g, u, paramVec);
+            	double rw = edgeWeight(g,u,(T)"1",paramVec);
+            	if (rw / z < alpha) {
+                	projectOneNode(g, u, paramVec, z, rw, weightingScheme.toString());
+					if (log.isDebugEnabled()) {
+                		z = totalEdgeWeight(g, u, paramVec);
+                		rw = edgeWeight(g,u,(T)"1",paramVec);
+	            		log.debug("Local alpha = " + rw / z);
+					}
+				}
+            }
+        }
+    }
+
+	protected <T> void projectOneNode(AnnotatedGraph<T> g, T u, ParamVector paramVec,
+            double z, double rw, String scheme) {
+
+		// temporarily hard-code here
+        double alpha = 0.1;
+        Set<String> nonRestartFeatureSet = new TreeSet<String>();
+        int nonRestartNodeNum = 0;
+        for (Map.Entry<T, Double> e : g.nearNative(u).entrySet()) {
+            T v = e.getKey();
+            if (!v.toString().equals("1")) {
+                nonRestartNodeNum ++;
+                for (Feature f : g.phi(u, v)) {
+                    nonRestartFeatureSet.add(f.featureName);
+                }
+            }
+        }
+        double newValue = 0;
+		if (scheme.equals("exponential")) {
+        	newValue = Math.log(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
+		} else if (scheme.equals("ReLU")) {
+        	newValue = rw * (1 - alpha) / (alpha * nonRestartNodeNum);
+		} else if (scheme.equals("sigmoid")) {
+        	newValue = logit(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
+		} else if (scheme.equals("tanh")) {
+        	newValue = arcTanh(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
+		} else {
+			throw new UnsupportedOperationException("Unsupported scheme: " + scheme);
+		}
+        for (String f : nonRestartFeatureSet) {
+            if (!f.endsWith(".graph')") && !f.endsWith(".cfacts')")) {
+				throw new UnsupportedOperationException("The assumption that minalpha only happens on fact/graph feature is violated. (" + f + ")");
+            } else {
+                paramVec.put(f, newValue);
+            }
+        }
+    }
+	private double logit (double p) {
+		return Math.log(p / (1-p));
+	}
+	private double arcTanh (double z) {
+		return 0.5 * (Math.log(1.0 + z) - Math.log(1.0 - z));
 	}
 
 	/**
