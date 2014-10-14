@@ -1,0 +1,48 @@
+package edu.cmu.ml.praprolog.prove.v1;
+
+import static org.junit.Assert.*;
+
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Before;
+import org.junit.Test;
+
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.GoalComponent;
+import edu.cmu.ml.praprolog.prove.v1.TuprologComponent;
+import edu.cmu.ml.praprolog.prove.v1.TuprologLogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.Component.Outlink;
+
+public class TuprologLogicProgramStateTest {
+    
+    @Before
+    public void setup() {
+		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+    }
+	@Test
+	public void testEquals() {
+		TuprologLogicProgramState s1 = new TuprologLogicProgramState(Goal.decompile("sim,katie,-1"));
+		TuprologComponent c = new TuprologComponent("testcases/prolog/family.pl");
+		GoalComponent g = GoalComponent.loadCompiled("testcases/family-more.cfacts");
+		List<Outlink> results = c.outlinks(s1);
+		assertEquals(3,results.size());
+		results.addAll(g.outlinks(results.get(1).state));
+		assertEquals(4,results.size());
+		results.addAll(c.outlinks(results.get(3).state));
+		for (Iterator<Outlink> it = results.iterator(); it.hasNext(); ) {
+			Outlink o = it.next();
+			if (! o.getState().isSolution()) it.remove();
+			else System.out.println(o.getState());
+		}
+		for (int i=0; i<results.size(); i++) {
+			for (int j=i+1; j<results.size(); j++) {
+				assertFalse("i "+i+" j "+j,results.get(i).state.equals(results.get(j).state));
+			}
+		}
+	}
+
+}

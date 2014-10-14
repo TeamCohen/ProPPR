@@ -8,9 +8,6 @@ public abstract class Argument implements Comparable<Argument> {
 	public static Argument fromString(String s) {
 		return new ConstantArgument(s);
 	}
-	public Argument getRenamed(int offset) {
-		return this;
-	}
 	public int compareTo(Argument a) {
 	    return this.getName().compareTo(a.getName());
 	}

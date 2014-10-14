@@ -9,11 +9,11 @@ import org.junit.Test;
 
 import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
-import edu.cmu.ml.praprolog.prove.Component;
-import edu.cmu.ml.praprolog.prove.DprProver;
-import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
-import edu.cmu.ml.praprolog.prove.Prover;
+import edu.cmu.ml.praprolog.prove.v1.Component;
+import edu.cmu.ml.praprolog.prove.v1.DprProver;
+import edu.cmu.ml.praprolog.prove.v1.InnerProductWeighter;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.Prover;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;

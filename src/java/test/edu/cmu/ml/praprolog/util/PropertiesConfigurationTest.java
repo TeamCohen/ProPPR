@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.prove.PprProver;
+import edu.cmu.ml.praprolog.prove.v1.PprProver;
 
 public class PropertiesConfigurationTest {
 

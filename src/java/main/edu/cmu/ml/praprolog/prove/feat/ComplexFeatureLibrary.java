@@ -1,7 +1,7 @@
 package edu.cmu.ml.praprolog.prove.feat;
 
-import edu.cmu.ml.praprolog.prove.Goal;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 import org.apache.log4j.Logger;

@@ -15,12 +15,12 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.Tester.ExampleSolutionScore;
 import edu.cmu.ml.praprolog.Tester.TestResults;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
-import edu.cmu.ml.praprolog.prove.LogicProgramState;
-import edu.cmu.ml.praprolog.prove.Prover;
-import edu.cmu.ml.praprolog.prove.RawPosNegExample;
-import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
-import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.Prover;
+import edu.cmu.ml.praprolog.prove.v1.RawPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.RawPosNegExampleStreamer;
+import edu.cmu.ml.praprolog.prove.v1.ThawedPosNegExample;
 
 public class MultithreadedTester extends Tester {
 	private static final Logger log = Logger.getLogger(MultithreadedTester.class);

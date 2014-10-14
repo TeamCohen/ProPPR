@@ -3,7 +3,7 @@ package edu.cmu.ml.praprolog.util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
-import edu.cmu.ml.praprolog.prove.Prover;
+import edu.cmu.ml.praprolog.prove.v1.Prover;
 
 public abstract class CustomConfiguration extends Configuration {
 

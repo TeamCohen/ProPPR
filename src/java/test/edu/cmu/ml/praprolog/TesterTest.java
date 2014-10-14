@@ -15,16 +15,16 @@ import org.junit.Test;
 
 import edu.cmu.ml.praprolog.Tester.ExampleSolutionScore;
 import edu.cmu.ml.praprolog.Tester.TestResults;
-import edu.cmu.ml.praprolog.prove.Component;
-import edu.cmu.ml.praprolog.prove.DprProver;
-import edu.cmu.ml.praprolog.prove.Goal;
-import edu.cmu.ml.praprolog.prove.GoalComponentTest;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
-import edu.cmu.ml.praprolog.prove.PprProver;
-import edu.cmu.ml.praprolog.prove.RawPosNegExample;
-import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
-import edu.cmu.ml.praprolog.prove.RuleComponentTest;
-import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.Component;
+import edu.cmu.ml.praprolog.prove.v1.DprProver;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.GoalComponentTest;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.PprProver;
+import edu.cmu.ml.praprolog.prove.v1.RawPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.RawPosNegExampleStreamer;
+import edu.cmu.ml.praprolog.prove.v1.RuleComponentTest;
+import edu.cmu.ml.praprolog.prove.v1.ThawedPosNegExample;
 
 public class TesterTest {
 

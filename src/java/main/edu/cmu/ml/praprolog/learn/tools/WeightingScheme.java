@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import edu.cmu.ml.praprolog.graph.Feature;
-import edu.cmu.ml.praprolog.prove.Goal;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public abstract class WeightingScheme {

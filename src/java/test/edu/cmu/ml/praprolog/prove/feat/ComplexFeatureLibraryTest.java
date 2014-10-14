@@ -1,8 +1,8 @@
 package edu.cmu.ml.praprolog.prove.feat;
 
-import edu.cmu.ml.praprolog.prove.Component;
-import edu.cmu.ml.praprolog.prove.Goal;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.Component;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
 import junit.framework.Assert;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;

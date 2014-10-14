@@ -12,7 +12,7 @@ import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
-import edu.cmu.ml.praprolog.prove.DprProver;
+import edu.cmu.ml.praprolog.prove.v1.DprProver;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 

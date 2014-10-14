@@ -14,15 +14,15 @@ import alice.tuprolog.SolveInfo;
 import alice.tuprolog.Struct;
 import alice.tuprolog.Term;
 import alice.tuprolog.Var;
-import edu.cmu.ml.praprolog.prove.Argument;
-import edu.cmu.ml.praprolog.prove.Component.Outlink;
-import edu.cmu.ml.praprolog.prove.ConstantArgument;
-import edu.cmu.ml.praprolog.prove.Goal;
-import edu.cmu.ml.praprolog.prove.LogicProgramState;
-import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
-import edu.cmu.ml.praprolog.prove.RenamingSubstitution;
-import edu.cmu.ml.praprolog.prove.TuprologLogicProgramState;
-import edu.cmu.ml.praprolog.prove.VariableArgument;
+import edu.cmu.ml.praprolog.prove.v1.Argument;
+import edu.cmu.ml.praprolog.prove.v1.ConstantArgument;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.ProPPRLogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.RenamingSubstitution;
+import edu.cmu.ml.praprolog.prove.v1.TuprologLogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.VariableArgument;
+import edu.cmu.ml.praprolog.prove.v1.Component.Outlink;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class TuprologAdapter {

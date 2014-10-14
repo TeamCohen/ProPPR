@@ -1,6 +1,12 @@
 package edu.cmu.ml.praprolog.prove.feat;
 
 import edu.cmu.ml.praprolog.prove.*;
+import edu.cmu.ml.praprolog.prove.v1.Argument;
+import edu.cmu.ml.praprolog.prove.v1.Component;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.GoalComponent;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+
 import org.apache.log4j.Logger;
 
 import java.util.*;

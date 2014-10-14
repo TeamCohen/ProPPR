@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.cmu.ml.praprolog.prove.Goal;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
 
 /**
  * Encodes a named feature value suitable for use as a key or a set member.

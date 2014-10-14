@@ -1,6 +1,11 @@
 package edu.cmu.ml.praprolog.prove.feat;
 
 import edu.cmu.ml.praprolog.prove.*;
+import edu.cmu.ml.praprolog.prove.v1.Argument;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgramException;
+import edu.cmu.ml.praprolog.prove.v1.RenamingSubstitution;
 
 import java.util.Map;
 

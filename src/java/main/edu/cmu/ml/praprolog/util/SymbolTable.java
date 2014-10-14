@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import edu.cmu.ml.praprolog.prove.Argument;
-import edu.cmu.ml.praprolog.prove.VariableArgument;
 
 /**
  * A symbol table mapping strings to/from integers in the range
@@ -69,15 +68,21 @@ public class SymbolTable {
 	 * @param symbol
 	 * @return
 	 */
-	public Argument getId(String symbol) {
+	public int getId(String symbol) {
 		this.insert(symbol);
 		// FIXME this may be slow
-		return new VariableArgument(-this.idDict.get(symbol));
+		return this.idDict.get(symbol);
 	}
 	public void insert(Argument a) {
 		this.insert(a.getName()); // FIXME may need to check constant/variable
 	}
-	public Argument getId(Argument a) {
+	public int getId(Argument a) {
 		return getId(a.getName()); // FIXME may need to check constant/variable
+	}
+	public boolean hasId(String symbol) {
+		return this.idDict.containsKey(symbol);
+	}
+	public String getSymbol(int id) {
+		return this.symbolList.get(id);
 	}
 }

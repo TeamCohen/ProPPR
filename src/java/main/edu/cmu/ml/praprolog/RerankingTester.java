@@ -9,10 +9,10 @@ import edu.cmu.ml.praprolog.graph.GraphWriter;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
-import edu.cmu.ml.praprolog.prove.LogicProgramState;
-import edu.cmu.ml.praprolog.prove.Prover;
-import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.Prover;
+import edu.cmu.ml.praprolog.prove.v1.ThawedPosNegExample;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class RerankingTester extends Tester {

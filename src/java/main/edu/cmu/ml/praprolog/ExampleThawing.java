@@ -10,14 +10,14 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.graph.GraphWriter;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
-import edu.cmu.ml.praprolog.prove.Goal;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
-import edu.cmu.ml.praprolog.prove.LogicProgramState;
-import edu.cmu.ml.praprolog.prove.ProPPRLogicProgramState;
-import edu.cmu.ml.praprolog.prove.Prover;
-import edu.cmu.ml.praprolog.prove.RawPosNegExample;
-import edu.cmu.ml.praprolog.prove.ThawedPosNegExample;
-import edu.cmu.ml.praprolog.prove.TracingDfsProver;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.ProPPRLogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.Prover;
+import edu.cmu.ml.praprolog.prove.v1.RawPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.ThawedPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.TracingDfsProver;
 import edu.cmu.ml.praprolog.util.Dictionary;
 
 public class ExampleThawing {

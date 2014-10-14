@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.graph.GraphWriter;
-import edu.cmu.ml.praprolog.prove.LogicProgram;
-import edu.cmu.ml.praprolog.prove.Prover;
-import edu.cmu.ml.praprolog.prove.RawPosNegExample;
-import edu.cmu.ml.praprolog.prove.RawPosNegExampleStreamer;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.Prover;
+import edu.cmu.ml.praprolog.prove.v1.RawPosNegExample;
+import edu.cmu.ml.praprolog.prove.v1.RawPosNegExampleStreamer;
 
 public class ModularMultiExampleCooker extends MultithreadedExampleCooker {
 	private static final Logger log = Logger.getLogger(ModularMultiExampleCooker.class);

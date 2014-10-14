@@ -9,7 +9,7 @@ import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
 import edu.cmu.ml.praprolog.trove.learn.tools.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
-import edu.cmu.ml.praprolog.prove.InnerProductWeighter;
+import edu.cmu.ml.praprolog.prove.v1.InnerProductWeighter;
 import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.util.Configuration;
 import edu.cmu.ml.praprolog.util.Dictionary;

@@ -1,6 +1,14 @@
 package edu.cmu.ml.praprolog.prove.feat;
 
 import edu.cmu.ml.praprolog.prove.*;
+import edu.cmu.ml.praprolog.prove.v1.Argument;
+import edu.cmu.ml.praprolog.prove.v1.Component;
+import edu.cmu.ml.praprolog.prove.v1.ConstantArgument;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgramException;
+import edu.cmu.ml.praprolog.prove.v1.RenamingSubstitution;
+
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;

@@ -1,8 +1,8 @@
 package edu.cmu.ml.praprolog.util;
 
-import edu.cmu.ml.praprolog.prove.Argument;
-import edu.cmu.ml.praprolog.prove.Goal;
-import edu.cmu.ml.praprolog.prove.LogicProgramState;
+import edu.cmu.ml.praprolog.prove.v1.Argument;
+import edu.cmu.ml.praprolog.prove.v1.Goal;
+import edu.cmu.ml.praprolog.prove.v1.LogicProgramState;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;

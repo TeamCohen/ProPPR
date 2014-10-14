@@ -18,6 +18,12 @@ import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.*;
+import edu.cmu.ml.praprolog.prove.v1.Component;
+import edu.cmu.ml.praprolog.prove.v1.DprProver;
+import edu.cmu.ml.praprolog.prove.v1.PprProver;
+import edu.cmu.ml.praprolog.prove.v1.Prover;
+import edu.cmu.ml.praprolog.prove.v1.TracingDfsProver;
+
 import org.apache.commons.cli.*;
 
 import java.io.*;
