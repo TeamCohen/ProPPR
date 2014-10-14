@@ -21,6 +21,7 @@ import edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 
+@Ignore
 public class ToyTrainerTest {
 	private static final String COOKED_FILE = "testcases/toy.cooked";
 
@@ -36,7 +37,7 @@ public class ToyTrainerTest {
 				new CookedExampleStreamer<Integer>(COOKED_FILE, 
 						new AnnotatedGraphFactory<Integer>(AnnotatedGraphFactory.INT)),
 				epochs,
-				false);//tracelosses
+				true);//tracelosses
 
 		SRW.seed(0);
 		L2PosNegLossTrainedSRW<String> srwStr = new L2PosNegLossTrainedSRW<String>();
@@ -46,7 +47,7 @@ public class ToyTrainerTest {
 				new CookedExampleStreamer<String>(COOKED_FILE, 
 						new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
 				epochs,
-				false);//tracelosses
+				true);//tracelosses
 		System.err.println("name                  strvalue  intvalue");
 		for (String f : paramVecStr.keySet()) {
 			

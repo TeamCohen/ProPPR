@@ -59,6 +59,19 @@ public class Dictionary {
 	}
 
 	/**
+	 * Reset the key's value, or set it if the key is new.
+	 * @param map
+	 * @param key
+	 * @param value
+	 */
+	public static void reset(TIntDoubleMap map, int key, double value) {
+		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
+		else {
+			map.put(key,sanitize(value, String.valueOf(key)));
+		}
+	}
+
+	/**
 	 * Increment the key's value, or set it if the key is new.
 	 * @param map
 	 * @param key
@@ -71,6 +84,27 @@ public class Dictionary {
 			map.put(key,sanitize(newvalue, String.valueOf(key)));
 		}
 	}
+
+	/**
+	 * Reset the key's value, or set it if the key is new.
+	 * @param map
+	 * @param key
+	 * @param value
+	 */
+	public static void reset(TObjectDoubleMap<String> map, String key, double value) {
+		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
+		else {
+			map.put(key,sanitize(value, String.valueOf(key)));
+		}
+	}
+
+	public static void reset(ParamVector map, String key, double value) {
+		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
+		else {
+			map.put(key,sanitize(value, String.valueOf(key)));
+		}
+	}
+
 	/**
 	 * Increment the key's value, or set it if the key is new.
 	 * Adds a TreeMap if key1 is new.
@@ -251,7 +285,23 @@ public class Dictionary {
 			double newvalue = map.get(key)+value;
 			map.put(key,sanitize(newvalue, String.valueOf(key)));
 		}
-	}public static <K> void increment(Map<K,Double> map, K key, Double value) { increment(map,key,value,String.valueOf(key)); }
+	}
+
+	/**
+	 * Reset the key's value, or set it if the key is new.
+	 * @param map
+	 * @param key
+	 * @param value
+	 */
+	public static <K> void reset(Map<K,Double> map, K key, Double value, String msg) {
+		if (!map.containsKey(key)) map.put(key, sanitize(value, msg));
+		else {
+			map.put(key,sanitize(value, String.valueOf(key)));
+		}
+       }
+
+       public static <K> void increment(Map<K,Double> map, K key, Double value) { increment(map,key,value,String.valueOf(key)); }
+
 	/**
 	 * Increment the key's value, or set it if the key is new.
 	 * Adds a TreeMap if key1 is new.

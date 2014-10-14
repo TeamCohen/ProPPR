@@ -15,17 +15,17 @@ import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
-public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
+public class L1PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	private static final Logger log = Logger.getLogger(L2PosNegLossTrainedSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 	protected LossData cumloss;
 
-	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
+	public L1PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, String affgraph, double zeta) {
 		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		this.cumloss = new LossData();
 	}
 
-	public L2PosNegLossTrainedSRW() {
+	public L1PosNegLossTrainedSRW() {
 		super();
 		this.cumloss = new LossData();
 	}
@@ -86,34 +86,19 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	}
 
 	/**
-	 * Loss is mu * theta_f^2
-	 * d/df Loss is then 2 * mu * theta_f
+	 * though non-continuous, the d/df of L1 can be approximated by mu.
+        * the proximal operator implementation in localL1 is more stable.
 	 * @param f
 	 * @param paramVec
 	 * @return
 	 */
 	protected Double derivRegularization(String f, ParamVector paramVec) {
 		double value = Dictionary.safeGet(paramVec, f);
-		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*mu*value;
-		//double ret = untrainedFeatures.contains(f) ? 0.0 : mu;
+		double ret = untrainedFeatures.contains(f) ? 0.0 : mu;
+              this.cumloss.add(LOSS.REGULARIZATION, this.mu);
 
-		this.cumloss.add(LOSS.REGULARIZATION, this.mu * Math.pow(value,2));
-              //this.cumloss.add(LOSS.REGULARIZATION, this.mu * Math.abs(value));
 		return ret;
 	}
-
-//	public double empiricalLoss(ParamVector paramVec, PosNegRWExample<T> example) {
-//		Map<T,Double> p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-//		double loss = 0;
-//		for (T x : example.getPosList()) 
-//		{
-//			double prob = Dictionary.safeGet(p,x);
-//			loss -= Math.log(checkProb(prob));
-//		}
-//		for (T x : example.getNegList()) 
-//			loss -= Math.log(1.0-Dictionary.safeGet(p,x));
-//		return loss;
-//	}
 
 	public double clip(double prob)
 	{
