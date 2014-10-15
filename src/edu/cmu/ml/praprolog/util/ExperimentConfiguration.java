@@ -20,6 +20,7 @@ import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
@@ -99,9 +100,16 @@ public class ExperimentConfiguration extends Configuration {
 				.hasArgs()
 				.withValueSeparator(':')
 				.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
+						+ "Syntax: srw:param=value:param=value...\n"
+						+ "Available srw options:\n"
+						+ "l1p, l1plocal, l1laplacianplocal, l1pgrouplassoplocal\n"
+						+ "l2p,l2plocal\n"
+						+ "apr\n"
+						+ "Available parameters:\n"
+						+ "mu,eta,delta,zeta,affinityFile,alpha,maxT\n"
 						+ "Default mu=.001\n"
 						+ "Default eta=1.0\n"
-						+ "Available options:\n"
+						+ "Available options & old parameter list format:\n"
 						+ "l1p[:mu[:eta[:delta]]] (L1PosNegLossTrainedSRW)\n"
 						+ "l2p[:mu[:eta[:delta]]] (L2PosNegLossTrainedSRW)\n"
 						+ "l1plocal[:mu[:eta[:delta]]] (LocalL1PosNegLossTrainedSRW)\n"
@@ -346,88 +354,93 @@ public class ExperimentConfiguration extends Configuration {
 	}
 
 	protected void setupSRW(CommandLine line, int flags, Options options) {
-		double mu = SRW.DEFAULT_MU;
-		double eta = SRW.DEFAULT_ETA;
-		double delta = SRW.DEFAULT_DELTA;
-		int maxT = SRW.DEFAULT_MAX_T;
-		File affgraph = SRW.DEFAULT_AFFGRAPH;
-		double zeta = SRW.DEFAULT_ZETA;
+		SRWParameters sp = new SRWParameters();
 
 		if (line.hasOption("maxT")) {
-			maxT = Integer.parseInt(line.getOptionValue("maxT"));
+			sp.maxT = Integer.parseInt(line.getOptionValue("maxT"));
 		}
 		if (line.hasOption("srw")) {
 			String[] values = line.getOptionValues("srw");
-			if (values.length > 1) {
-				mu = Double.parseDouble(values[1]);
+			
+			boolean namedParameters = false;
+			if (values.length > 1 && values[1].contains("=")) namedParameters = true;
+
+			if (namedParameters) {
+				for (int i=1; i<values.length; i++) {
+					String[] parts = values[i].split("=");
+					sp.set(parts);
+				}
+			} else {
+				if (values.length > 1) {
+					sp.mu = Double.parseDouble(values[1]);
+				}
+				if (values.length > 2) {
+					sp.eta = Double.parseDouble(values[2]);
+				}
+				if (values.length > 3) {
+					sp.delta = Double.parseDouble(values[3]);
+				}
+				if (values.length > 4) {
+					sp.affinityFile = this.getExistingFileDirect(line, values[4]);
+				}			
+				if (values.length > 5) {
+					sp.zeta = Double.parseDouble(values[5]);
+				}
 			}
-			if (values.length > 2) {
-				eta = Double.parseDouble(values[2]);
-			}
-			if (values.length > 3) {
-				delta = Double.parseDouble(values[3]);
-			}
-			if (values.length > 4) {
-				affgraph = this.getExistingFileOption(line, values[4]);
-			}			
-			if (values.length > 5) {
-				zeta = Double.parseDouble(values[5]);
-			}			
 			
 			if (values[0].equals("l2p")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(sp);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(sp);
 				}
 			} else if (values[0].equals("l1p")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.L1PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.L1PosNegLossTrainedSRW(sp);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.L1PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.learn.L1PosNegLossTrainedSRW<String>(sp);
 			       } 
                      } else if (values[0].equals("l1plocal")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1PosNegLossTrainedSRW(sp);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1PosNegLossTrainedSRW<String>(sp);
 			       } 
                      } else if (values[0].equals("l1plaplacianlocal")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1LaplacianPosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1LaplacianPosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1LaplacianPosNegLossTrainedSRW<String>(sp);
 			       } 
                      } else if (values[0].equals("l1plocalgrouplasso")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1GroupLassoPosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1GroupLassoPosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL1GroupLassoPosNegLossTrainedSRW<String>(sp);
 			       } 
                      } else if (values[0].equals("l2plocal")) {
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.LocalL2PosNegLossTrainedSRW(sp);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+					this.srw = new edu.cmu.ml.praprolog.learn.LocalL2PosNegLossTrainedSRW<String>(sp);
 				}
 			} else if (values[0].equals("apr")) {
 				double epsilon = AprSRW.DEFAULT_EPSILON;
-				double alpha = AprSRW.DEFAULT_ALPHA;
-				if (values.length > 6) epsilon = Double.parseDouble(values[6]);
-				if (values.length > 7) alpha = Double.parseDouble(values[7]);
+				if (!namedParameters && values.length > 6) epsilon = Double.parseDouble(values[6]);
+				if (!namedParameters && values.length > 7) sp.alpha = Double.parseDouble(values[7]);
 				if (this.trove) {
-					this.srw = new edu.cmu.ml.praprolog.trove.learn.AprSRW(maxT, mu, eta, weightingScheme, delta, affgraph, zeta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
+					this.srw = new edu.cmu.ml.praprolog.trove.learn.AprSRW(sp, epsilon, AprSRW.DEFAULT_STAYPROB);
 				} else {
-					this.srw = new edu.cmu.ml.praprolog.learn.AprSRW<String>(maxT, mu, eta, weightingScheme, delta, affgraph, zeta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
+					this.srw = new edu.cmu.ml.praprolog.learn.AprSRW<String>(sp, epsilon, AprSRW.DEFAULT_STAYPROB);
 				}
 			} else {
 				usageOptions(options,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
 			if (this.trove) {
-				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta, affgraph, zeta);
+				this.srw = new edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW(sp);
 			} else {
-				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta, affgraph, zeta);
+				this.srw = new edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW<String>(sp);
 			}
 		}
 	}

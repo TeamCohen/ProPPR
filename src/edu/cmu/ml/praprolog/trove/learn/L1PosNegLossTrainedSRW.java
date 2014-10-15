@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.learn.tools.LossData;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
@@ -26,8 +27,8 @@ public class L1PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	protected LossData cumloss;
 	
 	
-	public L1PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
-		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
+	public L1PosNegLossTrainedSRW(SRWParameters params) {
+		super(params);
 		this.cumloss = new LossData();
 	}
 
@@ -73,9 +74,9 @@ public class L1PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		}
 
 		//negative instance booster
-    	double h = pmax + delta;
+    	double h = pmax + c.delta;
 		double beta = 1;
-		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
+		if(c.delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 		
 		for (int x : example.getNegList()) {
 			TObjectDoubleHashMap<String> dx = d.get(x);
@@ -97,8 +98,8 @@ public class L1PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	 */
 	protected Double derivRegularization(String f, ParamVector paramVec) {
 		double value = Dictionary.safeGet(paramVec, f);
-		double ret = untrainedFeatures.contains(f) ? 0.0 : mu;
-		this.cumloss.add(LOSS.REGULARIZATION, this.mu);
+		double ret = untrainedFeatures.contains(f) ? 0.0 : c.mu;
+		this.cumloss.add(LOSS.REGULARIZATION, c.mu);
 		return ret;
 	}
 

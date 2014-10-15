@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
@@ -21,8 +22,8 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 	protected LossData cumloss;
 
-	public L2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
-		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
+	public L2PosNegLossTrainedSRW(SRWParameters params) {
+		super(params);
 		this.cumloss = new LossData();
 	}
 
@@ -58,7 +59,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		for (T x : example.getPosList()) {
 			if (log.isDebugEnabled()) log.debug("pos example "+x);
 			Map<String,Double> dx = Dictionary.safeGet(d,x,Collections.EMPTY_MAP);//d.get(x);
-			double px = clip(Dictionary.safeGet(p,x,weightingScheme.defaultWeight()));//p.get(x));
+			double px = clip(Dictionary.safeGet(p,x,c.weightingScheme.defaultWeight()));//p.get(x));
 			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
@@ -70,13 +71,13 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 		}
 
 		//negative instance booster
-		double h = pmax + delta;
+		double h = pmax + c.delta;
 		double beta = 1;
-		if(delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
+		if(c.delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 
 		for (T x : example.getNegList()) {
 			Map<String,Double> dx = Dictionary.safeGet(d, x, Collections.EMPTY_MAP);//d.get(x);
-			double px = Dictionary.safeGet(p,x,weightingScheme.defaultWeight());//p.get(x);
+			double px = Dictionary.safeGet(p,x,c.weightingScheme.defaultWeight());//p.get(x);
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) 
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/clip(1-px));
@@ -95,10 +96,10 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 	 */
 	protected Double derivRegularization(String f, ParamVector paramVec) {
 		double value = Dictionary.safeGet(paramVec, f);
-		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*mu*value;
+		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
 		//double ret = untrainedFeatures.contains(f) ? 0.0 : mu;
 
-		this.cumloss.add(LOSS.REGULARIZATION, this.mu * Math.pow(value,2));
+		this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
               //this.cumloss.add(LOSS.REGULARIZATION, this.mu * Math.abs(value));
 		return ret;
 	}

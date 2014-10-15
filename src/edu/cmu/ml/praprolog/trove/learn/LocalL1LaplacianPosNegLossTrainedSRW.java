@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.util.Dictionary;
@@ -14,8 +15,8 @@ import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class LocalL1LaplacianPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW {
-	public LocalL1LaplacianPosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
-		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
+	public LocalL1LaplacianPosNegLossTrainedSRW(SRWParameters params) {
+		super(params);
 	}
 	public LocalL1LaplacianPosNegLossTrainedSRW() { super(); }
 
@@ -70,11 +71,11 @@ public class LocalL1LaplacianPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW
               double sumofsquares = 0;
 
               String target = "#" + f;
-		if(diagonalDegree.containsKey(target)){
-	  	    double positive = this.diagonalDegree.get(target)*value;
+		if(c.diagonalDegree.containsKey(target)){
+	  	    double positive = c.diagonalDegree.get(target)*value;
 		    double negativeSum = 0;
                   sumofsquares = value*value;
-		    List<String> sims = this.affinity.get(target);
+		    List<String> sims = c.affinity.get(target);
 		    for (String s : sims) {
                          double svalue = Dictionary.safeGet(paramVec,s);
   			    negativeSum -= svalue;
@@ -85,19 +86,19 @@ public class LocalL1LaplacianPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW
 		}
                
               //Laplacian
-		double powerTerm = Math.pow(1 - 2 * this.zeta * this.learningRate() * laplacian, gap);
+		double powerTerm = Math.pow(1 - 2 * c.zeta * this.learningRate() * laplacian, gap);
 		double weightDecay = laplacian * (powerTerm - 1);
 		Dictionary.increment(paramVec, f, weightDecay);
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.zeta * Math.pow(value, 2));
+		this.cumloss.add(LOSS.REGULARIZATION, gap * c.zeta * Math.pow(value, 2));
               
 		//L1 with a proximal operator              
 		//signum(w) * max(0.0, abs(w) - shrinkageVal)
               
-              double shrinkageVal = gap * this.learningRate() * this.mu;
-              if((this.mu != 0) && (!Double.isInfinite(shrinkageVal))){
+              double shrinkageVal = gap * this.learningRate() * c.mu;
+              if((c.mu != 0) && (!Double.isInfinite(shrinkageVal))){
  		    weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - shrinkageVal);
 		    Dictionary.reset(paramVec, f, weightDecay);
               }
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu);             		
+		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu);             		
 	}
 }

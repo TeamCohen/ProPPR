@@ -17,9 +17,12 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.learn.tools.LossData;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
+import edu.cmu.ml.praprolog.prove.DprProver;
+import edu.cmu.ml.praprolog.prove.MinAlphaException;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
 import edu.cmu.ml.praprolog.trove.learn.tools.RWExample;
 import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
@@ -49,40 +52,16 @@ public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static Random random = new Random(); 
 	public static void seed(long seed) { random.setSeed(seed); }
-	protected double mu;
-	protected int maxT;
-	protected double eta;
-	protected double delta;
-	protected double zeta;
-	protected File affgraph;
-	protected Map<String,List<String>> affinity;
-	protected Map<String,Integer> diagonalDegree;
-	protected int epoch;
+	protected SRWParameters c;
 	protected Set<String> untrainedFeatures;
-	protected WeightingScheme weightingScheme;
-	public SRW() { this(edu.cmu.ml.praprolog.learn.SRW.DEFAULT_MAX_T); }
+	protected int epoch;
+	public SRW() { this(new SRWParameters()); }
 	public SRW(int maxT) { 
-		this(maxT, 
-				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_MU, 
-				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_ETA, 
-				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_WEIGHTING_SCHEME(),
-				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_DELTA,
-				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_AFFGRAPH,
-				edu.cmu.ml.praprolog.learn.SRW.DEFAULT_ZETA); }
-	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
-		this.maxT = maxT;
-		this.mu = mu;
-		this.eta = eta;
+		this(new SRWParameters(maxT)); }
+	public SRW(SRWParameters params) {
+		this.c = params;
 		this.epoch = 1;
-		this.zeta = zeta;
-		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
-		this.weightingScheme = wScheme;
-		this.affgraph = affgraph;
-		if(zeta>0){
-			affinity = edu.cmu.ml.praprolog.learn.SRW.constructAffinity(affgraph);
-			diagonalDegree = edu.cmu.ml.praprolog.learn.SRW.constructDegree(affinity);
-		}
 	}
 
 	/**
@@ -94,7 +73,7 @@ public class SRW<E extends RWExample> {
 	public void addDefaultWeights(AnnotatedTroveGraph graph, Map<String,Double> p) {
 		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
-				p.put(f,weightingScheme.defaultWeight()+0.01*random.nextDouble());
+				p.put(f,c.weightingScheme.defaultWeight()+0.01*random.nextDouble());
 			}
 		}
 	}
@@ -108,7 +87,7 @@ public class SRW<E extends RWExample> {
 	 * @return
 	 */
 	public  double edgeWeight(AnnotatedTroveGraph g, int u, int v,  Map<String,Double> p) {
-		double wt = this.weightingScheme.edgeWeight(p,g.phi(u, v));
+		double wt = c.weightingScheme.edgeWeight(p,g.phi(u, v));
 
 		if (Double.isInfinite(wt)) return Double.MAX_VALUE;
 		return wt;
@@ -142,7 +121,7 @@ public class SRW<E extends RWExample> {
 	 */
 	public  TIntDoubleMap rwrUsingFeatures(AnnotatedTroveGraph g, TIntDoubleMap startVec, ParamVector paramVec) {
 		TIntDoubleMap vec = startVec;
-		for(int i=0; i<maxT; i++) {
+		for(int i=0; i<c.maxT; i++) {
 			vec = walkOnceUsingFeatures(g,vec,paramVec);
 		}
 		return vec;
@@ -198,7 +177,7 @@ public class SRW<E extends RWExample> {
 	public  TIntObjectMap<TObjectDoubleHashMap<String>> derivRWRbyParams(AnnotatedTroveGraph graph, TIntDoubleMap queryVec, ParamVector paramVec) {
 		TIntDoubleMap p = queryVec;
 		TIntObjectMap<TObjectDoubleHashMap<String>> d = new TIntObjectHashMap<TObjectDoubleHashMap<String>>();
-		for (int i=0; i<maxT; i++) {
+		for (int i=0; i<c.maxT; i++) {
 			TIntDoubleMap pNext = walkOnceUsingFeatures(graph, p, paramVec);
 			// dNext[u] is the vector deriv of the weight vector at u
 			TIntObjectMap<TObjectDoubleHashMap<String>> dNext = new TIntObjectHashMap<TObjectDoubleHashMap<String>>();
@@ -281,9 +260,9 @@ public class SRW<E extends RWExample> {
 		TObjectDoubleHashMap<String> result = new TObjectDoubleHashMap<String>();
 		for (Feature f : graph.phi(u, v)) {
 			result.put(f.featureName, 
-					this.weightingScheme.derivEdgeWeight(
+					c.weightingScheme.derivEdgeWeight(
 							Dictionary.safeGet(paramVec, f.featureName,
-									this.weightingScheme.defaultWeight())));
+									c.weightingScheme.defaultWeight())));
 		}
 		return result;
 	}
@@ -386,12 +365,10 @@ public class SRW<E extends RWExample> {
 	}	
 	
 	protected double learningRate() {
-		return Math.pow(this.epoch,-2) * this.eta;
+		return Math.pow(this.epoch,-2) * c.eta;
 	}
 	protected <T> void project2feasible (AnnotatedTroveGraph g,
             ParamVector paramVec, TIntDoubleHashMap query) {
-		// temporarily hard-code here
-        double alpha = 0.01;
         for (TIntIterator ui = g.getNodes().iterator(); ui.hasNext(); ) {
         	int u = ui.next();
         	for (int q : query.keys()) {
@@ -404,7 +381,7 @@ public class SRW<E extends RWExample> {
 					// check & project for each node
 	            	double z = totalEdgeWeight(g, u, paramVec);
 	            	double rw = edgeWeight(g,u,q,paramVec);
-	            	if (rw / z < alpha) {
+	            	if (rw / z < c.alpha) {
 	                	projectOneNode(g, u, paramVec, z, rw, q);
 						if (log.isDebugEnabled()) {
 	                		z = totalEdgeWeight(g, u, paramVec);
@@ -419,9 +396,6 @@ public class SRW<E extends RWExample> {
 
 	protected <T> void projectOneNode(AnnotatedTroveGraph g, int u, ParamVector paramVec,
             double z, double rw, int queryNode) {
-
-		// temporarily hard-code here
-        double alpha = 0.01;
         Set<String> nonRestartFeatureSet = new TreeSet<String>();
         int nonRestartNodeNum = 0;
         for (TIntDoubleIterator e = g.near(u).iterator(); e.hasNext(); ) {
@@ -434,13 +408,13 @@ public class SRW<E extends RWExample> {
                 }
             }
         }
-        double newValue = weightingScheme.projection(rw,alpha,nonRestartNodeNum);
+        double newValue = c.weightingScheme.projection(rw,c.alpha,nonRestartNodeNum);
         for (String f : nonRestartFeatureSet) {
-            if (!f.startsWith("db(")) {
-				throw new UnsupportedOperationException("The assumption that minalpha only happens on fact/db feature is violated. (" + f + ")");
-            } else {
-                paramVec.put(f, newValue);
-            }
+        	if (!f.startsWith("db(")) {
+        		throw new MinAlphaException("Minalpha assumption violated: not a fact/db feature (" + f + ")");
+        	} else {
+        		paramVec.put(f, newValue);
+        	}
         }
     }
 	
@@ -520,33 +494,33 @@ public class SRW<E extends RWExample> {
 		return totLoss / numTest;
 	}
 	public double getMu() {
-		return mu;
+		return c.mu;
 	}
 	public void setMu(double mu) {
-		this.mu = mu;
+		c.mu = mu;
 	}
 	public int getMaxT() {
-		return maxT;
+		return c.maxT;
 	}
 	public void setMaxT(int maxT) {
-		this.maxT = maxT;
+		c.maxT = maxT;
 	}
 	public double getEta() {
-		return eta;
+		return c.eta;
 	}
 	public void setEta(double eta) {
-		this.eta = eta;
+		c.eta = eta;
 	}
 	public double getDelta() {
-		return delta;
+		return c.delta;
 	}
 	public void setDelta(double delta) {
-		this.delta = delta;
+		c.delta = delta;
 	}
 	public WeightingScheme getWeightingScheme() {
-		return weightingScheme;
+		return c.weightingScheme;
 	}
 	public void setWeightingScheme(WeightingScheme weightingScheme) {
-		this.weightingScheme = weightingScheme;
+		c.weightingScheme = weightingScheme;
 	}
 }

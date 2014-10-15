@@ -6,14 +6,15 @@ import java.util.Set;
 
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.MuParamVector;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
 public class LocalL1PosNegLossTrainedSRW<T> extends L1PosNegLossTrainedSRW<T> {
-	public LocalL1PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
-		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
+	public LocalL1PosNegLossTrainedSRW(SRWParameters params) {
+		super(params);
 	}
 	public LocalL1PosNegLossTrainedSRW() { super(); }
 
@@ -68,14 +69,14 @@ public class LocalL1PosNegLossTrainedSRW<T> extends L1PosNegLossTrainedSRW<T> {
               //
 		//signum(w) * max(0.0, abs(w) - shrinkageVal)
               
-              double shrinkageVal = gap * this.learningRate() * this.mu;
+              double shrinkageVal = gap * this.learningRate() * c.mu;
               double weightDecay;
-              if((this.mu != 0) && (!Double.isInfinite(shrinkageVal))){
+              if((c.mu != 0) && (!Double.isInfinite(shrinkageVal))){
  		    weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - shrinkageVal);
 		    Dictionary.reset(paramVec, f, weightDecay);
               }
 
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu);
+		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu);
 
 	}
 }
