@@ -6,11 +6,11 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
+import edu.cmu.ml.praprolog.graph.v1.AnnotatedGraph;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
-import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.v1.DprProver;
 import edu.cmu.ml.praprolog.util.Dictionary;

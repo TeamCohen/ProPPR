@@ -10,6 +10,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
+import edu.cmu.ml.praprolog.graph.v1.GraphWriter;
 import edu.cmu.ml.praprolog.prove.v1.Argument;
 import edu.cmu.ml.praprolog.prove.v1.ConstantArgument;
 import edu.cmu.ml.praprolog.prove.v1.Goal;

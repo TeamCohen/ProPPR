@@ -6,18 +6,18 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.praprolog.util.Dictionary;
 
-public class Backtrace {
+public class Backtrace<T> {
 	private Logger log;
 	public Backtrace(Logger parent) { this.log = parent; }
-	private ArrayDeque<LogicProgramState> backtrace;
+	private ArrayDeque<T> backtrace;
 	public void start() {
-		this.backtrace = new ArrayDeque<LogicProgramState>();
+		this.backtrace = new ArrayDeque<T>();
 	}
-	public void push(LogicProgramState state) {
+	public void push(T state) {
 		this.backtrace.push(state);
 	}
-	public void pop(LogicProgramState state) {
-		LogicProgramState p = this.backtrace.pop();
+	public void pop(T state) {
+		T p = this.backtrace.pop();
 		if (!p.equals(state)) log.error("popped unexpected state\nexpected "+state+"\ngot"+p);
 	}
 	public void print(LogicProgramException e) {

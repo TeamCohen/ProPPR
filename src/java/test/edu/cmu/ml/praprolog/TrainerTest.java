@@ -9,12 +9,13 @@ import java.util.TreeMap;
 import org.junit.Before;
 import org.junit.Test;
 
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
-import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.v1.Trainer;
 
 public class TrainerTest extends RedBlueGraph {
 	public Trainer<String> trainer;

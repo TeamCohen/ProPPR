@@ -17,12 +17,20 @@ import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
-import edu.cmu.ml.praprolog.prove.*;
-import edu.cmu.ml.praprolog.prove.v1.Component;
-import edu.cmu.ml.praprolog.prove.v1.DprProver;
-import edu.cmu.ml.praprolog.prove.v1.PprProver;
-import edu.cmu.ml.praprolog.prove.v1.Prover;
-import edu.cmu.ml.praprolog.prove.v1.TracingDfsProver;
+//import edu.cmu.ml.praprolog.prove.v1.Component;
+//import edu.cmu.ml.praprolog.prove.v1.DprProver;
+//import edu.cmu.ml.praprolog.prove.v1.PprProver;
+//import edu.cmu.ml.praprolog.prove.v1.Prover;
+//import edu.cmu.ml.praprolog.prove.v1.TracingDfsProver;
+import edu.cmu.ml.praprolog.prove.DprProver;
+import edu.cmu.ml.praprolog.prove.PprProver;
+import edu.cmu.ml.praprolog.prove.Prover;
+import edu.cmu.ml.praprolog.prove.TracingDfsProver;
+import edu.cmu.ml.praprolog.prove.wam.Goal;
+import edu.cmu.ml.praprolog.prove.wam.WamProgram;
+import edu.cmu.ml.praprolog.prove.wam.plugins.FactsPlugin;
+import edu.cmu.ml.praprolog.prove.wam.plugins.LightweightGraphPlugin;
+import edu.cmu.ml.praprolog.prove.wam.plugins.WamPlugin;
 
 import org.apache.commons.cli.*;
 
@@ -56,6 +64,8 @@ public class Configuration {
     public static final String PROPFILE = "config.properties";
     private static final boolean DEFAULT_COMBINE = true;
     public Prover prover = null;
+    public WamProgram program = null;
+    public WamPlugin[] plugins = null;
     public String[] programFiles = null;
     public File dataFile = null;
     public File queryFile = null;
@@ -63,13 +73,13 @@ public class Configuration {
     public File complexFeatureConfigFile = null;
     public String outputFile = null;
     public int nthreads = -1;
-    public double alpha = Component.ALPHA_DEFAULT;
+//    public double alpha = Component.ALPHA_DEFAULT;
     public int epochs = 5;
     public boolean traceLosses = false;
     public String paramsFile = null;
-    public WeightingScheme weightingScheme = null;
+    public WeightingScheme<Goal> weightingScheme = null;
     public boolean force = false;
-	public Boolean ternaryIndex = null;
+	public Boolean ternaryIndex = false;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -114,11 +124,14 @@ public class Configuration {
 		}
 	}
 	protected File getExistingFileOption(CommandLine line, String name) {
-		File value = new File(line.getOptionValue(name));
+		return getExistingFileDirect(line.getOptionValue(name));
+	}
+	protected File getExistingFileDirect(String filename) {
+		File value = new File(filename);
 		if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
 		return value;
 	}
-	protected void retrieveSettings(CommandLine line, int flags, Options options) {
+	protected void retrieveSettings(CommandLine line, int flags, Options options) throws IOException {
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("ternaryIndex"))  this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue("ternaryIndex"));
 		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = getExistingFileOption(line,"data");
@@ -145,9 +158,9 @@ public class Configuration {
 					this.prover = new DprProver();
 				else {
 					double epsilon = Double.parseDouble(values[1]);
-					this.alpha = DprProver.MINALPH_DEFAULT;
+					double alpha = DprProver.MINALPH_DEFAULT;
 					if (values.length>2) {
-						this.alpha = Double.parseDouble(values[2]);
+						alpha = Double.parseDouble(values[2]);
 					}
 					int strategy = DprProver.STRATEGY_DEFAULT;
 					if (values.length>3) {
@@ -155,8 +168,8 @@ public class Configuration {
 						if ("boost".equals(values[3])) strategy = DprProver.BOOST_ALPHA;
 						if ("adjust".equals(values[3])) strategy = DprProver.ADJUST_ALPHA;
 					}
-					this.prover = new DprProver(epsilon,this.alpha, strategy);
-					this.alpha += epsilon;
+					this.prover = new DprProver(epsilon,alpha, strategy);
+					alpha += epsilon;
 				}
 			} else if(values[0].startsWith("tr")) {
 				int depth = TracingDfsProver.DEFAULT_MAXDEPTH;
@@ -185,7 +198,31 @@ public class Configuration {
         }
         
         if (line.hasOption("force")) this.force = true;
+        
+        if (this.programFiles != null) this.loadProgramFiles();
     }
+	
+	/**
+	 * Clears program and plugin list, then loads them from --programFiles option.
+	 * @throws IOException
+	 */
+	protected void loadProgramFiles() throws IOException {
+		this.program = null;
+		this.plugins = new WamPlugin[programFiles.length-1];
+		int i=0;
+    	for (String s : programFiles) {
+    		if (s.endsWith(".wam")) {
+    			if (this.program != null) throw new IllegalArgumentException("Multiple WAM programs not supported");
+    			this.program = WamProgram.load(this.getExistingFileDirect(s));
+    		} else if (s.endsWith(".graph")) {
+    			this.plugins[i++] = LightweightGraphPlugin.load(this.getExistingFileDirect(s));
+    		} else if (s.endsWith("facts")) {
+    			this.plugins[i++] = FactsPlugin.load(this.getExistingFileDirect(s), this.ternaryIndex);
+    		} else {
+    			throw new IllegalArgumentException("Plugin type for "+s+" unsupported/unknown");
+    		}
+    	}
+	}
 
     /**
      * For all option flags as specified in this file, addOptions creates

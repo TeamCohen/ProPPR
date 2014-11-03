@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.GraphWriter;
+import edu.cmu.ml.praprolog.graph.v1.GraphWriter;
 import edu.cmu.ml.praprolog.prove.v1.Prover;
 import edu.cmu.ml.praprolog.prove.v1.LogicProgram.LogicProgramOutlink;
 import edu.cmu.ml.praprolog.util.Dictionary;

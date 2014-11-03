@@ -1,0 +1,62 @@
+0		comment	coworker(-1,-2) :- employee(-1,-3), boss(-3,-2)  #v:['X', 'Y', 'Z'].
+1	coworker/2	allocate	3	['Z', 'Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	coworker
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushfreevar	-3
+12		callp	employee/2
+13		pushboundvar	-3
+14		pushboundvar	-2
+15		callp	boss/2
+16		returnp
+17		comment	employee(-1,-2) :- management(-2), boss(-2,-1)  #v:['X', 'Y'].
+18	employee/2	allocate	2	['Y', 'X']
+19		initfreevar	-1	-2
+20		initfreevar	-2	-1
+21		fclear
+22		fpushstart	id	3
+23		fpushconst	employee
+24		fpushconst	2
+25		fpushconst	21
+26		freport
+27		pushboundvar	-2
+28		callp	management/1
+29		pushboundvar	-2
+30		pushboundvar	-1
+31		callp	boss/2
+32		returnp
+33		comment	boss(sookie,steve) :- .
+34	boss/2	unifyconst	sookie	-2
+35		unifyconst	steve	-1
+36		fclear
+37		fpushstart	id	3
+38		fpushconst	boss
+39		fpushconst	2
+40		fpushconst	36
+41		freport
+42		returnp
+43		comment	boss(sookie,sven) :- .
+44	boss/2	unifyconst	sookie	-2
+45		unifyconst	sven	-1
+46		fclear
+47		fpushstart	id	3
+48		fpushconst	boss
+49		fpushconst	2
+50		fpushconst	46
+51		freport
+52		returnp
+53		comment	management(sookie) :- .
+54	management/1	unifyconst	sookie	-1
+55		fclear
+56		fpushstart	id	3
+57		fpushconst	management
+58		fpushconst	1
+59		fpushconst	55
+60		freport
+61		returnp

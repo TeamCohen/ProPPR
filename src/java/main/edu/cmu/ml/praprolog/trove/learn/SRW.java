@@ -14,7 +14,7 @@ import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;
 import edu.cmu.ml.praprolog.trove.learn.tools.RWExample;
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;

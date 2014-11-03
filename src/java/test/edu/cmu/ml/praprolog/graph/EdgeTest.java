@@ -10,7 +10,7 @@ import java.util.TreeSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.graph.Edge;
+import edu.cmu.ml.praprolog.graph.v1.Edge;
 
 public class EdgeTest {
 	Set<Edge> edges;

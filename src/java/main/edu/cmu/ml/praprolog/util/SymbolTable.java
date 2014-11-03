@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.cmu.ml.praprolog.prove.Argument;
+import edu.cmu.ml.praprolog.prove.wam.Argument;
 
 /**
  * A symbol table mapping strings to/from integers in the range
@@ -13,50 +13,21 @@ import edu.cmu.ml.praprolog.prove.Argument;
  * @author wcohen,krivard
  *
  */
-public class SymbolTable {
-	protected List<String> symbolList = new ArrayList<String>();
+public class SymbolTable<T> {
+	protected List<T> symbolList = new ArrayList<T>();
 	protected int nextId = 0;
-	protected Map<String,Integer> idDict = new HashMap<String,Integer>();
-	public SymbolTable() {
-		this(new Argument[0]);
-	}
-	public SymbolTable(Argument ... initSymbols) {
-		for (Argument s : initSymbols) this.insert(s.getName()); // FIXME this might not work
-	}
-/*
-
-    def __init__(self,initSymbols=[]):
-        self._symbolList = [None]
-        self._nextId = 0
-        self._idDict = {}
-        for s in initSymbols: 
-            self.insert(s)
-
-    def insert(self,symbol):
-        """"""
-        if symbol not in self._idDict:
-            self._nextId += 1
-            self._idDict[symbol] = self._nextId
-            self._symbolList += [symbol]
-
-    def getSymbolList(self):
-        """Get an array of all defined symbols."""
-        return self._symbolList[1:]
-
-    def hasId(self,symbol):
-        return symbol in self._idDict
-
-    def getId(self,symbol):
-        """Get the numeric id, between 1 and N, of a symbol"""
-        self.insert(symbol)
-        return self._idDict[symbol]
-
- */
+	protected Map<T,Integer> idDict = new HashMap<T,Integer>();
+//	public SymbolTable() {
+//		this(new Argument[0]);
+//	}
+//	public SymbolTable(Argument ... initSymbols) {
+//		for (Argument s : initSymbols) this.insert(s.getName()); // FIXME this might not work
+//	}
 	/**
 	 * Insert a symbol.
 	 * @param s
 	 */
-	public void insert(String symbol) {
+	public void insert(T symbol) {
 		if (!this.idDict.containsKey(symbol)) {
 			this.nextId += 1;
 			this.idDict.put(symbol,this.nextId);
@@ -68,21 +39,21 @@ public class SymbolTable {
 	 * @param symbol
 	 * @return
 	 */
-	public int getId(String symbol) {
+	public int getId(T symbol) {
 		this.insert(symbol);
 		// FIXME this may be slow
 		return this.idDict.get(symbol);
 	}
-	public void insert(Argument a) {
-		this.insert(a.getName()); // FIXME may need to check constant/variable
-	}
-	public int getId(Argument a) {
-		return getId(a.getName()); // FIXME may need to check constant/variable
-	}
-	public boolean hasId(String symbol) {
+	public boolean hasId(T symbol) {
 		return this.idDict.containsKey(symbol);
 	}
-	public String getSymbol(int id) {
-		return this.symbolList.get(id);
+	public T getSymbol(int id) {
+		return this.symbolList.get(id-1);
+	}
+	public List<T> getSymbolList() {
+		return this.symbolList;
+	}
+	public int size() {
+		return this.symbolList.size();
 	}
 }

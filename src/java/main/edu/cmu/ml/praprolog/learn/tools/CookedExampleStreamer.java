@@ -5,9 +5,7 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
-import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph.GraphFormatException;
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.FileBackedIterable;
 import edu.cmu.ml.praprolog.util.ParsedFile;
 

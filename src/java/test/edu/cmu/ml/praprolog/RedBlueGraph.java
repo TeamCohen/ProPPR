@@ -16,9 +16,9 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
-import edu.cmu.ml.praprolog.graph.AnnotatedStringGraph;
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.graph.v1.AnnotatedGraph;
+import edu.cmu.ml.praprolog.graph.v1.AnnotatedStringGraph;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 /**
  * This is a template for a set of test cases that all use the same style of graph.
  * @author katie

@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.QueryAnswerer;
 import edu.cmu.ml.praprolog.prove.v1.Argument;
 import edu.cmu.ml.praprolog.prove.v1.Component;
 import edu.cmu.ml.praprolog.prove.v1.Goal;
@@ -17,6 +16,7 @@ import edu.cmu.ml.praprolog.prove.v1.ProPPRLogicProgramState;
 import edu.cmu.ml.praprolog.prove.v1.Prover;
 import edu.cmu.ml.praprolog.prove.v1.TracingDfsProver;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.v1.QueryAnswerer;
 
 
 public class UngroundedSolutionsTest {

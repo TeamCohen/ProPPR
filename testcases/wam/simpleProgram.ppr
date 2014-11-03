@@ -1,0 +1,5 @@
+coworker(X,Y) :- employee(X,Z),boss(Z,Y) .
+employee(X,Y) :- management(Y),boss(Y,X) .
+management(sookie) :- .
+boss(sookie,steve) :- .
+boss(sookie,sven) :- .

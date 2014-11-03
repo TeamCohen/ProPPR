@@ -3,8 +3,8 @@ package edu.cmu.ml.praprolog.learn;
 import java.util.Map;
 import java.util.Set;
 
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
-import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.MuParamVector;

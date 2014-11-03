@@ -7,10 +7,10 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.praprolog.examples.PairwiseRWExample;
+import edu.cmu.ml.praprolog.examples.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
-import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
-import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 

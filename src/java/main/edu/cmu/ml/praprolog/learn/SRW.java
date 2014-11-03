@@ -9,11 +9,11 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.examples.RWExample;
+import edu.cmu.ml.praprolog.graph.v1.AnnotatedGraph;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
-import edu.cmu.ml.praprolog.learn.tools.RWExample;
 import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;

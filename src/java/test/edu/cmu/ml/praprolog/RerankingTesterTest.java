@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.prove.v1.Component;
 import edu.cmu.ml.praprolog.prove.v1.DprProver;
@@ -17,6 +16,9 @@ import edu.cmu.ml.praprolog.prove.v1.Prover;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
+import edu.cmu.ml.praprolog.v1.RerankingTester;
+import edu.cmu.ml.praprolog.v1.Tester;
+import edu.cmu.ml.praprolog.v1.Tester.TestResults;
 
 public class RerankingTesterTest {
 	double EPSILON=1e-10;

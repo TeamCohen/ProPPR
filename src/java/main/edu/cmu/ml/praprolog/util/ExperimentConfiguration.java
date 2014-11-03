@@ -6,27 +6,17 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
-import edu.cmu.ml.praprolog.ExampleCooker;
-import edu.cmu.ml.praprolog.ModularMultiExampleCooker;
-import edu.cmu.ml.praprolog.MultithreadedExampleCooker;
-import edu.cmu.ml.praprolog.MultithreadedTester;
-import edu.cmu.ml.praprolog.QueryAnswerer;
-import edu.cmu.ml.praprolog.RerankingQueryAnswerer;
-import edu.cmu.ml.praprolog.Trainer2;
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.AprSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
-import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.feat.ComplexFeatureLibrary;
-import edu.cmu.ml.praprolog.prove.v1.Component;
-import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
 import edu.cmu.ml.praprolog.trove.MultithreadedRRTrainer;
 import edu.cmu.ml.praprolog.trove.MultithreadedTrainer;
-import edu.cmu.ml.praprolog.Tester;
 import edu.cmu.ml.praprolog.trove.Trainer;
 import edu.cmu.ml.praprolog.trove.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.util.multithreading.Multithreading;
@@ -41,7 +31,6 @@ public class ExperimentConfiguration extends Configuration {
 	public boolean trove;//=true;
 	public boolean pretest;//=false;
 	public boolean strict;//=false;
-	public LogicProgram program;
 	public QueryAnswerer queryAnswerer;
 	public boolean normalize;
 	public String solutionsFile;
@@ -240,13 +229,13 @@ public class ExperimentConfiguration extends Configuration {
 				threads = Integer.parseInt(values[1]);
 			}
 			if (values[0].equals("t")) {
-				this.trainer = new edu.cmu.ml.praprolog.Trainer<String>(
+				this.trainer = new edu.cmu.ml.praprolog.v1.Trainer<String>(
 						(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw);
 			} else if (values[0].equals("mt")) {
-				this.trainer = new edu.cmu.ml.praprolog.MultithreadedTrainer<String>(
+				this.trainer = new edu.cmu.ml.praprolog.v1.MultithreadedTrainer<String>(
 						(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw, threads);
 			} else if (values[0].equals("mrr")) {
-				this.trainer = new edu.cmu.ml.praprolog.MultithreadedRRTrainer<String>(
+				this.trainer = new edu.cmu.ml.praprolog.v1.MultithreadedRRTrainer<String>(
 						(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw, threads);
 			} else if (values[0].equals("trove.t")) {
 				this.trainer = new Trainer( 
@@ -303,7 +292,7 @@ public class ExperimentConfiguration extends Configuration {
 									this.program, 
 									(edu.cmu.ml.praprolog.trove.learn.SRW<edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample>) this.srw);
 						} else {
-							this.tester = new edu.cmu.ml.praprolog.RerankingTester(
+							this.tester = new edu.cmu.ml.praprolog.v1.RerankingTester(
 									this.prover, 
 									this.program, 
 									(edu.cmu.ml.praprolog.learn.SRW<PosNegRWExample<String>>) this.srw);

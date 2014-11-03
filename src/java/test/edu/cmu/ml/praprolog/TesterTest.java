@@ -13,8 +13,6 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.Tester.ExampleSolutionScore;
-import edu.cmu.ml.praprolog.Tester.TestResults;
 import edu.cmu.ml.praprolog.prove.v1.Component;
 import edu.cmu.ml.praprolog.prove.v1.DprProver;
 import edu.cmu.ml.praprolog.prove.v1.Goal;
@@ -25,6 +23,9 @@ import edu.cmu.ml.praprolog.prove.v1.RawPosNegExample;
 import edu.cmu.ml.praprolog.prove.v1.RawPosNegExampleStreamer;
 import edu.cmu.ml.praprolog.prove.v1.RuleComponentTest;
 import edu.cmu.ml.praprolog.prove.v1.ThawedPosNegExample;
+import edu.cmu.ml.praprolog.v1.Tester;
+import edu.cmu.ml.praprolog.v1.Tester.ExampleSolutionScore;
+import edu.cmu.ml.praprolog.v1.Tester.TestResults;
 
 public class TesterTest {
 

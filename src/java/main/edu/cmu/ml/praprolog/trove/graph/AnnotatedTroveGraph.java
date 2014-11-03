@@ -11,7 +11,7 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 
 /**
  * A Graph that supports edge features.

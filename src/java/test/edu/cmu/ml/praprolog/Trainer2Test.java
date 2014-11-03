@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import edu.cmu.ml.praprolog.util.multithreading.Multithreading;
+import edu.cmu.ml.praprolog.v1.Trainer2;
 
 public class Trainer2Test extends TrainerTest {
 

@@ -11,8 +11,7 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.ExampleCooker;
-import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
 import edu.cmu.ml.praprolog.prove.v1.Component;
 import edu.cmu.ml.praprolog.prove.v1.DprProver;
 import edu.cmu.ml.praprolog.prove.v1.Goal;
@@ -21,6 +20,7 @@ import edu.cmu.ml.praprolog.prove.v1.PprProver;
 import edu.cmu.ml.praprolog.prove.v1.Prover;
 import edu.cmu.ml.praprolog.prove.v1.RawPosNegExample;
 import edu.cmu.ml.praprolog.util.Dictionary;
+import edu.cmu.ml.praprolog.v1.ExampleCooker;
 
 public class ExampleCookerTest {
 

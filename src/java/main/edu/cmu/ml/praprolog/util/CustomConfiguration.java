@@ -1,9 +1,11 @@
 package edu.cmu.ml.praprolog.util;
 
+import java.io.IOException;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
-import edu.cmu.ml.praprolog.prove.v1.Prover;
+import edu.cmu.ml.praprolog.prove.Prover;
 
 public abstract class CustomConfiguration extends Configuration {
 
@@ -32,7 +34,7 @@ public abstract class CustomConfiguration extends Configuration {
 	protected abstract void addCustomOptions(Options options, int flags);
 	
 	@Override
-	protected void retrieveSettings(CommandLine line, int flags, Options options) {
+	protected void retrieveSettings(CommandLine line, int flags, Options options) throws IOException {
 		super.retrieveSettings(line, flags, options);
 		this.retrieveCustomSettings(line,flags,options);
 	}

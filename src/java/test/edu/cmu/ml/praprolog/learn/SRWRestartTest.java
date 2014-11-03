@@ -11,13 +11,13 @@ import java.util.TreeMap;
 
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.examples.PairwiseRWExample;
+import edu.cmu.ml.praprolog.examples.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.graph.v1.AnnotatedGraph;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 import edu.cmu.ml.praprolog.learn.L2SqLossSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
-import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
-import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;

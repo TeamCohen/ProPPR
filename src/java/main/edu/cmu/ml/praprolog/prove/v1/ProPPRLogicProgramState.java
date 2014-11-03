@@ -113,7 +113,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		Argument[] newArgs = new Argument[args.length];
 		for (int a=0; a<args.length; a++) {
 			if (args[a].isConstant()) newArgs[a] = args[a];
-			else newArgs[a] = new VariableArgument(-variableSymTab.getId(args[a]));
+			else newArgs[a] = new VariableArgument(-variableSymTab.getId(args[a].getName()));
 		}
 		return new Goal(g.getFunctor(),newArgs);
 	}
@@ -155,7 +155,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		for (Goal[] goalList : allGoals) {
 			for (Goal g : goalList) {
 				for (Argument a : g.getArgs()) {
-					if (a.isVariable()) variableSymTab.insert(a); 
+					if (a.isVariable()) variableSymTab.insert(a.getName()); 
 				}
 			}
 		}
@@ -226,7 +226,7 @@ public class ProPPRLogicProgramState extends LogicProgramState {
 		for (Goal[] goalList : allGoals) {
 			for (Goal g : goalList) {
 				for (Argument a : g.getArgs()) {
-					if (a.isVariable()) variableSymTab.insert(a); 
+					if (a.isVariable()) variableSymTab.insert(a.getName()); 
 				}
 			}
 		}

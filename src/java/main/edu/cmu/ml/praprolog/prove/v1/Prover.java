@@ -3,7 +3,7 @@ package edu.cmu.ml.praprolog.prove.v1;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.cmu.ml.praprolog.graph.GraphWriter;
+import edu.cmu.ml.praprolog.graph.v1.GraphWriter;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 

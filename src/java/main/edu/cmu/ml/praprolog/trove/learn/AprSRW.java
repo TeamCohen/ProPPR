@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph;

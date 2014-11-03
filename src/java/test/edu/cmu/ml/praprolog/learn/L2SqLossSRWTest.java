@@ -11,12 +11,12 @@ import java.util.TreeMap;
 
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraph;
+import edu.cmu.ml.praprolog.examples.PairwiseRWExample;
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
+import edu.cmu.ml.praprolog.examples.PairwiseRWExample.HiLo;
+import edu.cmu.ml.praprolog.graph.v1.AnnotatedGraph;
 import edu.cmu.ml.praprolog.learn.tools.LinearWeightingScheme;
-import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample;
-import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
-import edu.cmu.ml.praprolog.learn.tools.PairwiseRWExample.HiLo;
 import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.praprolog.util.Dictionary;

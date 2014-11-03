@@ -5,8 +5,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.praprolog.Tester;
-import edu.cmu.ml.praprolog.graph.GraphWriter;
+import edu.cmu.ml.praprolog.graph.v1.GraphWriter;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.prove.v1.LogicProgram;
 import edu.cmu.ml.praprolog.prove.v1.LogicProgramState;
@@ -17,6 +16,7 @@ import edu.cmu.ml.praprolog.trove.graph.AnnotatedTroveGraph.GraphFormatException
 import edu.cmu.ml.praprolog.trove.learn.SRW;
 import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.util.ParamVector;
+import edu.cmu.ml.praprolog.v1.Tester;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 

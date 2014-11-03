@@ -293,6 +293,19 @@ public class Dictionary {
 		return 0.0;
 	}
 	/**
+	 * Return the key's value, or 0.0 if the key is not in this map.
+	 * @param map
+	 * @param key1
+	 * @param key2
+	 * @return
+	 */
+	public static <K,L,M> M safeGetGet(Map<K,Map<L,M>> map, K key1, L key2, M dflt) {
+		if (map.containsKey(key1)) {
+			return safeGet(map.get(key1),key2,dflt);
+		}
+		return dflt;
+	}
+	/**
 	 * Serialize this map to a StringBuilder, using the specified delimiter between key:value pairs.
 	 * The string added to the StringBuilder is:
 	 *    $delim$key1:$value1$delim$key2:$value2 ... $delim$keyN$valueN

@@ -1,6 +1,6 @@
 package edu.cmu.ml.praprolog.prove.v1;
 
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 import edu.cmu.ml.praprolog.prove.v1.Component.Outlink;
 import edu.cmu.ml.praprolog.util.SymbolTable;
 import org.apache.log4j.Logger;
@@ -228,6 +228,10 @@ public class LogicProgram {
         public List<Feature> getFeatureList() {
             return featureList;
         }
+
+		public void setWeight(double d) {
+			this.weight = d;
+		}
     }
 
 }

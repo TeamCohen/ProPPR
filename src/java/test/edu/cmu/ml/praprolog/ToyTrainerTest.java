@@ -12,14 +12,15 @@ import java.util.TreeSet;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import edu.cmu.ml.praprolog.graph.AnnotatedGraphFactory;
-import edu.cmu.ml.praprolog.graph.Feature;
+import edu.cmu.ml.praprolog.examples.PosNegRWExample;
+import edu.cmu.ml.praprolog.graph.v1.AnnotatedGraphFactory;
+import edu.cmu.ml.praprolog.graph.v1.Feature;
 import edu.cmu.ml.praprolog.learn.L2PosNegLossTrainedSRW;
 import edu.cmu.ml.praprolog.learn.L2SqLossSRW;
 import edu.cmu.ml.praprolog.learn.SRW;
 import edu.cmu.ml.praprolog.learn.tools.CookedExampleStreamer;
-import edu.cmu.ml.praprolog.learn.tools.PosNegRWExample;
 import edu.cmu.ml.praprolog.learn.tools.SigmoidWeightingScheme;
+import edu.cmu.ml.praprolog.v1.Trainer;
 
 public class ToyTrainerTest {
 	private static final String COOKED_FILE = "testcases/toy.cooked";

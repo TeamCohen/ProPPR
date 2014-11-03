@@ -34,8 +34,8 @@ public class MultithreadedTrainer extends Trainer {
 			Iterable<PosNegRWExample> importCookedExamples, int numEpochs, boolean traceLosses) {
 		return trainParametersOnCookedIterator(importCookedExamples, 
 				new SimpleParamVector(new ConcurrentHashMap<String,Double>(
-						edu.cmu.ml.praprolog.MultithreadedTrainer.DEFAULT_CAPACITY,
-						edu.cmu.ml.praprolog.MultithreadedTrainer.DEFAULT_LOAD,
+						edu.cmu.ml.praprolog.v1.MultithreadedTrainer.DEFAULT_CAPACITY,
+						edu.cmu.ml.praprolog.v1.MultithreadedTrainer.DEFAULT_LOAD,
 						this.nthreads)), 
 				numEpochs, traceLosses);
 	}
