@@ -2,7 +2,7 @@ include ../Makefile.in
 
 DIR=weibo_bones
 SCRIPTS=scripts
-JM=java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog
+JM=java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr
 PSTEM=weibo1
 P=$(PSTEM).crules
 L2PLOCAL=l2plocal:0.001:2

@@ -29,7 +29,7 @@ fi
 PROGRAM=`cat $DIR/programFiles.arg`
 
 echo --- Cooking $DATA:
-echo java -cp $CP edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM%:} --data $DATA --output ${DATA%.data}.cooked $@
-java -cp $CP edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM%:} --data $DATA --output ${DATA%.data}.cooked $@
+echo java -cp $CP edu.cmu.ml.proppr.ExampleCooker --programFiles ${PROGRAM%:} --data $DATA --output ${DATA%.data}.cooked $@
+java -cp $CP edu.cmu.ml.proppr.ExampleCooker --programFiles ${PROGRAM%:} --data $DATA --output ${DATA%.data}.cooked $@
 
 echo --- Done.

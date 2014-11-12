@@ -34,19 +34,19 @@ For all run phases, control logging output using conf/log4j.properties.
 
 edu.cmu.ml.Experiment - Full pipeline: ground, train, test.
 
-edu.cmu.ml.praprolog.ExampleCooker - for grounding (used by grounding.sh)
+edu.cmu.ml.proppr.ExampleCooker - for grounding (used by grounding.sh)
 
-edu.cmu.ml.praprolog.trove.Trainer - single-threaded parameter-learning over labeled examples
-edu.cmu.ml.praprolog.trove.MultithreadedTrainer - multithreaded parameter-learning
+edu.cmu.ml.proppr.trove.Trainer - single-threaded parameter-learning over labeled examples
+edu.cmu.ml.proppr.trove.MultithreadedTrainer - multithreaded parameter-learning
     - if the trove *Trainer classes have trouble, there are less memory-efficient but potentially easier-to-debug versions which use string keys:
-      edu.cmu.ml.praprolog.Trainer
-      edu.cmu.ml.praprolog.MultithreadedTrainer
+      edu.cmu.ml.proppr.Trainer
+      edu.cmu.ml.proppr.MultithreadedTrainer
 
-edu.cmu.ml.praprolog.Tester - single-threaded evaluation of trained parameters over labeled examples
+edu.cmu.ml.proppr.Tester - single-threaded evaluation of trained parameters over labeled examples
 
-edu.cmu.ml.praprolog.prove.Prompt - interactive prompt for exploring state trees in grounding proofs - good for debugging rulefiles
+edu.cmu.ml.proppr.prove.Prompt - interactive prompt for exploring state trees in grounding proofs - good for debugging rulefiles
 
-edu.cmu.ml.praprolog.QueryAnswerer - compute query solutions, using trained or untrained parameters
+edu.cmu.ml.proppr.QueryAnswerer - compute query solutions, using trained or untrained parameters
 
 
 2.1. RUN: EXPERIMENT PIPELINE
@@ -76,7 +76,7 @@ Now you can run the full pipeline on the resulting files. The compile script
 generates the --programFiles argument for you:
 
 ProPPR $ export PROGRAMFILES=`cat my_program/programFiles.arg` 
-ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Experiment \
+ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.Experiment \
 --programFiles ${PROGRAMFILES%:}
 --train $DIR/train.data --output my_program/train.cooked \
 --test my_program/test.data --params my_program/params.wts
@@ -142,7 +142,7 @@ compiling my_program/rules.rules to my_program/rules.crules
 parsing my_program/rules.rules
 Converting my_program/facts.facts
 --- Cooking my_program/train.data:
-java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.ExampleCooker --programFiles my_program/rules.crules:my_program/facts.cfacts:my_program/graph.graph --data my_program/train.data --output my_program/train.cooked
+java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.ExampleCooker --programFiles my_program/rules.crules:my_program/facts.cfacts:my_program/graph.graph --data my_program/train.data --output my_program/train.cooked
  INFO [Component] Loading from file 'my_program/rules.crules'...
  INFO [Component] Loading from file 'my_program/facts.cfacts'...
  INFO [Component] Loading from file 'my_program/graph.graph'...
@@ -170,7 +170,7 @@ compiling my_program/textcat.rules to my_program/textcat.crules
 parsing my_program/textcat.rules
 Converting my_program/toylabels.facts
 --- Cooking my_program/toytrain.data:
-java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.ExampleCooker --programFiles my_program/textcat.crules:my_program/toylabels.cfacts:my_program/toywords.graph --data my_program/toytrain.data --output my_program/toytrain.cooked --prover dpr:0.00001 --threads 3
+java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.ExampleCooker --programFiles my_program/textcat.crules:my_program/toylabels.cfacts:my_program/toywords.graph --data my_program/toytrain.data --output my_program/toytrain.cooked --prover dpr:0.00001 --threads 3
  INFO [Component] Loading from file 'my_program/textcat.crules'...
  INFO [Component] Loading from file 'my_program/toylabels.cfacts'...
  INFO [Component] Loading from file 'my_program/toywords.graph'...
@@ -193,7 +193,7 @@ facts.facts	graph.graph	rules.rules train.data
 Given a cooked file we can learn the parameter weights that best
 support the training examples:
 
-ProPPR $ java edu.cmu.ml.praprolog.trove.Trainer my_program/toytrain.cooked my_program/toytrain.params
+ProPPR $ java edu.cmu.ml.proppr.trove.Trainer my_program/toytrain.cooked my_program/toytrain.params
 
 You can specify additional options if you like:
     --epochs {int}	Number of epochs (default 5)
@@ -204,7 +204,7 @@ You can specify additional options if you like:
 
 For multithreaded learning, use:
 
-ProPPR $ java edu.cmu.ml.praprolog.trove.MultithreadedTrainer my_program/toytrain.cooked my_program/toytrain.params
+ProPPR $ java edu.cmu.ml.proppr.trove.MultithreadedTrainer my_program/toytrain.cooked my_program/toytrain.params
 
 With the same options as above, plus:
     --threads {int}  Number of threads (default 4)
@@ -227,7 +227,7 @@ rules.crules  rules.rules  test.data train.cooked  train.data
 Run the tester:
 
 ProPPR $ export PROGRAMFILES=`cat my_program/programFiles.arg` 
-ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.praprolog.Tester \
+ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.Tester \
 --programFiles ${PROGRAMFILES%:}
 --test my_program/test.data --params my_program/params.wts
  INFO [Tester] flags: 0x59
@@ -255,7 +255,7 @@ ProPPR $ cat testcases/family.queries
 sim(william,X)
 sim(rachel,X)
 
-ProPPR $ java edu.cmu.ml.praprolog.QueryAnswerer \
+ProPPR $ java edu.cmu.ml.proppr.QueryAnswerer \
   --programFiles testcases/family.cfacts:testcases/family.crules \
   --queries testcases/family.queries --output answers.txt
  INFO [Component] Loading from file 'testcases/family.cfacts' with alpha=0.0 ...
@@ -286,13 +286,13 @@ An interactive prompt can be useful while debugging logic program issues, becaus
 Starting up the prompt:
 
 """
-ProPPR $ java -cp conf/:bin/:lib/* edu.cmu.ml.praprolog.prove.Prompt --programFiles ${PROGRAMFILES%:}
+ProPPR $ java -cp conf/:bin/:lib/* edu.cmu.ml.proppr.prove.Prompt --programFiles ${PROGRAMFILES%:}
 Starting up beanshell...
-prv set: edu.cmu.ml.praprolog.prove.TracingDfsProver@57fdc2d
+prv set: edu.cmu.ml.proppr.prove.TracingDfsProver@57fdc2d
  INFO [Component] Loading from file 'kbp_prototype/doc.crules' with alpha=0.0 ...
  INFO [Component] Loading from file 'kbp_prototype/kb.cfacts' with alpha=0.0 ...
  INFO [Component] Loading from file 'kbp_prototype/lp_predicate_SF_ENG_001-50doc.graph' with alpha=0.0 ...
-lp set: edu.cmu.ml.praprolog.prove.LogicProgram@2225a091
+lp set: edu.cmu.ml.proppr.prove.LogicProgram@2225a091
 
 Type 'help();' for help, 'quit();' to quit; 'list();' for a variable listing.
 

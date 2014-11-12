@@ -1,0 +1,25 @@
+New in 2.0
+==========
+
+WAM-based prover and graph architecture
+* 73x grounding speedup in python
+* 8-10x grounding speedup in java
+
+Multi-goal queries
+* e.g. disambiguate(bethlehem,EntityId),entityType(EntityId,Type)	+disambiguate(bethlehem,e12345),entityType(e12345,city)
+
+Name changes
+* Cook -> Ground (ExampleCooker -> Grounder, *.cooked -> *.grounded, etc)
+* edu.cmu.ml.praprolog -> edu.cmu.ml.proppr
+
+
+Examples organization
+* inference and learning examples now in edu.cmu.ml.proppr.examples
+
+
+Directory structure
+* src/java/main - primary java source
+* src/java/test - unit tests
+* src/scripts   - built-in scripts (program compiler, structure learner, etc)
+* scripts       - analysis tools (negative label sampling, answer metrics, grounded file statistics, etc)
+

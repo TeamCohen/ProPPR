@@ -28,7 +28,7 @@ $ make
 
 Run SparseGraphComponent to make sure it works. Run some outlinks queries, expressing the goal query in compiled format (comma-delimited, using negative integers as variable names).
 
-$ java -cp bin/:lib/*.jar:conf/ edu.cmu.ml.praprolog.prove.SparseGraphComponent $(NAME)
+$ java -cp bin/:lib/*.jar:conf/ edu.cmu.ml.proppr.prove.SparseGraphComponent $(NAME)
 > outlinks some_functor,some_arg1,-1
 goal(some_functor,c[some_arg1],v[-1]) ... goal(some_functor,c[some_arg1],c[some_value])
 

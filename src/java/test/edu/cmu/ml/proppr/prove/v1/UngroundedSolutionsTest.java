@@ -1,0 +1,49 @@
+package edu.cmu.ml.proppr.prove.v1;
+import static org.junit.Assert.*;
+
+import java.io.IOException;
+import java.util.Map;
+
+import org.junit.Test;
+
+import edu.cmu.ml.proppr.prove.v1.Argument;
+import edu.cmu.ml.proppr.prove.v1.Component;
+import edu.cmu.ml.proppr.prove.v1.Goal;
+import edu.cmu.ml.proppr.prove.v1.InnerProductWeighter;
+import edu.cmu.ml.proppr.prove.v1.LogicProgram;
+import edu.cmu.ml.proppr.prove.v1.LogicProgramState;
+import edu.cmu.ml.proppr.prove.v1.ProPPRLogicProgramState;
+import edu.cmu.ml.proppr.prove.v1.Prover;
+import edu.cmu.ml.proppr.prove.v1.TracingDfsProver;
+import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.v1.QueryAnswerer;
+
+
+public class UngroundedSolutionsTest {
+
+	@Test
+	public void test() throws IOException {
+		LogicProgram program = new LogicProgram(
+				Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),
+						Component.ALPHA_DEFAULT, null));
+		Prover p = new TracingDfsProver(10);
+
+		Map<LogicProgramState,Double> ans = p.proveState(program, new ProPPRLogicProgramState(Goal.decompile("grandparent,-1,-2")));
+		
+		System.out.println("===");
+		for (LogicProgramState s : ans.keySet()) {
+			if (s.isSolution()) {
+				System.out.println(s);
+				for (Argument a : s.getGroundGoal().getArgs()) assertTrue(a.isConstant());
+				assertFalse("Description includes variables",s.description().contains("v["));
+			}
+		}
+		
+//		System.out.println("===");
+//		for (String s : Prover.filterSolutions(ans).keySet()) {
+//			System.out.println(s);
+//			assertFalse("Filtered solutions contain variables",s.contains("v["));
+//		}
+	}
+
+}
