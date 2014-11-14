@@ -13,7 +13,7 @@ import edu.cmu.ml.proppr.prove.v1.ProPPRLogicProgramState;
 import edu.cmu.ml.proppr.prove.v1.Prover;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ExperimentConfiguration;
+import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
@@ -45,7 +45,7 @@ import java.util.Map;
 public class QueryAnswerer {
     private static final Logger log = Logger.getLogger(QueryAnswerer.class);
     
-    static class QueryAnswererConfiguration extends ExperimentConfiguration {
+    static class QueryAnswererConfiguration extends ModuleConfiguration {
         boolean normalize;
         boolean rerank;
 
@@ -143,12 +143,12 @@ public class QueryAnswerer {
         QueryAnswerer qa = c.rerank ?
                            new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw) :
                            new QueryAnswerer();
-        log.info("Running queries from " + c.queryFile + "; saving results to " + c.outputFile);
+        log.info("Running queries from " + c.queryFile + "; saving results to " + c.groundedFilename);
         if (c.paramsFile != null) {
         	ParamsFile file = new ParamsFile(c.paramsFile);
             qa.addParams(c.program, new SimpleParamVector(Dictionary.load(file)), c.weightingScheme);
             file.check(c);
         }
-        qa.findSolutions(c.program, c.prover, c.queryFile, c.outputFile, c.normalize);
+        qa.findSolutions(c.program, c.prover, c.queryFile, c.groundedFilename, c.normalize);
     }
 }

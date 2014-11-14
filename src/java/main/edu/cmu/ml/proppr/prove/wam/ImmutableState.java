@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.prove.wam;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * An immutable, hashable version of an interpreter state.
@@ -25,7 +26,7 @@ public class ImmutableState extends State {
 	
 	@Override
 	public int hashCode() {
-		return heap.hashCode() ^ registers.hashCode() ^ pc ^ (jumpTo!=null ? jumpTo.hashCode() : 0) ^ (completed?1:0) ^ (failed?2:0);
+		return ((Arrays.hashCode(heap) ^ Arrays.hashCode(registers) ^ pc ^ (jumpTo!=null ? jumpTo.hashCode() : 0)) << 2) ^ (completed?1:0) ^ (failed?2:0);
 	}
 
 	@Override

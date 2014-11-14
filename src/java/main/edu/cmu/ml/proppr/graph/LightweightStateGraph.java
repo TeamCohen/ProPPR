@@ -137,7 +137,7 @@ public class LightweightStateGraph extends InferenceGraph {
 		
 		boolean first = true;
 		
-		for (int fi = 1; fi < this.featureTab.size(); fi++) {
+		for (int fi = 1; fi <= this.featureTab.size(); fi++) {
 			if (!first) sb.append(":");
 			else first = false;
 			Goal f = this.featureTab.getSymbol(fi);

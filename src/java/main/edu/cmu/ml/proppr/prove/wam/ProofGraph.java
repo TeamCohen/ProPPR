@@ -29,7 +29,7 @@ public class ProofGraph {
 	public static final boolean DEFAULT_RESTART = false;
 	public static final boolean DEFAULT_TRUELOOP = true;
 	private InferenceExample example;
-	private WamProgram program;
+	private AWamProgram program;
 	private WamInterpreter interpreter;
 	private int queryStartAddress;
 	private ImmutableState startState;
@@ -38,14 +38,14 @@ public class ProofGraph {
 	private Map<Goal,Double> trueLoopRestartFD;
 	private Goal restartFeature;
 	private Goal restartBoosterFeature;
-	public ProofGraph(Query query, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+	public ProofGraph(Query query, AWamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this(new InferenceExample(query,null,null),program,plugins);
 	}
-	public ProofGraph(InferenceExample ex, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+	public ProofGraph(InferenceExample ex, AWamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this.example = ex; 
-		this.program = program;
+		this.program = new WamQueryProgram(program);
 		// TODO: builtin plugins
-		this.interpreter = new WamInterpreter(program, plugins);
+		this.interpreter = new WamInterpreter(this.program, plugins);
 		this.startState = this.createStartState();
 		
 		this.trueLoopFD = new HashMap<Goal,Double>(); this.trueLoopFD.put(new Goal("trueLoop"),1.0);
@@ -59,7 +59,7 @@ public class ProofGraph {
 		this.example.getQuery().variabilize();
 		// discard any compiled code added by previous queries
 		this.program.revert();
-		this.queryStartAddress = program.getInstructions().size();
+		this.queryStartAddress = program.size();
 		// add the query on to the end of the program
 		this.program.append(this.example.getQuery());
 		// execute querycode to get start state
@@ -77,6 +77,7 @@ public class ProofGraph {
 		if (!this.graph.outlinksDefined(state)) {
 			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop,restart);
 			if (restart) this.graph.setOutlinks(state,outlinks);
+			return outlinks;
 		}
 		return this.graph.getOutlinks(state);
 	}

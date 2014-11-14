@@ -29,7 +29,7 @@ public abstract class LearningGraphBuilder<F> {
 			TObjectDoubleMap<F> fd = new TObjectDoubleHashMap<F>();
 			for (String f : featStr.split(",")) {
 				if (featureList.length > 0) {
-					fd.put(parseFeature(featureList[Integer.parseInt(f)]),1.0);
+					fd.put(parseFeature(featureList[Integer.parseInt(f)-1]),1.0);
 				} else {
 					fd.put(parseFeature(f),1.0);
 				}
@@ -39,6 +39,7 @@ public abstract class LearningGraphBuilder<F> {
 			}
 			graph.addOutlink(nodes[0], new RWOutlink<F>(fd, nodes[1]));
 		}
+		graph.freeze(); // might be slow? but saves memory
 		return graph;
 	}
 }

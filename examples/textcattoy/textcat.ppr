@@ -1,0 +1,2 @@
+predict(X,Y) :- hasWord(X,W),isLabel(Y),related(W,Y)  {r}.
+related(W,Y) :- {w(W,Y)}.

@@ -13,7 +13,7 @@ import edu.cmu.ml.proppr.prove.v1.InnerProductWeighter;
 import edu.cmu.ml.proppr.trove.Trainer;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ExperimentConfiguration;
+import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.v1.Tester.TestResults;
@@ -21,8 +21,8 @@ import edu.cmu.ml.proppr.v1.Tester.TestResults;
 public class Experiment {
 	private static final Logger log = Logger.getLogger(Experiment.class);
 	public static void main(String[] args) {
-		ExperimentConfiguration c = new ExperimentConfiguration(args, 
-				Configuration.USE_DEFAULTS | Configuration.USE_TRAINTEST | Configuration.USE_LEARNINGSET | ExperimentConfiguration.USE_QUERYANSWERER);
+		ModuleConfiguration c = new ModuleConfiguration(args, 
+				Configuration.USE_DEFAULTS | Configuration.USE_TRAINTEST | Configuration.USE_LEARNINGSET | ModuleConfiguration.USE_QUERYANSWERER);
 		
 		System.out.println(c.toString());
 		
@@ -37,20 +37,20 @@ public class Experiment {
 //		if (c.nthreads < 0) cooker = new ExampleCooker(c.prover,c.programFiles,c.alpha);
 //		else cooker = new ModularMultiExampleCooker(c.prover, c.programFiles, c.alpha, c.nthreads);
 		// wait until after program is loaded to start timing
-		log.info("Cooking training examples from "+c.dataFile+"...");
+		log.info("Cooking training examples from "+c.queryFile+"...");
 		long start = System.currentTimeMillis();
-		c.cooker.cookExamples(c.dataFile, c.outputFile);
+		c.grounder.cookExamples(c.queryFile, c.groundedFilename);
 		
 		// train parameters on the cooked training data
 		log.info("Training model parameters...");
 		ParamVector paramVec = null;
 		if (c.trove) {
 			Trainer trainer = (Trainer) c.trainer;
-			paramVec = trainer.trainParametersOnCookedIterator(new edu.cmu.ml.proppr.trove.learn.tools.CookedExampleStreamer(c.outputFile), c.epochs, c.traceLosses);
+			paramVec = trainer.trainParametersOnCookedIterator(new edu.cmu.ml.proppr.trove.learn.tools.CookedExampleStreamer(c.groundedFilename), c.epochs, c.traceLosses);
 		} else {
 			edu.cmu.ml.proppr.v1.Trainer<String> trainer = (edu.cmu.ml.proppr.v1.Trainer<String>) c.trainer;
 			paramVec = trainer.trainParametersOnCookedIterator(
-				new GroundedExampleStreamer<String>(c.outputFile, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
+				new GroundedExampleStreamer<String>(c.groundedFilename, new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
 				c.epochs,
 				c.traceLosses);
 		}

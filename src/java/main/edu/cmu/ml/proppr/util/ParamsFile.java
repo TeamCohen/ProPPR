@@ -63,7 +63,7 @@ public class ParamsFile extends ParsedFile {
 	private static void saveParameter(Writer writer, String paramName, Double paramValue) throws IOException {
 		writer.write(String.format("%s\t%.6g\n", paramName,paramValue));
 	}
-	private static void saveHeader(Writer writer, Configuration config) throws IOException {
+	private static void saveHeader(Writer writer, ModuleConfiguration config) throws IOException {
 		writer.write(HEADER_PREFIX);
 		writer.write("weightingScheme=");
 		writer.write(config.weightingScheme.toString());
@@ -84,7 +84,7 @@ public class ParamsFile extends ParsedFile {
 		}
 		
 	}
-	public static void save(Map<String,Double> params, File paramsFile, Configuration config) {
+	public static void save(Map<String,Double> params, File paramsFile, ModuleConfiguration config) {
 		BufferedWriter writer;
 		try {
 			writer = new BufferedWriter(new FileWriter(paramsFile));
@@ -100,7 +100,7 @@ public class ParamsFile extends ParsedFile {
 			e.printStackTrace();
 		}
 	}
-	public static void save(TIntDoubleMap params, File paramsFile, Configuration config) {
+	public static void save(TIntDoubleMap params, File paramsFile, ModuleConfiguration config) {
 		BufferedWriter writer;
 		try {
 			writer = new BufferedWriter(new FileWriter(paramsFile));
@@ -122,7 +122,7 @@ public class ParamsFile extends ParsedFile {
 	 * matches the settings stored in this params file.
 	 * @param c
 	 */
-	public void check(Configuration c) {
+	public void check(ModuleConfiguration c) {
 		if (!this.getProperty("weightingScheme").equals(c.weightingScheme.toString())) 
 			failCheck("weightingScheme",this.getProperty("weightingScheme"), c.weightingScheme.toString(), c.force);
 		

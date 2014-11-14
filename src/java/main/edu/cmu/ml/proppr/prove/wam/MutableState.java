@@ -154,14 +154,6 @@ public class MutableState extends State {
 		sb.append("]");
 	}
 	@Override
-	protected void buildCallStackString(StringBuilder sb) {
-		sb.append("c[");
-		for (CallStackFrame f : this.calls) {
-			sb.append(f);
-		}
-		sb.append("]");
-	}
-	@Override
 	protected void buildRegisterString(StringBuilder sb) {
 		sb.append("r[");
 		for (int i=0; i<rn; i++) {

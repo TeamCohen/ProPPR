@@ -32,6 +32,9 @@ public abstract class Prover {
 	/** Return unfiltered distribution of state associated with proving the start state. 
 	 * @throws LogicProgramException */
 	public abstract Map<State,Double> prove(ProofGraph pg) throws LogicProgramException;
+	/** Return a threadsafe copy of the prover */
+	public abstract Prover copy();
+	
 	protected Map<State,Double> normalizedOutlinks(ProofGraph pg, State s) throws LogicProgramException {
 		List<Outlink> outlinks = pg.pgOutlinks(s,NORMLX_RESTART,NORMLX_TRUELOOP);
 		Map<State,Double> weightedOutlinks = new HashMap<State,Double>();

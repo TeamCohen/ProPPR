@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
@@ -22,15 +23,17 @@ import edu.cmu.ml.proppr.examples.InferenceExampleStreamer;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.prove.wam.AWamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
-import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.CustomConfiguration;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.multithreading.Multithreading;
+import edu.cmu.ml.proppr.util.multithreading.Transformer;
 
 /**
  * Exports a graph-based example for each raw example in a data file.
@@ -48,27 +51,36 @@ public class Grounder {
 	protected GroundingStatistics statistics=null;
 
 	protected Prover prover;
-	protected WamProgram masterProgram;
+	protected AWamProgram masterProgram;
 	protected WamPlugin[] masterPlugins;
-	
-	public Grounder(Prover p, WamProgram program, WamPlugin ... plugins) {
+	protected int nthreads=1;
+	protected int throttle=Multithreading.DEFAULT_THROTTLE;
+	private int empty;
+
+	public Grounder(Prover p, AWamProgram program, WamPlugin ... plugins) {
 		this.prover = p;
 		this.masterProgram = program;
 		this.masterPlugins = plugins;
 	}
-	
+	public Grounder(int nthreads, int throttle, Prover p, AWamProgram program, WamPlugin ... plugins) {
+		this(p,program,plugins);
+		this.nthreads = Math.max(1,nthreads);
+		this.throttle = throttle;
+	}
+
 	public class GroundingStatistics {
-	    public GroundingStatistics() {
-	    	log.info("Resetting grounding statistics...");
-	    }
+		public GroundingStatistics() {
+			log.info("Resetting grounding statistics...");
+		}
 		// statistics
 		int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
 		InferenceExample worstX = null;
 		double smallestFractionCovered = 1.0;
-		int nwritten=0;
-		
+		int count;
+
 		protected synchronized void updateStatistics(InferenceExample ex,int npos,int nneg,int covpos,int covneg) {
 			// keep track of some statistics - synchronized for multithreading
+			count ++;
 			totalPos += npos;
 			totalNeg += nneg;
 			coveredPos += covpos;
@@ -81,84 +93,68 @@ public class Grounder {
 		}
 	}
 
-	public void groundExamples(File dataFile, String outputFile) {
-		BufferedWriter writer = null;
+	public void groundExamples(File dataFile, File groundedFile) {
 		try {
-			writer = new BufferedWriter(new FileWriter(outputFile));
 			if (this.graphKeyFile != null) this.graphKeyWriter = new BufferedWriter(new FileWriter(this.graphKeyFile));
-			groundExamples(dataFile,writer); 
-			writer.close();
+			this.statistics = new GroundingStatistics();
+			this.empty = 0;
+
+			Multithreading<InferenceExample,String> m = new Multithreading<InferenceExample,String>(log);
+
+			m.executeJob(
+					this.nthreads, 
+					new InferenceExampleStreamer(dataFile).stream(), 
+					new Transformer<InferenceExample,String>(){
+						@Override
+						public Callable<String> transformer(InferenceExample in, int id) {
+							return new Ground(in,id);
+						}}, 
+					groundedFile, 
+					this.throttle);
+			if (empty>0) log.info("Skipped "+empty+" of "+this.statistics.count+" examples due to empty graphs");
+
 			if (this.graphKeyFile != null) this.graphKeyWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-
-	/** Single-threaded baseline method to ground examples.
-	 */
-
-	public void groundExamples(File dataFile, Writer writer) throws IOException {
-		this.statistics = new GroundingStatistics();
-		int k=0, empty=0;
-		for (InferenceExample inf : new InferenceExampleStreamer(dataFile).stream()) {
-			k++;
-			try {
-				ProofGraph pg = new ProofGraph(inf,this.masterProgram,this.masterPlugins);
-				GroundedExample x = groundExample(pg);
-				if (x.getGraph().edgeSize() > 0) writer.write(serializeGroundedExample(pg, x));
-				else { log.warn("Empty graph for example "+k); empty++; }
-			} catch(RuntimeException e) {
-				log.error("from example line "+k,e);
-			} catch (LogicProgramException e) {
-				log.error("logic program exception on example line "+k,e);
-			}
-		}
-		if (empty>0) log.info("Skipped "+empty+" of "+k+" examples due to empty graphs");
-	}
-
 	long lastPrint = System.currentTimeMillis();
 
+	/** Requires non-empty graph; non-empty example */
 	protected String serializeGroundedExample(ProofGraph pg, GroundedExample x) {
 		if (log.isInfoEnabled()) {
-			statistics.nwritten++;
 			long now = System.currentTimeMillis();
 			if (now-lastPrint > 5000) {
-				log.info("Grounded "+statistics.nwritten+" examples");
 				lastPrint = now;
 			}
-		}
-
-		if (x.length() == 0) {
-			log.warn("No positive or negative solutions for query "+statistics.nwritten+":"+pg.getExample().getQuery().toString()+"; skipping");
-			return "";
 		}
 
 		return pg.serialize(x);
 	}
 
-//	protected String serializeGraphKey(InferenceExample ex, ProofGraph pg) {
-//		StringBuilder key = new StringBuilder();
-//		String s = ex.getQuery().toString();
-//		ArrayList<Object> states = pg.
-//		for (int i=1; i<states.size(); i++) {
-//			key.append(s)
-//			.append("\t")
-//			.append(i)
-//			.append("\t")
-//			.append((State) states.get(i))
-//			.append("\n");
-//		}
-//		return key.toString();
-//	}
+	//	protected String serializeGraphKey(InferenceExample ex, ProofGraph pg) {
+	//		StringBuilder key = new StringBuilder();
+	//		String s = ex.getQuery().toString();
+	//		ArrayList<Object> states = pg.
+	//		for (int i=1; i<states.size(); i++) {
+	//			key.append(s)
+	//			.append("\t")
+	//			.append(i)
+	//			.append("\t")
+	//			.append((State) states.get(i))
+	//			.append("\n");
+	//		}
+	//		return key.toString();
+	//	}
 
-//	protected void saveGraphKey(InferenceExample rawX, GraphWriter writer) {
-//		try {
-//			this.graphKeyWriter.write(serializeGraphKey(rawX,writer));
-//		} catch (IOException e) {
-//			throw new IllegalStateException("Couldn't write to graph key file "+this.graphKeyFile.getName(),e);
-//		}
-//	}
+	//	protected void saveGraphKey(InferenceExample rawX, GraphWriter writer) {
+	//		try {
+	//			this.graphKeyWriter.write(serializeGraphKey(rawX,writer));
+	//		} catch (IOException e) {
+	//			throw new IllegalStateException("Couldn't write to graph key file "+this.graphKeyFile.getName(),e);
+	//		}
+	//	}
 
 	protected Prover getProver() {
 		return this.prover;
@@ -171,16 +167,16 @@ public class Grounder {
 	 * @return
 	 * @throws LogicProgramException 
 	 */
-	public GroundedExample groundExample(ProofGraph pg) throws LogicProgramException {
+	public GroundedExample groundExample(Prover p, ProofGraph pg) throws LogicProgramException {
 		if (log.isTraceEnabled())
 			log.trace("thawed example: "+pg.getExample().toString());
-		Map<State,Double> ans = this.getProver().prove(pg);
+		Map<State,Double> ans = p.prove(pg);
 		GroundedExample ground = pg.makeRWExample(ans);
 		InferenceExample ex = pg.getExample();
 		statistics.updateStatistics(ex,
 				ex.getPosSet().length,ex.getNegSet().length,
 				ground.getPosList().size(),ground.getNegList().size());
-//		if (this.graphKeyFile!= null) { saveGraphKey(rawX, writer); }
+		//		if (this.graphKeyFile!= null) { saveGraphKey(rawX, writer); }
 		return ground;
 	}
 
@@ -192,8 +188,8 @@ public class Grounder {
 				+" coveredNeg: "+statistics.coveredNeg);
 		if (statistics.totalPos>0) 
 			log.info("For positive examples " + statistics.coveredPos 
-				+ "/" + statistics.totalPos 
-				+ " proveable [" + ((100.0*statistics.coveredPos)/statistics.totalPos) + "%]");
+					+ "/" + statistics.totalPos 
+					+ " proveable [" + ((100.0*statistics.coveredPos)/statistics.totalPos) + "%]");
 		if (statistics.totalNeg>0) 
 			log.info("For negative examples " + statistics.coveredNeg 
 					+ "/" + statistics.totalNeg 
@@ -205,12 +201,12 @@ public class Grounder {
 
 	public static class ExampleGrounderConfiguration extends CustomConfiguration {
 		private File keyFile;
-		public ExampleGrounderConfiguration(String[] args, int flags) {
-			super(args, flags);
+		public ExampleGrounderConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
+			super(args, inputFiles, outputFiles, constants, modules);
 		}
 
 		@Override
-		protected void addCustomOptions(Options options, int flags) {
+		protected void addCustomOptions(Options options, int[] flags) {
 			options.addOption(OptionBuilder
 					.withLongOpt("graphKey")
 					.withArgName("keyFile")
@@ -220,7 +216,7 @@ public class Grounder {
 		}
 
 		@Override
-		protected void retrieveCustomSettings(CommandLine line, int flags,
+		protected void retrieveCustomSettings(CommandLine line, int[] flags,
 				Options options) {
 			if (line.hasOption("graphKey")) this.keyFile = new File(line.getOptionValue("graphKey"));
 		}
@@ -229,29 +225,57 @@ public class Grounder {
 		public Object getCustomSetting(String name) {
 			return keyFile;
 		}
-
-
-	}
-
-	public static void main(String ... args) {
-		int flags = Configuration.USE_DEFAULTS | Configuration.USE_DATA | Configuration.USE_OUTPUT;
-		ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, flags);
-		if (c.programFiles == null) Configuration.missing(Configuration.USE_PROGRAMFILES,flags);
-
-		Grounder grounder = null;
-		if (c.nthreads < 0) grounder = new Grounder(c.prover,c.program,c.plugins);
-//		else grounder = new ModularMultiExampleGrounder(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)), c.nthreads); 
-		//MultithreadedExampleGrounder(c.prover,c.programFiles,c.nthreads);
-		long start = System.currentTimeMillis();
-		if (c.getCustomSetting("graphKey") != null) grounder.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
-		grounder.groundExamples(c.dataFile, c.outputFile);
-		System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
-		System.out.println("Done.");
-
 	}
 
 	public void useGraphKeyFile(File keyFile) {
 		log.info("Using graph key file "+keyFile.getName());
 		this.graphKeyFile = keyFile;
+	}
+
+	///////////////////////////////// Multithreading scaffold //////////////////////////
+
+	/** Transforms from inputs to outputs
+	 * 
+	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+	 */
+	private class Ground implements Callable<String> {
+		InferenceExample inf;
+		int id;
+		public Ground(InferenceExample in, int id) {
+			this.inf = in;
+			this.id = id;
+		}
+		@Override
+		public String call() throws Exception {
+			ProofGraph pg = new ProofGraph(inf,masterProgram,masterPlugins);
+			GroundedExample x = groundExample(getProver().copy(), pg);
+			if (x.getGraph().edgeSize() > 0) {
+				if (x.length() > 0) {
+					return (serializeGroundedExample(pg, x));
+				} else {
+					log.warn("No positive or negative solutions for query "+id+":"+pg.getExample().getQuery().toString()+"; skipping");
+				}
+			}
+			log.warn("Empty graph for example "+id);
+			empty++;
+			return null;
+		}
+	}
+
+	/////////////////////////////////////// Command line ////////////////////////////////
+	public static void main(String ... args) {
+		int inputFiles = Configuration.USE_QUERIES;
+		int outputFiles = Configuration.USE_GROUNDED;
+		int constants = Configuration.USE_WAM | Configuration.USE_THREADS;
+		int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER;
+		
+		ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);
+
+		long start = System.currentTimeMillis();
+		if (c.getCustomSetting("graphKey") != null) c.grounder.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
+		c.grounder.groundExamples(c.queryFile, c.groundedFile);
+		System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
+		System.out.println("Done.");
+
 	}
 }

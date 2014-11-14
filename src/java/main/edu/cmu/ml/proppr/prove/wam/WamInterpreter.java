@@ -29,12 +29,12 @@ public class WamInterpreter {
 	private SymbolTable<String> constantTable;
 	private List<Feature> featureStack;
 	private Map<Goal,Double> reportedFeatures;
-	private WamProgram program;
+	private AWamProgram program;
 	private WamPlugin[] plugins;
-	public WamInterpreter(WamProgram program, WamPlugin[] plugins) {
+	public WamInterpreter(AWamProgram program, WamPlugin[] plugins) {
 		this(new SymbolTable<String>(), program, plugins);
 	}
-	public WamInterpreter(SymbolTable<String> ct, WamProgram program, WamPlugin[] plugins) {
+	public WamInterpreter(SymbolTable<String> ct, AWamProgram program, WamPlugin[] plugins) {
 		this.constantTable = ct;
 		this.featureStack = new ArrayList<Feature>();
 		this.program = program;
@@ -45,7 +45,7 @@ public class WamInterpreter {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 
-	public WamProgram getProgram() {
+	public AWamProgram getProgram() {
 		return this.program;
 	}
 	public ImmutableState saveState() {return this.state.immutableVersion();}

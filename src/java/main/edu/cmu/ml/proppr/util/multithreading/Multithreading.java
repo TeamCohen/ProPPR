@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.util.multithreading;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -52,7 +53,7 @@ public class Multithreading<In,Out> {
 	 * @throws IOException 
 	 */
 	@SuppressWarnings("unchecked")
-	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,String outputFile, int throttle) throws IOException {
+	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,File outputFile, int throttle) throws IOException {
 		Writer w = new BufferedWriter(new FileWriter(outputFile));
 		executeJob(nThreads, streamer, transformer, (Cleanup<Out>) new WritingCleanup(w, this.log), throttle);
 		w.close();

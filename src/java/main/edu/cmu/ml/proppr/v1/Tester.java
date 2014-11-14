@@ -24,7 +24,7 @@ import edu.cmu.ml.proppr.prove.v1.ThawedPosNegExample;
 import edu.cmu.ml.proppr.prove.v1.TracingDfsProver;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ExperimentConfiguration;
+import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
@@ -166,7 +166,7 @@ public class Tester extends ExampleThawing {
 	public static void main(String[] args) {
 		int flags = Configuration.USE_DEFAULTS | Configuration.USE_TEST | Configuration.USE_PARAMS;
 		log.info(String.format("flags: 0x%x",flags));
-		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
+		ModuleConfiguration c = new ModuleConfiguration(args,flags);
 		
 //		Tester tester = new Tester(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha)));
 		if (c.paramsFile != null) {

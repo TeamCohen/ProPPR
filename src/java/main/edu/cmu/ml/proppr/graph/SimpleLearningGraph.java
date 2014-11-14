@@ -7,6 +7,7 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.procedure.TObjectProcedure;
 
 /**
  * Straightforward implementation using three hash maps for u -> v -> f -> w.
@@ -89,5 +90,16 @@ public class SimpleLearningGraph extends LearningGraph<String> {
 	@Override
 	public int edgeSize() {
 		return edgeSize;
+	}
+
+	@Override
+	public void freeze() {
+		this.near.forEachValue(new TObjectProcedure<TIntArrayList>() {
+			@Override
+			public boolean execute(TIntArrayList destList) {
+				destList.trimToSize();
+				return true;
+			}
+		});
 	}
 }

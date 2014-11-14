@@ -105,7 +105,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return
 	 */
-	public double totalEdgeWeight(LearningGraph<F> g, int u,  ParamVector<F,?> p) {
+	public <D> double totalEdgeWeight(LearningGraph<F> g, int u,  ParamVector<F,D> p) {
 		double sum = 0.0;
 		for (TIntIterator it = g.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
@@ -136,10 +136,12 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return Mapping from new set of node names to updated values.
 	 */
-	public TIntDoubleMap walkOnceUsingFeatures(final LearningGraph<F> g, TIntDoubleMap vec, final ParamVector<F,?> paramVec) {
+	public <D> TIntDoubleMap walkOnceUsingFeatures(final LearningGraph<F> g, TIntDoubleMap vec, final ParamVector<F,D> paramVec) {
+		if (vec.isEmpty()) return vec;
 		final TIntDoubleMap nextVec = new TIntDoubleHashMap();
 		vec.forEachEntry(new TIntDoubleProcedure() {
 			int k=-1;
+			LearningGraph<F> graph = g;
 			@Override
 			public boolean execute(int u, double uw) {
 				k++;
@@ -157,7 +159,8 @@ public class SRW<F,E extends RWExample<F>> {
 					int v = it.next();
 					double ew = edgeWeight(g,u,v,paramVec);
 					double inc = uw * ew / z;
-					Dictionary.increment(nextVec,v,inc);
+					nextVec.adjustOrPutValue(v, inc, inc);
+//					Dictionary.increment(nextVec,v,inc);
 				}
 				return true;
 			}

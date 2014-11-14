@@ -20,7 +20,7 @@ import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ExperimentConfiguration;
+import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.FileBackedIterable;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
@@ -184,20 +184,20 @@ public class Trainer<T> {
 				| Configuration.USE_DEFERREDPROGRAM
 				| Configuration.USE_MAXT;
 		log.info(String.format("flags: 0x%x",flags));
-		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
+		ModuleConfiguration c = new ModuleConfiguration(args,flags);
 
-		String cookedFile=c.dataFile.getPath();
-		if (!c.dataFile.getName().endsWith(ExampleCooker.COOKED_SUFFIX)) {
+		String cookedFile=c.queryFile.getPath();
+		if (!c.queryFile.getName().endsWith(ExampleCooker.COOKED_SUFFIX)) {
 			// then we have to cook first
-			log.info("Cooking "+c.dataFile+"...");
-			if (c.outputFile == null) 
+			log.info("Cooking "+c.queryFile+"...");
+			if (c.groundedFilename == null) 
 				throw new IllegalArgumentException("If you specify an uncooked file for --data, "
 						+"you have to use --output to tell me where to put the cooked version. "
 						+"Use "+ExampleCooker.COOKED_SUFFIX+" for cooked files so I can tell the difference.");
 			long start = System.currentTimeMillis();
-			c.cooker.cookExamples(c.dataFile, c.outputFile);
+			c.grounder.cookExamples(c.queryFile, c.groundedFilename);
 			log.info("Finished cooking in "+(System.currentTimeMillis()-start)+" ms");
-			cookedFile = c.outputFile;
+			cookedFile = c.groundedFilename;
 		}
 
 		// train parameters on the cooked training data

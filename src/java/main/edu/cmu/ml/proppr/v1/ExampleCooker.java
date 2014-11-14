@@ -276,7 +276,7 @@ public class ExampleCooker extends ExampleThawing {
 		//MultithreadedExampleCooker(c.prover,c.programFiles,c.nthreads);
 		long start = System.currentTimeMillis();
 		if (c.getCustomSetting("graphKey") != null) cooker.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
-		cooker.cookExamples(c.dataFile, c.outputFile);
+		cooker.cookExamples(c.queryFile, c.groundedFilename);
 		System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
 		System.out.println("Done.");
 

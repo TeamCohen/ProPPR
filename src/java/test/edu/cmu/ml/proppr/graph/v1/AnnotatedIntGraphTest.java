@@ -1,4 +1,4 @@
-package edu.cmu.ml.proppr.graph;
+package edu.cmu.ml.proppr.graph.v1;
 
 import org.junit.Before;
 

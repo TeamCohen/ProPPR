@@ -31,10 +31,13 @@ public abstract class LearningGraph<F> {
 	}
 	/** Store the neighbors of node u */
 	public abstract void addOutlink(int u, RWOutlink<F> outlink);
+	/** */
 	public abstract TIntArrayList near(int u);
 	public abstract TObjectDoubleMap<F> getFeatures(int u, int v);
 	public abstract Set<F> getFeatureSet();
 	public abstract int[] getNodes();
 	public abstract int nodeSize();
 	public abstract int edgeSize();
+	/** No further edits will be made; optimize the graph. */
+	public abstract void freeze();
 }

@@ -59,11 +59,11 @@
 			</fileset>
 		</delete>
 	</target>
-    <target depends="clean,decruft" name="cleanall"/>
-    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="cleanall" depends="clean,decruft"/>
+    <target name="build" depends="build-subprojects,build-project"/>
     <target name="build-subprojects"/>
 	
-    <target depends="init" name="build-project">
+    <target name="build-project" depends="init" >
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
             <src path="src/java/main"/>
@@ -76,7 +76,7 @@
     	</copy>
     </target>
 	
-    <target depends="init" name="build-tests">
+    <target name="build-tests" depends="init">
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
             <src path="src/java/test"/>

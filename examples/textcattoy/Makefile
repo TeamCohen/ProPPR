@@ -11,7 +11,7 @@ PROGRAM=textcat.wam:toylabels.cfacts:toywords.graph
 all: results.txt
 
 clean:
-	rm -f *results.txt params.wts *.cooked
+	rm -f *results.txt params.wts *.grounded
 
 results.txt: pre.train.results.txt pre.test.results.txt post.train.results.txt post.test.results.txt
 	cat $^ > $@
@@ -25,11 +25,11 @@ pre.%.Tester.log: %.examples
 post.%.Tester.log: %.examples params.wts
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts --tester $(TESTER) --srw $(SRW) | tee post.$*.Tester.log
 
-params.wts: ${TRAIN}.examples.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS) --trainer $(TRAINER)
+params.wts: ${TRAIN}.examples.grounded
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
 
-%.examples.cooked: %.examples
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}
+%.examples.grounded: %.examples
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS}
 
 #%.examples: %.solutions.txt %.queries
 #	${SCRIPTS}/solutions2train.pl $*.queries $< $*.unreachable $@

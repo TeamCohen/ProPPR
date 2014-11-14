@@ -8,13 +8,14 @@ import java.util.List;
 
 import org.junit.Test;
 
+import edu.cmu.ml.proppr.prove.wam.AWamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Instruction.OP;
 
 public class WamProgramTest {
 	@Test
 	public void testLoad() throws IOException {
-		WamProgram program = WamProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		AWamProgram program = WamProgram.load(new File("testcases/wam/simpleProgram.wam"));
 		OP[] simpleProgram = 
 			{
 				OP.comment,
@@ -82,7 +83,7 @@ public class WamProgramTest {
 			};
 		assertEquals(simpleProgram.length,program.size());
 		for (int i=0; i<simpleProgram.length; i++) {
-			assertEquals("Instruction "+i,simpleProgram[i],program.getInstructions().get(i).opcode);
+			assertEquals("Instruction "+i,simpleProgram[i],program.getInstruction(i).opcode);
 		}
 		assertTrue(program.hasLabel("coworker/2"));
 		List<Integer> addr = program.getAddresses("coworker/2");

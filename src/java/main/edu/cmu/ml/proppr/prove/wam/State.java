@@ -1,5 +1,6 @@
 package edu.cmu.ml.proppr.prove.wam;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -122,7 +123,11 @@ public abstract class State {
 		sb.append("]");
 	}
 	protected void buildCallStackString(StringBuilder sb) {
-		sb.append("c[?]");
+		sb.append("c[");
+		for (CallStackFrame f : this.calls) {
+			sb.append(f);
+		}
+		sb.append("]");
 	}
 	protected void buildRegisterString(StringBuilder sb) {
 		sb.append("r[");
@@ -137,20 +142,20 @@ public abstract class State {
 	public boolean equals(Object o) {
 		if (! (o instanceof State)) return false;
 		State s = (State) o;
-		if (this.getHeapSize() != s.getHeapSize() ||
-				this.getRegisterSize() != s.getRegisterSize() ||
-				this.calls.size() != s.calls.size() ||
+		if (this.calls.size() != s.calls.size() ||
 				this.pc != s.pc ||
 				this.completed != s.completed ||
 				this.failed != s.failed)
 			return false;
-		for (int i=0; i<this.getHeapSize(); i++) {
-			if (heap[i] != s.heap[i]) return false;
-		}
-		for (int i=0; i<this.getRegisterSize(); i++) {
-			if (registers[i] != s.registers[i]) return false;
-		}
-		Iterator<CallStackFrame> it = this.calls.iterator(),
+//		for (int i=0; i<this.getHeapSize(); i++) {
+//			if (heap[i] != s.heap[i]) return false;
+//		}
+		if (!Arrays.equals(heap, s.heap)) return false;
+//		for (int i=0; i<this.getRegisterSize(); i++) {
+//			if (registers[i] != s.registers[i]) return false;
+//		}
+		if (!Arrays.equals(registers, s.registers)) return false;
+		Iterator<CallStackFrame>  it = this.calls.iterator(),
 				sit = s.calls.iterator();
 		while(it.hasNext()) {
 			CallStackFrame me = it.next();

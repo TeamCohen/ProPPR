@@ -327,8 +327,8 @@ public class ExampleCookerWC extends ExampleThawing {
 				
 	ExampleCookerWC cooker = new ExampleCookerWC(c.prover, new LogicProgram(Component.loadComponents(c.programFiles,c.alpha,c)));
 	long start = System.currentTimeMillis();
-	Writer outputWriter = new BufferedWriter(new FileWriter(c.outputFile));
-	cooker.cookExamples(c.dataFile, outputWriter, c.nthreads >= 1 ? c.nthreads : 1);
+	Writer outputWriter = new BufferedWriter(new FileWriter(c.groundedFilename));
+	cooker.cookExamples(c.queryFile, outputWriter, c.nthreads >= 1 ? c.nthreads : 1);
 	cooker.reportStatistics();
 	outputWriter.close();
 	System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");

@@ -48,6 +48,9 @@ public class DfsProver extends Prover {
 		this.trueLoop = trueLoop;
 		this.restart = restart;
 	}
+	public Prover copy() {
+		return new DfsProver(this.weighter, this.maxDepth, this.trueLoop, this.restart);
+	}
 
 	protected class Entry {
 		public State state;

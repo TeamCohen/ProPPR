@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.prove.UniformWeighter;
 import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.prove.wam.AWamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
@@ -29,10 +30,10 @@ public class UngroundedSolutionsTest {
 
 	@Test
 	public void test() throws IOException, LogicProgramException {
-		WamProgram program = WamProgram.load(new File("testcases/grand/grand.wam"));
+		AWamProgram program = WamProgram.load(new File("testcases/grand/grand.wam"));
 		GraphlikePlugin facts = LightweightGraphPlugin.load(new File("testcases/grand/grand.cfacts"));
 		Query q = new Query(new Goal("grandparent",new ConstantArgument("X"),new ConstantArgument("Y")));
-		q.variabilize();
+//		q.variabilize();
 		ProofGraph pg = new ProofGraph(q,program,facts);
 		Prover p = new DfsProver(new UniformWeighter(), 20);
 		
