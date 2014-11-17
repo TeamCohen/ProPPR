@@ -1,3 +1,4 @@
+import logging
 #symbol table - map strings to/from the range 1..N inclusive.
 
 class SymbolTable(object):
@@ -13,6 +14,7 @@ class SymbolTable(object):
 
     def insert(self,symbol):
         """Insert a symbol."""
+        #logging.debug( "symtab: %s" % symbol)
         if symbol not in self._idDict:
             self._nextId += 1
             self._idDict[symbol] = self._nextId
@@ -21,6 +23,9 @@ class SymbolTable(object):
     def getSymbolList(self):
         """Get an array of all defined symbols."""
         return self._symbolList[1:]
+
+    def getSymbol(self,id):
+        return self._symbolList[id]
 
     def hasId(self,symbol):
         return symbol in self._idDict

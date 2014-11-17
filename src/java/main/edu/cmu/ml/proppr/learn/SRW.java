@@ -251,7 +251,7 @@ public class SRW<F,E extends RWExample<F>> {
         double edgeUV = this.edgeWeight(graph, u, v, paramVec);
         TObjectDoubleMap<F> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
         for (F f : trainableFeatures(totDerFeature.keySet())) {
-            // above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
+            // revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
             double term2 = (edgeUV / totEdgeWeightU) * Dictionary.safeGet(totDerFeature, f);
             double val = Dictionary.safeGet(derEdgeUV, f) - term2;
             Dictionary.increment(derWalk, f, val / totEdgeWeightU);

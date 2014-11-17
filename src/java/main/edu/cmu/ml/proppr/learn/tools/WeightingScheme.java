@@ -43,4 +43,13 @@ public abstract class WeightingScheme<F> {
 		}
 		return Math.max(0, edgeWeightFunction(sum));
 	}
+	
+	/** Support method for learning
+	 * 
+	 * @param sum
+	 * @return
+	 */
+	public double edgeWeight(double sum) {
+		return Math.max(0,edgeWeightFunction(sum));
+	}
 }

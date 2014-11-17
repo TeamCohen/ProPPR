@@ -1,5 +1,7 @@
 package edu.cmu.ml.proppr.prove.wam;
 
+import java.util.Arrays;
+
 import edu.cmu.ml.proppr.prove.wam.Argument;
 
 public class Goal implements Comparable<Goal> {
@@ -48,5 +50,20 @@ public class Goal implements Comparable<Goal> {
 			if (k!=0) return k;
 		}
 		return 0;
+	}
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof Goal)) return false;
+		Goal g = (Goal) o;
+		if (!this.functor.equals(g.functor)) return false;
+		if (this.arity != g.arity) return false;
+		for (int i=0; i<this.arity; i++) {
+			if (!this.args[i].equals(g.args[i])) return false;
+		}
+		return true;
+	}
+	@Override
+	public int hashCode() {
+		return functor.hashCode() ^ Arrays.hashCode(args);
 	}
 }

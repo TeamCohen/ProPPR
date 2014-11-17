@@ -146,14 +146,12 @@ public class ProofGraph {
 	}
 
 	public GroundedExample makeRWExample(Map<State, Double> ans) {
-
 		List<State> posIds = new ArrayList<State>();
 		List<State> negIds = new ArrayList<State>();
 		for (Map.Entry<State,Double> soln : ans.entrySet()) {
 			if (soln.getKey().isCompleted()) {
 				Query ground = fill(soln.getKey());
 				// FIXME: slow?
-				
 				if (Arrays.binarySearch(example.getPosSet(), ground) >= 0) posIds.add(soln.getKey());
 				if (Arrays.binarySearch(example.getNegSet(), ground) >= 0) negIds.add(soln.getKey());
 			}

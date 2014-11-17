@@ -138,7 +138,7 @@ public class ParamsFile extends ParsedFile {
 			}
 		}
 		
-		if (!this.getProperty("prover").equals(c.prover.toString()))
+		if (this.getProperty("prover") != null && !this.getProperty("prover").equals(c.prover.toString()))
 			failCheck("prover",this.getProperty("prover"),c.prover.toString(), c.force);
 	}
 	private void failCheck(String setting, String paramsFile, String configuration, boolean force) {

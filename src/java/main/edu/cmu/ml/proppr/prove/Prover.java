@@ -35,6 +35,9 @@ public abstract class Prover {
 	/** Return a threadsafe copy of the prover */
 	public abstract Prover copy();
 	
+	public void setWeighter(FeatureDictWeighter w) {
+		this.weighter = w;
+	}
 	protected Map<State,Double> normalizedOutlinks(ProofGraph pg, State s) throws LogicProgramException {
 		List<Outlink> outlinks = pg.pgOutlinks(s,NORMLX_RESTART,NORMLX_TRUELOOP);
 		Map<State,Double> weightedOutlinks = new HashMap<State,Double>();

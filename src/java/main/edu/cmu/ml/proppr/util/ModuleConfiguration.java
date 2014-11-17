@@ -44,7 +44,7 @@ public class ModuleConfiguration extends Configuration {
 //	public boolean normalize;
 //	public String solutionsFile;
 	public WeightingScheme weightingScheme;
-	public Prover prover = null;
+	public Prover prover;
 	public ModuleConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		super(args,  inputFiles,  outputFiles,  constants,  modules);
 	}
@@ -455,6 +455,7 @@ public class ModuleConfiguration extends Configuration {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(super.toString()).append(":\n");
+		if (prover != null)   sb.append("  Prover: ").append(prover.getClass().getCanonicalName()).append("\n");
 		if (grounder != null) sb.append("Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
 		if (srw != null)      sb.append("  Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
 		if (trainer != null)  sb.append(" Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");

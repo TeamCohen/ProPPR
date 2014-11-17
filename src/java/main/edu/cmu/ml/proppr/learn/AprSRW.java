@@ -223,7 +223,7 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
 			for(F feature : (graph.getFeatureSet())) {
-				double dotP = this.weightingScheme.edgeWeightFunction(unwrappedDotP.get(v));
+				double dotP = this.weightingScheme.edgeWeight(unwrappedDotP.get(v));
 				double ddotP = this.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 				int c = graph.getFeatures(u, v).containsKey(feature) ? 1 : 0;
 				double vdr = dr.get(v).get(feature);
@@ -240,7 +240,7 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
 			// calculate edge weight on v:
-			double dotP = this.weightingScheme.edgeWeightFunction(unwrappedDotP.get(v));
+			double dotP = this.weightingScheme.edgeWeight(unwrappedDotP.get(v));
 			Dictionary.increment(r, v, (1 - stayProb) * (1 - alpha) * (dotP / rowSum) * ru);
 		}
 	}

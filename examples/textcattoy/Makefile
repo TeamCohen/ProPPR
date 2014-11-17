@@ -34,7 +34,11 @@ params.wts: ${TRAIN}.examples.grounded
 #%.examples: %.solutions.txt %.queries
 #	${SCRIPTS}/solutions2train.pl $*.queries $< $*.unreachable $@
 
-#%.solutions.txt: %.queries
-#	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --output $@ --prover ${PROVER}
+%.solutions.txt: %.examples
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads 1
+
+
+%.trained.solutions.txt: %.examples params.wts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads 1 --params params.wts
 
 .PRECIOUS: %.examples params.wts %.solutions.txt

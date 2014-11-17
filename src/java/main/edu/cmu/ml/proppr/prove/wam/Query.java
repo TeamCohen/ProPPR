@@ -38,6 +38,12 @@ public class Query extends Rule implements Comparable<Query> {
 		return new Query(goals.toArray(new Goal[0]));
 
 	}
+	public static Goal parseGoal(String string) {
+		char[] array = string.toCharArray();
+		LinkedList<Goal> goals = new LinkedList<Goal>();
+		if (goal(array,0,goals) != array.length) throw new IllegalArgumentException("Bad syntax for goal "+string);
+		return goals.getFirst();
+	}
 	private static int goal(char[] array, int cursor, List<Goal> goals) {
 		StringBuilder functor = new StringBuilder();
 		cursor = functor(array,cursor,functor);

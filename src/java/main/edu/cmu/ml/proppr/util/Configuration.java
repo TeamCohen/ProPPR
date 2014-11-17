@@ -44,7 +44,7 @@ public class Configuration {
 	public static final int USE_PARAMS = 0x20;
 	private static final String QUERIES_FILE_OPTION = "queries";
 	private static final String GROUNDED_FILE_OPTION = "grounded";
-	private static final String ANSWERS_FILE_OPTION = "solutions";
+	private static final String SOLUTIONS_FILE_OPTION = "solutions";
 	private static final String TRAIN_FILE_OPTION = "train";
 	private static final String TEST_FILE_OPTION = "test";
 	private static final String PARAMS_FILE_OPTION = "params";
@@ -146,7 +146,7 @@ public class Configuration {
 		flags = inputFiles(allFlags);
 		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))   this.queryFile = getExistingFile(line.getOptionValue(QUERIES_FILE_OPTION));
 		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION)) this.groundedFile = getExistingFile(line.getOptionValue(GROUNDED_FILE_OPTION));
-		if (isOn(flags,USE_ANSWERS) && line.hasOption(ANSWERS_FILE_OPTION))   this.solutionsFile = getExistingFile(line.getOptionValue(ANSWERS_FILE_OPTION));
+		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION))   this.solutionsFile = getExistingFile(line.getOptionValue(SOLUTIONS_FILE_OPTION));
 		if (isOn(flags,USE_TEST) && line.hasOption(TEST_FILE_OPTION))         this.testFile = getExistingFile(line.getOptionValue(TEST_FILE_OPTION));
 		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))       this.queryFile = getExistingFile(line.getOptionValue(TRAIN_FILE_OPTION));
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))     this.paramsFile = getExistingFile(line.getOptionValue(PARAMS_FILE_OPTION));
@@ -155,7 +155,7 @@ public class Configuration {
 		flags = outputFiles(allFlags);
 		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))   this.queryFile = new File(line.getOptionValue(QUERIES_FILE_OPTION));
 		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION)) this.groundedFile = new File(line.getOptionValue(GROUNDED_FILE_OPTION));
-		if (isOn(flags,USE_ANSWERS) && line.hasOption(ANSWERS_FILE_OPTION))   this.solutionsFile = new File(line.getOptionValue(ANSWERS_FILE_OPTION));
+		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION))   this.solutionsFile = new File(line.getOptionValue(SOLUTIONS_FILE_OPTION));
 		if (isOn(flags,USE_TEST) && line.hasOption(TEST_FILE_OPTION))         this.testFile = new File(line.getOptionValue(TEST_FILE_OPTION));
 		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))       this.queryFile = new File(line.getOptionValue(TRAIN_FILE_OPTION));
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))     this.paramsFile = new File(line.getOptionValue(PARAMS_FILE_OPTION));
@@ -208,6 +208,7 @@ public class Configuration {
 			options.addOption(
 					OptionBuilder
 					.withLongOpt(QUERIES_FILE_OPTION)
+					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Queries. Format (discards after tab): "+EXAMPLES_FORMAT)
@@ -250,6 +251,15 @@ public class Configuration {
 
 		// output files
 		flags = outputFiles(allFlags);
+		if(isOn(flags, USE_ANSWERS))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(SOLUTIONS_FILE_OPTION)
+					.isRequired()
+					.withArgName("file")
+					.hasArg()
+					.withDescription("Output answers")
+					.create());	
 		if(isOn(flags, USE_QUERIES))
 			options.addOption(
 					OptionBuilder
@@ -289,6 +299,7 @@ public class Configuration {
 			options.addOption(
 					OptionBuilder
 					.withLongOpt(PARAMS_FILE_OPTION)
+					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output learned walker parameters.")
@@ -362,7 +373,7 @@ public class Configuration {
 		flags = inputFiles(allFlags);
 		if (isOn(flags, USE_QUERIES)) syntax.append(" --").append(QUERIES_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_GROUNDED)) syntax.append(" --").append(GROUNDED_FILE_OPTION).append(" inputFile.grounded");
-		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(ANSWERS_FILE_OPTION).append(" inputFile");
+		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(SOLUTIONS_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_TRAIN)) syntax.append(" --").append(TRAIN_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" inputFile");
@@ -371,7 +382,7 @@ public class Configuration {
 		flags = outputFiles(allFlags);
 		if (isOn(flags, USE_QUERIES)) syntax.append(" --").append(QUERIES_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_GROUNDED)) syntax.append(" --").append(GROUNDED_FILE_OPTION).append(" outputFile.grounded");
-		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(ANSWERS_FILE_OPTION).append(" outputFile");
+		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(SOLUTIONS_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_TRAIN)) syntax.append(" --").append(TRAIN_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" outputFile");
