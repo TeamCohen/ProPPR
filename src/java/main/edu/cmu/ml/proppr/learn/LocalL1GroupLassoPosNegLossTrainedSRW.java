@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.List;
 
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
+import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -14,10 +15,11 @@ import edu.cmu.ml.proppr.util.ParamVector;
 import gnu.trove.map.TObjectDoubleMap;
 
 public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW {
-	public LocalL1GroupLassoPosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme<String> wScheme, double delta, File affgraph, double zeta) {
-		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
+	public LocalL1GroupLassoPosNegLossTrainedSRW(SRWParameters params) {
+		super(params);
 	}
 	public LocalL1GroupLassoPosNegLossTrainedSRW() { super(); }
+
 
 	@Override
 	public Set<String> localFeatures(ParamVector<String,?> paramVec, PosNegRWExample example) {
@@ -68,11 +70,11 @@ public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSR
 
 		double sumofsquares = 0;
 		String target = "#" + f;
-		if(diagonalDegree.containsKey(target)){
-			double positive = this.diagonalDegree.get(target)*value;
+		if(c.diagonalDegree.containsKey(target)){
+			double positive = c.diagonalDegree.get(target)*value;
 			double negativeSum = 0;
 			sumofsquares = value*value;
-			List<String> sims = this.affinity.get(target);
+			List<String> sims = c.affinity.get(target);
 			for (String s : sims) {
 				double svalue = Dictionary.safeGet(paramVec,s);
 				negativeSum -= svalue;
@@ -82,13 +84,13 @@ public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSR
 
 		//Group Lasso
 		double weightDecay = 0;
-		if(this.zeta != 0){
+		if(c.zeta != 0){
 			double grouplasso = 0.5 * Math.pow(sumofsquares,-0.5);
 			if(!Double.isInfinite(grouplasso)){
 				//System.out.println("f: " + f +" group lasso:" + grouplasso);
-				weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - (gap * this.learningRate() * this.zeta * grouplasso));
+				weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - (gap * this.learningRate() * c.zeta * grouplasso));
 				Dictionary.reset(paramVec, f, weightDecay);
-				this.cumloss.add(LOSS.REGULARIZATION, gap * this.learningRate() * this.zeta * grouplasso);             		
+				this.cumloss.add(LOSS.REGULARIZATION, gap * this.learningRate() * c.zeta * grouplasso);             		
 			}
 		}     
 
@@ -96,11 +98,11 @@ public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSR
 		//L1 with a proximal operator              
 		//signum(w) * max(0.0, abs(w) - shrinkageVal)
 
-		double shrinkageVal = gap * this.learningRate() * this.mu;
-		if((this.mu != 0) && (!Double.isInfinite(shrinkageVal))){
+		double shrinkageVal = gap * this.learningRate() * c.mu;
+		if((c.mu != 0) && (!Double.isInfinite(shrinkageVal))){
 			weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - shrinkageVal);
 			Dictionary.reset(paramVec, f, weightDecay);
 		}
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu);             		
+		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu);             		
 	}
 }

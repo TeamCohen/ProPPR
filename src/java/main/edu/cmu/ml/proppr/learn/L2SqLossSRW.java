@@ -50,7 +50,7 @@ public class L2SqLossSRW extends SRW<PairwiseRWExample> {
 	 * @return
 	 */
 	public double derivRegularization(String f, ParamVector<String, ?> paramVec) {
-		return (this.untrainedFeatures.contains(f)) ? 0 : 2*paramVec.get(f)*this.mu;
+		return (this.untrainedFeatures.contains(f)) ? 0 : 2*paramVec.get(f)*c.mu;
 	}
 	
 //	/**

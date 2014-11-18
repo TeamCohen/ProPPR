@@ -7,4 +7,8 @@ public class MinAlphaException extends IllegalStateException {
 		super("minAlpha too high! Did you remember to set alpha in logic program components? "+
                 		"dpr minAlpha ="+minAlpha+" localAlpha="+localAlpha+" for state "+u);
 	}
+
+	public MinAlphaException(String string) {
+		super(string);
+	}
 }

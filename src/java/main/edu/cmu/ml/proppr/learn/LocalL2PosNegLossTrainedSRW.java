@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -13,8 +14,8 @@ import edu.cmu.ml.proppr.util.ParamVector;
 import gnu.trove.map.TObjectDoubleMap;
 
 public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
-	public LocalL2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
-		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
+	public LocalL2PosNegLossTrainedSRW(SRWParameters params) {
+		super(params);
 	}
 	public LocalL2PosNegLossTrainedSRW() { super(); }
 
@@ -64,9 +65,9 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;
 		double value = Dictionary.safeGet(paramVec,f);
-		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap);
+		double powerTerm = Math.pow(1 - 2 * c.mu * this.learningRate(), gap);
 		double weightDecay = value * (powerTerm - 1);
 	       Dictionary.increment(paramVec, f, weightDecay);
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu * Math.pow(value, 2));
+		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.pow(value, 2));
 	}
 }
