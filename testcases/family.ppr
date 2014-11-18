@@ -1,0 +1,8 @@
+sim(X,X) :- {base} .
+sim(X,Y) :- sister(X,Z),sim(Z,Y) {sister} .
+sim(X,Y) :- child(X,Z),sim(Z,Y) {child} .
+rel(X,Y) :- sister(X,Y) .
+rel(X,Y) :- child(X,Y) .
+rel(X,Y) :- child(Y,X) .
+rel(X,Y) :- spouse(X,Y) .
+rel2(X,Y) :- rel(X,Z),rel(Z,Y) .

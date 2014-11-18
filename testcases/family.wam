@@ -1,0 +1,109 @@
+0		comment	rel(-1,-2) :- sister(-1,-2)  #v:['X', 'Y'].
+1	rel/2	allocate	2	['Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	rel
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushboundvar	-2
+12		callp	sister/2
+13		returnp
+14		comment	rel(-1,-2) :- child(-1,-2)  #v:['X', 'Y'].
+15	rel/2	allocate	2	['Y', 'X']
+16		initfreevar	-1	-2
+17		initfreevar	-2	-1
+18		fclear
+19		fpushstart	id	3
+20		fpushconst	rel
+21		fpushconst	2
+22		fpushconst	18
+23		freport
+24		pushboundvar	-1
+25		pushboundvar	-2
+26		callp	child/2
+27		returnp
+28		comment	rel(-1,-2) :- child(-2,-1)  #v:['X', 'Y'].
+29	rel/2	allocate	2	['Y', 'X']
+30		initfreevar	-1	-2
+31		initfreevar	-2	-1
+32		fclear
+33		fpushstart	id	3
+34		fpushconst	rel
+35		fpushconst	2
+36		fpushconst	32
+37		freport
+38		pushboundvar	-2
+39		pushboundvar	-1
+40		callp	child/2
+41		returnp
+42		comment	rel(-1,-2) :- spouse(-1,-2)  #v:['X', 'Y'].
+43	rel/2	allocate	2	['Y', 'X']
+44		initfreevar	-1	-2
+45		initfreevar	-2	-1
+46		fclear
+47		fpushstart	id	3
+48		fpushconst	rel
+49		fpushconst	2
+50		fpushconst	46
+51		freport
+52		pushboundvar	-1
+53		pushboundvar	-2
+54		callp	spouse/2
+55		returnp
+56		comment	rel2(-1,-2) :- rel(-1,-3), rel(-3,-2)  #v:['X', 'Y', 'Z'].
+57	rel2/2	allocate	3	['Z', 'Y', 'X']
+58		initfreevar	-1	-2
+59		initfreevar	-2	-1
+60		fclear
+61		fpushstart	id	3
+62		fpushconst	rel2
+63		fpushconst	2
+64		fpushconst	60
+65		freport
+66		pushboundvar	-1
+67		pushfreevar	-3
+68		callp	rel/2
+69		pushboundvar	-3
+70		pushboundvar	-2
+71		callp	rel/2
+72		returnp
+73		comment	sim(-1,-1) :-  {base}  #v:['X'].
+74	sim/2	allocate	1	['X']
+75		initfreevar	-1	-2
+76		unifyboundvar	-1	-1
+77		fclear
+78		fpushstart	base	0
+79		freport
+80		returnp
+81		comment	sim(-1,-2) :- sister(-1,-3), sim(-3,-2) {sister}  #v:['X', 'Y', 'Z'].
+82	sim/2	allocate	3	['Z', 'Y', 'X']
+83		initfreevar	-1	-2
+84		initfreevar	-2	-1
+85		fclear
+86		fpushstart	sister	0
+87		freport
+88		pushboundvar	-1
+89		pushfreevar	-3
+90		callp	sister/2
+91		pushboundvar	-3
+92		pushboundvar	-2
+93		callp	sim/2
+94		returnp
+95		comment	sim(-1,-2) :- child(-1,-3), sim(-3,-2) {child}  #v:['X', 'Y', 'Z'].
+96	sim/2	allocate	3	['Z', 'Y', 'X']
+97		initfreevar	-1	-2
+98		initfreevar	-2	-1
+99		fclear
+100		fpushstart	child	0
+101		freport
+102		pushboundvar	-1
+103		pushfreevar	-3
+104		callp	child/2
+105		pushboundvar	-3
+106		pushboundvar	-2
+107		callp	sim/2
+108		returnp
