@@ -15,16 +15,16 @@ import edu.cmu.ml.proppr.util.ParsedFile;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
-public class GroundedExampleStreamer<F> implements Iterable<PosNegRWExample<F>>, Iterator<PosNegRWExample<F>>, FileBackedIterable {
+public class GroundedExampleStreamer implements Iterable<PosNegRWExample>, Iterator<PosNegRWExample>, FileBackedIterable {
 	private static final Logger log = Logger.getLogger(GroundedExampleStreamer.class);
 	public static final String MAJOR_DELIM="\t";
 	public static final String MINOR_DELIM=",";
 	private ParsedFile file;
-	private LearningGraphBuilder<F> builder;
- 	public GroundedExampleStreamer(String cookedExamplesFile, LearningGraphBuilder<F> builder) {
+	private LearningGraphBuilder builder;
+ 	public GroundedExampleStreamer(String cookedExamplesFile, LearningGraphBuilder builder) {
  		this(new ParsedFile(cookedExamplesFile), builder);
  	}
-	public GroundedExampleStreamer(ParsedFile cookedExamplesFile, LearningGraphBuilder<F> builder) {
+	public GroundedExampleStreamer(ParsedFile cookedExamplesFile, LearningGraphBuilder builder) {
 		log.info("Importing cooked examples from "+cookedExamplesFile.getFileName());
 		this.file = cookedExamplesFile;
 		this.builder = builder;
@@ -42,7 +42,7 @@ public class GroundedExampleStreamer<F> implements Iterable<PosNegRWExample<F>>,
 	}
 
 	@Override
-	public PosNegRWExample<F> next() {
+	public PosNegRWExample next() {
 		String line = this.file.next();
 		log.debug("Imporing example from line "+file.getLineNumber());
 
@@ -62,8 +62,8 @@ public class GroundedExampleStreamer<F> implements Iterable<PosNegRWExample<F>>,
 			else return null;
 		}
 		try {
-			LearningGraph<F> g = builder.deserialize(parts[4]);
-			return new PosNegRWExample<F>(g,queryVec,posList,negList);
+			LearningGraph g = builder.deserialize(parts[4]);
+			return new PosNegRWExample(g,queryVec,posList,negList);
 		} catch (GraphFormatException e) {
 			file.parseError("["+e.getMessage()+"]");
 			if (this.hasNext()) return next();
@@ -77,7 +77,7 @@ public class GroundedExampleStreamer<F> implements Iterable<PosNegRWExample<F>>,
 	}
 
 	@Override
-	public Iterator<PosNegRWExample<F>> iterator() {
+	public Iterator<PosNegRWExample> iterator() {
 		return this;
 	}
 	

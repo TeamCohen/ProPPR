@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.learn;
 
 import java.util.HashMap;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
+public class AprSRW extends SRW<PosNegRWExample> {
 	private static final Logger log = Logger.getLogger(AprSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 	public static final double DEFAULT_ALPHA=DprProver.MINALPH_DEFAULT;
@@ -41,8 +42,8 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		init(DEFAULT_ALPHA,DEFAULT_EPSILON,DEFAULT_STAYPROB);
 	}
 	
-	public AprSRW(int maxT, double mu, double eta, WeightingScheme<F> wScheme, double delta) {
-		super(maxT,mu,eta,wScheme,delta);
+	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
+		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		init(DEFAULT_ALPHA,DEFAULT_EPSILON,DEFAULT_STAYPROB);
 	}
 	
@@ -50,9 +51,9 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		super(); 
 		this.init(ialpha,iepsilon,istayProb);
 	}
-	public AprSRW(int maxT, double mu, double eta, WeightingScheme<F> wScheme, double delta,
+	public AprSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta,
 			double ialpha, double iepsilon, double istayProb) {
-		super(maxT,mu,eta,wScheme,delta);
+		super(maxT,mu,eta,wScheme,delta,affgraph,zeta);
 		this.init(ialpha,iepsilon,istayProb);
 	}
 
@@ -66,14 +67,14 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 	}
 	
 	@Override
-	public TObjectDoubleMap<F> gradient(ParamVector<F,?> paramVec, PosNegRWExample<F> example) {
+	public TObjectDoubleMap<String> gradient(ParamVector<String,?> paramVec, PosNegRWExample example) {
 		// startNode maps node->weight
 		TIntDoubleMap query = example.getQueryVec();
 		if (query.size() > 1) throw new UnsupportedOperationException("Can't do multi-node queries");
 		int startNode = query.keySet().iterator().next();
 		
 		// gradient maps feature->gradient with respect to that feature
-		TObjectDoubleMap<F> gradient = null;
+		TObjectDoubleMap<String> gradient = null;
 		
 		// maps storing the probability and remainder weights of the nodes:
 		TIntDoubleMap p = new TIntDoubleHashMap();
@@ -88,14 +89,14 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		r.putAll(query);
 		
 		// maps storing the gradients of p and r for each node:
-		TIntObjectMap<TObjectDoubleMap<F>> dp = new TIntObjectHashMap<TObjectDoubleMap<F>>();
-		TIntObjectMap<TObjectDoubleMap<F>> dr = new TIntObjectHashMap<TObjectDoubleMap<F>>();
+		TIntObjectMap<TObjectDoubleMap<String>> dp = new TIntObjectHashMap<TObjectDoubleMap<String>>();
+		TIntObjectMap<TObjectDoubleMap<String>> dr = new TIntObjectHashMap<TObjectDoubleMap<String>>();
 		
 		// initializing the above maps:
 		for(int node : example.getGraph().getNodes()) {
-			dp.put(node, new TObjectDoubleHashMap<F>());
-			dr.put(node, new TObjectDoubleHashMap<F>());
-			for(F feature : (example.getGraph().getFeatureSet()))
+			dp.put(node, new TObjectDoubleHashMap<String>());
+			dr.put(node, new TObjectDoubleHashMap<String>());
+			for(String feature : (example.getGraph().getFeatureSet()))
 			{
 				dp.get(node).put(feature, 0.0);
 				dr.get(node).put(feature, 0.0);
@@ -123,7 +124,7 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 			log.debug(completeCount +" of " + example.getGraph().nodeSize() + " completed this pass");
 		}
 		
-		for (F f : trainableFeatures(localFeatures(paramVec,example))) {
+		for (String f : trainableFeatures(localFeatures(paramVec,example))) {
 			this.cumloss.add(LOSS.REGULARIZATION, this.mu * Math.pow(Dictionary.safeGet(paramVec,f), 2));
 		}
 		double pmax = 0;
@@ -145,9 +146,9 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		return gradient;
 	}
 	
-	private double dotP(TObjectDoubleMap<F> phi, ParamVector<F,?> paramVec) {
+	private double dotP(TObjectDoubleMap<String> phi, ParamVector<String,?> paramVec) {
 		double dotP = 0;
-		for(F feature : phi.keySet())
+		for(String feature : phi.keySet())
 			dotP += paramVec.get(feature);
 		return dotP;
 	}
@@ -160,7 +161,7 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		return prob;
 	}
 	
-	public double totalEdgeProbWeight(LearningGraph<F> g, int u,  ParamVector<F, ?> p) {
+	public double totalEdgeProbWeight(LearningGraph g, int u,  ParamVector<String, ?> p) {
 		double sum = 0.0;
 		for (TIntIterator it = g.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
@@ -181,13 +182,13 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 	 * @param dp
 	 * @param dr
 	 */
-	public void push(int u, TIntDoubleMap p, TIntDoubleMap r, LearningGraph<F> graph, ParamVector<F,?> paramVec,
-			TIntObjectMap<TObjectDoubleMap<F>> dp, TIntObjectMap<TObjectDoubleMap<F>> dr) {
+	public void push(int u, TIntDoubleMap p, TIntDoubleMap r, LearningGraph graph, ParamVector<String,?> paramVec,
+			TIntObjectMap<TObjectDoubleMap<String>> dp, TIntObjectMap<TObjectDoubleMap<String>> dr) {
 		log.debug("Pushing "+u);
 		
 		// update p for the pushed node:
 		Dictionary.increment(p, u, alpha * r.get(u));
-		TObjectDoubleMap<F> dru = dr.get(u);
+		TObjectDoubleMap<String> dru = dr.get(u);
 		
 		TIntDoubleMap unwrappedDotP = new TIntDoubleHashMap();
 		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
@@ -199,9 +200,9 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		double rowSum = this.totalEdgeProbWeight(graph, u, paramVec);
 		
 		// calculate the gradients of the rowSums (needed for the calculation of the gradient of r):
-		TObjectDoubleMap<F> drowSums = new TObjectDoubleHashMap<F>();
-		TObjectDoubleMap<F> prevdr = new TObjectDoubleHashMap<F>();
-		for(F feature : (graph.getFeatureSet())) {
+		TObjectDoubleMap<String> drowSums = new TObjectDoubleHashMap<String>();
+		TObjectDoubleMap<String> prevdr = new TObjectDoubleHashMap<String>();
+		for(String feature : (graph.getFeatureSet())) {
 //			log.debug("dru["+feature+"] = "+dru.get(feature));
 			// simultaneously update the dp for the pushed node:
 			if (trainable(feature)) Dictionary.increment(dp,u,feature,alpha * dru.get(feature));
@@ -222,7 +223,7 @@ public class AprSRW<F> extends SRW<F,PosNegRWExample<F>> {
 		// update dr for other vertices:
 		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
-			for(F feature : (graph.getFeatureSet())) {
+			for(String feature : (graph.getFeatureSet())) {
 				double dotP = this.weightingScheme.edgeWeight(unwrappedDotP.get(v));
 				double ddotP = this.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 				int c = graph.getFeatures(u, v).containsKey(feature) ? 1 : 0;

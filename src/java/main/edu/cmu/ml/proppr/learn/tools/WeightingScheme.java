@@ -14,6 +14,7 @@ public abstract class WeightingScheme<F> {
 	public abstract double edgeWeightFunction(double sum);
 	public abstract double derivEdgeWeight(double weight);
 	public abstract double defaultWeight();
+	public abstract double projection(double rw, double alpha, int nonRestartNodeNum);
 	
 	/** Support method for proving
 	 * 

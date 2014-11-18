@@ -9,7 +9,7 @@ import gnu.trove.procedure.TIntProcedure;
  * A supervised random walk example which specifies a list of positive examples and a list of negative examples.
  * @author krivard
  */
-public class PosNegRWExample<F> extends RWExample<F> {
+public class PosNegRWExample extends RWExample {
 	protected int[] posList;
 	protected int[] negList;
 
@@ -28,18 +28,18 @@ public class PosNegRWExample<F> extends RWExample<F> {
 //		return result;
 //	}
 
-	private PosNegRWExample(LearningGraph<F> graph, TIntDoubleMap queryVec) {
+	private PosNegRWExample(LearningGraph graph, TIntDoubleMap queryVec) {
 		super(graph,queryVec);
 	}
 	
-	public PosNegRWExample(LearningGraph<F> graph, TIntDoubleMap queryVec,
+	public PosNegRWExample(LearningGraph graph, TIntDoubleMap queryVec,
 			int[] pos, int[] neg) {
 		super(graph,queryVec);
 		this.posList = pos;
 		this.negList = neg;
 	}
 
-//	public PosNegRWExample(InferenceLearningGraph<F><T> g, Map<T, Double> queryVec,
+//	public PosNegRWExample(InferenceLearningGraph<T> g, Map<T, Double> queryVec,
 //			Iterable<T> pos, Iterable<T> neg) {
 //		super(g,queryVec);
 //		for (T p : pos) this.posList.add(p);

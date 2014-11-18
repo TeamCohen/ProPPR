@@ -14,17 +14,17 @@ import gnu.trove.map.TIntDoubleMap;
  * @author krivard
  *
  */
-public abstract class RWExample<F> {
+public abstract class RWExample {
 	protected TIntDoubleMap queryVec;
-	protected LearningGraph<F> graph;
-	public RWExample(LearningGraph<F> graph, TIntDoubleMap queryVec) {
+	protected LearningGraph graph;
+	public RWExample(LearningGraph graph, TIntDoubleMap queryVec) {
 		this.queryVec = queryVec;
 		this.graph = graph;
 	}
 	public TIntDoubleMap getQueryVec() {
 		return queryVec;
 	}
-	public LearningGraph<F> getGraph() {
+	public LearningGraph getGraph() {
 		return graph;
 	}
 	public String toString() {

@@ -1,5 +1,6 @@
 package edu.cmu.ml.proppr.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -419,6 +420,8 @@ public class ModuleConfiguration extends Configuration {
 		double eta = SRW.DEFAULT_ETA;
 		double delta = SRW.DEFAULT_DELTA;
 		int maxT = SRW.DEFAULT_MAX_T;
+		File affgraph = SRW.DEFAULT_AFFGRAPH;
+		double zeta = SRW.DEFAULT_ZETA;
 
 		if (line.hasOption("maxT")) {
 			maxT = Integer.parseInt(line.getOptionValue("maxT"));
@@ -434,21 +437,36 @@ public class ModuleConfiguration extends Configuration {
 			if (values.length > 3) {
 				delta = Double.parseDouble(values[3]);
 			}
+			if (values.length > 4) {
+				affgraph = this.getExistingFile(values[4]);
+			}			
+			if (values.length > 5) {
+				zeta = Double.parseDouble(values[5]);
+			}			
+			
 			if (values[0].equals("l2p")) {
-				this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta);
+				this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+			} else if (values[0].equals("l1p")) {
+				this.srw = new edu.cmu.ml.proppr.learn.L1PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+			} else if (values[0].equals("l1plocal")) {
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+			} else if (values[0].equals("l1plaplacianlocal")) {
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
+			} else if (values[0].equals("l1plocalgrouplasso")) {
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
 			} else if (values[0].equals("l2plocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL2PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL2PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta,affgraph,zeta);
 			} else if (values[0].equals("apr")) {
 				double epsilon = AprSRW.DEFAULT_EPSILON;
 				double alpha = AprSRW.DEFAULT_ALPHA;
 				if (values.length > 4) epsilon = Double.parseDouble(values[4]);
 				if (values.length > 5) alpha = Double.parseDouble(values[5]);
-					this.srw = new edu.cmu.ml.proppr.learn.AprSRW<String>(maxT, mu, eta, weightingScheme, delta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
+					this.srw = new edu.cmu.ml.proppr.learn.AprSRW(maxT, mu, eta, weightingScheme, delta,affgraph,zeta, alpha, epsilon, AprSRW.DEFAULT_STAYPROB);
 			} else {
 				usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
-				this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW<String>(maxT,mu,eta,weightingScheme,delta);
+			this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW(maxT,mu,eta,weightingScheme,delta, affgraph, zeta);
 		}
 	}
 

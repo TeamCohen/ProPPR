@@ -22,6 +22,7 @@ import edu.cmu.ml.proppr.learn.tools.GroundedExampleStreamer;
 import edu.cmu.ml.proppr.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.proppr.v1.Trainer;
 
+@Ignore
 public class ToyTrainerTest {
 	private static final String COOKED_FILE = "testcases/toy.cooked";
 
@@ -37,7 +38,7 @@ public class ToyTrainerTest {
 				new GroundedExampleStreamer<Integer>(COOKED_FILE, 
 						new AnnotatedGraphFactory<Integer>(AnnotatedGraphFactory.INT)),
 				epochs,
-				false);//tracelosses
+				true);//tracelosses
 
 		SRW.seed(0);
 		L2PosNegLossTrainedSRW<String> srwStr = new L2PosNegLossTrainedSRW<String>();
@@ -47,7 +48,7 @@ public class ToyTrainerTest {
 				new GroundedExampleStreamer<String>(COOKED_FILE, 
 						new AnnotatedGraphFactory<String>(AnnotatedGraphFactory.STRING)),
 				epochs,
-				false);//tracelosses
+				true);//tracelosses
 		System.err.println("name                  strvalue  intvalue");
 		for (String f : paramVecStr.keySet()) {
 			

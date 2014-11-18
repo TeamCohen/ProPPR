@@ -18,7 +18,7 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class L2SqLossSRW<F> extends SRW<F,PairwiseRWExample<F>> {
+public class L2SqLossSRW extends SRW<PairwiseRWExample> {
 	private static final Logger log = Logger.getLogger(L2SqLossSRW.class);
 	protected double margin=0.01;
 	private LossData cumloss;
@@ -49,7 +49,7 @@ public class L2SqLossSRW<F> extends SRW<F,PairwiseRWExample<F>> {
 	 * @param paramVec
 	 * @return
 	 */
-	public double derivRegularization(F f, ParamVector<F, ?> paramVec) {
+	public double derivRegularization(String f, ParamVector<String, ?> paramVec) {
 		return (this.untrainedFeatures.contains(f)) ? 0 : 2*paramVec.get(f)*this.mu;
 	}
 	
@@ -81,26 +81,26 @@ public class L2SqLossSRW<F> extends SRW<F,PairwiseRWExample<F>> {
         @param example
         @return Map from edge features to values
 	 */
-	public TObjectDoubleMap<F> gradient(ParamVector<F,?> paramVec, PairwiseRWExample<F> example) {
+	public TObjectDoubleMap<String> gradient(ParamVector<String,?> paramVec, PairwiseRWExample example) {
 		TIntDoubleMap p = this.rwrUsingFeatures(example.getGraph(),example.getQueryVec(),paramVec);
-		TIntObjectMap<TObjectDoubleMap<F>> d = this.derivRWRbyParams(example.getGraph(),example.getQueryVec(),paramVec);
-		TObjectDoubleMap<F> derivFparamVec = new TObjectDoubleHashMap<F>();
-		Set<F> allFeatures = paramVec.keySet();
-		for (F f : allFeatures) {
+		TIntObjectMap<TObjectDoubleMap<String>> d = this.derivRWRbyParams(example.getGraph(),example.getQueryVec(),paramVec);
+		TObjectDoubleMap<String> derivFparamVec = new TObjectDoubleHashMap<String>();
+		Set<String> allFeatures = paramVec.keySet();
+		for (String f : allFeatures) {
 			derivFparamVec.put(f, derivRegularization(f,paramVec));
 		}
 		
-		Set<F> trainableFeatures = trainableFeatures(paramVec);
+		Set<String> trainableFeatures = trainableFeatures(paramVec);
 		for (HiLo hl : example.getHiLoList()) {
 			double delta = Dictionary.safeGet(p, hl.getLo()) - Dictionary.safeGet(p,hl.getHi());
-			for (F f : trainableFeatures) {
+			for (String f : trainableFeatures) {
 				double del = derivLoss(delta) * (Dictionary.safeGetGet(d, hl.getLo(), f) - Dictionary.safeGetGet(d, hl.getHi(), f));
 				Dictionary.increment(derivFparamVec, f, del);
 			}
 			this.cumloss.add(LOSS.L2, this.loss(delta));
 		}
 		
-		for (F f : trainableFeatures(derivFparamVec.keySet())) {
+		for (String f : trainableFeatures(derivFparamVec.keySet())) {
 			derivFparamVec.put(f,derivFparamVec.get(f) / example.length());
 			if (Double.isInfinite(derivFparamVec.get(f))) {
 				throw new IllegalStateException("Asymptote error");
@@ -110,13 +110,13 @@ public class L2SqLossSRW<F> extends SRW<F,PairwiseRWExample<F>> {
 	}
 	
 
-	public ParamVector<F,?> train(List<PairwiseRWExample<F>> trainingExamples, ParamVector<F,?> initialParamVec) {
+	public ParamVector<String,?> train(List<PairwiseRWExample> trainingExamples, ParamVector<String,?> initialParamVec) {
 		this.epoch = 0;
-		ParamVector<F,?> paramVec = initialParamVec;
+		ParamVector<String,?> paramVec = initialParamVec;
 		for (int i=0; i<NUM_EPOCHS; i++) {
 			this.epoch++;
 //			int ex=0;
-			for (PairwiseRWExample<F> example : trainingExamples) { //ex++;
+			for (PairwiseRWExample example : trainingExamples) { //ex++;
 				if (log.isDebugEnabled()) log.debug(String.format("epoch: %d length: %s train: %s",epoch, example.length(),example.toString()));
 				trainOnExample(paramVec, example);
 			}

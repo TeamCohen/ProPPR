@@ -4,11 +4,13 @@ import static org.junit.Assert.*;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.v1.Trainer2;
 
+@Ignore
 public class Trainer2Test extends TrainerTest {
 
 	@Override

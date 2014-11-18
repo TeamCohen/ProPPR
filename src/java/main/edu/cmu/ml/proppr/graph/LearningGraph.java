@@ -11,30 +11,30 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 
-public abstract class LearningGraph<F> {
+public abstract class LearningGraph {
 	private static final Logger log = Logger.getLogger(LearningGraph.class);
 	public static class GraphFormatException extends Exception {
 		public GraphFormatException(String msg) { super(msg); }
 	}
 	/** Return the neighbors of node u. */
-	public List<RWOutlink<F>> getOutlinks(final int u) {
-		final List<RWOutlink<F>> result = new ArrayList<RWOutlink<F>>();
+	public List<RWOutlink> getOutlinks(final int u) {
+		final List<RWOutlink> result = new ArrayList<RWOutlink>();
 		near(u).forEach(new TIntProcedure() {
 			@Override
 			public boolean execute(int v) {
-				TObjectDoubleMap<F> fd = getFeatures(u,v);
-				result.add(new RWOutlink<F>(fd,v));
+				TObjectDoubleMap<String> fd = getFeatures(u,v);
+				result.add(new RWOutlink(fd,v));
 				return true;
 			}
 		});
 		return result;
 	}
 	/** Store the neighbors of node u */
-	public abstract void addOutlink(int u, RWOutlink<F> outlink);
+	public abstract void addOutlink(int u, RWOutlink outlink);
 	/** */
 	public abstract TIntArrayList near(int u);
-	public abstract TObjectDoubleMap<F> getFeatures(int u, int v);
-	public abstract Set<F> getFeatureSet();
+	public abstract TObjectDoubleMap<String> getFeatures(int u, int v);
+	public abstract Set<String> getFeatureSet();
 	public abstract int[] getNodes();
 	public abstract int nodeSize();
 	public abstract int edgeSize();

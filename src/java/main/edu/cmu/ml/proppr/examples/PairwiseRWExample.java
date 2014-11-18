@@ -11,9 +11,9 @@ import gnu.trove.map.TIntDoubleMap;
  * @author krivard
  *
  */
-public class PairwiseRWExample<F> extends RWExample<F> {
+public class PairwiseRWExample extends RWExample {
 	protected List<HiLo> hiLoList;
-	public PairwiseRWExample(LearningGraph<F> graph, TIntDoubleMap queryVec, List<HiLo> hilolist) {
+	public PairwiseRWExample(LearningGraph graph, TIntDoubleMap queryVec, List<HiLo> hilolist) {
 		super(graph, queryVec);
 		this.hiLoList = hilolist;
 	}

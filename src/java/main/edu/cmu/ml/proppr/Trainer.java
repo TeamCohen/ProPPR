@@ -34,11 +34,11 @@ public class Trainer {
 	protected int nthreads = 1;
 	protected int throttle;
 
-	protected SRW<String,PosNegRWExample<String>> learner;
+	protected SRW<PosNegRWExample> learner;
 	protected int epoch;
 	LossData lossLastEpoch;
 
-	public Trainer(SRW<String,PosNegRWExample<String>> learner, int nthreads, int throttle) {
+	public Trainer(SRW<PosNegRWExample> learner, int nthreads, int throttle) {
 		this.learner = learner;
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
@@ -50,10 +50,10 @@ public class Trainer {
 		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 	
-	public void doExample(PosNegRWExample<String> x, ParamVector<String,?> paramVec, boolean traceLosses) {
+	public void doExample(PosNegRWExample x, ParamVector<String,?> paramVec, boolean traceLosses) {
 		this.learner.trainOnExample(paramVec, x);
 	}
-	public ParamVector train(Iterable<PosNegRWExample<String>> examples, int numEpochs, boolean traceLosses) {
+	public ParamVector train(Iterable<PosNegRWExample> examples, int numEpochs, boolean traceLosses) {
 		return train(
 				examples,
 				new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)),
@@ -61,7 +61,7 @@ public class Trainer {
 				traceLosses
 				);
 	}
-	public ParamVector train(Iterable<PosNegRWExample<String>> examples, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector train(Iterable<PosNegRWExample> examples, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
@@ -133,10 +133,10 @@ public class Trainer {
 	 *
 	 */
 	private class FQTrainingExample {
-		PosNegRWExample<String> x;
+		PosNegRWExample x;
 		ParamVector paramVec;
 		SRW learner;
-		public FQTrainingExample(PosNegRWExample<String> x, ParamVector paramVec, SRW learner) {
+		public FQTrainingExample(PosNegRWExample x, ParamVector paramVec, SRW learner) {
 			this.x = x;
 			this.paramVec = paramVec;
 			this.learner = learner;
@@ -194,9 +194,9 @@ public class Trainer {
 	 *
 	 */
 	private class FQTrainingExampleStreamer implements Iterable<FQTrainingExample>,Iterator<FQTrainingExample> {
-		Iterator<PosNegRWExample<String>> examples;
+		Iterator<PosNegRWExample> examples;
 		ParamVector paramVec;
-		public FQTrainingExampleStreamer(Iterable<PosNegRWExample<String>> examples, ParamVector paramVec) {
+		public FQTrainingExampleStreamer(Iterable<PosNegRWExample> examples, ParamVector paramVec) {
 			this.examples = examples.iterator();
 			this.paramVec = paramVec;
 		}
@@ -212,7 +212,7 @@ public class Trainer {
 
 		@Override
 		public FQTrainingExample next() {
-			PosNegRWExample<String> example = examples.next();
+			PosNegRWExample example = examples.next();
 			return new FQTrainingExample(example, paramVec, learner);
 		}
 
@@ -244,7 +244,7 @@ public class Trainer {
 		log.info("Training model parameters on "+groundedFile+"...");
 		long start = System.currentTimeMillis();
 		ParamVector params = c.trainer.train(
-				new GroundedExampleStreamer<String>(groundedFile, new SLGBuilder()), 
+				new GroundedExampleStreamer(groundedFile, new SLGBuilder()), 
 				c.epochs, 
 				c.traceLosses);
 		log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");

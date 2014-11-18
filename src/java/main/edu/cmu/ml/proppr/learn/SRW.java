@@ -1,5 +1,12 @@
 package edu.cmu.ml.proppr.learn;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -39,34 +46,85 @@ import gnu.trove.procedure.TObjectProcedure;
  * @author wcohen,krivard,yww
  *
  */
-public class SRW<F,E extends RWExample<F>> {
+public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
-	protected static final int NUM_EPOCHS = 5;
+	public static final int NUM_EPOCHS = 5;
 	public static final int DEFAULT_MAX_T=10;
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
+	public static final double DEFAULT_ZETA=0;
+	public static final File DEFAULT_AFFGRAPH=null;
 	public static final int DEFAULT_RATE_LENGTH = 1;
+	public static final double PERTURB_EPSILON=1e-10;
+	protected static final TObjectDoubleMap EMPTY = new TObjectDoubleHashMap();
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected double mu;
 	protected int maxT;
 	protected double eta;
 	protected double delta;
+	protected double zeta;
+	protected File affgraph;
+	protected Map<String,List<String>> affinity;
+	protected Map<String,Integer> diagonalDegree;
 	protected int epoch;
-	protected Set<F> untrainedFeatures;
-	protected WeightingScheme<F> weightingScheme;
+	protected Set<String> untrainedFeatures;
+	protected WeightingScheme<String> weightingScheme;
 	public SRW() { this(DEFAULT_MAX_T); }
-	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA); }
-	public SRW(int maxT, double mu, double eta, WeightingScheme<F> wScheme, double delta) {
+	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA, DEFAULT_AFFGRAPH, DEFAULT_ZETA); }
+	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta, File affgraph, double zeta) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.epoch = 1;
 		this.delta = delta;
-		this.untrainedFeatures = new TreeSet<F>();
+		this.untrainedFeatures = new TreeSet<String>();
+		this.zeta = zeta;
 		this.weightingScheme = wScheme;
+		this.affgraph = affgraph;
+		if(zeta>0){
+			affinity = constructAffinity(affgraph);
+			diagonalDegree = constructDegree(affinity);
+		}
+	}
+
+	public static HashMap<String,List<String>> constructAffinity(File affgraph){	
+		//Construct the affinity matrix from the input
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(affgraph));
+			HashMap<String,List<String>> affinity = new HashMap<String,List<String>>();
+		    String line = null;
+			while ((line = reader.readLine()) != null) {
+			    String[] items = line.split("\\t");
+			    if(!affinity.containsKey(items[0])){
+			    	List<String> pairs = new ArrayList<String>();
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			    else{
+			    	List<String> pairs = affinity.get(items[0]);
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			}
+			return affinity;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static HashMap<String,Integer> constructDegree(Map<String,List<String>> affinity){
+		HashMap<String,Integer> diagonalDegree = new HashMap<String,Integer>();
+		for (String key : affinity.keySet()) {
+			diagonalDegree.put(key, affinity.get(key).size());
+		}
+		log.debug("d size:" + diagonalDegree.size());
+		return diagonalDegree;
 	}
 
 
@@ -76,8 +134,8 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param graph
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 */
-	public void addDefaultWeights(LearningGraph<F> graph, ParamVector<F,?> p) {
-		for (F f : graph.getFeatureSet()) {
+	public void addDefaultWeights(LearningGraph graph, ParamVector<String,?> p) {
+		for (String f : graph.getFeatureSet()) {
 			if (!p.containsKey(f)) {
 				p.put(f,weightingScheme.defaultWeight()+0.01*random.nextDouble());
 			}
@@ -91,7 +149,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return
 	 */
-	public double edgeWeight(LearningGraph<F> g, int u, int v, ParamVector<F,?> p) {
+	public double edgeWeight(LearningGraph g, int u, int v, ParamVector<String,?> p) {
 		double wt = this.weightingScheme.edgeWeight(p,g.getFeatures(u, v));
 
 		if (Double.isInfinite(wt)) return Double.MAX_VALUE;
@@ -105,7 +163,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return
 	 */
-	public <D> double totalEdgeWeight(LearningGraph<F> g, int u,  ParamVector<F,D> p) {
+	public <D> double totalEdgeWeight(LearningGraph g, int u,  ParamVector<String,D> p) {
 		double sum = 0.0;
 		for (TIntIterator it = g.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
@@ -122,7 +180,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return RWR result vector mapping nodes to values
 	 */
-	public TIntDoubleMap rwrUsingFeatures(LearningGraph<F> g, TIntDoubleMap startVec, ParamVector<F,?> paramVec) {
+	public TIntDoubleMap rwrUsingFeatures(LearningGraph g, TIntDoubleMap startVec, ParamVector<String,?> paramVec) {
 		TIntDoubleMap vec = startVec;
 		for(int i=0; i<maxT; i++) {
 			vec = walkOnceUsingFeatures(g,vec,paramVec);
@@ -136,12 +194,12 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return Mapping from new set of node names to updated values.
 	 */
-	public <D> TIntDoubleMap walkOnceUsingFeatures(final LearningGraph<F> g, TIntDoubleMap vec, final ParamVector<F,D> paramVec) {
+	public <D> TIntDoubleMap walkOnceUsingFeatures(final LearningGraph g, TIntDoubleMap vec, final ParamVector<String,D> paramVec) {
 		if (vec.isEmpty()) return vec;
 		final TIntDoubleMap nextVec = new TIntDoubleHashMap();
 		vec.forEachEntry(new TIntDoubleProcedure() {
 			int k=-1;
-			LearningGraph<F> graph = g;
+			LearningGraph graph = g;
 			@Override
 			public boolean execute(int u, double uw) {
 				k++;
@@ -182,16 +240,16 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec Maps edge feature names to nonnegative values.
 	 * @return Mapping from each outgoing node from the random walk of the query and each feature relevant to the outgoing edge, to the derivative value. 
 	 */
-	public TIntObjectMap<TObjectDoubleMap<F>> derivRWRbyParams(final LearningGraph<F> graph, 
-			TIntDoubleMap queryVec, final ParamVector<F,?> paramVec) {
+	public TIntObjectMap<TObjectDoubleMap<String>> derivRWRbyParams(final LearningGraph graph, 
+			TIntDoubleMap queryVec, final ParamVector<String,?> paramVec) {
 		TIntDoubleMap pTrack = queryVec;
-		TIntObjectMap<TObjectDoubleMap<F>> dTrack = new TIntObjectHashMap<TObjectDoubleMap<F>>();
+		TIntObjectMap<TObjectDoubleMap<String>> dTrack = new TIntObjectHashMap<TObjectDoubleMap<String>>();
 		for (int i=0; i<maxT; i++) {
 			final TIntDoubleMap p = pTrack;
-			final TIntObjectMap<TObjectDoubleMap<F>> d = dTrack;
+			final TIntObjectMap<TObjectDoubleMap<String>> d = dTrack;
 			TIntDoubleMap pNext = walkOnceUsingFeatures(graph, p, paramVec);
 			// dNext[u] is the vector deriv of the weight vector at u
-			final TIntObjectMap<TObjectDoubleMap<F>> dNext = new TIntObjectHashMap<TObjectDoubleMap<F>>();
+			final TIntObjectMap<TObjectDoubleMap<String>> dNext = new TIntObjectHashMap<TObjectDoubleMap<String>>();
 			pNext.forEachKey(new TIntProcedure() {
 				@Override
 				public boolean execute(int j) {
@@ -200,13 +258,17 @@ public class SRW<F,E extends RWExample<F>> {
 					double pj = Dictionary.safeGet(p, j);
 					for (TIntIterator it = graph.near(j).iterator(); it.hasNext();) {
 						int u = it.next();
-						TObjectDoubleMap<F> dWP_ju = derivWalkProbByParams(graph,j,u,paramVec);
-						Set<F> features = new TreeSet<F>();
+						TObjectDoubleMap<String> dWP_ju = derivWalkProbByParams(graph,j,u,paramVec);
+						Set<String> features = new TreeSet<String>();
 						if(d.containsKey(j)) features.addAll(d.get(j).keySet());
 						features.addAll(dWP_ju.keySet());
-						for (F f : trainableFeatures(features)) {
+						for (String f : trainableFeatures(features)) {
 							Dictionary.increment(dNext, u, f, 
-									edgeWeight(graph,j,u,paramVec)/z * Dictionary.safeGetGet(d, j, f) + pj * Dictionary.safeGet(dWP_ju, f));
+									edgeWeight(graph,j,u,paramVec)
+									/ z 
+									* Dictionary.safeGetGet(d, j, f) 
+									+ pj 
+									* Dictionary.safeGet(dWP_ju, f));
 						}
 					}
 					return true;
@@ -228,20 +290,20 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec Maps edge feature names to nonnegative values.
 	 * @return Mapping from feature names to derivative values.
 	 */
-	protected TObjectDoubleMap<F> derivWalkProbByParams(LearningGraph<F> graph,
-			int u, int v, ParamVector<F,?> paramVec) {
+	protected TObjectDoubleMap<String> derivWalkProbByParams(LearningGraph graph,
+			int u, int v, ParamVector<String,?> paramVec) {
 		
 		double totEdgeWeightU = totalEdgeWeight(graph,u,paramVec);
-        TObjectDoubleMap<F> derWalk = new TObjectDoubleHashMap<F>();
+        TObjectDoubleMap<String> derWalk = new TObjectDoubleHashMap<String>();
         if (totEdgeWeightU == 0) return derWalk;
 
-        final TObjectDoubleMap<F> totDerFeature = new TObjectDoubleHashMap<F>();
+        final TObjectDoubleMap<String> totDerFeature = new TObjectDoubleHashMap<String>();
 		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
 			int k = it.next();
-            TObjectDoubleMap<F> derEdgeUK = this.derivEdgeWeightByParams(graph,u,k,paramVec);
-            derEdgeUK.forEachEntry(new TObjectDoubleProcedure<F>() {
+            TObjectDoubleMap<String> derEdgeUK = this.derivEdgeWeightByParams(graph,u,k,paramVec);
+            derEdgeUK.forEachEntry(new TObjectDoubleProcedure<String>() {
 				@Override
-				public boolean execute(F key, double value) {
+				public boolean execute(String key, double value) {
 	            	Dictionary.increment(totDerFeature, key, value);
 					return true;
 				}
@@ -249,10 +311,11 @@ public class SRW<F,E extends RWExample<F>> {
         }
 
         double edgeUV = this.edgeWeight(graph, u, v, paramVec);
-        TObjectDoubleMap<F> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
-        for (F f : trainableFeatures(totDerFeature.keySet())) {
+        TObjectDoubleMap<String> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
+        for (String f : trainableFeatures(totDerFeature.keySet())) {
             // revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
-            double term2 = (edgeUV / totEdgeWeightU) * Dictionary.safeGet(totDerFeature, f);
+            double term2 = (edgeUV / totEdgeWeightU) 
+            		* Dictionary.safeGet(totDerFeature, f);
             double val = Dictionary.safeGet(derEdgeUV, f) - term2;
             Dictionary.increment(derWalk, f, val / totEdgeWeightU);
         }
@@ -268,14 +331,14 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec Maps edge feature names to nonnegative values.
 	 * @return Mapping from features names to the derivative value.
 	 */
-	protected TObjectDoubleMap<F> derivEdgeWeightByParams(LearningGraph<F> graph, 
-			int u, int v, final ParamVector<F,?> paramVec) {
-		TObjectDoubleMap<F> phi = graph.getFeatures(u, v);
-		final TObjectDoubleMap<F> result = new TObjectDoubleHashMap<F>(phi.size());
-		final WeightingScheme<F> w = this.weightingScheme;
-		phi.forEachKey(new TObjectProcedure<F>() {
+	protected TObjectDoubleMap<String> derivEdgeWeightByParams(LearningGraph graph, 
+			int u, int v, final ParamVector<String,?> paramVec) {
+		TObjectDoubleMap<String> phi = graph.getFeatures(u, v);
+		final TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>(phi.size());
+		final WeightingScheme<String> w = this.weightingScheme;
+		phi.forEachKey(new TObjectProcedure<String>() {
 			@Override
-			public boolean execute(F featureName) {
+			public boolean execute(String featureName) {
 				result.put(featureName, w.derivEdgeWeight(
 						Dictionary.safeGet(paramVec, featureName, w.defaultWeight())));
 				return true;
@@ -284,7 +347,7 @@ public class SRW<F,E extends RWExample<F>> {
 		return result;
 	}
 
-	public boolean trainable(F feature) {
+	public boolean trainable(String feature) {
 		return !untrainedFeatures.contains(feature);
 	}
 	
@@ -293,9 +356,9 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param candidates feature names
 	 * @return
 	 */
-	public Set<F> trainableFeatures(Set<F> candidates) {
-		TreeSet<F> result = new TreeSet<F>();
-		for (F f : candidates) {
+	public Set<String> trainableFeatures(Set<String> candidates) {
+		TreeSet<String> result = new TreeSet<String>();
+		for (String f : candidates) {
 			if (trainable(f)) result.add(f);
 		}
 		return result;
@@ -305,7 +368,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec Maps from features names to nonnegative values.
 	 * @return
 	 */
-	public Set<F> trainableFeatures(Map<F,?> paramVec) {
+	public Set<String> trainableFeatures(Map<String,?> paramVec) {
 		return trainableFeatures(paramVec.keySet());
 	}
 	
@@ -314,7 +377,7 @@ public class SRW<F,E extends RWExample<F>> {
 //	 * @param candidates Feature objects
 //	 * @return
 //	 */
-//	public Set<String> trainableFeatures(List<Feature> candidates) {
+//	public Set<String> trainableFeatures(List<Stringeature> candidates) {
 //
 //		TreeSet<String> result = new TreeSet<String>();
 //		for (Feature f : candidates) {
@@ -324,11 +387,11 @@ public class SRW<F,E extends RWExample<F>> {
 //	}
 
 	/** Allow subclasses to filter feature list **/
-	public Set<F> localFeatures(ParamVector<F,?> paramVec, E example) {
+	public Set<String> localFeatures(ParamVector<String,?> paramVec, E example) {
 		return paramVec.keySet();
 	}
 
-	public Set<F> untrainedFeatures() { return this.untrainedFeatures; }
+	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
 
 	/** Add the gradient vector to a second accumulator vector
 	 */
@@ -346,41 +409,41 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public void trainOnExample(final ParamVector<F,?> paramVec, E example) {
+	public void trainOnExample(final ParamVector<String,?> paramVec, E example) {
 		addDefaultWeights(example.getGraph(),paramVec);
 		prepareGradient(paramVec,example);
-		TObjectDoubleMap<F> grad = gradient(paramVec,example);
+		TObjectDoubleMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
 			checkGradient(grad, paramVec, example);
 		}
 		final double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
-		grad.forEachEntry(new TObjectDoubleProcedure<F>() {
+		grad.forEachEntry(new TObjectDoubleProcedure<String>() {
 			@Override
-			public boolean execute(F f, double value) {
+			public boolean execute(String f, double value) {
 				Dictionary.increment(paramVec, f, - rate * value);
 				log.debug(f+"->"+paramVec.get(f));
 				return true;
 			}
 		});
+		project2feasible(example.getGraph(), paramVec, example.getQueryVec());
 	}
 	
 	/**
 	 * Check if first-order approximation is close
 	 */
-	protected void checkGradient(TObjectDoubleMap<F> grad, final ParamVector<F,?> paramVec, final E example) {
-		final ParamVector<F,?> perturbedParamVec = paramVec.copy();
-        final double epsilon = 1.0e-10;
-        grad.forEachEntry(new TObjectDoubleProcedure<F>() {
+	protected void checkGradient(TObjectDoubleMap<String> grad, final ParamVector<String,?> paramVec, final E example) {
+		final ParamVector<String,?> perturbedParamVec = paramVec.copy();
+        grad.forEachEntry(new TObjectDoubleProcedure<String>() {
         	double perturbedLoss;
         	double loss = empiricalLoss(paramVec, example);
 			@Override
-			public boolean execute(F f, double value) {
+			public boolean execute(String f, double value) {
 				if (untrainedFeatures.contains(f)) return true;
-	            Dictionary.increment(perturbedParamVec, f, epsilon);
+	            Dictionary.increment(perturbedParamVec, f, PERTURB_EPSILON);
 	            perturbedLoss = empiricalLoss(perturbedParamVec, example);
-	            log.debug(f + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (epsilon*value));
+	            log.debug(f + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (PERTURB_EPSILON*value));
 	            loss = perturbedLoss;
 				return true;
 			}
@@ -390,6 +453,73 @@ public class SRW<F,E extends RWExample<F>> {
 	protected double learningRate() {
 		return Math.pow(this.epoch,-2) * this.eta;
 	}
+
+	protected void project2feasible (final LearningGraph g,
+            ParamVector paramVec, TIntDoubleMap query) {
+        for (int u : g.getNodes()) {
+        	processNode(u,g,paramVec,query);
+        }
+    }
+	protected void processNode(final int u, final LearningGraph g,
+            final ParamVector paramVec, final TIntDoubleMap query) {
+		// temporarily hard-code here
+        final double alpha = 0.01;
+		query.forEachKey(new TIntProcedure() {
+			@Override
+			public boolean execute(int q) {
+	            // if the node can restart
+	        	TObjectDoubleMap<String> restart = g.getFeatures(u, q);
+	        	if (restart.isEmpty()) return true;
+	        	if (restart.containsKey("id(defaultRestart)") || restart.containsKey("id(alphaBooster)")){
+	            
+					// check & project for each node
+	            	double z = totalEdgeWeight(g, u, paramVec);
+	            	double rw = edgeWeight(g,u,q,paramVec);
+	            	if (rw / z < alpha) {
+	                	projectOneNode(u, g, paramVec, z, rw, q);
+						if (log.isDebugEnabled()) {
+	                		z = totalEdgeWeight(g, u, paramVec);
+	                		rw = edgeWeight(g,u,q,paramVec);
+		            		log.debug("Local alpha = " + rw / z);
+						}
+					}
+	            }
+	            return true;
+			}
+		});
+	}
+
+	protected void projectOneNode(int u, LearningGraph g, ParamVector paramVec,
+            double z, double rw, int queryNode) {
+
+		// temporarily hard-code here
+        double alpha = 0.01;
+        final Set<String> nonRestartFeatureSet = new TreeSet<String>();
+        int nonRestartNodeNum = 0;
+        for (TIntIterator it = g.near(u).iterator(); it.hasNext();) {
+        	int v = it.next();
+            if (v == (queryNode)) continue;
+            nonRestartNodeNum ++;
+            g.getFeatures(u, v).forEachKey(new TObjectProcedure<String>() {
+
+				@Override
+				public boolean execute(String feature) {
+	                nonRestartFeatureSet.add(feature);
+	                return true;
+				}
+			});
+        }
+        double newValue = weightingScheme.projection(rw,alpha,nonRestartNodeNum);
+        for (String f : nonRestartFeatureSet) {
+            if (f instanceof String && !((String)f).startsWith("db(")) {
+				throw new UnsupportedOperationException("The assumption that minalpha only happens on fact/db feature is violated. (" + f + ")");
+            } else {
+                paramVec.put(f, newValue);
+            }
+        }
+    }
+
+
 
 	/**
 	 * Increase the epoch count
@@ -404,7 +534,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec
 	 * @param example
 	 */
-	public void prepareGradient(ParamVector<F,?> paramVec, E example) {}
+	public void prepareGradient(ParamVector<String,?> paramVec, E example) {}
 	
 	/**
 	 * Compute the local gradient of the parameters, associated
@@ -414,15 +544,15 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param example
 	 * @return
 	 */
-	public TObjectDoubleMap<F> gradient(ParamVector<F,?> paramVec, E example) {
+	public TObjectDoubleMap<String> gradient(ParamVector<String,?> paramVec, E example) {
 		throw new UnsupportedOperationException("Bad programmer! Must override in subclass.");
 	}
 
 	/** Give the learner the opportunity to swap in an alternate parameter implementation **/
-	public ParamVector<F,?> setupParams(ParamVector<F,?> paramVec) { return paramVec; }
+	public ParamVector<String,?> setupParams(ParamVector<String,?> paramVec) { return paramVec; }
 	
 	/** Give the learner the opportunity to do additional parameter processing **/
-	public void cleanupParams(ParamVector<F,?> paramVec) {}
+	public void cleanupParams(ParamVector<String,?> paramVec) {}
 	
 	/**
 	 * Reset the loss-tracking state of this walker.
@@ -442,7 +572,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param example
 	 * @return
 	 */
-	public double empiricalLoss(ParamVector<F,?> paramVec, E example) {
+	public double empiricalLoss(ParamVector<String,?> paramVec, E example) {
 		log.warn("Discarding accumulated loss information for empirical loss calculation!");
 		this.clearLoss();
 		this.gradient(paramVec,example);
@@ -455,7 +585,7 @@ public class SRW<F,E extends RWExample<F>> {
 	 * @param paramVec
 	 * @param exampleIt
 	 */
-	public double averageLoss(ParamVector<F,?> paramVec, Iterable<E> exampleIt) {
+	public double averageLoss(ParamVector<String,?> paramVec, Iterable<E> exampleIt) {
 		double totLoss = 0;
 		double numTest = 0;
 		for (E example : exampleIt) { 
@@ -491,10 +621,10 @@ public class SRW<F,E extends RWExample<F>> {
 	public void setDelta(double delta) {
 		this.delta = delta;
 	}
-	public WeightingScheme<F> getWeightingScheme() {
+	public WeightingScheme<String> getWeightingScheme() {
 		return weightingScheme;
 	}
-	public void setWeightingScheme(WeightingScheme<F> weightingScheme) {
+	public void setWeightingScheme(WeightingScheme<String> weightingScheme) {
 		this.weightingScheme = weightingScheme;
 	}
 }

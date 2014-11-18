@@ -69,7 +69,7 @@ public class Neo4jGraphComponent extends GraphlikeComponent {
 	public Neo4jGraphComponent(String dbPath) {
 		init(dbPath);
 		this.featureDict = new HashMap<Goal,Double>();
-		this.featureDict.put(new Goal("id",dbPath),1.0);
+		this.featureDict.put(new Goal("db",dbPath),1.0);
 	}
 
 	@Override

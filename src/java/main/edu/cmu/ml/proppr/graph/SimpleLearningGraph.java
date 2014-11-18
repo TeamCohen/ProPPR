@@ -14,7 +14,7 @@ import gnu.trove.procedure.TObjectProcedure;
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  *
  */
-public class SimpleLearningGraph extends LearningGraph<String> {
+public class SimpleLearningGraph extends LearningGraph {
 	private static final TIntArrayList EMPTY_LIST = new TIntArrayList();
 	private static final TObjectDoubleMap<String> EMPTY_MAP = new TObjectDoubleHashMap<String>();
 	protected TIntObjectMap<TIntArrayList> near = new TIntObjectHashMap<TIntArrayList>();
@@ -23,14 +23,10 @@ public class SimpleLearningGraph extends LearningGraph<String> {
 	protected Set<String> features = new TreeSet<String>();
 	protected int edgeSize = 0;
 
-	public static class SLGBuilder extends LearningGraphBuilder<String> {
+	public static class SLGBuilder extends LearningGraphBuilder {
 		@Override
-		public LearningGraph<String> create() {
+		public LearningGraph create() {
 			return new SimpleLearningGraph();
-		}
-		@Override
-		public String parseFeature(String f) {
-			return f;
 		}
 	}
 	
@@ -42,7 +38,7 @@ public class SimpleLearningGraph extends LearningGraph<String> {
 	}
 
 	@Override
-	public void addOutlink(int u, RWOutlink<String> outlink) {
+	public void addOutlink(int u, RWOutlink outlink) {
 		ensureNode(u);
 		ensureNode(outlink.nodeid);
 		near.get(u).add(outlink.nodeid);
