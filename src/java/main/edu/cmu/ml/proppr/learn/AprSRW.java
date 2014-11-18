@@ -1,21 +1,14 @@
 package edu.cmu.ml.proppr.learn;
 
-import java.util.HashMap;
-import java.io.File;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.graph.v1.AnnotatedGraph;
-import edu.cmu.ml.proppr.graph.v1.Feature;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.SRWParameters;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.prove.v1.DprProver;
+import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import gnu.trove.iterator.TIntIterator;

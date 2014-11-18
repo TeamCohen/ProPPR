@@ -1,8 +1,5 @@
 package edu.cmu.ml.proppr.util;
 
-import edu.cmu.ml.proppr.prove.v1.Argument;
-import edu.cmu.ml.proppr.prove.v1.Goal;
-import edu.cmu.ml.proppr.prove.v1.LogicProgramState;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
@@ -23,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;

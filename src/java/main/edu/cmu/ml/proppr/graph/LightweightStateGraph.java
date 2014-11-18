@@ -8,12 +8,9 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.proppr.graph.v1.Edge;
-import edu.cmu.ml.proppr.graph.v1.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
-import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
