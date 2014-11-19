@@ -1,3 +1,221 @@
+===============
+QUICKSTART
+===============
+
+1. Write a rulefile as *.ppr:
+
+$ cat > test.ppr
+predict(X,Y) :- hasWord(X,W),isLabel(Y),related(W,Y)  {r}.
+related(W,Y) :- {w(W,Y)}.
+^D
+
+2. Compile a rulefile:
+
+$ python src/scripts/compile.py serialize test.ppr | tee test.wam
+0		comment	predict(-1,-2) :- hasWord(-1,-3), isLabel(-2), related(-3,-2) {r}  #v:['X', 'Y', 'W'].
+1	predict/2	allocate	3	['W', 'Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	r	0
+6		freport
+7		pushboundvar	-1
+8		pushfreevar	-3
+9		callp	hasWord/2
+10		pushboundvar	-2
+11		callp	isLabel/1
+12		pushboundvar	-3
+13		pushboundvar	-2
+14		callp	related/2
+15		returnp
+16		comment	related(-1,-2) :-  {w(-1,-2)}  #v:['W', 'Y'].
+17	related/2	allocate	2	['Y', 'W']
+18		initfreevar	-1	-2
+19		initfreevar	-2	-1
+20		fclear
+21		fpushstart	w	2
+22		fpushboundvar	-1
+23		fpushboundvar	-2
+24		freport
+25		returnp
+
+3. Write arity-2 facts in a database file as *.graph:
+
+$ cat > test.graph
+hasWord	dh	a
+hasWord	dh	pricy
+hasWord	dh	doll
+hasWord	dh	house
+hasWord	ft	a
+hasWord	ft	little
+hasWord	ft	red
+hasWord	ft	fire
+hasWord	ft	truck
+hasWord	rw	a
+hasWord	rw	red
+hasWord	rw	wagon
+hasWord	sc	a
+hasWord	sc	pricy
+hasWord	sc	red
+hasWord	sc	sports
+hasWord	sc	car
+...
+^D
+
+4. Write arity-N facts in a database file as *.cfacts:
+
+$ cat > test.cfacts
+isLabel	neg
+isLabel	pos
+^D
+
+5. Write training examples:
+
+$ cat > test_train.data
+predict(dh,Y)	-predict(dh,neg)	+predict(dh,pos)
+predict(ft,Y)	-predict(ft,neg)	+predict(ft,pos)
+predict(rw,Y)	-predict(rw,neg)	+predict(rw,pos)
+predict(sc,Y)	-predict(sc,neg)	+predict(sc,pos)
+...
+^D
+
+6. Ground training examples:
+
+$ java -cp conf:bin:lib/* edu.cmu.ml.proppr.Grounder --programFiles test.wam:test.graph:test.cfacts --queries test_train.data --grounded test_train.grounded
+Time 461 msec
+Done.
+
+7. Train parameters:
+
+$ java -cp conf:bin:lib/* edu.cmu.ml.proppr.Trainer --train test_train.grounded --params test.wts
+ INFO [Trainer] edu.cmu.ml.proppr.util.ModuleConfiguration:
+  Walker: edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW
+ Trainer: edu.cmu.ml.proppr.Trainer
+Weighting Scheme: edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme
+
+ INFO [Trainer] Training model parameters on test_train.grounded...
+ INFO [Trainer] epoch 1 ...
+ INFO [Trainer] epoch 2 ...
+ INFO [Trainer] epoch 3 ...
+ INFO [Trainer] epoch 4 ...
+ INFO [Trainer] epoch 5 ...
+ INFO [Trainer] Finished training in 650 ms
+ INFO [Trainer] Saving parameters to test.wts...
+
+8. Write testing examples:
+
+$ cat > test_testing.data 
+predict(pb,Y)	-predict(pb,neg)	+predict(pb,pos)
+predict(yc,Y)	-predict(yc,neg)	+predict(yc,pos)
+predict(rb2,Y)	-predict(rb2,neg)	+predict(rb2,pos)
+...
+^D
+
+9. Get untrained rankings:
+
+$ java -cp conf:bin:lib/* edu.cmu.ml.proppr.QueryAnswerer --programFiles test.wam:test.graph:test.cfacts --queries test_testing.data --solutions pre.testing.solutions.txt
+edu.cmu.ml.proppr.QueryAnswerer.QueryAnswererConfiguration:
+  Prover: edu.cmu.ml.proppr.prove.DprProver
+Weighting Scheme: edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme
+
+ INFO [QueryAnswerer] Running queries from test_testing.data; saving results to pre.testing.solutions.txt
+ INFO [QueryAnswerer] Querying: predict(pb,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(yc,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(rb2,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(rp,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(bp,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(he,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(wt,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+
+10. Measure untrained performance:
+
+$ python scripts/answermetrics.py --data test_testing.data --answers pre.testing.solutions.txt --metric mrr --metric recall
+==============================================================================
+metric mrr (Mean Reciprocal Rank): averages 1/rank for all positive answers
+. micro: 1.0
+. macro: 1.0
+. details:
+. .  predict(he,-1)  #v:[?]. 	1.0
+. .  predict(pb,-1)  #v:[?]. 	1.0
+. .  predict(yc,-1)  #v:[?]. 	1.0
+. .  predict(bp,-1)  #v:[?]. 	1.0
+. .  predict(rb2,-1)  #v:[?]. 	1.0
+. .  predict(wt,-1)  #v:[?]. 	1.0
+. .  predict(rp,-1)  #v:[?]. 	1.0
+==============================================================================
+metric recall (Recall): fraction of positive examples that are proposed as solutions anywhere in the ranking
+. micro: 1.0
+. macro: 1.0
+. details:
+. .  predict(he,-1)  #v:[?]. 	1.0
+. .  predict(pb,-1)  #v:[?]. 	1.0
+. .  predict(yc,-1)  #v:[?]. 	1.0
+. .  predict(bp,-1)  #v:[?]. 	1.0
+. .  predict(rb2,-1)  #v:[?]. 	1.0
+. .  predict(wt,-1)  #v:[?]. 	1.0
+. .  predict(rp,-1)  #v:[?]. 	1.0
+
+11. Get trained rankings (note --params; --solutions):
+
+$ java -cp conf:bin:lib/* edu.cmu.ml.proppr.QueryAnswerer --programFiles test.wam:test.graph:test.cfacts --queries test_testing.data --solutions post.testing.solutions.txt --params test.wts 
+edu.cmu.ml.proppr.QueryAnswerer.QueryAnswererConfiguration:
+  Prover: edu.cmu.ml.proppr.prove.DprProver
+Weighting Scheme: edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme
+
+ INFO [QueryAnswerer] Running queries from test_testing.data; saving results to post.testing.solutions.txt
+ INFO [QueryAnswerer] Querying: predict(pb,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(yc,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(rb2,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(rp,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(bp,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(he,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+ INFO [QueryAnswerer] Querying: predict(wt,-1)  #v:[?].
+ INFO [QueryAnswerer] Writing 2 solutions...
+
+12. Measure trained performance:
+
+$ python scripts/answermetrics.py --data test_testing.data --answers post.testing.solutions.txt --metric mrr --metric recall
+==============================================================================
+metric mrr (Mean Reciprocal Rank): averages 1/rank for all positive answers
+. micro: 1.0
+. macro: 1.0
+. details:
+. .  predict(he,-1)  #v:[?]. 	1.0
+. .  predict(pb,-1)  #v:[?]. 	1.0
+. .  predict(yc,-1)  #v:[?]. 	1.0
+. .  predict(bp,-1)  #v:[?]. 	1.0
+. .  predict(rb2,-1)  #v:[?]. 	1.0
+. .  predict(wt,-1)  #v:[?]. 	1.0
+. .  predict(rp,-1)  #v:[?]. 	1.0
+==============================================================================
+metric recall (Recall): fraction of positive examples that are proposed as solutions anywhere in the ranking
+. micro: 1.0
+. macro: 1.0
+. details:
+. .  predict(he,-1)  #v:[?]. 	1.0
+. .  predict(pb,-1)  #v:[?]. 	1.0
+. .  predict(yc,-1)  #v:[?]. 	1.0
+. .  predict(bp,-1)  #v:[?]. 	1.0
+. .  predict(rb2,-1)  #v:[?]. 	1.0
+. .  predict(wt,-1)  #v:[?]. 	1.0
+. .  predict(rp,-1)  #v:[?]. 	1.0
+
+
+
+
 ProPPR: PROGRAMMING WITH PERSONALIZED PAGERANK
 ==============================================
 This is a Java package for using graph walk algorithms to perform inference tasks over local groundings of first-order logic programs. The package makes use of parallelization to substantially speed processing, making it practical even for large databases.
@@ -6,16 +224,16 @@ Contents:
 1. Build
 2. Run
    2.0. Overview of Java main() classes
-   2.1. Experiment pipeline
-        2.1.0. Experiment: full pipeline
-        2.1.1. ExampleCooker: Grounding or "Cooking"
-        2.1.2. Trainer: SGD learning
-        2.1.3. Tester: Evaluating results
-   2.2. Utilities
-        2.2.0. QueryAnswerer: Answering queries against a program
-        2.2.1. Prompt: Interact with ProPPR machinery in a shell
-3. File Formats
-
+        2.0.0. Grounder: Construct a proof graph for each query
+	2.0.1. Trainer: Train feature weights on the proof graphs
+	2.0.2. QueryAnswerer: Generate [un]trained ranked candidate solutions for queries
+   2.1. Utilities
+   	2.1.0. compiler.py: Convert ProPPR rulefiles (.ppr) to WAM instructions (.wam)
+        2.1.1. answermetrics.py: Measure performance
+	2.1.2. sparseGraphTools: Construct memory- and CPU-efficient ProPPR databases
+3. Use
+   3.0. Developing a ProPPR program and database
+   3.1. Typical workflow for experiments
 
 1. BUILD
 ========
@@ -32,212 +250,61 @@ For all run phases, control logging output using conf/log4j.properties.
 2.0. RUN: JAVA MAIN CLASSES
 ===========================
 
-edu.cmu.ml.Experiment - Full pipeline: ground, train, test.
-
-edu.cmu.ml.proppr.ExampleCooker - for grounding (used by grounding.sh)
-
-edu.cmu.ml.proppr.trove.Trainer - single-threaded parameter-learning over labeled examples
-edu.cmu.ml.proppr.trove.MultithreadedTrainer - multithreaded parameter-learning
-    - if the trove *Trainer classes have trouble, there are less memory-efficient but potentially easier-to-debug versions which use string keys:
-      edu.cmu.ml.proppr.Trainer
-      edu.cmu.ml.proppr.MultithreadedTrainer
-
-edu.cmu.ml.proppr.Tester - single-threaded evaluation of trained parameters over labeled examples
-
-edu.cmu.ml.proppr.prove.Prompt - interactive prompt for exploring state trees in grounding proofs - good for debugging rulefiles
-
-edu.cmu.ml.proppr.QueryAnswerer - compute query solutions, using trained or untrained parameters
+edu.cmu.ml.proppr.Grounder
+edu.cmu.ml.proppr.Trainer
+edu.cmu.ml.proppr.QueryAnswerer
 
 
-2.1. RUN: EXPERIMENT PIPELINE
-=============================
+2.0.0. RUN: MAIN CLASSES: GROUNDER
+==================================
 
-2.1.0. RUN: EXPERIMENT PIPELINE: EXPERIMENT
-===========================================
+$ java -cp conf:bin:lib/* edu.cmu.ml.proppr.Grounder --queries \
+        inputFile --grounded outputFile.grounded --programFiles \
+        file.wam:file.cfacts:file.graph [--ternaryIndex true|false] \
+        [--threads integer] [--prover ppr[:depth] | \
+        dpr[:eps[:alph[:strat]]] | tr[:depth] ]
 
-Use the file formats below to create files that specify your program's
-rules and fact DBs, and optionally a graph. Create training and testing data
-files of positive and negative examples for queries on the
-program. Details on file format are below. Place these files in their
-own directory.
+Grounder will read the list of queries from inputFile, the WAM program
+from file.wam, and the various database plugin files file.cfacts and
+file.graph, and produce the proof graph for each query in
+outputFile.grounded.
 
-ProPPR $ ls my_program
-facts.facts	graph.graph	rules.rules train.data test.data
+Optional parameters: 
 
-Use the provided script 'compile.sh' to convert these files into 
-ProPPR-readable formats:
+ * If your database contains facts of arity 3 or more, use
+`--ternaryIndex true` to spend some memory and increase the speed of
+lookups.
 
-ProPPR $ scripts/compile.sh my_program
-compiling my_program/rules.rules to my_program/rules.crules
-parsing my_program/rules.rules
-Converting my_program/facts.facts
+ * If you are on a multi-core machine, set --threads up to (#cores-2)
+to ground queries in parallel (one thread is used as the controller,
+one for writing output, and the others are worker threads).
 
-Now you can run the full pipeline on the resulting files. The compile script
-generates the --programFiles argument for you:
-
-ProPPR $ export PROGRAMFILES=`cat my_program/programFiles.arg` 
-ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.Experiment \
---programFiles ${PROGRAMFILES%:}
---train my_program/toytrain.data --output my_program/train.cooked \
---test my_program/toytest.data --params my_program/params.wts
- INFO [Component] Loading from file 'my_program/rules.crules' with alpha=0.0 ...
- INFO [Component] Loading from file 'my_program/facts.cfacts' with alpha=0.0 ...
- INFO [Component] Loading from file 'my_program/graph.graph' with alpha=0.0 ...
- INFO [Experiment] Cooking training examples from my_program/toytrain.data...
- INFO [Experiment] Training model parameters...
- INFO [Trainer] Importing cooked examples from my_program/train.cooked
- INFO [Trainer] Imported 11 examples
- INFO [Trainer] Training on cooked examples...
- INFO [Trainer] epoch 1 ...
- INFO [Trainer] epoch 2 ...
- INFO [Trainer] epoch 3 ...
- INFO [Trainer] epoch 4 ...
- INFO [Trainer] epoch 5 ...
- INFO [Trainer] epoch 6 ...
- INFO [Trainer] epoch 7 ...
- INFO [Trainer] epoch 8 ...
- INFO [Trainer] epoch 9 ...
- INFO [Trainer] epoch 10 ...
- INFO [Trainer] epoch 11 ...
- INFO [Trainer] epoch 12 ...
- INFO [Trainer] epoch 13 ...
- INFO [Trainer] epoch 14 ...
- INFO [Trainer] epoch 15 ...
- INFO [Trainer] epoch 16 ...
- INFO [Trainer] epoch 17 ...
- INFO [Trainer] epoch 18 ...
- INFO [Trainer] epoch 19 ...
- INFO [Trainer] epoch 20 ...
- INFO [Trainer] Finished in 1816 ms
- INFO [Experiment] Saving parameters to my_program/params.wts...
- INFO [Experiment] Testing on my_program/toytest.data...
- INFO [Tester] pairTotal 7.0 pairErrors 0.0 errorRate 0.0 map 1.0
-result= running time 2836
-result= pairs 7.0 errors 0.0 errorRate 0.0 map 1.0
-
-The full list of options is available (including setting details on prover type,
-number of threads, loss output, etc) by running Experiment with no arguments.
+ * The default prover is dpr:1e-4:0.1, which will fail in graphs with
+a maximum out degree >10. Reduce alpha to 1/(max out degree) to suit
+your dataset.
 
 
-2.1.1. RUN: EXPERIMENT PIPELINE: EXAMPLECOOKER
-==============================================
+2.0.1. RUN: MAIN CLASSES: TRAINER
+====================================
 
-Use the provided script 'ground.sh'
+$ java -cp conf:bin:lib/* edu.cmu.ml.proppr.Trainer --train inputFile.grounded
+        --params outputFile [--threads integer] [--epochs integer]
+        [--traceLosses] [--force] [--weightingScheme linear | sigmoid
+        | tanh | ReLU | exp]
 
-Use the file formats below to create files that specify your program's
-rules and fact DBs, and optionally a graph. Create a training data
-file of positive and negative examples for queries on the
-program. Details on file format are below. Place these files in their
-own directory.
+Trainer will read the grounded proof graphs from inputFile.grounded, then perform stochastic gradient descent to optimize the weights assigned to the edge labels, storing the resulting parameter vector in outputFile.
 
-ProPPR $ ls my_program
-facts.facts	graph.graph	rules.rules train.data
+Optional arguments:
 
-Run the grounding script on the directory, and specify the training data file explicitly:
+ * If you are on a multicore machine, specify --threads up to (#cores-2) and ProPPR will process examples in parallel (1 controller thread, 1 thread for managing output, N worker threads). Training is threadsafe, but currently (fall 2014) programs with a small number of non-db features (or a large number of db lookups) may experience reduced parallelization speedup due to resource contention.
 
-ProPPR $ scripts/ground.sh my_program my_program/train.data
---- Compiling my_program first:
-scripts/compile.sh my_program
-compiling my_program/rules.rules to my_program/rules.crules
-parsing my_program/rules.rules
-Converting my_program/facts.facts
---- Cooking my_program/train.data:
-java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.ExampleCooker --programFiles my_program/rules.crules:my_program/facts.cfacts:my_program/graph.graph --data my_program/train.data --output my_program/train.cooked
- INFO [Component] Loading from file 'my_program/rules.crules'...
- INFO [Component] Loading from file 'my_program/facts.cfacts'...
- INFO [Component] Loading from file 'my_program/graph.graph'...
-171
-Done.
---- Done.
-ProPPR $ ls my_program/
-programFiles.arg  rules.crules  rules.rules  facts.cfacts  facts.facts  train.cooked  train.data  graph.graph
+* Increase or decrease the number of training iterations using --epochs.
 
+* Turn on --traceLosses to view a readout of log loss and regularization loss every epoch.
 
-You can pass additional arguments to the cooker, if you wish to
-specify prover or multhreading settings:
+* Turn on --force to use different settings for training than were used for grounding (not recommended unless you know what you're doing)
 
-	[--prover { ppr | dpr[:eps] | tr[:depth] }]
-		(default prover is ppr)
-		(default dpr epsilon=0.0001)
-		(default tr depth=5)
-	[--threads NUMBER]
-		use multithreading (default implementation is single-threaded)
-
-ProPPR $ scripts/ground.sh my_program my_program/toytrain.data --prover dpr:0.00001 --threads 3
---- Compiling my_program first:
-scripts/compile.sh my_program
-compiling my_program/textcat.rules to my_program/textcat.crules
-parsing my_program/textcat.rules
-Converting my_program/toylabels.facts
---- Cooking my_program/toytrain.data:
-java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.ExampleCooker --programFiles my_program/textcat.crules:my_program/toylabels.cfacts:my_program/toywords.graph --data my_program/toytrain.data --output my_program/toytrain.cooked --prover dpr:0.00001 --threads 3
- INFO [Component] Loading from file 'my_program/textcat.crules'...
- INFO [Component] Loading from file 'my_program/toylabels.cfacts'...
- INFO [Component] Loading from file 'my_program/toywords.graph'...
-1124
-Done.
---- Done.
-
-
-To reset your project directory to just the original rule, fact,
-graph, and data files, use the script:
-
-ProPPR $ scripts/clean.sh my_program/
-ProPPR $ ls my_program
-facts.facts	graph.graph	rules.rules train.data
-
-
-2.1.2. RUN: EXPERIMENT PIPELINE: TRAINER
-========================================
-
-Given a cooked file we can learn the parameter weights that best
-support the training examples:
-
-ProPPR $ java edu.cmu.ml.proppr.trove.Trainer my_program/toytrain.cooked my_program/toytrain.params
-
-You can specify additional options if you like:
-    --epochs {int}	Number of epochs (default 5)
-    --traceLosses	Turn on traceLosses (default off)
-		             	NB: example count for losses is sum(x.length() for x in examples)
-		             	and won't match `wc -l cookedExampleFile`
-
-
-For multithreaded learning, use:
-
-ProPPR $ java edu.cmu.ml.proppr.trove.MultithreadedTrainer my_program/toytrain.cooked my_program/toytrain.params
-
-With the same options as above, plus:
-    --threads {int}  Number of threads (default 4)
-    --rr             Use round-robin scheduling (default:queue) (RECOMMENDED)
-
-
-2.1.3. RUN: EXPERIMENT PIPELINE: TESTER
-=======================================
-
-Given a cooked file of testing examples and the model parameters output from 
-Trainer, we can get the MAP of the trained model over the test data.
-
-If you are running this step you should already have a compiled program 
-my_program, likely cooked training data, and the trained parameters:
-
-ProPPR $ ls my_program/
-facts.cfacts  facts.facts  graph.graph  params.wts programFiles.arg  
-rules.crules  rules.rules  test.data train.cooked  train.data
-
-Run the tester:
-
-ProPPR $ export PROGRAMFILES=`cat my_program/programFiles.arg` 
-ProPPR $ java -cp .:bin/:lib/*:conf/ edu.cmu.ml.proppr.Tester \
---programFiles ${PROGRAMFILES%:}
---test my_program/test.data --params my_program/params.wts
- INFO [Tester] flags: 0x59
- INFO [Component] Loading from file 'my_program/rules.crules' with alpha=0.0 ...
- INFO [Component] Loading from file 'my_program/facts.cfacts' with alpha=0.0 ...
- INFO [Component] Loading from file 'my_program/graph.graph' with alpha=0.0 ...
- INFO [Tester] Testing on my_program/test.data...
- INFO [Tester] pairTotal 7.0 pairErrors 0.0 errorRate 0.0 map 1.0
-result= running time 113
-result= pairs 7.0 errors 0.0 errorRate 0.0 map 1.0
+* Set --weightingScheme to your desired wrapper function, controlling how the weight of an edge is computed from its features.
 
 
 2.2. RUN: UTILITIES
