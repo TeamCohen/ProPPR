@@ -28,6 +28,11 @@ import edu.cmu.ml.proppr.util.Dictionary;
 public class ProofGraph {
 	public static final boolean DEFAULT_RESTART = false;
 	public static final boolean DEFAULT_TRUELOOP = true;
+	private static final Goal TRUELOOP = new Goal("id",new ConstantArgument("trueLoop"));
+	private static final Goal TRUELOOP_RESTART = new Goal("id",new ConstantArgument("trueLoopRestart"));
+	private static final Goal RESTART = new Goal("id",new ConstantArgument("restart"));
+	private static final Goal ALPHABOOSTER = new Goal("id",new ConstantArgument("alphaBooster"));
+	
 	private InferenceExample example;
 	private AWamProgram program;
 	private WamInterpreter interpreter;
@@ -48,10 +53,10 @@ public class ProofGraph {
 		this.interpreter = new WamInterpreter(this.program, plugins);
 		this.startState = this.createStartState();
 		
-		this.trueLoopFD = new HashMap<Goal,Double>(); this.trueLoopFD.put(new Goal("trueLoop"),1.0);
-		this.trueLoopRestartFD = new HashMap<Goal,Double>(); this.trueLoopRestartFD.put(new Goal("trueLoopRestart"),1.0);
-		this.restartFeature = new Goal("restart");
-		this.restartBoosterFeature = new Goal("alphaBooster");
+		this.trueLoopFD = new HashMap<Goal,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
+		this.trueLoopRestartFD = new HashMap<Goal,Double>(); this.trueLoopRestartFD.put(TRUELOOP_RESTART,1.0);
+		this.restartFeature = RESTART;
+		this.restartBoosterFeature = ALPHABOOSTER;
 		this.graph = new LightweightStateGraph();
 	}
 	private ImmutableState createStartState() throws LogicProgramException {

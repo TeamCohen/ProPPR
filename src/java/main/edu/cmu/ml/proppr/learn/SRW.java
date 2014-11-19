@@ -25,6 +25,7 @@ import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.prove.MinAlphaException;
+import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import gnu.trove.iterator.TIntIterator;
@@ -394,7 +395,7 @@ public class SRW<E extends RWExample> {
 		TObjectDoubleMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
-			checkGradient(grad, paramVec, example);
+//			checkGradient(grad, paramVec, example);
 		}
 		final double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
@@ -447,7 +448,7 @@ public class SRW<E extends RWExample> {
 	            // if the node can restart
 	        	TObjectDoubleMap<String> restart = g.getFeatures(u, q);
 	        	if (restart.isEmpty()) return true;
-	        	if (restart.containsKey("id(defaultRestart)") || restart.containsKey("id(alphaBooster)")){
+	        	if (restart.containsKey("id(restart)") || restart.containsKey("id(alphaBooster)")){
 	            
 					// check & project for each node
 	            	double z = totalEdgeWeight(g, u, paramVec);
@@ -485,7 +486,7 @@ public class SRW<E extends RWExample> {
         }
         double newValue = c.weightingScheme.projection(rw,c.alpha,nonRestartNodeNum);
         for (String f : nonRestartFeatureSet) {
-            if (!f.startsWith("db(")) {
+            if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) {
 				throw new MinAlphaException("Minalpha assumption violated: not a fact/db feature (" + f + ")");
             } else {
                 paramVec.put(f, newValue);

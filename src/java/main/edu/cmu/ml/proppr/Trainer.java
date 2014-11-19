@@ -46,10 +46,14 @@ public class Trainer {
 		learner.untrainedFeatures().add("fixedWeight");
 		learner.untrainedFeatures().add("id(trueLoop)");
 		learner.untrainedFeatures().add("id(trueLoopRestart)");
-		learner.untrainedFeatures().add("id(defaultRestart)");
+		learner.untrainedFeatures().add("id(restart)");
 		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 	
+	public Trainer(SRW<PosNegRWExample> srw) {
+		this(srw, 1, Multithreading.DEFAULT_THROTTLE);
+	}
+
 	public void doExample(PosNegRWExample x, ParamVector<String,?> paramVec, boolean traceLosses) {
 		this.learner.trainOnExample(paramVec, x);
 	}

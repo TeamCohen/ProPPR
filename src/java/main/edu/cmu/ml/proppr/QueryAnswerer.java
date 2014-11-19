@@ -171,7 +171,7 @@ public class QueryAnswerer {
 		@Override
 		public String call() throws Exception {
 			try {
-				return findSolutions(program, plugins, prover, query, normalize, id);
+				return findSolutions(program, plugins, prover.copy(), query, normalize, id);
 			} catch (LogicProgramException e) {
 				throw new LogicProgramException("on query "+id,e);
 			}

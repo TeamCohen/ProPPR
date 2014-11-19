@@ -25,7 +25,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 /**
- * Utility methods for common tasks on Map<String,Double> and Map<String,Map<String,Double>>.
+ * Utility methods for common tasks on String->Double &c.
  * @author krivard
  *
  */

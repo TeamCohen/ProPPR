@@ -14,7 +14,7 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
-import edu.cmu.ml.proppr.graph.v1.AnnotatedGraph;
+import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.L2SqLossSRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
@@ -24,6 +24,9 @@ import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
+import gnu.trove.map.TIntDoubleMap;
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class L2SqLossSRWTest extends SRWTest {
 	public void initSrw() {
@@ -31,25 +34,25 @@ public class L2SqLossSRWTest extends SRWTest {
 	}
 	
 	@Override
-	public Map<String,Double> makeGradient(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {
+	public TObjectDoubleMap<String> makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		List<HiLo> trainingPairs = new ArrayList<HiLo>();
-		for (String p : pos) {
-			for (String n : neg) {
+		for (int p : pos) {
+			for (int n : neg) {
 				trainingPairs.add(new HiLo(p,n));
 			}
 		}
-		return srw.gradient(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
+		return srw.gradient(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
 	}
 	
 	@Override
-	public double makeLoss(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {		
+	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {		
 		List<HiLo> trainingPairs = new ArrayList<HiLo>();
-		for (String p : pos) {
-			for (String n : neg) {
+		for (int p : pos) {
+			for (int n : neg) {
 				trainingPairs.add(new HiLo(p,n));
 			}
 		}
-		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
+		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
 	}
 
 	@Test
@@ -58,19 +61,17 @@ public class L2SqLossSRWTest extends SRWTest {
 		List<HiLo> trainingPairs = new ArrayList<HiLo>();
 		for (String b : blues) {
 			for (String r : reds) {
-				trainingPairs.add(new HiLo(r,b));
+				trainingPairs.add(new HiLo(nodes.getId(r),nodes.getId(b)));
 			}
 		}
 		
-		AnnotatedGraph g = brGraphs.get(0);
-		
 		List<PairwiseRWExample> trainGen = new ArrayList<PairwiseRWExample>();
-		TreeMap<String,Double> query = new TreeMap<String,Double>();
-		query.put("b0", 1.0); 
-		trainGen.add(new PairwiseRWExample(g, query, trainingPairs));
-		query = new TreeMap<String,Double>();
-		query.put("b1",1.0);
-		trainGen.add(new PairwiseRWExample(g, query, trainingPairs));
+		TIntDoubleMap query = new TIntDoubleHashMap();
+		query.put(nodes.getId("b0"), 1.0); 
+		trainGen.add(new PairwiseRWExample(brGraph, query, trainingPairs));
+		query = new TIntDoubleHashMap();
+		query.put(nodes.getId("b1"),1.0);
+		trainGen.add(new PairwiseRWExample(brGraph, query, trainingPairs));
 		
 		L2SqLossSRW brSRW = ((L2SqLossSRW) srw);
 		double originalLoss = brSRW.averageLoss(uniformParams, trainGen);

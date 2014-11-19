@@ -70,7 +70,7 @@ class Labels(object):
 
 class Answer(object):
     """Encodes a single answer proposed by ProPPR for a query."""
-    def __init__(self,rank,score,theta,solution):
+    def __init__(self,rank,score,solution):
         self.rank = rank
         self.score = score
         self.solution = solution
@@ -109,12 +109,13 @@ class Answers(object):
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
                 self.queryTime[intVarQuery] = int(timeStr.split(" ")[0])
             else:
-                (rankStr,scoreStr,thetaStr) = line.strip().split("\t")
+                (rankStr,scoreStr,solution) = line.strip().split("\t")
                 score = float(scoreStr)
                 rank = int(rankStr)
-                theta = self.asDict(thetaStr)
-                solution = self.substitute(intVarQuery,theta)
-                a = Answer(rank,score,theta,solution)
+                solution = solution[:-1] #trim trailing '.'
+                #theta = self.asDict(thetaStr)
+                #solution = self.substitute(intVarQuery,theta)
+                a = Answer(rank,score,solution)
                 if labels:
                     a.isPos = solution in labels.pos[intVarQuery]
                     a.isNeg = solution in labels.neg[intVarQuery]

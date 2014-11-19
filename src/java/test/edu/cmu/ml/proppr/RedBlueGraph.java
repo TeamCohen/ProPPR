@@ -16,9 +16,14 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 
-import edu.cmu.ml.proppr.graph.v1.AnnotatedGraph;
-import edu.cmu.ml.proppr.graph.v1.AnnotatedStringGraph;
-import edu.cmu.ml.proppr.graph.v1.Feature;
+import edu.cmu.ml.proppr.graph.LearningGraph;
+import edu.cmu.ml.proppr.graph.RWOutlink;
+import edu.cmu.ml.proppr.graph.SimpleLearningGraph;
+import edu.cmu.ml.proppr.util.SymbolTable;
+import gnu.trove.map.TIntDoubleMap;
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+
 /**
  * This is a template for a set of test cases that all use the same style of graph.
  * @author katie
@@ -30,10 +35,10 @@ import edu.cmu.ml.proppr.graph.v1.Feature;
  *
  */
 public class RedBlueGraph {
-
-	protected List<AnnotatedGraph<String>> brGraphs;
+	protected LearningGraph brGraph;
 	protected Set<String> reds;
 	protected Set<String> blues;
+	protected SymbolTable<String> nodes = new SymbolTable<String>();
 	protected int magicNumber;
 
 	public RedBlueGraph() {
@@ -51,33 +56,31 @@ public class RedBlueGraph {
 				BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
 			}
 
-			brGraphs = new ArrayList<AnnotatedGraph<String>>();
-			Collections.addAll(brGraphs, new AnnotatedStringGraph(), new AnnotatedStringGraph(), new AnnotatedStringGraph());
+			brGraph = new SimpleLearningGraph();
 			
 	//		brSRWs = new ArrayList<SRW>();
 	//		Collections.addAll(brSRWs, new L2SqLossSRW(), new L2SqLossSRW(), new L2SqLossSRW());
 			
-			addColor(brGraphs, magicNumber,"r");
-			addColor(brGraphs, magicNumber,"b");
+			addColor(brGraph, magicNumber,"r");
+			addColor(brGraph, magicNumber,"b");
 			{
-				String u = "b0", v="r0";
-				for (AnnotatedGraph<String> g : brGraphs) {
-					ArrayList<Feature> ff = new ArrayList<Feature>();
-					ff.add(new Feature("fromb", 1.0));
-					ff.add(new Feature("tor",1.0));
-					g.addDirectedEdge(u, v, ff);
-	
-					ff = new ArrayList<Feature>();
-					ff.add(new Feature("fromr", 1.0));
-					ff.add(new Feature("tob",1.0));
-					g.addDirectedEdge(v,u, ff);
-				}
+				int u = nodes.getId("b0"), v=nodes.getId("r0");
+				TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
+				ff.put("fromb", 1.0);
+				ff.put("tor",1.0);
+				brGraph.addOutlink(u, new RWOutlink(ff,v));
+
+				ff = new TObjectDoubleHashMap<String>();
+				ff.put("fromr", 1.0);
+				ff.put("tob",1.0);
+				brGraph.addOutlink(u, new RWOutlink(ff,v));
 			}		
 			
 			// save sets of red and blue nodes
 			reds = new TreeSet<String>();
 			blues = new TreeSet<String>();
-			for (String u : brGraphs.get(0).getNodes()) {
+			for (int ui : brGraph.getNodes()) {
+				String u = nodes.getSymbol(ui);
 				if (u.startsWith("b")) blues.add(u);
 				else reds.add(u);
 			}
@@ -85,18 +88,16 @@ public class RedBlueGraph {
 //			System.err.println("\n"+brGraphs.get(0).dump("r0"));
 		}
 
-	public void addColor(List<AnnotatedGraph<String>> graphs, int num, String label) {
+	public void addColor(LearningGraph graph, int num, String label) {
 		for (int x=0; x<num; x++) {
 			for (int y=0; y<num; y++) {
 				if (x!=y) {
 					String u = label+x;
 					String v = label+y;
-					for (AnnotatedGraph<String> g : graphs) {
-						ArrayList<Feature> ff = new ArrayList<Feature>();
-						ff.add(new Feature("from"+label, 1.0));
-						ff.add(new Feature("to"+label,1.0));
-						g.addDirectedEdge(u, v, ff);
-					}
+					TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
+					ff.put("from"+label, 1.0);
+					ff.put("to"+label,1.0);
+					graph.addOutlink(nodes.getId(u),new RWOutlink(ff,nodes.getId(v)));
 				}
 			}
 		}
@@ -114,17 +115,17 @@ public class RedBlueGraph {
 		return result;
 	}
 
-	public void equalScores(Map<String,Double> vec1, Map<String,Double> vec2) {
-		for (String x : vec2.keySet()) {
+	public void equalScores(TIntDoubleMap vec1, TIntDoubleMap vec2) {
+		for (int x : vec2.keys()) {
 			assertTrue("vec1 must contain vec2 item "+x,vec1.containsKey(x));
 		}
-		for (String x : vec1.keySet()) {
+		for (int x : vec1.keys()) {
 			assertTrue("vec2 must contain vec1 item "+x,vec2.containsKey(x));
 			assertEquals(vec1.get(x),vec2.get(x),1e-10);
 		}
 	}
 
-	public void lowerScores(Map<String,Double> vec1, Map<String,Double> vec2) {
+	public void lowerScores(TObjectDoubleMap<String> vec1, TObjectDoubleMap<String> vec2) {
 			for (String x : vec2.keySet()) {
 				assertTrue("vec1 must contain vec2 item "+x,vec1.containsKey(x));
 			}

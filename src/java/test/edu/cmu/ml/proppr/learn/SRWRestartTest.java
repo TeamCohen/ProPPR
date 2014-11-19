@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PairwiseRWExample;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
+import edu.cmu.ml.proppr.graph.RWOutlink;
 import edu.cmu.ml.proppr.graph.v1.AnnotatedGraph;
 import edu.cmu.ml.proppr.graph.v1.Feature;
 import edu.cmu.ml.proppr.learn.L2SqLossSRW;
@@ -21,6 +22,8 @@ import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 /**
  * These tests are on a graph which includes reset links.
@@ -29,22 +32,20 @@ import edu.cmu.ml.proppr.util.SimpleParamVector;
  */
 public class SRWRestartTest extends SRWTest {
 	public void initSrw() {
-		srw = new L2SqLossSRW<String>();
+		srw = new L2SqLossSRW();
 	}
 	public void setup(){
 		super.setup();
 
 		// add restart links to r0,r1,r2 each graph
-		for (int k=0; k<magicNumber; k++) {
-			String ri = "r"+k;
-			AnnotatedGraph<String> g = brGraphs.get(k); //brGraph 0 resets to r0, brGraph 1 resets to r1, etc
-			for (String u : g.getNodes()) {
-				ArrayList<Feature> ff = new ArrayList<Feature>();
-				ff.addAll(g.phi(u, ri));
-				ff.add(new Feature("restart",this.srw.getWeightingScheme().defaultWeight()));
-				g.addDirectedEdge(u, ri, ff);
-			}
+//		for (int k=0; k<magicNumber; k++) {
+		for (int u : brGraph.getNodes()) {
+			TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
+			ff.putAll(brGraph.getFeatures(u, nodes.getId("r0")));
+			ff.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());
+			brGraph.addOutlink(u, new RWOutlink(ff, nodes.getId("r0")));
 		}
+//		}
 		uniformParams.put("restart",this.srw.getWeightingScheme().defaultWeight());
 	}
 	@Override
@@ -55,7 +56,7 @@ public class SRWRestartTest extends SRWTest {
 				trainingPairs.add(new HiLo(p,n));
 			}
 		}
-		return srw.gradient(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
+		return srw.gradient(paramVec, new PairwiseRWExample(brGraph.get(0), query, trainingPairs));
 	}
 	
 	@Override
@@ -66,7 +67,7 @@ public class SRWRestartTest extends SRWTest {
 				trainingPairs.add(new HiLo(p,n));
 			}
 		}
-		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraphs.get(0), query, trainingPairs));
+		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraph.get(0), query, trainingPairs));
 	}
 	
 //	@Override
@@ -82,11 +83,11 @@ public class SRWRestartTest extends SRWTest {
 		
 //		Map<String,Double> startVec = new TreeMap<String,Double>();
 //		startVec.put("r0",1.0);
-		ParamVector baseLineRwr = new SimpleParamVector(brGraphs.get(0).rwr(startVec));
+		ParamVector baseLineRwr = new SimpleParamVector(brGraph.get(0).rwr(startVec));
 		ParamVector biasedParams = makeBiasedVec();
 		
 		SRW<PairwiseRWExample<String>> mysrw = new SRW<PairwiseRWExample<String>>(maxT);
-		Map<String,Double> newRwr = mysrw.rwrUsingFeatures(brGraphs.get(0), startVec, biasedParams);
+		Map<String,Double> newRwr = mysrw.rwrUsingFeatures(brGraph.get(0), startVec, biasedParams);
 		
 		System.err.println(Dictionary.buildString(baseLineRwr, new StringBuilder(), "\n"));
 		System.err.println(Dictionary.buildString(newRwr, new StringBuilder(), "\n"));
@@ -111,7 +112,7 @@ public class SRWRestartTest extends SRWTest {
 		for (int i=0;i<magicNumber;i++) {
 			TreeMap<String,Double> xxFeatures = new TreeMap<String,Double>();
 			xxFeatures.put("r"+i, 1.0);
-			PairwiseRWExample<String> xx = new PairwiseRWExample<String>(brGraphs.get(i),xxFeatures,trainingPairs);
+			PairwiseRWExample<String> xx = new PairwiseRWExample<String>(brGraph.get(i),xxFeatures,trainingPairs);
 			examples[i] = xx;
 		}
 		

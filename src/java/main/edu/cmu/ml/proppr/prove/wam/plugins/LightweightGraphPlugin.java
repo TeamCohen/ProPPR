@@ -38,7 +38,7 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 		this(name,DEFAULT_ALPHA);
 	}
 	public LightweightGraphPlugin(String name,double alpha) {
-		this.fd.put(new Goal("graph",new ConstantArgument(name)),1.0);
+		this.fd.put(WamPlugin.pluginFeature(this, name),1.0);
 		this.name = name;
 		this.alpha = alpha;
 	}

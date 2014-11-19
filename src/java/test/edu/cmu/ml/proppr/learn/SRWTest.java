@@ -17,8 +17,7 @@ import edu.cmu.ml.proppr.examples.PairwiseRWExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.examples.RWExample;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
-import edu.cmu.ml.proppr.graph.v1.AnnotatedGraph;
-import edu.cmu.ml.proppr.graph.v1.AnyKeyGraph;
+import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.L2SqLossSRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
@@ -26,6 +25,10 @@ import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntDoubleMap;
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 /**
  * These tests are on a graph without reset links in it.
  * @author krivard
@@ -33,8 +36,9 @@ import edu.cmu.ml.proppr.util.SimpleParamVector;
  */
 public class SRWTest extends RedBlueGraph {
 	private static final Logger log = Logger.getLogger(SRWTest.class);
-	protected SRW<PairwiseRWExample<String>> srw;
-	protected ParamVector uniformParams, startVec;
+	protected SRW srw;
+	protected ParamVector uniformParams;
+	protected TIntDoubleMap startVec;
 	
 	@Override
 	public void setup() {
@@ -43,8 +47,8 @@ public class SRWTest extends RedBlueGraph {
 		defaultSrwSettings();
 		uniformParams = makeParams(new TreeMap<String,Double>());
 		for (String n : new String[] {"fromb","tob","fromr","tor"}) uniformParams.put(n,srw.getWeightingScheme().defaultWeight());
-		startVec = makeParams(new TreeMap<String,Double>());
-		startVec.put("r0",1.0);
+		startVec = new TIntDoubleHashMap();
+		startVec.put(nodes.getId("r0"),1.0);
 	}
 	
 	public void defaultSrwSettings() {
@@ -54,18 +58,19 @@ public class SRWTest extends RedBlueGraph {
 	}
 	
 	public void initSrw() { 
-		srw = new SRW<PairwiseRWExample<String>>(10);
+		srw = new SRW<PairwiseRWExample>(10);
 	}
 	
-	public Map<String,Double> myRWR(Map<String,Double> startVec, AnyKeyGraph<String> g, int maxT) {
-		Map<String,Double> vec = startVec;
-		Map<String,Double> nextVec = null;
+	public TIntDoubleMap myRWR(TIntDoubleMap startVec, LearningGraph g, int maxT) {
+		TIntDoubleMap vec = startVec;
+		TIntDoubleMap nextVec = null;
 		for (int t=0; t<maxT; t++) {
-			nextVec = new TreeMap<String,Double>();
+			nextVec = new TIntDoubleHashMap();
 			int k=-1;
-			for (String u : vec.keySet()) { k++;
-				int z = g.nearNative(u).size();
-				for (String v : g.nearNative(u).keySet()) {
+			for (int u : vec.keys()) { k++;
+				int z = g.near(u).size();
+				for (TIntIterator it = g.near(u).iterator(); it.hasNext(); ) {
+					int v = it.next();
 					double inc = vec.get(u) / z;
 					Dictionary.increment(nextVec, v, inc);
 					log.debug("Incremented "+u+", "+v+" by "+inc);
@@ -84,10 +89,9 @@ public class SRWTest extends RedBlueGraph {
 		log.debug("Test logging");
 		int maxT = 10;
 		
-		AnnotatedGraph<String> g = brGraphs.get(0);
-		Map<String,Double> baseLineVec = myRWR(startVec,g,maxT);
+		TIntDoubleMap baseLineVec = myRWR(startVec,brGraph,maxT);
 		uniformParams.put("restart",srw.getWeightingScheme().defaultWeight());
-		Map<String,Double> newVec = srw.rwrUsingFeatures(g, startVec, uniformParams);
+		TIntDoubleMap newVec = srw.rwrUsingFeatures(brGraph, startVec, uniformParams);
 		equalScores(baseLineVec,newVec);
 	}
 	
@@ -100,20 +104,22 @@ public class SRWTest extends RedBlueGraph {
 		return new SimpleParamVector();
 	}
 	
-	public Map<String,Double> makeGradient(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {
-		return srw.gradient(paramVec, new PosNegRWExample(brGraphs.get(0), query, pos,neg));
+	public TObjectDoubleMap<String> makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
+		return srw.gradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg));
 	}
 	
 	@Test
 	public void testGradient() {
 		if (this.getClass().equals(SRWTest.class)) return;
 		
-		ParamVector baseLineVec = makeParams(brGraphs.get(0).rwr(startVec));
+//		ParamVector baseLineVec = makeParams(brGraph.rwr(startVec));
+//
+//		Set<String> blues = bluePart(baseLineVec).keySet();
+//		Set<String> reds = redPart(baseLineVec).keySet();
+		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
+		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  pos[i++] = nodes.getId(k); }
 
-		Set<String> pos = bluePart(baseLineVec).keySet();
-		Set<String> neg = redPart(baseLineVec).keySet();
-
-		Map<String,Double> gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
+		TObjectDoubleMap<String> gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
 		System.err.println(Dictionary.buildString(gradient, new StringBuilder(), "\n").toString());
 
 		assertTrue("gradient @ tob "+gradient.get("tob"),gradient.get("tob") < 0);
@@ -122,8 +128,8 @@ public class SRWTest extends RedBlueGraph {
 		assertTrue("gradient @ fromr "+gradient.get("fromr"),gradient.get("fromr")>-1e-10);
 	}
 	
-	public double makeLoss(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {
-		return srw.empiricalLoss(paramVec, new PosNegRWExample(brGraphs.get(0), query, pos,neg));
+	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
+		return srw.empiricalLoss(paramVec, new PosNegRWExample(brGraph, query, pos,neg));
 	}
 	
 	protected ParamVector makeBiasedVec() {
@@ -148,11 +154,9 @@ public class SRWTest extends RedBlueGraph {
 	@Test
 	public void testLoss() {
 		if (this.getClass().equals(SRWTest.class)) return;
-		
-		ParamVector baseLineVec = makeParams(brGraphs.get(0).rwr(startVec));
-		
-		Set<String> pos = bluePart(baseLineVec).keySet();
-		Set<String> neg = redPart(baseLineVec).keySet();
+
+		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
+		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  pos[i++] = nodes.getId(k); }
 
 		double baselineLoss = makeLoss(this.srw, uniformParams, startVec, pos, neg);
 
@@ -178,7 +182,7 @@ public class SRWTest extends RedBlueGraph {
 			ParamVector pert = uniformParams.copy();
 			pert.put("fromb", pert.get(feature)+1e-10);
 			srw.clearLoss();
-			Map<String,Double> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
+			TObjectDoubleMap<String> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
 			double newLoss = srw.cumulativeLoss().total();
 			//System.err.println("\n1st-order on "+feature+":"+Dictionary.buildString(epsGrad, new StringBuilder(), "\n").toString());
 			
@@ -187,7 +191,7 @@ public class SRWTest extends RedBlueGraph {
 		
 		double eps = .0001;
 		ParamVector nearlyUniformWeightVec = makeParams(new TreeMap<String,Double>());
-		Map<String,Double> gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
+		TObjectDoubleMap<String> gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
 		System.err.println("\nbaseline gradient:"+Dictionary.buildString(gradient, new StringBuilder(), "\n").toString());
 		for (String f : gradient.keySet()) nearlyUniformWeightVec.put(f,1.0-eps*gradient.get(f));
 		System.err.println("\nimproved params:"+Dictionary.buildString(nearlyUniformWeightVec, new StringBuilder(), "\n").toString());

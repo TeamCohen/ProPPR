@@ -1,0 +1,124 @@
+0		comment	grandmother(-1,-2) :- pgm(-1,-2)  #v:['X', 'Y'].
+1	grandmother/2	allocate	2	['Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	grandmother
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushboundvar	-2
+12		callp	pgm/2
+13		returnp
+14		comment	grandmother(-1,-2) :- mgm(-1,-2)  #v:['X', 'Y'].
+15	grandmother/2	allocate	2	['Y', 'X']
+16		initfreevar	-1	-2
+17		initfreevar	-2	-1
+18		fclear
+19		fpushstart	id	3
+20		fpushconst	grandmother
+21		fpushconst	2
+22		fpushconst	18
+23		freport
+24		pushboundvar	-1
+25		pushboundvar	-2
+26		callp	mgm/2
+27		returnp
+28		comment	mgm(-1,-2) :- mother(-1,-3), mother(-3,-2)  #v:['X', 'Y', 'Z'].
+29	mgm/2	allocate	3	['Z', 'Y', 'X']
+30		initfreevar	-1	-2
+31		initfreevar	-2	-1
+32		fclear
+33		fpushstart	id	3
+34		fpushconst	mgm
+35		fpushconst	2
+36		fpushconst	32
+37		freport
+38		pushboundvar	-1
+39		pushfreevar	-3
+40		callp	mother/2
+41		pushboundvar	-3
+42		pushboundvar	-2
+43		callp	mother/2
+44		returnp
+45		comment	pgm(-1,-2) :- pgf(-3,-2), married(-3,-1)  #v:['X', 'Y', 'Z'].
+46	pgm/2	allocate	3	['Z', 'Y', 'X']
+47		initfreevar	-1	-2
+48		initfreevar	-2	-1
+49		fclear
+50		fpushstart	id	3
+51		fpushconst	pgm
+52		fpushconst	2
+53		fpushconst	49
+54		freport
+55		pushfreevar	-3
+56		pushboundvar	-2
+57		callp	pgf/2
+58		pushboundvar	-3
+59		pushboundvar	-1
+60		callp	married/2
+61		returnp
+62		comment	grandparent(-1,-2) :- parent(-1,-3), parent(-3,-2)  #v:['X', 'Y', 'Z'].
+63	grandparent/2	allocate	3	['Z', 'Y', 'X']
+64		initfreevar	-1	-2
+65		initfreevar	-2	-1
+66		fclear
+67		fpushstart	id	3
+68		fpushconst	grandparent
+69		fpushconst	2
+70		fpushconst	66
+71		freport
+72		pushboundvar	-1
+73		pushfreevar	-3
+74		callp	parent/2
+75		pushboundvar	-3
+76		pushboundvar	-2
+77		callp	parent/2
+78		returnp
+79		comment	parent(-1,-2) :- father(-1,-2)  #v:['X', 'Y'].
+80	parent/2	allocate	2	['Y', 'X']
+81		initfreevar	-1	-2
+82		initfreevar	-2	-1
+83		fclear
+84		fpushstart	id	3
+85		fpushconst	parent
+86		fpushconst	2
+87		fpushconst	83
+88		freport
+89		pushboundvar	-1
+90		pushboundvar	-2
+91		callp	father/2
+92		returnp
+93		comment	parent(-1,-2) :- mother(-1,-2)  #v:['X', 'Y'].
+94	parent/2	allocate	2	['Y', 'X']
+95		initfreevar	-1	-2
+96		initfreevar	-2	-1
+97		fclear
+98		fpushstart	id	3
+99		fpushconst	parent
+100		fpushconst	2
+101		fpushconst	97
+102		freport
+103		pushboundvar	-1
+104		pushboundvar	-2
+105		callp	mother/2
+106		returnp
+107		comment	pgf(-1,-2) :- father(-1,-3), father(-3,-2)  #v:['X', 'Y', 'Z'].
+108	pgf/2	allocate	3	['Z', 'Y', 'X']
+109		initfreevar	-1	-2
+110		initfreevar	-2	-1
+111		fclear
+112		fpushstart	id	3
+113		fpushconst	pgf
+114		fpushconst	2
+115		fpushconst	111
+116		freport
+117		pushboundvar	-1
+118		pushfreevar	-3
+119		callp	father/2
+120		pushboundvar	-3
+121		pushboundvar	-2
+122		callp	father/2
+123		returnp

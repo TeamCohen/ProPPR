@@ -31,7 +31,7 @@ public class FactsPlugin extends WamPlugin {
 	boolean useTernaryIndex;
 	private String name;
 	public FactsPlugin(String name, boolean useTernaryIndex) {
-		this.fd.put(new Goal("facts",new ConstantArgument(name)),1.0);
+		this.fd.put(WamPlugin.pluginFeature(this, name),1.0);
 		this.name = name;
 		this.useTernaryIndex = useTernaryIndex;
 	}

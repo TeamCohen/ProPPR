@@ -2,6 +2,8 @@ package edu.cmu.ml.proppr.prove.wam.plugins;
 
 import java.util.List;
 
+import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
+import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
@@ -14,6 +16,10 @@ import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
  *
  */
 public abstract class WamPlugin {
+	public static final String FACTS_FUNCTOR = "db(";
+	public static Goal pluginFeature(WamPlugin plugin, String identifier) {
+		return new Goal("db",new ConstantArgument(plugin.getClass().getSimpleName()),new ConstantArgument(identifier));
+	}
 
 	public abstract String about();
 	
