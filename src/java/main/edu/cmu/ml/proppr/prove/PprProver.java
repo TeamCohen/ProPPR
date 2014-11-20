@@ -44,7 +44,9 @@ public class PprProver extends Prover {
 	public String toString() { return "ppr:"+this.maxDepth; }
 	
 	public Prover copy() {
-		return new PprProver(this.maxDepth, this.trace);
+		Prover copy = new PprProver(this.maxDepth, this.trace);
+		copy.setWeighter(weighter);
+		return copy;
 	}
 	
 	public void setMaxDepth(int i) {
