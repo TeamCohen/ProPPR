@@ -107,6 +107,7 @@ class Answers(object):
         for line in open(self.answerFile):        
             if line.startswith('#'):
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
+                intVarQuery = intVarQuery[:(intVarQuery.index("#")-2)]
                 self.queryTime[intVarQuery] = int(timeStr.split(" ")[0])
             else:
                 (rankStr,scoreStr,solution) = line.strip().split("\t")

@@ -77,7 +77,9 @@ public class DprProver extends Prover {
 	}
 
 	public Prover copy() {
-		return new DprProver(this.stayProbability, this.epsilon, this.minAlpha, this.minAlphaErrorStrategy);
+		DprProver copy = new DprProver(this.stayProbability, this.epsilon, this.minAlpha, this.minAlphaErrorStrategy);
+		copy.setWeighter(weighter);
+		return copy;
 	}
 
 
