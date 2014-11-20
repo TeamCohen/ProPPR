@@ -1,0 +1,6 @@
+eq(X,X) :- .
+moral(X) :- wife(X,Y),sweetheart(X,W),eq(Y,W).
+wife(bob,sue):-.
+sweetheart(bob,sue):-.
+wife(rob,sam):-.
+sweetheart(rob,sandy):-.

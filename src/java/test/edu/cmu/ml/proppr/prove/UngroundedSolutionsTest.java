@@ -18,12 +18,10 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
-import edu.cmu.ml.proppr.prove.wam.VariableArgument;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.GraphlikePlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.v1.QueryAnswerer;
 
 
 public class UngroundedSolutionsTest {

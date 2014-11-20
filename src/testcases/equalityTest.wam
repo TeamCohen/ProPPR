@@ -1,0 +1,70 @@
+0		comment	eq(-1,-1) :-   #v:['X'].
+1	eq/2	allocate	1	['X']
+2		initfreevar	-1	-2
+3		unifyboundvar	-1	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	eq
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		returnp
+11		comment	moral(-1) :- wife(-1,-2), sweetheart(-1,-3), eq(-2,-3)  #v:['X', 'Y', 'W'].
+12	moral/1	allocate	3	['W', 'Y', 'X']
+13		initfreevar	-1	-1
+14		fclear
+15		fpushstart	id	3
+16		fpushconst	moral
+17		fpushconst	1
+18		fpushconst	14
+19		freport
+20		pushboundvar	-1
+21		pushfreevar	-2
+22		callp	wife/2
+23		pushboundvar	-1
+24		pushfreevar	-3
+25		callp	sweetheart/2
+26		pushboundvar	-2
+27		pushboundvar	-3
+28		callp	eq/2
+29		returnp
+30		comment	sweetheart(bob,sue) :- .
+31	sweetheart/2	unifyconst	bob	-2
+32		unifyconst	sue	-1
+33		fclear
+34		fpushstart	id	3
+35		fpushconst	sweetheart
+36		fpushconst	2
+37		fpushconst	33
+38		freport
+39		returnp
+40		comment	sweetheart(rob,sandy) :- .
+41	sweetheart/2	unifyconst	rob	-2
+42		unifyconst	sandy	-1
+43		fclear
+44		fpushstart	id	3
+45		fpushconst	sweetheart
+46		fpushconst	2
+47		fpushconst	43
+48		freport
+49		returnp
+50		comment	wife(bob,sue) :- .
+51	wife/2	unifyconst	bob	-2
+52		unifyconst	sue	-1
+53		fclear
+54		fpushstart	id	3
+55		fpushconst	wife
+56		fpushconst	2
+57		fpushconst	53
+58		freport
+59		returnp
+60		comment	wife(rob,sam) :- .
+61	wife/2	unifyconst	rob	-2
+62		unifyconst	sam	-1
+63		fclear
+64		fpushstart	id	3
+65		fpushconst	wife
+66		fpushconst	2
+67		fpushconst	63
+68		freport
+69		returnp

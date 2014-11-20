@@ -7,6 +7,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PermissiveParser;
+import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
@@ -34,6 +35,7 @@ import java.io.*;
  *
  */
 public class Configuration {
+	private static final Logger log = Logger.getLogger(Configuration.class);
 	/* set files */
 	/** file. */
 	public static final int USE_QUERIES = 0x1;
@@ -181,17 +183,25 @@ public class Configuration {
 		this.program = null;
 		this.plugins = new WamPlugin[programFiles.length-1];
 		int i=0;
+		int wam,graph,facts;
+		wam = graph = facts = 0;
 		for (String s : programFiles) {
 			if (s.endsWith(".wam")) {
 				if (this.program != null) throw new IllegalArgumentException("Multiple WAM programs not supported");
 				this.program = WamProgram.load(this.getExistingFile(s));
+				wam++;
 			} else if (s.endsWith(".graph")) {
 				this.plugins[i++] = LightweightGraphPlugin.load(this.getExistingFile(s));
+				graph++;
 			} else if (s.endsWith("facts")) {
 				this.plugins[i++] = FactsPlugin.load(this.getExistingFile(s), this.ternaryIndex);
+				facts++;
 			} else {
 				throw new IllegalArgumentException("Plugin type for "+s+" unsupported/unknown");
 			}
+		}
+		if (graph>1 || facts>1) {
+			log.warn("Consolidated files not yet supported! If the same functor exists in two files, facts in the later file will be hidden from the prover!");
 		}
 	}
 

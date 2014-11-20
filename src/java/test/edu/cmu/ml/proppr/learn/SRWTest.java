@@ -159,6 +159,7 @@ public class SRWTest extends RedBlueGraph {
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
 
 		double baselineLoss = makeLoss(this.srw, uniformParams, startVec, pos, neg);
+		TObjectDoubleMap<String> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg);
 
 		ParamVector biasedWeightVec = makeBiasedVec();
 		double biasedLoss = makeLoss(srw, biasedWeightVec, startVec, pos, neg);
@@ -166,17 +167,23 @@ public class SRWTest extends RedBlueGraph {
 		assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 				baselineLoss > biasedLoss);
 
-		double origLoss = makeLoss(srw, uniformParams, startVec, pos, neg);
-		
+		double perturb_epsilon = 1e-10;
 		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
+			
 			ParamVector pert = uniformParams.copy();
-			pert.put("fromb", pert.get(feature)+1e-10);
+			pert.put(feature, pert.get(feature)+perturb_epsilon);
+			
 			srw.clearLoss();
 			TObjectDoubleMap<String> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
 			double newLoss = srw.cumulativeLoss().total();
-			System.err.println("\n1st-order on "+feature+":"+Dictionary.buildString(epsGrad, new StringBuilder(), "\n").toString());
 			
-			assertEquals("first order approximation on "+feature,0,newLoss-origLoss,1e-15);
+			System.err.println("\n1st-order on "+feature+": "+(newLoss-baselineLoss)+" approximation: "+perturb_epsilon*baselineGrad.get(feature));
+//			System.err.println("(difference: "+ (Math.abs((newLoss-baselineLoss) - (perturb_epsilon*baselineGrad.get(feature)))));
+			
+			assertEquals("first order approximation on "+feature,
+					perturb_epsilon*baselineGrad.get(feature),
+					newLoss-baselineLoss,
+					1e-15);
 		}
 		
 		double eps = .0001;
