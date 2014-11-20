@@ -90,7 +90,7 @@ public class SRWTest extends RedBlueGraph {
 		int maxT = 10;
 		
 		TIntDoubleMap baseLineVec = myRWR(startVec,brGraph,maxT);
-		uniformParams.put("restart",srw.getWeightingScheme().defaultWeight());
+		uniformParams.put("id(restart)",srw.getWeightingScheme().defaultWeight());
 		TIntDoubleMap newVec = srw.rwrUsingFeatures(brGraph, startVec, uniformParams);
 		equalScores(baseLineVec,newVec);
 	}
@@ -112,20 +112,20 @@ public class SRWTest extends RedBlueGraph {
 	public void testGradient() {
 		if (this.getClass().equals(SRWTest.class)) return;
 		
-//		ParamVector baseLineVec = makeParams(brGraph.rwr(startVec));
-//
-//		Set<String> blues = bluePart(baseLineVec).keySet();
-//		Set<String> reds = redPart(baseLineVec).keySet();
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
-		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  pos[i++] = nodes.getId(k); }
+		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
 
 		TObjectDoubleMap<String> gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
 		System.err.println(Dictionary.buildString(gradient, new StringBuilder(), "\n").toString());
 
+		// to favor blue (positive label) nodes,
+		// we want the gradient to go downhill (negative) 
+		// toward blue nodes (edges labeled 'tob')
 		assertTrue("gradient @ tob "+gradient.get("tob"),gradient.get("tob") < 0);
 		assertTrue("gradient @ tor "+gradient.get("tor"),gradient.get("tor") > 0);
-		assertTrue("gradient @ fromb "+gradient.get("fromb"),gradient.get("fromb")<1e-10);
-		assertTrue("gradient @ fromr "+gradient.get("fromr"),gradient.get("fromr")>-1e-10);
+		// we don't really care what happens on edges coming *from* blue nodes though:
+//		assertTrue("gradient @ fromb "+gradient.get("fromb"),gradient.get("fromb")<1e-10);
+//		assertTrue("gradient @ fromr "+gradient.get("fromr"),gradient.get("fromr")>-1e-10);
 	}
 	
 	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
@@ -156,25 +156,15 @@ public class SRWTest extends RedBlueGraph {
 		if (this.getClass().equals(SRWTest.class)) return;
 
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
-		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  pos[i++] = nodes.getId(k); }
+		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
 
 		double baselineLoss = makeLoss(this.srw, uniformParams, startVec, pos, neg);
 
-//		ParamVector biasedWeightVec = makeParams(); biasedWeightVec.putAll(uniformWeightVec);
-//		if (biasedWeightVec.get("tob").equals(1.0)) {
-//			biasedWeightVec.put("tob", 10.0);
-//			biasedWeightVec.put("tor", 0.1);
-//		} else {
-//			biasedWeightVec.put("tob", 1.0);
-//			biasedWeightVec.put("tor", -1.0);
-//		}
 		ParamVector biasedWeightVec = makeBiasedVec();
 		double biasedLoss = makeLoss(srw, biasedWeightVec, startVec, pos, neg);
 
 		assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 				baselineLoss > biasedLoss);
-//		assertEquals("baselineLoss\n",6.25056697891,baselineLoss,1e-6);
-//		assertEquals("biasedLoss\n",5.6002602,biasedLoss,1e-6);
 
 		double origLoss = makeLoss(srw, uniformParams, startVec, pos, neg);
 		
@@ -184,7 +174,7 @@ public class SRWTest extends RedBlueGraph {
 			srw.clearLoss();
 			TObjectDoubleMap<String> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
 			double newLoss = srw.cumulativeLoss().total();
-			//System.err.println("\n1st-order on "+feature+":"+Dictionary.buildString(epsGrad, new StringBuilder(), "\n").toString());
+			System.err.println("\n1st-order on "+feature+":"+Dictionary.buildString(epsGrad, new StringBuilder(), "\n").toString());
 			
 			assertEquals("first order approximation on "+feature,0,newLoss-origLoss,1e-15);
 		}

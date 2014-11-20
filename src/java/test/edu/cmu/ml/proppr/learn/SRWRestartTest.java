@@ -14,15 +14,15 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
 import edu.cmu.ml.proppr.graph.RWOutlink;
-import edu.cmu.ml.proppr.graph.v1.AnnotatedGraph;
-import edu.cmu.ml.proppr.graph.v1.Feature;
 import edu.cmu.ml.proppr.learn.L2SqLossSRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
+import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 /**
@@ -33,41 +33,40 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 public class SRWRestartTest extends SRWTest {
 	public void initSrw() {
 		srw = new L2SqLossSRW();
+		srw.setAlpha(0.01);
 	}
 	public void setup(){
 		super.setup();
 
-		// add restart links to r0,r1,r2 each graph
-//		for (int k=0; k<magicNumber; k++) {
+		// add restart links to r0
 		for (int u : brGraph.getNodes()) {
 			TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
 			ff.putAll(brGraph.getFeatures(u, nodes.getId("r0")));
 			ff.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());
 			brGraph.addOutlink(u, new RWOutlink(ff, nodes.getId("r0")));
 		}
-//		}
-		uniformParams.put("restart",this.srw.getWeightingScheme().defaultWeight());
+		uniformParams.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());
 	}
 	@Override
-	public Map<String,Double> makeGradient(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {
+	public TObjectDoubleMap<String> makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		List<HiLo> trainingPairs = new ArrayList<HiLo>();
-		for (String p : pos) {
-			for (String n : neg) {
+		for (int p : pos) {
+			for (int n : neg) {
 				trainingPairs.add(new HiLo(p,n));
 			}
 		}
-		return srw.gradient(paramVec, new PairwiseRWExample(brGraph.get(0), query, trainingPairs));
+		return srw.gradient(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
 	}
 	
 	@Override
-	public double makeLoss(SRW srw, ParamVector paramVec, ParamVector query, Set<String> pos, Set<String> neg) {		
+	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {		
 		List<HiLo> trainingPairs = new ArrayList<HiLo>();
-		for (String p : pos) {
-			for (String n : neg) {
+		for (int p : pos) {
+			for (int n : neg) {
 				trainingPairs.add(new HiLo(p,n));
 			}
 		}
-		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraph.get(0), query, trainingPairs));
+		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
 	}
 	
 //	@Override
@@ -83,14 +82,17 @@ public class SRWRestartTest extends SRWTest {
 		
 //		Map<String,Double> startVec = new TreeMap<String,Double>();
 //		startVec.put("r0",1.0);
-		ParamVector baseLineRwr = new SimpleParamVector(brGraph.get(0).rwr(startVec));
+//		SRW<PairwiseRWExample> mysrw = new SRW<PairwiseRWExample>(maxT);
+//		mysrw.setAlpha(0.01);
+		TIntDoubleMap baseLineRwr = srw.rwrUsingFeatures(brGraph, startVec, new SimpleParamVector<String>());
 		ParamVector biasedParams = makeBiasedVec();
 		
-		SRW<PairwiseRWExample<String>> mysrw = new SRW<PairwiseRWExample<String>>(maxT);
-		Map<String,Double> newRwr = mysrw.rwrUsingFeatures(brGraph.get(0), startVec, biasedParams);
+		TIntDoubleMap newRwr = srw.rwrUsingFeatures(brGraph, startVec, biasedParams);
 		
-		System.err.println(Dictionary.buildString(baseLineRwr, new StringBuilder(), "\n"));
-		System.err.println(Dictionary.buildString(newRwr, new StringBuilder(), "\n"));
+		System.err.println("baseline:");
+		for (int node : baseLineRwr.keys()) System.err.println(node+"/"+nodes.getSymbol(node)+":"+baseLineRwr.get(node));
+		System.err.println("biased:");
+		for (int node : newRwr.keys()) System.err.println(node+"/"+nodes.getSymbol(node)+":"+newRwr.get(node));
 		
 		lowerScores(bluePart(baseLineRwr),bluePart(newRwr));
 		lowerScores(redPart(newRwr),redPart(baseLineRwr));
@@ -101,35 +103,29 @@ public class SRWRestartTest extends SRWTest {
 	 */
 	@Test
 	public void testLearn1() {
-		List<HiLo<String>> trainingPairs = new ArrayList<HiLo<String>>();
+		List<HiLo> trainingPairs = new ArrayList<HiLo>();
 		for (String b : blues) {
 			for (String r : reds) {
-				trainingPairs.add(new HiLo<String>(b,r));
+				trainingPairs.add(new HiLo(nodes.getId(b),nodes.getId(r)));
 			}
 		}
 		
-		PairwiseRWExample<String>[] examples = new PairwiseRWExample[magicNumber];
-		for (int i=0;i<magicNumber;i++) {
-			TreeMap<String,Double> xxFeatures = new TreeMap<String,Double>();
-			xxFeatures.put("r"+i, 1.0);
-			PairwiseRWExample<String> xx = new PairwiseRWExample<String>(brGraph.get(i),xxFeatures,trainingPairs);
-			examples[i] = xx;
-		}
+		TIntDoubleMap xxFeatures = new TIntDoubleHashMap();
+		xxFeatures.put(nodes.getId("r0"), 1.0);
+		PairwiseRWExample examples = new PairwiseRWExample(brGraph,xxFeatures,trainingPairs);
 		
 		ParamVector weightVec = new SimpleParamVector();
 		weightVec.put("fromb",1.01);
 		weightVec.put("tob",1.0);
 		weightVec.put("fromr",1.03);
 		weightVec.put("tor",1.0);
-		weightVec.put("restart",1.02);
+		weightVec.put("id(restart)",1.02);
 		
-		for (int i=0; i<magicNumber; i++) {
-			L2SqLossSRW<String> mysrw = (L2SqLossSRW<String>) this.srw;
-			double preLoss = mysrw.empiricalLoss(weightVec, examples[i]);
-			mysrw.trainOnExample(weightVec,examples[i]);
-			double postLoss = mysrw.empiricalLoss(weightVec, examples[i]);
-			assertTrue(String.format("preloss %f postloss %f",preLoss,postLoss), 
-					preLoss == 0 || preLoss > postLoss);
-		}
+		L2SqLossSRW mysrw = (L2SqLossSRW) this.srw;
+		double preLoss = mysrw.empiricalLoss(weightVec, examples);
+		mysrw.trainOnExample(weightVec,examples);
+		double postLoss = mysrw.empiricalLoss(weightVec, examples);
+		assertTrue(String.format("preloss %f >=? postloss %f",preLoss,postLoss), 
+				preLoss == 0 || preLoss > postLoss);
 	}
 }

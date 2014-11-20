@@ -179,7 +179,6 @@ public class SRW<E extends RWExample> {
 		final TIntDoubleMap nextVec = new TIntDoubleHashMap();
 		vec.forEachEntry(new TIntDoubleProcedure() {
 			int k=-1;
-			LearningGraph graph = g;
 			@Override
 			public boolean execute(int u, double uw) {
 				k++;
@@ -458,7 +457,7 @@ public class SRW<E extends RWExample> {
 						if (log.isDebugEnabled()) {
 	                		z = totalEdgeWeight(g, u, paramVec);
 	                		rw = edgeWeight(g,u,q,paramVec);
-		            		log.debug("Local alpha = " + rw / z);
+		            		log.debug("Local alpha adjusted to " + rw / z);
 						}
 					}
 	            }
@@ -487,7 +486,7 @@ public class SRW<E extends RWExample> {
         double newValue = c.weightingScheme.projection(rw,c.alpha,nonRestartNodeNum);
         for (String f : nonRestartFeatureSet) {
             if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) {
-				throw new MinAlphaException("Minalpha assumption violated: not a fact/db feature (" + f + ")");
+				throw new MinAlphaException("Minalpha assumption violated: local alpha "+(rw/z)+" but links contain non-db features (" + f + ")");
             } else {
                 paramVec.put(f, newValue);
             }
@@ -595,6 +594,12 @@ public class SRW<E extends RWExample> {
 	}
 	public void setDelta(double delta) {
 		c.delta = delta;
+	}
+	public double getAlpha() {
+		return c.alpha;
+	}
+	public void setAlpha(double alpha) {
+		c.alpha = alpha;
 	}
 	public WeightingScheme<String> getWeightingScheme() {
 		return c.weightingScheme;

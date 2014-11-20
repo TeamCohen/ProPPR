@@ -41,8 +41,14 @@ public class SimpleLearningGraph extends LearningGraph {
 	public void addOutlink(int u, RWOutlink outlink) {
 		ensureNode(u);
 		ensureNode(outlink.nodeid);
-		near.get(u).add(outlink.nodeid);
-		phi.get(u).put(outlink.nodeid,outlink.fd);
+		// only add v to the near list if it's not already there;
+		// cheat by using the feature lookup
+		if (!phi.get(u).containsKey(outlink.nodeid)) {
+			near.get(u).add(outlink.nodeid);
+			phi.get(u).put(outlink.nodeid,outlink.fd);
+		} else {
+			phi.get(u).get(outlink.nodeid).putAll(outlink.fd);
+		}
 		for (String f : outlink.fd.keys(new String[0])) features.add(f);
 		edgeSize++;
 	}
