@@ -67,7 +67,7 @@ public class DfsProver extends Prover {
         together with the incoming weights. 
 	 * @throws LogicProgramException */
 	protected void dfs(ProofGraph pg, State s, int depth, double incomingEdgeWeight, List<Entry> tail) throws LogicProgramException {
-		beforeDfs(s, pg.getInterpreter(), depth);
+		beforeDfs(s, pg, depth);
 		tail.add(new Entry(s,incomingEdgeWeight));
 		if (!s.isCompleted() && depth < this.maxDepth) {
 			backtrace.push(s);
@@ -88,7 +88,7 @@ public class DfsProver extends Prover {
 	 * @param interp 
 	 * @throws LogicProgramException 
 	 */
-	protected void beforeDfs(State s, WamInterpreter interp, int depth) throws LogicProgramException {}
+	protected void beforeDfs(State s, ProofGraph pg, int depth) throws LogicProgramException {}
 	@Override
 	public Map<State, Double> prove(ProofGraph pg) {
 		Map<State,Double>vec = new HashMap<State,Double>();

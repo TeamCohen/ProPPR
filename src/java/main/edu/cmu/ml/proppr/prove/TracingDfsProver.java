@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.prove;
 
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
+import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -18,13 +19,13 @@ public class TracingDfsProver extends DfsProver {
 		init(depth);
 	}
 	@Override
-	protected void beforeDfs(State state, WamInterpreter interp, int depth) throws LogicProgramException {
+	protected void beforeDfs(State state, ProofGraph pg, int depth) throws LogicProgramException {
 		StringBuilder sb = new StringBuilder();
 		for (int i=0;i<depth;i++) sb.append("| ");
 		if (state.isCompleted()) {
-			Dictionary.buildString(Prover.asDict(interp.getConstantTable(), state),sb,", ");
+			Dictionary.buildString(pg.asDict(state),sb,", ");
 		} else {
-			Dictionary.buildString(interp.pendingGoals(state), sb, ", ");
+			Dictionary.buildString(pg.getInterpreter().pendingGoals(state), sb, ", ");
 		}
 	}
 }

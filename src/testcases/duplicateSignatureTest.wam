@@ -1,0 +1,89 @@
+0		comment	class(steve,wizard) :- .
+1	class/2	unifyconst	steve	-2
+2		unifyconst	wizard	-1
+3		fclear
+4		fpushstart	id	3
+5		fpushconst	class
+6		fpushconst	2
+7		fpushconst	3
+8		freport
+9		returnp
+10		comment	solved(steve,p_parlor) :- .
+11	solved/2	unifyconst	steve	-2
+12		unifyconst	p_parlor	-1
+13		fclear
+14		fpushstart	id	3
+15		fpushconst	solved
+16		fpushconst	2
+17		fpushconst	13
+18		freport
+19		returnp
+20		comment	location(steve,kitchen) :- .
+21	location/2	unifyconst	steve	-2
+22		unifyconst	kitchen	-1
+23		fclear
+24		fpushstart	id	3
+25		fpushconst	location
+26		fpushconst	2
+27		fpushconst	23
+28		freport
+29		returnp
+30		comment	hasKey(-1,-2) :- class(-1,wizard) {magic}  #v:['Player', 'Room'].
+31	hasKey/2	allocate	2	['Room', 'Player']
+32		initfreevar	-1	-2
+33		initfreevar	-2	-1
+34		fclear
+35		fpushstart	magic	0
+36		freport
+37		pushboundvar	-1
+38		pushconst	wizard
+39		callp	class/2
+40		returnp
+41		comment	hasKey(-1,-2) :- doorPuzzle(-2,-3), solved(-1,-3) {typicalcase}  #v:['Player', 'Room', 'Puzzle'].
+42	hasKey/2	allocate	3	['Puzzle', 'Room', 'Player']
+43		initfreevar	-1	-2
+44		initfreevar	-2	-1
+45		fclear
+46		fpushstart	typicalcase	0
+47		freport
+48		pushboundvar	-2
+49		pushfreevar	-3
+50		callp	doorPuzzle/2
+51		pushboundvar	-1
+52		pushboundvar	-3
+53		callp	solved/2
+54		returnp
+55		comment	canExit(-1,-2) :- location(-1,-2), hasKey(-1,-2) {ability}  #v:['Player', 'Room'].
+56	canExit/2	allocate	2	['Room', 'Player']
+57		initfreevar	-1	-2
+58		initfreevar	-2	-1
+59		fclear
+60		fpushstart	ability	0
+61		freport
+62		pushboundvar	-1
+63		pushboundvar	-2
+64		callp	location/2
+65		pushboundvar	-1
+66		pushboundvar	-2
+67		callp	hasKey/2
+68		returnp
+69		comment	doorPuzzle(kitchen,p_kitchen) :- .
+70	doorPuzzle/2	unifyconst	kitchen	-2
+71		unifyconst	p_kitchen	-1
+72		fclear
+73		fpushstart	id	3
+74		fpushconst	doorPuzzle
+75		fpushconst	2
+76		fpushconst	72
+77		freport
+78		returnp
+79		comment	doorPuzzle(parlor,p_parlor) :- .
+80	doorPuzzle/2	unifyconst	parlor	-2
+81		unifyconst	p_parlor	-1
+82		fclear
+83		fpushstart	id	3
+84		fpushconst	doorPuzzle
+85		fpushconst	2
+86		fpushconst	82
+87		freport
+88		returnp

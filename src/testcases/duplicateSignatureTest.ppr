@@ -1,0 +1,8 @@
+canExit(Player,Room) :- location(Player,Room),hasKey(Player,Room) {ability}.
+hasKey(Player,Room) :- class(Player,wizard) {magic}.
+hasKey(Player,Room) :- doorPuzzle(Room,Puzzle),solved(Player,Puzzle) {typicalcase}.
+doorPuzzle(kitchen,p_kitchen) :- .
+doorPuzzle(parlor,p_parlor) :- .
+class(steve,wizard) :- .
+location(steve,kitchen) :- .
+solved(steve,p_parlor) :- .
