@@ -29,7 +29,7 @@ public class UngroundedSolutionsTest {
 	@Test
 	public void test() throws IOException, LogicProgramException {
 		AWamProgram program = WamProgram.load(new File("testcases/grand/grand.wam"));
-		GraphlikePlugin facts = LightweightGraphPlugin.load(new File("testcases/grand/grand.cfacts"));
+		GraphlikePlugin facts = LightweightGraphPlugin.load(new File("testcases/grand/grand.cfacts"),LightweightGraphPlugin.DEFAULT_ALPHA);
 		Query q = new Query(new Goal("grandparent",new ConstantArgument("X"),new ConstantArgument("Y")));
 //		q.variabilize();
 		ProofGraph pg = new ProofGraph(q,program,facts);

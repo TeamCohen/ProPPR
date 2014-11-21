@@ -21,6 +21,7 @@ import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
+import edu.cmu.ml.proppr.prove.PprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
@@ -216,13 +217,12 @@ public class ModuleConfiguration extends Configuration {
 				String[] values = line.getOptionValue(PROVER_MODULE_OPTION).split(":");
 				switch (PROVERS.valueOf(values[0])) {
 				case ppr:
-					usageOptions(options,allFlags,"PPR prover not yet supported in 2.0 :(");
-					//					if (values.length==1) {
-					//					this.prover = new PprProver();
-					//				} else {
-					//					int depth = Integer.parseInt(values[1]);
-					//					this.prover = new PprProver(depth);
-					//				}
+					if (values.length==1) {
+						this.prover = new PprProver();
+					} else {
+						int depth = Integer.parseInt(values[1]);
+						this.prover = new PprProver(depth);
+					}
 				case dpr:
 					if (values.length==1)
 						this.prover = new DprProver();

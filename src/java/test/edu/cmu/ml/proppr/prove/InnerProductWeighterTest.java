@@ -1,4 +1,4 @@
-package edu.cmu.ml.proppr.prove.v1;
+package edu.cmu.ml.proppr.prove;
 
 import static org.junit.Assert.*;
 
@@ -10,8 +10,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import edu.cmu.ml.proppr.prove.v1.Goal;
-import edu.cmu.ml.proppr.prove.v1.InnerProductWeighter;
+import edu.cmu.ml.proppr.prove.InnerProductWeighter;
+import edu.cmu.ml.proppr.prove.wam.Goal;
 
 public class InnerProductWeighterTest {
 

@@ -62,6 +62,7 @@ public class Configuration {
 	public static final int USE_FORCE = 0x10;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
+	private static final String ALPHA_CONST_OPTION = "alpha";
 	private static final String THREADS_CONST_OPTION = "threads";
 	private static final String EPOCHS_CONST_OPTION = "epochs";
 	private static final String TRACELOSSES_CONST_OPTION = "traceLosses";
@@ -89,7 +90,7 @@ public class Configuration {
 	public WamPlugin[] plugins = null;
 	public String[] programFiles = null;
 	public int nthreads = -1;
-	//    public double alpha = Component.ALPHA_DEFAULT;
+    public double alpha = DprProver.MINALPH_DEFAULT;
 	public int epochs = 5;
 	public boolean traceLosses = false;
 	public boolean force = false;
@@ -157,19 +158,22 @@ public class Configuration {
 		flags = outputFiles(allFlags);
 		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))   this.queryFile = new File(line.getOptionValue(QUERIES_FILE_OPTION));
 		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION)) this.groundedFile = new File(line.getOptionValue(GROUNDED_FILE_OPTION));
-		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION))   this.solutionsFile = new File(line.getOptionValue(SOLUTIONS_FILE_OPTION));
+		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION)) this.solutionsFile = new File(line.getOptionValue(SOLUTIONS_FILE_OPTION));
 		if (isOn(flags,USE_TEST) && line.hasOption(TEST_FILE_OPTION))         this.testFile = new File(line.getOptionValue(TEST_FILE_OPTION));
 		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))       this.queryFile = new File(line.getOptionValue(TRAIN_FILE_OPTION));
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))     this.paramsFile = new File(line.getOptionValue(PARAMS_FILE_OPTION));
 
 		// constants
 		flags = constants(allFlags);
-		if (isOn(flags,USE_WAM) && line.hasOption(PROGRAMFILES_CONST_OPTION))  this.programFiles = line.getOptionValues(PROGRAMFILES_CONST_OPTION);
-		if (isOn(flags,USE_WAM) && line.hasOption(TERNARYINDEX_CONST_OPTION))  this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue(TERNARYINDEX_CONST_OPTION));
-		if (isOn(flags,USE_THREADS) && line.hasOption(THREADS_CONST_OPTION))    this.nthreads = Integer.parseInt(line.getOptionValue(THREADS_CONST_OPTION));
-		if (isOn(flags,USE_EPOCHS) && line.hasOption(EPOCHS_CONST_OPTION))      this.epochs = Integer.parseInt(line.getOptionValue(EPOCHS_CONST_OPTION));
+		if (isOn(flags,USE_WAM)) {
+			if (line.hasOption(PROGRAMFILES_CONST_OPTION)) this.programFiles = line.getOptionValues(PROGRAMFILES_CONST_OPTION);
+			if (line.hasOption(TERNARYINDEX_CONST_OPTION)) this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue(TERNARYINDEX_CONST_OPTION));
+			if (line.hasOption(ALPHA_CONST_OPTION))        this.alpha = Double.parseDouble(line.getOptionValue(ALPHA_CONST_OPTION));  
+		}
+		if (isOn(flags,USE_THREADS) && line.hasOption(THREADS_CONST_OPTION))   this.nthreads = Integer.parseInt(line.getOptionValue(THREADS_CONST_OPTION));
+		if (isOn(flags,USE_EPOCHS) && line.hasOption(EPOCHS_CONST_OPTION))     this.epochs = Integer.parseInt(line.getOptionValue(EPOCHS_CONST_OPTION));
 		if (isOn(flags,USE_TRACELOSSES) && line.hasOption(TRACELOSSES_CONST_OPTION)) this.traceLosses = true;
-		if (isOn(flags,USE_FORCE) && line.hasOption(FORCE_CONST_OPTION))              this.force = true;
+		if (isOn(flags,USE_FORCE) && line.hasOption(FORCE_CONST_OPTION))             this.force = true;
 
 
 		if (this.programFiles != null) this.loadProgramFiles();
@@ -191,7 +195,7 @@ public class Configuration {
 				this.program = WamProgram.load(this.getExistingFile(s));
 				wam++;
 			} else if (s.endsWith(".graph")) {
-				this.plugins[i++] = LightweightGraphPlugin.load(this.getExistingFile(s));
+				this.plugins[i++] = LightweightGraphPlugin.load(this.getExistingFile(s),this.alpha);
 				graph++;
 			} else if (s.endsWith("facts")) {
 				this.plugins[i++] = FactsPlugin.load(this.getExistingFile(s), this.ternaryIndex);

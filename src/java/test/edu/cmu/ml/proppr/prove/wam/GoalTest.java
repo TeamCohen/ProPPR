@@ -1,4 +1,4 @@
-package edu.cmu.ml.proppr.prove.v1;
+package edu.cmu.ml.proppr.prove.wam;
 
 import static org.junit.Assert.*;
 
@@ -7,8 +7,9 @@ import java.util.HashSet;
 
 import org.junit.Test;
 
-import edu.cmu.ml.proppr.prove.v1.Argument;
-import edu.cmu.ml.proppr.prove.v1.Goal;
+import edu.cmu.ml.proppr.prove.wam.Argument;
+import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
 public class GoalTest {
@@ -40,31 +41,4 @@ public class GoalTest {
 
         assertTrue("set membership",set.contains(g)); // shouldn't this pass?
     }
-
-
-    @Test
-    public void testDecompile() {
-    	Goal g = Goal.decompile("predict,-1,-2 ");
-    	for (Argument a : g.getArgs()) {
-    		assertTrue(a.toString(),a.isVariable() || !a.getName().startsWith("-"));
-    	}
-    }
-    
-    @Test
-    public void testCompile() {
-    	Goal g = Goal.decompile("samebib,class_338,-1");
-    	Goal g2 = Goal.parseGoal("samebib class_338 X");
-    	System.out.println(g);
-    	System.out.println(g2);
-    	assertNotSame("uncompiled strings",g.toString(), g2.toString());
-    	assertNotSame("uncompiled objects",g,g2);
-    	
-    	System.out.println("compiling...");
-    	g2.compile(new SymbolTable());
-    	System.out.println(g);
-    	System.out.println(g2);
-    	assertEquals("compiled strings",g.toString(), g2.toString());
-    	assertEquals("compiled objects",g,g2);
-    }
-    
 }
