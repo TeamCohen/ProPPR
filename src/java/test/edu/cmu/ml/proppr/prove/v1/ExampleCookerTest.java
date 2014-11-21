@@ -12,15 +12,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.prove.v1.Component;
-import edu.cmu.ml.proppr.prove.v1.DprProver;
-import edu.cmu.ml.proppr.prove.v1.Goal;
-import edu.cmu.ml.proppr.prove.v1.LogicProgram;
-import edu.cmu.ml.proppr.prove.v1.PprProver;
-import edu.cmu.ml.proppr.prove.v1.Prover;
-import edu.cmu.ml.proppr.prove.v1.RawPosNegExample;
+import edu.cmu.ml.proppr.prove.DprProver;
+import edu.cmu.ml.proppr.prove.PprProver;
+import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.v1.ExampleCooker;
 
 public class ExampleCookerTest {
 
@@ -68,7 +63,7 @@ public class ExampleCookerTest {
 		neg.add("predict howard mammal");
 		
 		Goal query = new Goal("predict","howard","Y");
-		PosNegRWExample<String> ex = cooker.cookExample(new RawPosNegExample(query, pos, neg),cooker.getMasterProgram());
+		PosNegRWExample ex = cooker.cookExample(new RawPosNegExample(query, pos, neg),cooker.getMasterProgram());
 
 		assertTrue(msg+"query not compiled!",query.isCompiled());
 
@@ -77,7 +72,7 @@ public class ExampleCookerTest {
 	}
 
 	
-	private void makeAssertions(PosNegRWExample<String> ex, String msg,
+	private void makeAssertions(PosNegRWExample ex, String msg,
 			int nodes, int edges, String key, double value, int npos, String pos, int nneg, String neg) {
 		assertEquals(msg+"pos size",npos,ex.getPosList().size());
 //		if (npos>0) assertEquals(msg+"pos value",pos,ex.getPosList().get(0));

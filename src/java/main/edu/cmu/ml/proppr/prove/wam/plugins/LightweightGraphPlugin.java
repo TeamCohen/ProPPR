@@ -2,7 +2,6 @@ package edu.cmu.ml.proppr.prove.wam.plugins;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +28,6 @@ import edu.cmu.ml.proppr.util.ParsedFile;
  *
  */
 public class LightweightGraphPlugin extends GraphlikePlugin {
-	private static final List<String> DEFAULT_DSTLIST=Collections.emptyList();
 	public static final double DEFAULT_ALPHA=DprProver.MINALPH_DEFAULT;
 	protected Map<String,Map<String,List<String>>> graph = new HashMap<String,Map<String,List<String>>>();
 	protected Map<Goal,Double> fd=new HashMap<Goal,Double>();
@@ -73,8 +71,8 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 	/** Return a simpleGraphComponent with all the components loaded from
         a file.  The format of the file is that each line is a tab-separated 
         triple of edgelabel, sourceNode, destNode. */
-	public static LightweightGraphPlugin load(File f,double alpha) {
-		LightweightGraphPlugin p = new LightweightGraphPlugin(f.getName(),alpha);
+	public static GraphlikePlugin load(File f,double alpha) {
+		GraphlikePlugin p = new LightweightGraphPlugin(f.getName(),alpha);
 		ParsedFile parsed = new ParsedFile(f);
 		for (String line : parsed) {
 			String[] parts = line.split("\t");

@@ -8,18 +8,31 @@ WAM-based prover and graph architecture
 Multi-goal queries
 * e.g. disambiguate(bethlehem,EntityId),entityType(EntityId,Type)	+disambiguate(bethlehem,e12345),entityType(e12345,city)
 
+Query-centric solutions:
+* Prover output for "predict(doc1,Y)" is "predict(doc1,cats)" instead of "-1=c[cats]" 
+
 Name changes
 * Cook -> Ground (ExampleCooker -> Grounder, *.cooked -> *.grounded, etc)
 * edu.cmu.ml.praprolog -> edu.cmu.ml.proppr
 
-
 Examples organization
 * inference and learning examples now in edu.cmu.ml.proppr.examples
 
+Graph organization
+* inference and learning graphs now coded separately in edu.cmu.ml.proppr.graph
 
 Directory structure
 * src/java/main - primary java source
 * src/java/test - unit tests
+* src/testcases - supporting files for unit tests
 * src/scripts   - built-in scripts (program compiler, structure learner, etc)
 * scripts       - analysis tools (negative label sampling, answer metrics, grounded file statistics, etc)
 
+The following features haven't been ported yet:
+* SparseGraph
+* FindGradient
+
+The following features are no longer supported (though we can bring them back by request):
+* Prompt
+* neo4j
+* tuprolog

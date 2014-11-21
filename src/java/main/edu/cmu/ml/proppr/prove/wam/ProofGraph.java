@@ -112,7 +112,7 @@ public class ProofGraph {
 		} else {
 			result = this.interpreter.wamOutlinks(state);
 			if (restart) {
-				int n = this.pgDegree(state);
+				int n = this.pgDegree(state);// TODO why not result.size()?
 				Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
 				restartFD.put(this.restartFeature,1.0);
 				restartFD.put(this.restartBoosterFeature,(double) n);

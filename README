@@ -1,6 +1,6 @@
-===============
-QUICKSTART
-===============
+==============
+2.0 QUICKSTART
+==============
 
 1. Write a rulefile as *.ppr:
 
@@ -139,16 +139,16 @@ Weighting Scheme: edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme
 $ python scripts/answermetrics.py --data test_testing.data --answers pre.testing.solutions.txt --metric mrr --metric recall
 ==============================================================================
 metric mrr (Mean Reciprocal Rank): averages 1/rank for all positive answers
-. micro: 1.0
-. macro: 1.0
+. micro: 0.5
+. macro: 0.5
 . details:
-. .  predict(he,-1)  #v:[?]. 	1.0
-. .  predict(pb,-1)  #v:[?]. 	1.0
-. .  predict(yc,-1)  #v:[?]. 	1.0
-. .  predict(bp,-1)  #v:[?]. 	1.0
-. .  predict(rb2,-1)  #v:[?]. 	1.0
-. .  predict(wt,-1)  #v:[?]. 	1.0
-. .  predict(rp,-1)  #v:[?]. 	1.0
+. .  predict(he,-1)  #v:[?]. 	0.5
+. .  predict(pb,-1)  #v:[?]. 	0.5
+. .  predict(yc,-1)  #v:[?]. 	0.5
+. .  predict(bp,-1)  #v:[?]. 	0.5
+. .  predict(rb2,-1)  #v:[?]. 	0.5
+. .  predict(wt,-1)  #v:[?]. 	0.5
+. .  predict(rp,-1)  #v:[?]. 	0.5
 ==============================================================================
 metric recall (Recall): fraction of positive examples that are proposed as solutions anywhere in the ranking
 . micro: 1.0
@@ -215,7 +215,7 @@ metric recall (Recall): fraction of positive examples that are proposed as solut
 
 
 
-
+==============================================
 ProPPR: PROGRAMMING WITH PERSONALIZED PAGERANK
 ==============================================
 This is a Java package for using graph walk algorithms to perform inference tasks over local groundings of first-order logic programs. The package makes use of parallelization to substantially speed processing, making it practical even for large databases.

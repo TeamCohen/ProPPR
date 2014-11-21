@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.prove.wam.plugins;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,8 @@ import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
 
 public abstract class GraphlikePlugin extends WamPlugin {
+	protected static final List<String> DEFAULT_DSTLIST = Collections.emptyList();
+
 	protected abstract boolean indexContains(String label);
 	protected abstract List<String> indexGet(String label, String src);
 	protected abstract Collection<String> indexGet(String label);

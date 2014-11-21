@@ -13,6 +13,13 @@ public class Goal implements Comparable<Goal> {
 		this.args = args;
 		this.arity = args.length;
 	}
+	public static Goal build(String functor, String ... constArgs) {
+		Argument[] args = new Argument[constArgs.length];
+		for (int i=0; i<constArgs.length; i++) {
+			args[i] = new ConstantArgument(constArgs[i]);
+		}
+		return new Goal(functor,args);
+	}
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(functor);
