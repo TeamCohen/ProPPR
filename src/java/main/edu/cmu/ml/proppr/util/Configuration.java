@@ -445,7 +445,7 @@ public class Configuration {
 		if (msg != null) printMsg = ("\nBAD USAGE:" + msg +"\n\n");
 		//        formatter.printHelp(syntax.toString(), options);
 		PrintWriter pw = new PrintWriter(System.err);
-		formatter.printHelp(pw, width, syntax.toString(), printMsg, options, 0, 2, printMsg);
+		formatter.printHelp(pw, width, syntax.toString(), "", options, 0, 2, printMsg);
 		pw.flush();
 		pw.close();
 		System.exit(0);
