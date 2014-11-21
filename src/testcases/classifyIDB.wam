@@ -1,0 +1,110 @@
+0		comment	isa(-1,duck) :- hasFeathers(-1) {covering}  #v:['X'].
+1	isa/2	allocate	1	['X']
+2		initfreevar	-1	-2
+3		unifyconst	duck	-1
+4		fclear
+5		fpushstart	covering	0
+6		freport
+7		pushboundvar	-1
+8		callp	hasFeathers/1
+9		returnp
+10		comment	isa(-1,duck) :- hasBill(-1) {looks}  #v:['X'].
+11	isa/2	allocate	1	['X']
+12		initfreevar	-1	-2
+13		unifyconst	duck	-1
+14		fclear
+15		fpushstart	looks	0
+16		freport
+17		pushboundvar	-1
+18		callp	hasBill/1
+19		returnp
+20		comment	isa(-1,duck) :- laysEggs(-1) {kids}  #v:['X'].
+21	isa/2	allocate	1	['X']
+22		initfreevar	-1	-2
+23		unifyconst	duck	-1
+24		fclear
+25		fpushstart	kids	0
+26		freport
+27		pushboundvar	-1
+28		callp	laysEggs/1
+29		returnp
+30		comment	isa(-1,chicken) :- hasFeathers(-1) {covering}  #v:['X'].
+31	isa/2	allocate	1	['X']
+32		initfreevar	-1	-2
+33		unifyconst	chicken	-1
+34		fclear
+35		fpushstart	covering	0
+36		freport
+37		pushboundvar	-1
+38		callp	hasFeathers/1
+39		returnp
+40		comment	isa(-1,chicken) :- clucks(-1) {noise}  #v:['X'].
+41	isa/2	allocate	1	['X']
+42		initfreevar	-1	-2
+43		unifyconst	chicken	-1
+44		fclear
+45		fpushstart	noise	0
+46		freport
+47		pushboundvar	-1
+48		callp	clucks/1
+49		returnp
+50		comment	isa(-1,chicken) :- laysEggs(-1) {kids}  #v:['X'].
+51	isa/2	allocate	1	['X']
+52		initfreevar	-1	-2
+53		unifyconst	chicken	-1
+54		fclear
+55		fpushstart	kids	0
+56		freport
+57		pushboundvar	-1
+58		callp	laysEggs/1
+59		returnp
+60		comment	isa(-1,chicken) :- hasBeak(-1) {looks}  #v:['X'].
+61	isa/2	allocate	1	['X']
+62		initfreevar	-1	-2
+63		unifyconst	chicken	-1
+64		fclear
+65		fpushstart	looks	0
+66		freport
+67		pushboundvar	-1
+68		callp	hasBeak/1
+69		returnp
+70		comment	isa(-1,platypus) :- hasFur(-1) {covering}  #v:['X'].
+71	isa/2	allocate	1	['X']
+72		initfreevar	-1	-2
+73		unifyconst	platypus	-1
+74		fclear
+75		fpushstart	covering	0
+76		freport
+77		pushboundvar	-1
+78		callp	hasFur/1
+79		returnp
+80		comment	isa(-1,platypus) :- hasBill(-1) {looks}  #v:['X'].
+81	isa/2	allocate	1	['X']
+82		initfreevar	-1	-2
+83		unifyconst	platypus	-1
+84		fclear
+85		fpushstart	looks	0
+86		freport
+87		pushboundvar	-1
+88		callp	hasBill/1
+89		returnp
+90		comment	isa(-1,platypus) :- laysEggs(-1) {kids}  #v:['X'].
+91	isa/2	allocate	1	['X']
+92		initfreevar	-1	-2
+93		unifyconst	platypus	-1
+94		fclear
+95		fpushstart	kids	0
+96		freport
+97		pushboundvar	-1
+98		callp	laysEggs/1
+99		returnp
+100		comment	isa(-1,platypus) :- givesMilk(-1) {milk}  #v:['X'].
+101	isa/2	allocate	1	['X']
+102		initfreevar	-1	-2
+103		unifyconst	platypus	-1
+104		fclear
+105		fpushstart	milk	0
+106		freport
+107		pushboundvar	-1
+108		callp	givesMilk/1
+109		returnp

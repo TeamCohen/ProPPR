@@ -1,0 +1,11 @@
+ isa(X,duck) :- hasFeathers(X) {covering}.
+ isa(X,duck) :- hasBill(X) {looks}.
+ isa(X,duck) :- laysEggs(X) {kids}.
+ isa(X,chicken) :- hasFeathers(X) {covering}.
+ isa(X,chicken) :- clucks(X) {noise}.
+ isa(X,chicken) :- laysEggs(X) {kids}.
+ isa(X,chicken) :- hasBeak(X) {looks}.
+ isa(X,platypus) :- hasFur(X) {covering}.
+ isa(X,platypus) :- hasBill(X) {looks}.
+ isa(X,platypus) :- laysEggs(X) {kids}.
+ isa(X,platypus) :- givesMilk(X) {milk}.

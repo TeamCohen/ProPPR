@@ -139,7 +139,7 @@ public class ProofGraph {
 		List<String> constants = this.interpreter.getConstantTable().getSymbolList();
 		for (int k : s.getRegisters()) {
 			int j = s.dereference(k);
-			if (s.hasConstantAt(j)) result.put(new VariableArgument(this.variableIds[j]), constants.get(s.getIdOfConstantAt(j)-1));
+			if (s.hasConstantAt(j)) result.put(new VariableArgument(j<this.variableIds.length ? this.variableIds[j] : k), constants.get(s.getIdOfConstantAt(j)-1));
 			else result.put(new VariableArgument(-k), "X"+j);
 		}
 		return result;

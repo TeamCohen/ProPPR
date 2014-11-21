@@ -1,0 +1,6 @@
+mem3(S1,S2,S3,List) :- parts(List,S1,Tail),mem2(S2,S3,Tail) {m3b}.
+mem3(S1,S2,S3,List) :- parts(List,Head,Tail),mem3(S1,S2,S3,Tail) {m3b}.
+mem2(S1,S2,List) :- parts(List,S1,Tail),mem(S2,Tail) {m2b}.
+mem2(S1,S2,List) :- parts(List,Head,Tail),mem2(S1,S2,Tail) {m3r}.
+mem(S1,List) :- parts(List,S1,Tail) {mb}.
+mem(S1,List) :- parts(List,Head,Tail),mem(S1,Tail) {mr}.

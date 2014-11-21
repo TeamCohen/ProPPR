@@ -2,6 +2,7 @@ package edu.cmu.ml.proppr.prove.v1;
 
 import org.junit.Test;
 
+import edu.cmu.ml.proppr.prove.ProverTestTemplate;
 import edu.cmu.ml.proppr.prove.v1.PprProver;
 
 public class PprProverTest extends ProverTestTemplate {

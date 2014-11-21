@@ -1,12 +1,16 @@
-package edu.cmu.ml.proppr.prove.v1;
+package edu.cmu.ml.proppr.prove;
+
+import java.io.IOException;
 
 import org.junit.Test;
 
-import edu.cmu.ml.proppr.prove.v1.DprProver;
+import edu.cmu.ml.proppr.prove.DprProver;
+import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
+
 
 public class DprProverTest extends ProverTestTemplate {
 	@Override
-	public void setup() {
+	public void setup() throws IOException {
 		super.setup();
 		this.prover = new DprProver(0.00001, .03);
 //		for (Component c : this.lpMilk.components) {
@@ -15,7 +19,7 @@ public class DprProverTest extends ProverTestTemplate {
 	}
 	
 	@Override @Test
-	public void testProveState() {
+	public void testProveState() throws LogicProgramException {
 		// answers are
 		// start state   0.53564
 		// most features 0.03571

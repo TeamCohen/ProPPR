@@ -206,14 +206,14 @@ public class DprProver extends Prover {
 			Map<State, Integer> deg, double z, double ru, ProofGraph pg) throws LogicProgramException {
 		backtrace.push(o.child);
 
-		boolean followup = !r.containsKey(o.child);
+//		boolean followup = !r.containsKey(o.child);
 		Dictionary.increment(r, o.child, moveProbability * (o.wt / z) * ru,"(elided)");
-		if(followup) {
+		if(!deg.containsKey(o.child)) {
 			try {
 				int degree = pg.pgDegree(o.child,true,true);
 				deg.put(o.child,degree); // trueloop, restart
 			} catch (LogicProgramException e) {
-//				backtrace.print(e);
+				backtrace.print(e);
 			}
 		}
 		if (deg.get(o.child) == 0)

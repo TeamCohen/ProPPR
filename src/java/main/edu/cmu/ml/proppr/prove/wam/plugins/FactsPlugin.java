@@ -94,8 +94,11 @@ public class FactsPlugin extends WamPlugin {
 				List<String[]> alternate = indexJA2.get(new JumpArgKey(state.getJumpTo(), argConst[1]));
 				if (values.size() > alternate.size()) values = alternate;
 			}
+		} else {
+			throw new IllegalStateException("Can't happen");
 		}
 		// then iterate through what you got
+		if (values == null) return result;
 		for (String[] val : values) {
 			if (!check(argConst,val)) continue;
 			wamInterp.restoreState(state);

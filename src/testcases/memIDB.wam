@@ -1,0 +1,97 @@
+0		comment	mem3(-1,-2,-3,-4) :- parts(-4,-1,-5), mem2(-2,-3,-5) {m3b}  #v:['S1', 'S2', 'S3', 'List', 'Tail'].
+1	mem3/4	allocate	5	['Tail', 'List', 'S3', 'S2', 'S1']
+2		initfreevar	-1	-4
+3		initfreevar	-2	-3
+4		initfreevar	-3	-2
+5		initfreevar	-4	-1
+6		fclear
+7		fpushstart	m3b	0
+8		freport
+9		pushboundvar	-4
+10		pushboundvar	-1
+11		pushfreevar	-5
+12		callp	parts/3
+13		pushboundvar	-2
+14		pushboundvar	-3
+15		pushboundvar	-5
+16		callp	mem2/3
+17		returnp
+18		comment	mem3(-1,-2,-3,-4) :- parts(-4,-5,-6), mem3(-1,-2,-3,-6) {m3b}  #v:['S1', 'S2', 'S3', 'List', 'Head', 'Tail'].
+19	mem3/4	allocate	6	['Tail', 'Head', 'List', 'S3', 'S2', 'S1']
+20		initfreevar	-1	-4
+21		initfreevar	-2	-3
+22		initfreevar	-3	-2
+23		initfreevar	-4	-1
+24		fclear
+25		fpushstart	m3b	0
+26		freport
+27		pushboundvar	-4
+28		pushfreevar	-5
+29		pushfreevar	-6
+30		callp	parts/3
+31		pushboundvar	-1
+32		pushboundvar	-2
+33		pushboundvar	-3
+34		pushboundvar	-6
+35		callp	mem3/4
+36		returnp
+37		comment	mem(-1,-2) :- parts(-2,-1,-3) {mb}  #v:['S1', 'List', 'Tail'].
+38	mem/2	allocate	3	['Tail', 'List', 'S1']
+39		initfreevar	-1	-2
+40		initfreevar	-2	-1
+41		fclear
+42		fpushstart	mb	0
+43		freport
+44		pushboundvar	-2
+45		pushboundvar	-1
+46		pushfreevar	-3
+47		callp	parts/3
+48		returnp
+49		comment	mem(-1,-2) :- parts(-2,-3,-4), mem(-1,-4) {mr}  #v:['S1', 'List', 'Head', 'Tail'].
+50	mem/2	allocate	4	['Tail', 'Head', 'List', 'S1']
+51		initfreevar	-1	-2
+52		initfreevar	-2	-1
+53		fclear
+54		fpushstart	mr	0
+55		freport
+56		pushboundvar	-2
+57		pushfreevar	-3
+58		pushfreevar	-4
+59		callp	parts/3
+60		pushboundvar	-1
+61		pushboundvar	-4
+62		callp	mem/2
+63		returnp
+64		comment	mem2(-1,-2,-3) :- parts(-3,-1,-4), mem(-2,-4) {m2b}  #v:['S1', 'S2', 'List', 'Tail'].
+65	mem2/3	allocate	4	['Tail', 'List', 'S2', 'S1']
+66		initfreevar	-1	-3
+67		initfreevar	-2	-2
+68		initfreevar	-3	-1
+69		fclear
+70		fpushstart	m2b	0
+71		freport
+72		pushboundvar	-3
+73		pushboundvar	-1
+74		pushfreevar	-4
+75		callp	parts/3
+76		pushboundvar	-2
+77		pushboundvar	-4
+78		callp	mem/2
+79		returnp
+80		comment	mem2(-1,-2,-3) :- parts(-3,-4,-5), mem2(-1,-2,-5) {m3r}  #v:['S1', 'S2', 'List', 'Head', 'Tail'].
+81	mem2/3	allocate	5	['Tail', 'Head', 'List', 'S2', 'S1']
+82		initfreevar	-1	-3
+83		initfreevar	-2	-2
+84		initfreevar	-3	-1
+85		fclear
+86		fpushstart	m3r	0
+87		freport
+88		pushboundvar	-3
+89		pushfreevar	-4
+90		pushfreevar	-5
+91		callp	parts/3
+92		pushboundvar	-1
+93		pushboundvar	-2
+94		pushboundvar	-5
+95		callp	mem2/3
+96		returnp
