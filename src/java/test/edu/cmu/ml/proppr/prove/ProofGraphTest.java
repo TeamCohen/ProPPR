@@ -31,19 +31,19 @@ public class ProofGraphTest {
 	public void test() throws LogicProgramException, IOException {
 		AWamProgram program = WamProgram.load(new File("testcases/wam/simpleProgram.wam"));
 		Query q = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
-		ProofGraph p = new ProofGraph(q,program);
+		ProofGraph pg = new ProofGraph(q,program);
 		
 		HashMap<String,Integer> solutions = new HashMap<String,Integer>();
 		solutions.put("steve", 0);
 		solutions.put("sven",0);
 		
 		Map<State,Double> vec = new HashMap<State,Double>();
-		vec.put(p.getStartState(),1.0);
+		vec.put(pg.getStartState(),1.0);
 
 		// step 1: coworker -> employee,boss
 		System.out.println("Step 1");
 		for (State s : vec.keySet()) System.out.println(s);
-		List<Outlink> outlinks = p.pgOutlinks(p.getStartState(),false,false);
+		List<Outlink> outlinks = pg.pgOutlinks(pg.getStartState(),false,false);
 		assertEquals("1. coworker :- employee,boss",1,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
 		assertEquals("1. statecount",1,vec.size());
@@ -51,7 +51,7 @@ public class ProofGraphTest {
 		// step 2: 
 		System.out.println("Step 2");
 		for (State s : vec.keySet()) System.out.println(s);
-		outlinks = p.pgOutlinks(vec.keySet().iterator().next(),false,false);
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
 		assertEquals("2. employee :- management,boss",1,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
 		assertEquals("2. statecount",1,vec.size());
@@ -59,7 +59,7 @@ public class ProofGraphTest {
 		// step 3: 
 		System.out.println("Step 3");
 		for (State s : vec.keySet()) System.out.println(s);
-		outlinks = p.pgOutlinks(vec.keySet().iterator().next(),false,false);
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
 		assertEquals("3. management :- sookie",1,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
 		assertEquals("3. statecount",1,vec.size());
@@ -67,7 +67,7 @@ public class ProofGraphTest {
 		// step 4: 
 		System.out.println("Step 4");
 		for (State s : vec.keySet()) System.out.println(s);
-		outlinks = p.pgOutlinks(vec.keySet().iterator().next(),false,false);
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
 		assertEquals("4. boss(sookie,X) :- _steve_ + sven",1,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
 		assertEquals("4. statecount",1,vec.size());
@@ -76,9 +76,9 @@ public class ProofGraphTest {
 		System.out.println("Step 5");
 		for (State s : vec.keySet()) {
 			System.out.println(s);
-			System.out.println(Dictionary.buildString(Prover.asDict(p.getInterpreter().getConstantTable(), s), new StringBuilder(), "\n\t").substring(1));
+			System.out.println(Dictionary.buildString(pg.asDict(s), new StringBuilder(), "\n\t").substring(1));
 		}
-		outlinks = p.pgOutlinks(vec.keySet().iterator().next(),false,false);
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
 		assertEquals("5. boss(sookie,X) :- steve + sven",2,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
 		assertEquals("5. statecount",2,vec.size());
@@ -87,7 +87,7 @@ public class ProofGraphTest {
 		System.out.println("Step 6");
 		for (State s : vec.keySet()) {
 			System.out.println(s);
-			Map<Argument,String> dict = Prover.asDict(p.getInterpreter().getConstantTable(), s);
+			Map<Argument,String> dict = pg.asDict(s);
 			System.out.println(Dictionary.buildString(dict, new StringBuilder(), "\n\t").substring(1));
 			assertTrue(s.isCompleted());
 			for (String v : dict.values()) {

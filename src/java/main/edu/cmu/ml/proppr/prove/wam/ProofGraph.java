@@ -17,6 +17,7 @@ import edu.cmu.ml.proppr.graph.LightweightStateGraph;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.SymbolTable;
 
 /**
  * # Creates the graph defined by a query, a wam program, and a list of
@@ -38,6 +39,7 @@ public class ProofGraph {
 	private WamInterpreter interpreter;
 	private int queryStartAddress;
 	private ImmutableState startState;
+	private int[] variableIds;
 	private LightweightStateGraph graph;
 	private Map<Goal,Double> trueLoopFD;
 	private Map<Goal,Double> trueLoopRestartFD;
@@ -71,6 +73,14 @@ public class ProofGraph {
 		Map<Goal,Double> features = this.interpreter.executeWithoutBranching(queryStartAddress);
 		if (!features.isEmpty()) throw new LogicProgramException("should be a call");
 		if (interpreter.getState().isFailed()) throw new LogicProgramException("query shouldn't have failed");
+		// remember variable IDs
+		State s = interpreter.saveState();
+		this.variableIds = new int[s.getHeapSize()];
+		int v=1;
+		for (int i=0; i<variableIds.length; i++) {
+			if (s.hasConstantAt(i)) variableIds[i] = 0;
+			else variableIds[i] = -v++;
+		}
 		return interpreter.saveState();
 	}
 	
@@ -123,6 +133,18 @@ public class ProofGraph {
 	
 	/* ***************************** grounding ******************* */
 	
+
+	public Map<Argument,String> asDict(State s) {
+		Map<Argument,String> result = new HashMap<Argument,String>();
+		List<String> constants = this.interpreter.getConstantTable().getSymbolList();
+		for (int k : s.getRegisters()) {
+			int j = s.dereference(k);
+			if (s.hasConstantAt(j)) result.put(new VariableArgument(this.variableIds[j]), constants.get(s.getIdOfConstantAt(j)-1));
+			else result.put(new VariableArgument(-k), "X"+j);
+		}
+		return result;
+	}
+	
 	/** Get a copy of the query represented by this proof using the variable bindings from
 	 * the specified state.
 	 * @param state
@@ -131,7 +153,7 @@ public class ProofGraph {
 	public Query fill(State state) {
 		Goal[] oldRhs = this.example.getQuery().getRhs();
 		Goal[] newRhs = new Goal[oldRhs.length];
-		Map<Argument,String> values = Prover.asDict(this.interpreter.getConstantTable(), state);
+		Map<Argument,String> values = asDict(state);
 		for (int i=0; i<oldRhs.length; i++) {
 			newRhs[i] = fillGoal(oldRhs[i], values);
 		}

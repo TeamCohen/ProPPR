@@ -81,6 +81,7 @@ public class WamInterpreter {
 			Instruction inst = this.program.getInstruction(state.getProgramCounter());
 			execute(inst,computeFeatures);
 		}
+		if(state.isCompleted()) log.debug(this.constantTable.toString());
 		return this.reportedFeatures;
 	}
 	
@@ -134,6 +135,7 @@ public class WamInterpreter {
 			if (plugin.claim(s.getJumpTo())) {
 				log.debug("Executing "+s.getJumpTo()+" from "+plugin.about());
 				this.restoreState(s);
+				log.debug(this.constantTable.toString());
 				for (Outlink o : plugin.outlinks(s, this, computeFeatures)) {
 					result.add(o);
 				}
@@ -145,6 +147,7 @@ public class WamInterpreter {
 		for (Integer address : program.getAddresses(s.getJumpTo())) {
 			log.debug("Executing "+s.getJumpTo()+" from "+address);
 			this.restoreState(s);
+			log.debug(this.constantTable.toString());
 			if (computeFeatures) {
 				Map<Goal,Double> features = this.executeWithoutBranching(address);
 				if (!features.isEmpty() && !this.state.isFailed()) {

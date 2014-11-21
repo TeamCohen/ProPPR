@@ -51,4 +51,11 @@ public class SymbolTable<T> {
 	public int size() {
 		return this.symbolList.size();
 	}
+	public String toString() {
+		StringBuilder sb = new StringBuilder("SymbolTable:");
+		for (int i=0; i<this.symbolList.size(); i++) {
+			sb.append(" ").append(this.symbolList.get(i)).append(":").append(i+1);
+		}
+		return sb.toString();
+	}
 }

@@ -1,5 +1,6 @@
 package edu.cmu.ml.proppr.prove;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
+import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.VariableArgument;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -52,16 +54,22 @@ public abstract class Prover {
 		}
 		return weightedOutlinks;
 	}
-	public Map<String,Double> solutions(ProofGraph pg) throws LogicProgramException {
-		return solutions(pg.getInterpreter().getConstantTable(), this.prove(pg));
+	public Map<Query,Double> solvedQueries(ProofGraph pg) throws LogicProgramException {
+		Map<State,Double> ans = prove(pg);
+		Map<Query,Double> solved = new HashMap<Query,Double>();
+		for (Map.Entry<State,Double> e : ans.entrySet()) {
+			if (e.getKey().isCompleted()) solved.put(pg.fill(e.getKey()),e.getValue());
+		}
+		return solved;
 	}
-	public Map<String,Double> solutions(SymbolTable<String> constants, Map<State,Double> proveOutput) {
+	public Map<String,Double> solutions(ProofGraph pg) throws LogicProgramException {
+		Map<State,Double> proveOutput = this.prove(pg);
 		Map<String,Double> filtered = new HashMap<String,Double>();
 		double normalizer = 0;
 		for (Map.Entry<State, Double> e : proveOutput.entrySet()) {
 			normalizer += e.getValue();
 			if (e.getKey().isCompleted()) {
-				Map<Argument,String> d = asDict(constants, e.getKey());
+				Map<Argument,String> d = pg.asDict(e.getKey());
 				String dstr = Dictionary.buildString(d,new StringBuilder()," ").substring(1);
 				filtered.put(dstr, Dictionary.safeGet(filtered,dstr)+e.getValue());
 			}
@@ -70,15 +78,5 @@ public abstract class Prover {
 			e.setValue(e.getValue()/normalizer);
 		}
 		return filtered;
-	}
-	public static Map<Argument,String> asDict(SymbolTable<String> constantTable, State s) {
-		Map<Argument,String> result = new HashMap<Argument,String>();
-		List<String> constants = constantTable.getSymbolList();
-		for (int k : s.getRegisters()) {
-			int j = s.dereference(k);
-			if (s.hasConstantAt(j)) result.put(new VariableArgument(-k), constants.get(s.getIdOfConstantAt(j)-1));
-			else result.put(new VariableArgument(-k), "X"+j);
-		}
-		return result;
 	}
 }

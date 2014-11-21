@@ -69,9 +69,6 @@ public class DfsProver extends Prover {
 	protected void dfs(ProofGraph pg, State s, int depth, double incomingEdgeWeight, List<Entry> tail) throws LogicProgramException {
 		beforeDfs(s, pg.getInterpreter(), depth);
 		tail.add(new Entry(s,incomingEdgeWeight));
-		if (log.isDebugEnabled()) {
-			log.debug("added "+Dictionary.buildString(Prover.asDict(pg.getInterpreter().getConstantTable(), s), new StringBuilder(), ", ").substring(2));
-		}
 		if (!s.isCompleted() && depth < this.maxDepth) {
 			backtrace.push(s);
 			List<Outlink> outlinks = pg.pgOutlinks(s, trueLoop, restart);

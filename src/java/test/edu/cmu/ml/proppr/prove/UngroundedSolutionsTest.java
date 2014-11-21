@@ -43,7 +43,7 @@ public class UngroundedSolutionsTest {
 		for (State s : ans.keySet()) {
 			if (s.isCompleted()) {
 				System.out.println(s);
-				Map<Argument,String> dict = Prover.asDict(pg.getInterpreter().getConstantTable(), s);
+				Map<Argument,String> dict = pg.asDict(s);
 				System.out.println(Dictionary.buildString(dict, new StringBuilder(), "\n\t").substring(1));
 				for (String a : dict.values()) {
 //					a = a.substring(a.indexOf(":"));
