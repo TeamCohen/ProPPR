@@ -29,6 +29,7 @@ import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.CustomConfiguration;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -48,8 +49,9 @@ public class Grounder {
 	public static final String GROUNDED_SUFFIX = ".grounded";
 	protected File graphKeyFile=null;
 	protected Writer graphKeyWriter=null;
-	protected GroundingStatistics statistics=null;
+	protected GroundingStatistics statistics=new GroundingStatistics();
 
+	protected APROptions apr;
 	protected Prover prover;
 	protected WamProgram masterProgram;
 	protected WamPlugin[] masterPlugins;
@@ -57,13 +59,14 @@ public class Grounder {
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
 
-	public Grounder(Prover p, WamProgram program, WamPlugin ... plugins) {
+	public Grounder(APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {
+		this.apr = apr;
 		this.prover = p;
 		this.masterProgram = program;
 		this.masterPlugins = plugins;
 	}
-	public Grounder(int nthreads, int throttle, Prover p, WamProgram program, WamPlugin ... plugins) {
-		this(p,program,plugins);
+	public Grounder(int nthreads, int throttle, APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {
+		this(apr,p,program,plugins);
 		this.nthreads = Math.max(1,nthreads);
 		this.throttle = throttle;
 	}
@@ -180,6 +183,11 @@ public class Grounder {
 		return ground;
 	}
 
+	public GroundedExample groundExample(Prover p,
+			InferenceExample inferenceExample) throws LogicProgramException {
+		return this.groundExample(p, new ProofGraph(inferenceExample,apr,masterProgram, masterPlugins));
+	}
+	
 	protected void reportStatistics(int empty) {
 		if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
 		log.info("totalPos: " + statistics.totalPos 
@@ -247,7 +255,7 @@ public class Grounder {
 		}
 		@Override
 		public String call() throws Exception {
-			ProofGraph pg = new ProofGraph(inf,masterProgram,masterPlugins);
+			ProofGraph pg = new ProofGraph(inf,apr,masterProgram,masterPlugins);
 			GroundedExample x = groundExample(getProver().copy(), pg);
 			if (x.getGraph().edgeSize() > 0) {
 				if (x.length() > 0) {

@@ -108,7 +108,7 @@ public class QueryAnswerer {
 	}
 
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
-		ProofGraph pg = new ProofGraph(query, program, plugins);
+		ProofGraph pg = new ProofGraph(query, apr, program, plugins);
 		log.info("Querying: "+query);
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);

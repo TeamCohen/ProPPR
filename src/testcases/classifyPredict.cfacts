@@ -1,0 +1,9 @@
+validClass	bird
+validClass	mammal
+
+hasFeature	howard	hasFeathers
+hasFeature	howard	laysEggs
+hasFeature	dundee	hasFur
+hasFeature	dundee	laysEggs
+hasFeature	elsie	hasFur
+hasFeature	elsie	liveBirth

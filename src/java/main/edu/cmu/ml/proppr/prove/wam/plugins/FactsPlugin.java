@@ -120,7 +120,7 @@ public class FactsPlugin extends WamPlugin {
 	
 	private boolean check(String[] args, String[] against) {
 		for (int i=0; i<args.length; i++) {
-			if (args[i] != null && args[i] != against[i]) return false;
+			if (args[i] != null && !(args[i].equals(against[i]))) return false;
 		}
 		return true;
 	}

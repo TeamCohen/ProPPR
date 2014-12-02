@@ -1,0 +1,2 @@
+predict(Creature,Class) :- hasFeature(Creature,F),validClass(Class),related(F,Class) {r}.
+related(Feature,Class) :- { f(Feature,Class) }.

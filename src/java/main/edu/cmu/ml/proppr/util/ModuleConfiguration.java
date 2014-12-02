@@ -250,14 +250,14 @@ public class ModuleConfiguration extends Configuration {
 
 		if (isOn(flags,Configuration.USE_GROUNDER)) {
 			if (!line.hasOption(GROUNDER_MODULE_OPTION)) {
-				this.grounder = new Grounder(nthreads,Multithreading.DEFAULT_THROTTLE,prover,program,plugins);
+				this.grounder = new Grounder(nthreads,Multithreading.DEFAULT_THROTTLE,apr,prover,program,plugins);
 			} else {
 				String[] values = line.getOptionValues(GROUNDER_MODULE_OPTION);
 				int threads = nthreads;
 				if (values.length>1) threads = Integer.parseInt(values[1]);
 				int throttle = Multithreading.DEFAULT_THROTTLE;
 				if (values.length>2) throttle = Integer.parseInt(values[2]);
-				this.grounder = new Grounder(threads,throttle,prover,program,plugins);
+				this.grounder = new Grounder(threads,throttle,apr,prover,program,plugins);
 			}
 		}
 		//		if (line.hasOption("cooker")) {
