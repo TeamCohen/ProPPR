@@ -6,13 +6,14 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
+import edu.cmu.ml.proppr.util.APROptions;
 
 
 public class DprProverTest extends ProverTestTemplate {
 	@Override
 	public void setup() throws IOException {
 		super.setup();
-		this.prover = new DprProver(0.00001, .03);
+		this.prover = new DprProver(new APROptions(new String[] {"eps=.00001","alph=.03"}));
 //		for (Component c : this.lpMilk.components) {
 //			c.setAlpha(0.03);
 //		}

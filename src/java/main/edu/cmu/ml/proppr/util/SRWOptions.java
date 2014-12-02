@@ -1,13 +1,15 @@
-package edu.cmu.ml.proppr.learn.tools;
+package edu.cmu.ml.proppr.util;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
 import edu.cmu.ml.proppr.learn.SRW;
+import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.DprProver;
 
-public class SRWParameters {
+public class SRWOptions {
 	public static final int DEFAULT_MAX_T=10;
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
@@ -24,7 +26,6 @@ public class SRWParameters {
 		delta,
 		zeta,
 		affinityFile,
-		alpha,
 		weightingScheme
 	}
 	
@@ -44,14 +45,14 @@ public class SRWParameters {
 	public Map<String,List<String>> affinity; 
 	/** local L1 group lasso / laplacian */
 	public Map<String,Integer> diagonalDegree;
-	/** minalpha projection */
-	public double alpha;
 	/** wrapper function */
 	public WeightingScheme weightingScheme;
+	/** minalpha projection */
+	public APROptions apr;
 	
 	/** */
-	public SRWParameters() { this(DEFAULT_MAX_T); }
-	public SRWParameters(int maxT) {
+	public SRWOptions() { this(DEFAULT_MAX_T); }
+	public SRWOptions(int maxT) {
 		this(
 				maxT, 
 				DEFAULT_MU, 
@@ -60,9 +61,9 @@ public class SRWParameters {
 				DEFAULT_DELTA, 
 				DEFAULT_AFFGRAPH, 
 				DEFAULT_ZETA, 
-				DprProver.MINALPH_DEFAULT); 
+				new APROptions()); 
 	}
-	public SRWParameters(
+	public SRWOptions(
 			int maxT, 
 			double mu, 
 			double eta, 
@@ -70,14 +71,14 @@ public class SRWParameters {
 			double delta, 
 			File affgraph, 
 			double zeta,
-			double alpha) {
+			APROptions options) {
 		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.delta = delta;
 		this.zeta = zeta;
 		this.weightingScheme = wScheme;
-		this.alpha = alpha;
+		this.apr = options;
 		this.affinityFile = affgraph;
 	}
 
@@ -102,7 +103,7 @@ public class SRWParameters {
 			if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
 			this.affinityFile = value; 
 			return;
-		case alpha: this.alpha = Double.parseDouble(setting[1]); return;
+//		case alpha: this.alpha = Double.parseDouble(setting[1]); return;
 		}
 	}
 }

@@ -5,16 +5,16 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.MuParamVector;
 import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.map.TObjectDoubleMap;
 
 public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
-	public LocalL2PosNegLossTrainedSRW(SRWParameters params) {
+	public LocalL2PosNegLossTrainedSRW(SRWOptions params) {
 		super(params);
 	}
 	public LocalL2PosNegLossTrainedSRW() { super(); }

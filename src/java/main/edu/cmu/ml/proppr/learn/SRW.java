@@ -20,7 +20,6 @@ import edu.cmu.ml.proppr.examples.RWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
@@ -28,6 +27,7 @@ import edu.cmu.ml.proppr.prove.MinAlphaException;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
@@ -58,12 +58,12 @@ public class SRW<E extends RWExample> {
 	public static final double PERTURB_EPSILON=1e-10;
 	protected static final TObjectDoubleMap EMPTY = new TObjectDoubleHashMap();
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
-	protected SRWParameters c;
+	protected SRWOptions c;
 	protected Set<String> untrainedFeatures;
 	protected int epoch;
-	public SRW() { this(new SRWParameters()); }
-	public SRW(int maxT) { this(new SRWParameters(maxT)); }
-	public SRW(SRWParameters params) {
+	public SRW() { this(new SRWOptions()); }
+	public SRW(int maxT) { this(new SRWOptions(maxT)); }
+	public SRW(SRWOptions params) {
 		this.c = params;
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
@@ -452,7 +452,7 @@ public class SRW<E extends RWExample> {
 					// check & project for each node
 	            	double z = totalEdgeWeight(g, u, paramVec);
 	            	double rw = edgeWeight(g,u,q,paramVec);
-	            	if (rw / z < c.alpha) {
+	            	if (rw / z < c.apr.alpha) {
 	                	projectOneNode(u, g, paramVec, z, rw, q);
 						if (log.isDebugEnabled()) {
 	                		z = totalEdgeWeight(g, u, paramVec);
@@ -483,7 +483,7 @@ public class SRW<E extends RWExample> {
 				}
 			});
         }
-        double newValue = c.weightingScheme.projection(rw,c.alpha,nonRestartNodeNum);
+        double newValue = c.weightingScheme.projection(rw,c.apr.alpha,nonRestartNodeNum);
         for (String f : nonRestartFeatureSet) {
             if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) {
 				throw new MinAlphaException("Minalpha assumption violated: local alpha "+(rw/z)+" but links contain non-db features (" + f + ")");
@@ -596,10 +596,10 @@ public class SRW<E extends RWExample> {
 		c.delta = delta;
 	}
 	public double getAlpha() {
-		return c.alpha;
+		return c.apr.alpha;
 	}
 	public void setAlpha(double alpha) {
-		c.alpha = alpha;
+		c.apr.alpha = alpha;
 	}
 	public WeightingScheme<String> getWeightingScheme() {
 		return c.weightingScheme;

@@ -15,12 +15,12 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
-import edu.cmu.ml.proppr.prove.wam.AWamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
-import edu.cmu.ml.proppr.prove.wam.WamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 
 
@@ -28,7 +28,7 @@ public class WamInterpreterTest {
 	int MAXDEPTH=10;
 	@Test
 	public void test() throws IOException {
-		AWamProgram program = WamProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		WamProgram program = WamBaseProgram.load(new File("testcases/wam/simpleProgram.wam"));
 		WamInterpreter interp = new WamInterpreter(program, new WamPlugin[0]);
 		// ? :- coworker(steve,X).
 		Query query = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
@@ -38,7 +38,7 @@ public class WamInterpreterTest {
 	}
 	
 	public List<State> findAnswers(WamInterpreter wamInterp, Query query) {
-		AWamProgram program = wamInterp.getProgram();
+		WamProgram program = wamInterp.getProgram();
 		int queryStartAddr = program.size();
 		query.variabilize();
 		program.append(query);

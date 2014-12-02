@@ -23,7 +23,7 @@ import edu.cmu.ml.proppr.examples.InferenceExampleStreamer;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Goal;
-import edu.cmu.ml.proppr.prove.wam.AWamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
@@ -51,18 +51,18 @@ public class Grounder {
 	protected GroundingStatistics statistics=null;
 
 	protected Prover prover;
-	protected AWamProgram masterProgram;
+	protected WamProgram masterProgram;
 	protected WamPlugin[] masterPlugins;
 	protected int nthreads=1;
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
 
-	public Grounder(Prover p, AWamProgram program, WamPlugin ... plugins) {
+	public Grounder(Prover p, WamProgram program, WamPlugin ... plugins) {
 		this.prover = p;
 		this.masterProgram = program;
 		this.masterPlugins = plugins;
 	}
-	public Grounder(int nthreads, int throttle, Prover p, AWamProgram program, WamPlugin ... plugins) {
+	public Grounder(int nthreads, int throttle, Prover p, WamProgram program, WamPlugin ... plugins) {
 		this(p,program,plugins);
 		this.nthreads = Math.max(1,nthreads);
 		this.throttle = throttle;

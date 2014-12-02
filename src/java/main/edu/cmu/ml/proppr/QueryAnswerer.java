@@ -4,13 +4,13 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.*;
-import edu.cmu.ml.proppr.prove.wam.AWamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
-import edu.cmu.ml.proppr.prove.wam.WamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamQueryProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.Configuration;
@@ -51,12 +51,12 @@ import java.util.concurrent.Callable;
 
 public class QueryAnswerer {
 	private static final Logger log = Logger.getLogger(QueryAnswerer.class);
-	protected AWamProgram program;
+	protected WamProgram program;
 	protected WamPlugin[] plugins;
 	protected Prover prover;
 	protected boolean normalize;
 	protected int nthreads;
-	public QueryAnswerer(AWamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads) {
+	public QueryAnswerer(WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads) {
 		this.program = program;
 		this.plugins = plugins;
 		this.prover = prover;
@@ -107,7 +107,7 @@ public class QueryAnswerer {
 		prover.setWeighter(InnerProductWeighter.fromParamVec(params, wScheme));
 	}
 
-	public String findSolutions(AWamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
+	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
 		ProofGraph pg = new ProofGraph(query, program, plugins);
 		log.info("Querying: "+query);
 		long start = System.currentTimeMillis();

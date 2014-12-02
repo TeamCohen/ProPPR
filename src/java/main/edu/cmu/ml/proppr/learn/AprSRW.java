@@ -6,11 +6,11 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.tools.LossData;
-import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
@@ -22,37 +22,33 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 public class AprSRW extends SRW<PosNegRWExample> {
 	private static final Logger log = Logger.getLogger(AprSRW.class);
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
-	public static final double DEFAULT_EPSILON=DprProver.EPS_DEFAULT;
 	public static final double DEFAULT_STAYPROB=DprProver.STAYPROB_DEFAULT;
 	
-	private double epsilon;
 	private double stayProb;
 	protected LossData cumloss;
 
 	public AprSRW() {
 		super();
-		init(DEFAULT_EPSILON,DEFAULT_STAYPROB);
+		init(DEFAULT_STAYPROB);
 	}
 	
-	public AprSRW(SRWParameters params) {
+	public AprSRW(SRWOptions params) {
 		super(params);
-		init(DEFAULT_EPSILON,DEFAULT_STAYPROB);
+		init(DEFAULT_STAYPROB);
 	}
 	
-	public AprSRW(double ialpha, double iepsilon, double istayProb) {
+	public AprSRW(double istayProb) {
 		super();
-		this.c.alpha = ialpha;
-		this.init(iepsilon,istayProb);
+		this.init(istayProb);
 	}
-	public AprSRW(SRWParameters params, double iepsilon, double istayProb) {
+	public AprSRW(SRWOptions params, double istayProb) {
 		super(params);
-		this.init(iepsilon,istayProb);
+		this.init(istayProb);
 	}
 
 	
-	private void init(double iepsilon, double istayProb) {
+	private void init(double istayProb) {
 		//set walk parameters here
-		epsilon = iepsilon;
 		stayProb = istayProb;
 		this.cumloss = new LossData();
 	}
@@ -101,8 +97,8 @@ public class AprSRW extends SRW<PosNegRWExample> {
 			completeCount = 0;
 			for(int u : example.getGraph().getNodes()) {
 				double ru = r.get(u);
-				if(ru / (double) example.getGraph().near(u).size() > epsilon)
-					while(ru / example.getGraph().near(u).size() > epsilon) {
+				if(ru / (double) example.getGraph().near(u).size() > c.apr.epsilon)
+					while(ru / example.getGraph().near(u).size() > c.apr.epsilon) {
 						this.push(u, p, r, example.getGraph(), paramVec, dp, dr);
 						if (r.get(u) > ru) throw new IllegalStateException("r increasing! :(");
 						ru = r.get(u);
@@ -178,7 +174,7 @@ public class AprSRW extends SRW<PosNegRWExample> {
 		log.debug("Pushing "+u);
 		
 		// update p for the pushed node:
-		Dictionary.increment(p, u, c.alpha * r.get(u));
+		Dictionary.increment(p, u, c.apr.alpha * r.get(u));
 		TObjectDoubleMap<String> dru = dr.get(u);
 		
 		TIntDoubleMap unwrappedDotP = new TIntDoubleHashMap();
@@ -196,7 +192,7 @@ public class AprSRW extends SRW<PosNegRWExample> {
 		for(String feature : (graph.getFeatureSet())) {
 //			log.debug("dru["+feature+"] = "+dru.get(feature));
 			// simultaneously update the dp for the pushed node:
-			if (trainable(feature)) Dictionary.increment(dp,u,feature,c.alpha * dru.get(feature));
+			if (trainable(feature)) Dictionary.increment(dp,u,feature,c.apr.alpha * dru.get(feature));
 			double drowSum = 0;
 			for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
 				int v = it.next();
@@ -208,7 +204,7 @@ public class AprSRW extends SRW<PosNegRWExample> {
 			
 			// update dr for the pushed vertex, storing dr temporarily for the calculation of dr for the other vertices:
 			prevdr.put(feature, dru.get(feature));
-			dru.put(feature, dru.get(feature) * (1 - c.alpha) * stayProb);
+			dru.put(feature, dru.get(feature) * (1 - c.apr.alpha) * stayProb);
 		}
 		
 		// update dr for other vertices:
@@ -221,19 +217,19 @@ public class AprSRW extends SRW<PosNegRWExample> {
 				double vdr = dr.get(v).get(feature);
 				
 				// whoa this is pretty gross.
-				vdr += (1-stayProb)*(1-c.alpha)*((prevdr.get(feature)*dotP/rowSum)+(r.get(u)*((contained*ddotP*rowSum)-(dotP*drowSums.get(feature)))/(rowSum*rowSum)));
+				vdr += (1-stayProb)*(1-c.apr.alpha)*((prevdr.get(feature)*dotP/rowSum)+(r.get(u)*((contained*ddotP*rowSum)-(dotP*drowSums.get(feature)))/(rowSum*rowSum)));
 				dr.get(v).put(feature, vdr);
 			}
 		}
 		
 		// update r for all affected vertices:
 		double ru = r.get(u);
-		r.put(u, ru * stayProb * (1 - c.alpha));
+		r.put(u, ru * stayProb * (1 - c.apr.alpha));
 		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
 			// calculate edge weight on v:
 			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
-			Dictionary.increment(r, v, (1 - stayProb) * (1 - c.alpha) * (dotP / rowSum) * ru);
+			Dictionary.increment(r, v, (1 - stayProb) * (1 - c.apr.alpha) * (dotP / rowSum) * ru);
 		}
 	}
 	

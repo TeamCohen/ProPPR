@@ -9,6 +9,7 @@ import java.util.Map;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParsedFile;
 
@@ -28,18 +29,13 @@ import edu.cmu.ml.proppr.util.ParsedFile;
  *
  */
 public class LightweightGraphPlugin extends GraphlikePlugin {
-	public static final double DEFAULT_ALPHA=DprProver.MINALPH_DEFAULT;
 	protected Map<String,Map<String,List<String>>> graph = new HashMap<String,Map<String,List<String>>>();
 	protected Map<Goal,Double> fd=new HashMap<Goal,Double>();
-	protected double alpha;
 	protected String name;
-//	public LightweightGraphPlugin(String name) {
-//		this(name,DEFAULT_ALPHA);
-//	}
-	public LightweightGraphPlugin(String name,double alpha) {
+	public LightweightGraphPlugin(APROptions apr, String name) {
+		super(apr);
 		this.fd.put(WamPlugin.pluginFeature(this, name),1.0);
 		this.name = name;
-		this.alpha = alpha;
 	}
 
 	@Override
@@ -71,8 +67,8 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 	/** Return a simpleGraphComponent with all the components loaded from
         a file.  The format of the file is that each line is a tab-separated 
         triple of edgelabel, sourceNode, destNode. */
-	public static GraphlikePlugin load(File f,double alpha) {
-		GraphlikePlugin p = new LightweightGraphPlugin(f.getName(),alpha);
+	public static GraphlikePlugin load(APROptions apr, File f) {
+		GraphlikePlugin p = new LightweightGraphPlugin(apr, f.getName());
 		ParsedFile parsed = new ParsedFile(f);
 		for (String line : parsed) {
 			String[] parts = line.split("\t");

@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 /**
  * A prover with scores based on simple depth-first-search
@@ -21,35 +22,34 @@ import edu.cmu.ml.proppr.util.Dictionary;
  */
 public class DfsProver extends Prover {
 	private static final Logger log = Logger.getLogger(DfsProver.class);
-	public static final int DEFAULT_MAXDEPTH=6;
 	private Backtrace<State> backtrace = new Backtrace<State>(log);
-	protected int maxDepth;
 	protected boolean trueLoop;
 	protected boolean restart;
 
-	
 	public DfsProver() {
 		init();
 	}
-	public DfsProver(FeatureDictWeighter w, int maxDepth) {
-		super(w);
-		init(maxDepth);
+	public DfsProver(APROptions apr) {
+		super(apr);
+		init();
 	}
-	public DfsProver(FeatureDictWeighter w, int maxDepth, boolean trueLoop, boolean restart) {
-		super(w);
-		init(maxDepth, trueLoop, restart);
+	public DfsProver(FeatureDictWeighter w, APROptions apr) {
+		super(w,apr);
+		init();
 	}
-	private void init() { init(DEFAULT_MAXDEPTH); }
-	protected void init(int maxDepth) {
-		init(maxDepth,ProofGraph.DEFAULT_TRUELOOP,ProofGraph.DEFAULT_RESTART);
+	public DfsProver(FeatureDictWeighter w, APROptions apr, boolean trueLoop, boolean restart) {
+		super(w,apr);
+		init(trueLoop, restart);
 	}
-	private void init(int maxDepth, boolean trueLoop, boolean restart) {
-		this.maxDepth = maxDepth;
+	private void init() {
+		init(ProofGraph.DEFAULT_TRUELOOP,ProofGraph.DEFAULT_RESTART);
+	}
+	private void init(boolean trueLoop, boolean restart) {
 		this.trueLoop = trueLoop;
 		this.restart = restart;
 	}
 	public Prover copy() {
-		return new DfsProver(this.weighter, this.maxDepth, this.trueLoop, this.restart);
+		return new DfsProver(this.weighter, this.apr, this.trueLoop, this.restart);
 	}
 
 	protected class Entry {
@@ -69,7 +69,7 @@ public class DfsProver extends Prover {
 	protected void dfs(ProofGraph pg, State s, int depth, double incomingEdgeWeight, List<Entry> tail) throws LogicProgramException {
 		beforeDfs(s, pg, depth);
 		tail.add(new Entry(s,incomingEdgeWeight));
-		if (!s.isCompleted() && depth < this.maxDepth) {
+		if (!s.isCompleted() && depth < this.apr.maxDepth) {
 			backtrace.push(s);
 			List<Outlink> outlinks = pg.pgOutlinks(s, trueLoop, restart);
 			if (outlinks.size() == 0) log.debug("exit dfs: no outlinks for "+s);
@@ -78,7 +78,7 @@ public class DfsProver extends Prover {
 				dfs(pg, o.child, depth+1, w, tail);
 			}
 			backtrace.pop(s);
-		} else log.debug("exit dfs: "+ (s.isCompleted() ? "state completed" : ("depth "+depth+">"+this.maxDepth)));
+		} else log.debug("exit dfs: "+ (s.isCompleted() ? "state completed" : ("depth "+depth+">"+this.apr.maxDepth)));
 	}
 
 	/** 

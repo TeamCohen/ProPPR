@@ -21,14 +21,15 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.prove.FeatureDictWeighter;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
-import edu.cmu.ml.proppr.prove.wam.AWamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
-import edu.cmu.ml.proppr.prove.wam.WamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
+import edu.cmu.ml.proppr.util.APROptions;
 
 public abstract class ProverTestTemplate {
 	private static final Logger log = Logger.getLogger(ProverTestTemplate.class);
@@ -36,19 +37,20 @@ public abstract class ProverTestTemplate {
 	private static final String MILK_FACTS="src/testcases/classifyEDB.cfacts";
 	private static final String MEM_PROGRAM="src/testcases/memIDB.wam";
 	private static final String MEM_FACTS="src/testcases/memEDB.cfacts";
-	AWamProgram lpMilk;
+	WamProgram lpMilk;
 	FactsPlugin fMilk;
-	AWamProgram lpMem;
+	WamProgram lpMem;
 	FactsPlugin	fMem;
 	Prover prover;
 	double[] proveStateAnswers=new double[3];
+	APROptions apr = new APROptions("depth=6");
 	@Before
 	public void setup() throws IOException {
 		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
-		lpMilk = WamProgram.load(new File(MILK_PROGRAM));
-		fMilk = FactsPlugin.load(new File(MILK_FACTS), false);
-		lpMem = WamProgram.load(new File(MEM_PROGRAM));
-		fMem = FactsPlugin.load(new File(MEM_FACTS), false);
+		lpMilk = WamBaseProgram.load(new File(MILK_PROGRAM));
+		fMilk = FactsPlugin.load(apr,new File(MILK_FACTS), false);
+		lpMem = WamBaseProgram.load(new File(MEM_PROGRAM));
+		fMem = FactsPlugin.load(apr,new File(MEM_FACTS), false);
 		setProveStateAnswers();
 	}
 	
@@ -65,7 +67,7 @@ public abstract class ProverTestTemplate {
 		w.put(new Goal("milk"),2);
 		prover.setWeighter(w);
 
-		ProofGraph pg = new ProofGraph(Query.parse("isa(elsie,X)"), lpMilk, fMilk);
+		ProofGraph pg = new ProofGraph(Query.parse("isa(elsie,X)"), apr, lpMilk, fMilk);
 		Map<State,Double> dist = prover.prove(pg);//("isa","elsie","X"));
 
 		for(Map.Entry<State, Double> s : dist.entrySet()) {

@@ -16,6 +16,7 @@ import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
@@ -35,7 +36,7 @@ public class ProofGraph {
 	private static final Goal ALPHABOOSTER = new Goal("id",new ConstantArgument("alphaBooster"));
 	
 	private InferenceExample example;
-	private AWamProgram program;
+	private WamProgram program;
 	private WamInterpreter interpreter;
 	private int queryStartAddress;
 	private ImmutableState startState;
@@ -45,11 +46,13 @@ public class ProofGraph {
 	private Map<Goal,Double> trueLoopRestartFD;
 	private Goal restartFeature;
 	private Goal restartBoosterFeature;
-	public ProofGraph(Query query, AWamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		this(new InferenceExample(query,null,null),program,plugins);
+	private APROptions apr;
+	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		this(new InferenceExample(query,null,null),apr,program,plugins);
 	}
-	public ProofGraph(InferenceExample ex, AWamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+	public ProofGraph(InferenceExample ex, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this.example = ex; 
+		this.apr = apr;
 		this.program = new WamQueryProgram(program);
 		// TODO: builtin plugins
 		this.interpreter = new WamInterpreter(this.program, plugins);
@@ -112,10 +115,10 @@ public class ProofGraph {
 		} else {
 			result = this.interpreter.wamOutlinks(state);
 			if (restart) {
-				int n = this.pgDegree(state);// TODO why not result.size()?
+				int n = result.size(); //this.pgDegree(state);// TODO why not result.size()?
 				Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
 				restartFD.put(this.restartFeature,1.0);
-				restartFD.put(this.restartBoosterFeature,(double) n);
+				restartFD.put(this.restartBoosterFeature,(double) n * this.apr.alpha / (1 - this.apr.alpha));
 				result.add(new Outlink(restartFD,this.startState));
 			}
 		}

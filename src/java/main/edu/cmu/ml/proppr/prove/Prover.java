@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.VariableArgument;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
@@ -25,15 +26,21 @@ public abstract class Prover {
 	private static final boolean NORMLX_RESTART = true;
 	private static final boolean NORMLX_TRUELOOP = true;
 	protected FeatureDictWeighter weighter;
+	protected APROptions apr;
 	public Prover() {
-		this(new UniformWeighter());
+		this(new APROptions());
 	}
-	public Prover(FeatureDictWeighter w) {
+	public Prover(APROptions apr) {
+		this(new UniformWeighter(), apr);
+	}
+	public Prover(FeatureDictWeighter w, APROptions apr) {
 		this.weighter = w;
+		this.apr = apr;
 	}
 	/** Return unfiltered distribution of state associated with proving the start state. 
 	 * @throws LogicProgramException */
 	public abstract Map<State,Double> prove(ProofGraph pg) throws LogicProgramException;
+	
 	/** Return a threadsafe copy of the prover */
 	public abstract Prover copy();
 	

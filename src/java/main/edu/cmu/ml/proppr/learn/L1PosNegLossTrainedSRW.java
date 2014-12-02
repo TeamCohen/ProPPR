@@ -7,11 +7,11 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
@@ -22,7 +22,7 @@ public class L1PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 	protected LossData cumloss;
 
-	public L1PosNegLossTrainedSRW(SRWParameters params) {
+	public L1PosNegLossTrainedSRW(SRWOptions params) {
 		super(params);
 		this.cumloss = new LossData();
 	}

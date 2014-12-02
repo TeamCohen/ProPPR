@@ -9,6 +9,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 /**
  * prover using power iteration
@@ -18,39 +19,34 @@ import edu.cmu.ml.proppr.util.Dictionary;
  */
 public class PprProver extends Prover {
 	private static final Logger log = Logger.getLogger(PprProver.class);
+	private static final boolean DEFAULT_TRACE=false;
 	private static final boolean RESTART = true;
 	private static final boolean TRUELOOP = true;
-	public static final int DEFAULT_MAXDEPTH=5;
-	protected int maxDepth;
 	protected boolean trace;
 	
-	public PprProver() { this(DEFAULT_MAXDEPTH); }
-	public PprProver(int md) {
-		this(md,false);
+	public PprProver() { this(DEFAULT_TRACE); }
+	public PprProver(boolean tr) {
+		init(tr);
 	}
-	public PprProver(int md, boolean tr) {
-		init(md,tr);
+	public PprProver(APROptions apr) { super(apr); init(DEFAULT_TRACE); }
+	public PprProver(FeatureDictWeighter w, APROptions apr, boolean tr) {
+		super(w, apr);
+		init(tr);
 	}
-	public PprProver(FeatureDictWeighter w, int md, boolean tr) {
-		super(w);
-		init(md,tr);
-	}
-	private void init(int md, boolean tr) {
-		this.maxDepth=md;
+	private void init(boolean tr) {
 		trace=tr;
 	}
 	
 	@Override
-	public String toString() { return "ppr:"+this.maxDepth; }
+	public String toString() { return "ppr:"+this.apr.maxDepth; }
 	
 	public Prover copy() {
-		Prover copy = new PprProver(this.maxDepth, this.trace);
-		copy.setWeighter(weighter);
+		Prover copy = new PprProver(weighter, this.apr, this.trace);
 		return copy;
 	}
 	
 	public void setMaxDepth(int i) {
-		this.maxDepth = i;
+		this.apr.maxDepth = i;
 	}
 	public void setTrace(boolean b) {
 		this.trace = b;
@@ -61,7 +57,7 @@ public class PprProver extends Prover {
 		startVec.put(pg.getStartState(),1.0);
 		Map<State,Double> vec = startVec;
 		
-		for (int i=0; i<this.maxDepth; i++) {
+		for (int i=0; i<this.apr.maxDepth; i++) {
 			vec = walkOnce(pg,vec);
 			if (log.isInfoEnabled()) log.info("iteration/descent "+(i-1)+" complete");
 			if(log.isDebugEnabled()) log.debug("after iteration "+(i+1)+" :"+

@@ -8,14 +8,14 @@ import java.util.List;
 
 import org.junit.Test;
 
-import edu.cmu.ml.proppr.prove.wam.AWamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.Instruction.OP;
 
 public class WamProgramTest {
 	@Test
 	public void testLoad() throws IOException {
-		AWamProgram program = WamProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		WamProgram program = WamBaseProgram.load(new File("testcases/wam/simpleProgram.wam"));
 		OP[] simpleProgram = 
 			{
 				OP.comment,

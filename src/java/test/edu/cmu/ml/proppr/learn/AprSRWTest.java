@@ -22,7 +22,7 @@ import edu.cmu.ml.proppr.util.SimpleParamVector;
 public class AprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
-		srw = new AprSRW(0.1,1e-5,0);
+		srw = new AprSRW();
 	}
 	
 	@Override

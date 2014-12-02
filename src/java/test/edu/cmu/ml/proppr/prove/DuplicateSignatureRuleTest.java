@@ -10,11 +10,12 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
-import edu.cmu.ml.proppr.prove.wam.AWamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
-import edu.cmu.ml.proppr.prove.wam.WamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
+import edu.cmu.ml.proppr.util.APROptions;
 
 /** 
  * Bug: When multiple goals in a rule have the same signature, ProPPR doesn't resolve their variables properly.
@@ -26,10 +27,11 @@ public class DuplicateSignatureRuleTest {
 
 	@Test
 	public void test2() throws LogicProgramException, IOException {
-		AWamProgram program = WamProgram.load(new File(PROGRAM));
-		ProofGraph pg = new ProofGraph(Query.parse("canExit(steve,X)"),program);
+		APROptions apr = new APROptions("depth=10");
+		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
+		ProofGraph pg = new ProofGraph(Query.parse("canExit(steve,X)"),apr,program);
 		
-		Prover p = new TracingDfsProver(10);
+		Prover p = new TracingDfsProver(apr);
 		Map<Query,Double> result = p.solvedQueries(pg);
 		for (Map.Entry<Query, Double> e : result.entrySet()) {
 			System.out.println(e.getValue()+"\t"+e.getKey());

@@ -8,6 +8,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
+import edu.cmu.ml.proppr.util.APROptions;
 
 /**
  * Abstract extension to a WAM program.
@@ -21,6 +22,11 @@ public abstract class WamPlugin {
 		return new Goal("db",new ConstantArgument(plugin.getClass().getSimpleName()),new ConstantArgument(identifier));
 	}
 
+	protected APROptions apr;
+	public WamPlugin(APROptions apr) {
+		this.apr = apr;
+	}
+	
 	public abstract String about();
 	
 	/** Return True if this plugin should be called to implement this predicate/arity pair.

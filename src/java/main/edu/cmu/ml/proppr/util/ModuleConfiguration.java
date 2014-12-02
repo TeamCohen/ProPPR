@@ -15,7 +15,6 @@ import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.learn.tools.SigmoidWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
@@ -78,10 +77,10 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: dpr\n"
 							+ "Available options:\n"
-							+ "ppr[:depth] (default depth=5)\n"
-							+ "dpr[:eps[:alph[:strat]]] (default eps=1E-4, alph=0.1, strategy=throw(boost,adjust))\n"
-							+ "df[:depth] (default depth=5)"
-							+ "tr[:depth] (default depth=5)")
+							+ "ppr\n"
+							+ "dpr[:strat] (default strategy=throw(boost,adjust))\n"
+							+ "df"
+							+ "tr")
 							.create());
 		if (isOn(flags, USE_GROUNDER))
 			options.addOption(
@@ -113,25 +112,16 @@ public class ModuleConfiguration extends Configuration {
 					.hasArgs()
 					.withValueSeparator(':')
 					.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
+							 + "Syntax: srw:param=value:param=value...\n"
+							 + "Available srw options:\n"
+							 + "l1p, l1plocal, l1laplacianplocal, l1pgrouplassoplocal\n"
+							 + "l2p, l2plocal\n"
+							 + "apr\n"
+							 + "Available parameters:\n"
+							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
-							+ "Default eta=1.0\n"
-							+ "Available options:\n"
-							+ "l2p[:mu[:eta[:delta]]] (L2PosNegLossTrainedSRW)\n"
-							+ "l2plocal[:mu[:eta[:delta]] (LocalL2PosNegLossTrainedSRW)\n"
-							+ "apr[:mu[:eta[:delta[:eps[:alph]]]]] (AprSRW; default eps=1E-4, alph=0.1)")
+							+ "Default eta=1.0")
 							.create());
-		//		options.addOption(
-		//				OptionBuilder
-		//				.withLongOpt("tester")
-		//				.withArgName("class[:arg]")
-		//				.hasArgs()
-		//				.withValueSeparator(':')
-		//				.withDescription("Default: mt\n"
-		//						+ "Available options:\n"
-		//						+ "t Tester\n"
-		//						+ "mt[:threads] (default threads=3) MultithreadedTester\n"
-		//						+ "rt RerankingTester")
-		//						.create());
 		if (isOn(flags, USE_SRW))
 			options.addOption(
 					OptionBuilder
@@ -212,45 +202,29 @@ public class ModuleConfiguration extends Configuration {
 		if (isOn(flags,USE_PROVER)) {
 			if (!line.hasOption(PROVER_MODULE_OPTION)) {
 				// default:
-				this.prover = new DprProver();
+				this.prover = new DprProver(apr);
 			} else {
 				String[] values = line.getOptionValue(PROVER_MODULE_OPTION).split(":");
 				switch (PROVERS.valueOf(values[0])) {
 				case ppr:
-					if (values.length==1) {
-						this.prover = new PprProver();
-					} else {
-						int depth = Integer.parseInt(values[1]);
-						this.prover = new PprProver(depth);
-					}
+					this.prover = new PprProver(apr);
 				case dpr:
 					if (values.length==1)
-						this.prover = new DprProver();
+						this.prover = new DprProver(apr);
 					else {
-						double epsilon = Double.parseDouble(values[1]);
-						double alpha = DprProver.MINALPH_DEFAULT;
-						if (values.length>2) {
-							alpha = Double.parseDouble(values[2]);
-						}
 						int strategy = DprProver.STRATEGY_DEFAULT;
-						if (values.length>3) {
-							if ("throw".equals(values[3])) strategy = DprProver.THROW_ALPHA_ERRORS;
-							if ("boost".equals(values[3])) strategy = DprProver.BOOST_ALPHA;
-							if ("adjust".equals(values[3])) strategy = DprProver.ADJUST_ALPHA;
-						}
-						this.prover = new DprProver(epsilon,alpha, strategy);
-						alpha += epsilon;
+						if ("throw".equals(values[1])) strategy = DprProver.THROW_ALPHA_ERRORS;
+						if ("boost".equals(values[1])) strategy = DprProver.BOOST_ALPHA;
+						if ("adjust".equals(values[1])) strategy = DprProver.ADJUST_ALPHA;
+						this.prover = new DprProver(apr, strategy);
+//						alpha += epsilon;
 					}
 					break;
 				case dfs:
-					this.prover = new DfsProver();
+					this.prover = new DfsProver(apr);
 					break;
 				case tr:
-					int depth = TracingDfsProver.DEFAULT_MAXDEPTH;
-					if (values.length!=1) {
-						depth = Integer.parseInt(values[1]);
-					}
-					this.prover = new TracingDfsProver(depth);
+					this.prover = new TracingDfsProver(apr);
 					break;
 				default:
 					usageOptions(options,allFlags,"No prover definition for '"+values[0]+"'");
@@ -421,7 +395,7 @@ public class ModuleConfiguration extends Configuration {
 	}
 
 	protected void setupSRW(CommandLine line, int flags, Options options) {
-		SRWParameters sp = new SRWParameters();
+		SRWOptions sp = new SRWOptions();
 
 		if (line.hasOption("maxT")) {
 			sp.maxT = Integer.parseInt(line.getOptionValue("maxT"));
@@ -468,9 +442,7 @@ public class ModuleConfiguration extends Configuration {
 			} else if (values[0].equals("l2plocal")) {
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL2PosNegLossTrainedSRW(sp);
 			} else if (values[0].equals("apr")) {
-				double epsilon = AprSRW.DEFAULT_EPSILON;
-				if (values.length > 4) epsilon = Double.parseDouble(values[4]);
-				this.srw = new edu.cmu.ml.proppr.learn.AprSRW(sp, epsilon, AprSRW.DEFAULT_STAYPROB);
+				this.srw = new edu.cmu.ml.proppr.learn.AprSRW(sp, AprSRW.DEFAULT_STAYPROB);
 			} else {
 				usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}

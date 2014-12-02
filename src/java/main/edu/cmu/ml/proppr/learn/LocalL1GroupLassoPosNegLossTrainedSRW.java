@@ -6,16 +6,16 @@ import java.util.Set;
 import java.util.List;
 
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.learn.tools.SRWParameters;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.MuParamVector;
 import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.map.TObjectDoubleMap;
 
 public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW {
-	public LocalL1GroupLassoPosNegLossTrainedSRW(SRWParameters params) {
+	public LocalL1GroupLassoPosNegLossTrainedSRW(SRWOptions params) {
 		super(params);
 	}
 	public LocalL1GroupLassoPosNegLossTrainedSRW() { super(); }

@@ -11,7 +11,27 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
+import edu.cmu.ml.proppr.util.APROptions;
 
+/**
+ * An 'extensional database' - restricted to be a labeled directed
+    graph, or equivalently, a set of f(+X,-Y) unit predicates.
+    
+ * Alpha is used to limit the minimum restart weight, when you
+        use a uniformWeighter (or something related, like a fdWeighter
+        with learned weights that are close to 1.0).
+        
+        With unit feature weights, a graph node of degree n will lead
+        to an lpState with degree n+1, and have a restart weight that
+        is 1/(n+1).  With alpha set, a new feature (named
+        'alphaBooster') is introduced with a non-unit VALUE of n *
+        (alpha/(1-alpha)) for the restart weight, which means that
+        unit weights will give that edge a total weight of alpha.
+ * 
+ * @author "William Cohen <wcohen@cs.cmu.edu>"
+ * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+ *
+ */
 public abstract class GraphlikePlugin extends WamPlugin {
 	protected static final List<String> DEFAULT_DSTLIST = Collections.emptyList();
 
@@ -20,6 +40,10 @@ public abstract class GraphlikePlugin extends WamPlugin {
 	protected abstract Collection<String> indexGet(String label);
 	protected abstract void indexAdd(String label, String src, String dst);
 	protected abstract Map<Goal,Double> getFD();
+	
+	public GraphlikePlugin(APROptions apr) {
+		super(apr);
+	}
 	
 	public void addEdge(String functor, String src, String dst) {
 		indexAdd(functor+"/2",src,dst);

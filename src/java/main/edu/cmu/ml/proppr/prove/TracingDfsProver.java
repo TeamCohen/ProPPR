@@ -4,6 +4,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 
 /**
@@ -14,9 +15,8 @@ import edu.cmu.ml.proppr.util.Dictionary;
  *
  */
 public class TracingDfsProver extends DfsProver {
-	public TracingDfsProver(int depth) {
-		super();
-		init(depth);
+	public TracingDfsProver(APROptions apr) {
+		super(apr);
 	}
 	@Override
 	protected void beforeDfs(State state, ProofGraph pg, int depth) throws LogicProgramException {

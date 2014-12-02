@@ -18,8 +18,8 @@ import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
-import edu.cmu.ml.proppr.prove.wam.AWamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
+import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
@@ -62,7 +62,7 @@ public class Configuration {
 	public static final int USE_FORCE = 0x10;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
-	private static final String ALPHA_CONST_OPTION = "alpha";
+	private static final String APR_CONST_OPTION = "apr";
 	private static final String THREADS_CONST_OPTION = "threads";
 	private static final String EPOCHS_CONST_OPTION = "epochs";
 	private static final String TRACELOSSES_CONST_OPTION = "traceLosses";
@@ -78,6 +78,8 @@ public class Configuration {
 
 	public static final String PROPFILE = "config.properties";
 	private static final boolean DEFAULT_COMBINE = true;
+	
+	private static final int USE_APR = USE_WAM | USE_PROVER | USE_SRW;
 
 	public File queryFile = null;
 	public File testFile = null;
@@ -86,11 +88,11 @@ public class Configuration {
 	public File paramsFile = null;
 	public File solutionsFile = null;
 
-	public AWamProgram program = null;
+	public WamProgram program = null;
 	public WamPlugin[] plugins = null;
 	public String[] programFiles = null;
 	public int nthreads = -1;
-    public double alpha = DprProver.MINALPH_DEFAULT;
+    public APROptions apr = new APROptions();
 	public int epochs = 5;
 	public boolean traceLosses = false;
 	public boolean force = false;
@@ -168,8 +170,9 @@ public class Configuration {
 		if (isOn(flags,USE_WAM)) {
 			if (line.hasOption(PROGRAMFILES_CONST_OPTION)) this.programFiles = line.getOptionValues(PROGRAMFILES_CONST_OPTION);
 			if (line.hasOption(TERNARYINDEX_CONST_OPTION)) this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue(TERNARYINDEX_CONST_OPTION));
-			if (line.hasOption(ALPHA_CONST_OPTION))        this.alpha = Double.parseDouble(line.getOptionValue(ALPHA_CONST_OPTION));  
 		}
+		if (anyOn(flags,USE_APR))
+			if (line.hasOption(APR_CONST_OPTION))          this.apr = new APROptions(line.getOptionValues(APR_CONST_OPTION));
 		if (isOn(flags,USE_THREADS) && line.hasOption(THREADS_CONST_OPTION))   this.nthreads = Integer.parseInt(line.getOptionValue(THREADS_CONST_OPTION));
 		if (isOn(flags,USE_EPOCHS) && line.hasOption(EPOCHS_CONST_OPTION))     this.epochs = Integer.parseInt(line.getOptionValue(EPOCHS_CONST_OPTION));
 		if (isOn(flags,USE_TRACELOSSES) && line.hasOption(TRACELOSSES_CONST_OPTION)) this.traceLosses = true;
@@ -192,13 +195,13 @@ public class Configuration {
 		for (String s : programFiles) {
 			if (s.endsWith(".wam")) {
 				if (this.program != null) throw new IllegalArgumentException("Multiple WAM programs not supported");
-				this.program = WamProgram.load(this.getExistingFile(s));
+				this.program = WamBaseProgram.load(this.getExistingFile(s));
 				wam++;
 			} else if (s.endsWith(".graph")) {
-				this.plugins[i++] = LightweightGraphPlugin.load(this.getExistingFile(s),this.alpha);
+				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s));
 				graph++;
 			} else if (s.endsWith("facts")) {
-				this.plugins[i++] = FactsPlugin.load(this.getExistingFile(s), this.ternaryIndex);
+				this.plugins[i++] = FactsPlugin.load(this.apr, this.getExistingFile(s), this.ternaryIndex);
 				facts++;
 			} else {
 				throw new IllegalArgumentException("Plugin type for "+s+" unsupported/unknown");
@@ -366,7 +369,18 @@ public class Configuration {
 				.withLongOpt("force")
 				.withDescription("Ignore errors and run anyway")
 				.create());
-		
+		if (anyOn(flags, USE_APR))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(APR_CONST_OPTION)
+					.withArgName("options")
+					.hasArgs()
+					.withValueSeparator(':')
+					.withDescription("Default: eps=1e-4:alph=0.1:depth=5\n"
+							+ "Syntax: param=value:param=value...\n"
+							+ "Available parameters:\n"
+							+ "eps, alph, depth")
+					.create());
 
 
 //		if (isOn(flags, USE_COMPLEX_FEATURES)) {

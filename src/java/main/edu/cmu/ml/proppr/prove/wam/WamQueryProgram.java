@@ -3,10 +3,10 @@ package edu.cmu.ml.proppr.prove.wam;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WamQueryProgram extends AWamProgram {
-	private AWamProgram masterProgram;
-	private AWamProgram queryProgram;
-	public WamQueryProgram(AWamProgram master) {
+public class WamQueryProgram extends WamProgram {
+	private WamProgram masterProgram;
+	private WamProgram queryProgram;
+	public WamQueryProgram(WamProgram master) {
 		this.masterProgram = master;
 	}
 	@Override
@@ -51,6 +51,6 @@ public class WamQueryProgram extends AWamProgram {
 	}
 	@Override
 	public void revert() {
-		this.queryProgram = new WamProgram();
+		this.queryProgram = new WamBaseProgram();
 	}
 }

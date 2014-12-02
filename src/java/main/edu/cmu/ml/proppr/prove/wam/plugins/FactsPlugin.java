@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ParsedFile;
 
 public class FactsPlugin extends WamPlugin {
@@ -30,7 +31,8 @@ public class FactsPlugin extends WamPlugin {
 	int numUsesIndexFA1A2 = 0;
 	boolean useTernaryIndex;
 	private String name;
-	public FactsPlugin(String name, boolean useTernaryIndex) {
+	public FactsPlugin(APROptions apr, String name, boolean useTernaryIndex) {
+		super(apr);
 		this.fd.put(WamPlugin.pluginFeature(this, name),1.0);
 		this.name = name;
 		this.useTernaryIndex = useTernaryIndex;
@@ -156,8 +158,8 @@ public class FactsPlugin extends WamPlugin {
 		}
 	}
 
-	public static FactsPlugin load(File f, boolean ternary) {
-		FactsPlugin p = new FactsPlugin(f.getName(), ternary);
+	public static FactsPlugin load(APROptions apr, File f, boolean ternary) {
+		FactsPlugin p = new FactsPlugin(apr, f.getName(), ternary);
 		ParsedFile parsed = new ParsedFile(f);
 		for (String line : parsed) {
 			String[] parts =line.split("\t",2);
