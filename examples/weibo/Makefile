@@ -5,6 +5,7 @@ SCRIPTS=scripts
 JM=java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr
 PSTEM=weibo1
 P=$(PSTEM).crules
+APR=0.0001:0.1
 L2PLOCAL=l2plocal:0.001:2
 L2P=l2p:0.001:2
 #SRW1=$(L2P)
@@ -49,11 +50,22 @@ test.data: all.data
 ##### experiments
 
 %.run: $(P) %.data train.data
-	$(JM).Experiment \
-			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
-			 --strict --train train.data --test $*.data --srw $(SRW) --output train.grounded \
-			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
-			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
+	$(JM).Grounder \
+	--programFiles $(P):all.cfacts \
+	--queries train.data --grounded train.grounded \
+	--apr $(APR) --prover $(PR) --threads $(TH) --weightingScheme $(WT)
+	$(JM).Trainer \
+	--train train.grounded --params train.params --srw $(SRW) \
+	--apr $(APR) --traceLosses --threads $(TH) --epochs $(EPOCHS) --weightingScheme $(WT)
+	$(JM).QueryAnswerer \
+	--programFiles $(P):all.cfacts \
+	--queries $*.data --solutions $*.answers \
+	--apr $(APR) --threads $(TH) --unnormalized
+#	$(JM).Experiment \
+#	--programFiles $(P):all.cfacts --apr $(APR) --prover $(PR) --epochs $(EPOCHS) \
+#	--strict --train train.data --test $*.data --srw $(SRW) --grounded train.grounded \
+#	--params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
+#			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
 
 	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
 	cat $*.results; \

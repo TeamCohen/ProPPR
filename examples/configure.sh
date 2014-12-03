@@ -88,7 +88,7 @@ ifeq (\$(strip \$(ALPHA)),)
 ALPHA=0.01
 endif
 ifeq (\$(strip \$(PROVER)),)
-PROVER=dpr:\$(EPSILON):\$(ALPHA)
+PROVER=dpr
 endif
 ifeq (\$(strip \$(MU)),)
 MU=0.001
@@ -97,7 +97,7 @@ ifeq (\$(strip \$(ETA)),)
 ETA=1.0
 endif
 ifeq (\$(strip \$(SRW)),)
-SRW=l2plocal:mu=\$(MU):eta=\$(ETA):alpha=\$(ALPHA)
+SRW=l2plocal:mu=\$(MU):eta=\$(ETA)
 endif
 ifeq (\$(strip \$(THREADS)),)
 THREADS=3
