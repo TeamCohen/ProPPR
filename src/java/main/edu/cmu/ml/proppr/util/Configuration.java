@@ -44,13 +44,13 @@ public class Configuration {
 	public static final int USE_TRAIN = 0x8;
 	public static final int USE_TEST = 0x10;
 	public static final int USE_PARAMS = 0x20;
-	private static final String QUERIES_FILE_OPTION = "queries";
-	private static final String GROUNDED_FILE_OPTION = "grounded";
-	private static final String SOLUTIONS_FILE_OPTION = "solutions";
-	private static final String TRAIN_FILE_OPTION = "train";
-	private static final String TEST_FILE_OPTION = "test";
-	private static final String PARAMS_FILE_OPTION = "params";
-	private static final String EXAMPLES_FORMAT = "f(A1,A2)\\t{+|-}f(a1,a2)\\t...";
+	public static final String QUERIES_FILE_OPTION = "queries";
+	public static final String GROUNDED_FILE_OPTION = "grounded";
+	public static final String SOLUTIONS_FILE_OPTION = "solutions";
+	public static final String TRAIN_FILE_OPTION = "train";
+	public static final String TEST_FILE_OPTION = "test";
+	public static final String PARAMS_FILE_OPTION = "params";
+	public static final String EXAMPLES_FORMAT = "f(A1,A2)\\t{+|-}f(a1,a2)\\t...";
 
 	/* set constants */
 	/** constant. programFiles, ternaryIndex */

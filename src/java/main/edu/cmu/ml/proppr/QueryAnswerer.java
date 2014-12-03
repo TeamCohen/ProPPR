@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamQueryProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
@@ -54,19 +55,23 @@ public class QueryAnswerer {
 	protected WamProgram program;
 	protected WamPlugin[] plugins;
 	protected Prover prover;
+	protected APROptions apr;
 	protected boolean normalize;
 	protected int nthreads;
-	public QueryAnswerer(WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads) {
+	protected int numSolutions;
+	public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads, int topk) {
+		this.apr = apr;
 		this.program = program;
 		this.plugins = plugins;
 		this.prover = prover;
 		this.normalize = normalize;
 		this.nthreads = Math.max(1, threads);
+		this.numSolutions = topk;
 	}
 	
 	static class QueryAnswererConfiguration extends ModuleConfiguration {
 		boolean normalize;
-		//        boolean rerank;
+		int topk;
 
 		public QueryAnswererConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 			super(args,  inputFiles,  outputFiles,  constants,  modules);
@@ -80,11 +85,13 @@ public class QueryAnswerer {
 					.withLongOpt("unnormalized")
 					.withDescription("Show unnormalized scores for answers")
 					.create());
-			//            options.addOption(
-			//                    OptionBuilder
-			//                            .withLongOpt("reranked")
-			//                            .withDescription("Cook with unit weights and rerank solutions, instead of cooking with trained weights")
-			//                            .create());
+			options.addOption(
+					OptionBuilder
+					.withLongOpt("top")
+					.withArgName("k")
+					.hasArg()
+					.withDescription("Print only the top k solutions for each query")
+					.create());
 		}
 
 		@Override
@@ -92,11 +99,11 @@ public class QueryAnswerer {
 			super.retrieveSettings(line, flags, options);
 			this.normalize = true;
 			if (line.hasOption("unnormalized")) this.normalize = false;
-			//            this.rerank = false;
-			//            if (line.hasOption("reranked")) this.rerank = true;
-			if (!line.hasOption("queries")) {
-				usageOptions(options, flags,"Missing required option: queries");
+			if (!line.hasOption(Configuration.QUERIES_FILE_OPTION)) {
+				usageOptions(options, flags,"Missing required option: "+Configuration.QUERIES_FILE_OPTION);
 			}
+			this.topk = -1;
+			if (line.hasOption("top")) this.topk = Integer.parseInt(line.getOptionValue("top"));
 		}
 	}
 
@@ -113,8 +120,6 @@ public class QueryAnswerer {
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);
 		long end = System.currentTimeMillis();
-		// START HERE
-		// foreach state if completed do proofgraph.fill()
 		Map<Query,Double> solutions = new TreeMap<Query,Double>();
 		for (Map.Entry<State, Double> s : dist.entrySet()) {
 			if (s.getKey().isCompleted()) {
@@ -135,6 +140,7 @@ public class QueryAnswerer {
 		int rank = 0;
 		for (Map.Entry<Query, Double> soln : solutionDist) {
 			++rank;
+			if (numSolutions > 0 && rank > numSolutions) break;
 			sb.append(rank + "\t").append(soln.getValue().toString()).append("\t").append(soln.getKey().toString()).append("\n");
 		}
 		return sb.toString();
@@ -216,11 +222,7 @@ public class QueryAnswerer {
 				args,
 				inputFiles, outputFiles, constants, modules);
 		System.out.println(c.toString());
-
-		//        QueryAnswerer qa = c.rerank ?
-		//                           new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw) :
-		//                           new QueryAnswerer();
-		QueryAnswerer qa = new QueryAnswerer(c.program, c.plugins, c.prover, c.normalize, c.nthreads);
+		QueryAnswerer qa = new QueryAnswerer(c.apr, c.program, c.plugins, c.prover, c.normalize, c.nthreads, c.topk);
 		log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
 		if (c.paramsFile != null) {
 			ParamsFile file = new ParamsFile(c.paramsFile);
