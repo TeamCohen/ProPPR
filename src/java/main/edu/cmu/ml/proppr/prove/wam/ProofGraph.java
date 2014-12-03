@@ -88,9 +88,9 @@ public class ProofGraph {
 	}
 	
 	/* **************** proving ****************** */
-	public List<Outlink> pgOutlinks(State state) throws LogicProgramException {
-		return pgOutlinks(state,DEFAULT_TRUELOOP,DEFAULT_RESTART);
-	}
+//	public List<Outlink> pgOutlinks(State state) throws LogicProgramException {
+//		return pgOutlinks(state,DEFAULT_TRUELOOP,DEFAULT_RESTART);
+//	}
 	public List<Outlink> pgOutlinks(State state, boolean trueLoop, boolean restart) throws LogicProgramException {
 		if (!this.graph.outlinksDefined(state)) {
 			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop,restart);

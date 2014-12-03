@@ -69,6 +69,20 @@ public class ModuleConfiguration extends Configuration {
 
 		//modules
 		flags = modules(allFlags);
+		if(isOn(flags, USE_WEIGHTINGSCHEME))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(WEIGHTINGSCHEME_MODULE_OPTION)
+					.withArgName("w")
+					.hasArg()
+					.withDescription("Default: ReLU\n"
+							+ "Available options:\n"
+							+ "linear\n"
+							+ "sigmoid\n"
+							+ "tanh\n"
+							+ "ReLU\n"
+							+ "exp")
+							.create());
 		if(isOn(flags, USE_PROVER))
 			options.addOption(
 					OptionBuilder

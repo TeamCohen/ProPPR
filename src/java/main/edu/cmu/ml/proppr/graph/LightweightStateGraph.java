@@ -135,7 +135,7 @@ public class LightweightStateGraph extends InferenceGraph {
 		boolean first = true;
 		
 		for (int fi = 1; fi <= this.featureTab.size(); fi++) {
-			if (!first) sb.append(":");
+			if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
 			else first = false;
 			Goal f = this.featureTab.getSymbol(fi);
 			sb.append(f);
@@ -150,16 +150,25 @@ public class LightweightStateGraph extends InferenceGraph {
 					@Override
 					public boolean execute(int vi) {
 						sb.append("\t");
-						sb.append(ui).append("->").append(vi);
-						sb.append(":");
+						sb.append(ui).append(LearningGraphBuilder.SRC_DST_DELIM).append(vi);
+						sb.append(LearningGraphBuilder.EDGE_FEATURE_DELIM);
 						//foreach feature on src,dst
-						edgeFeatureDict.get(ui).get(vi).forEachKey(new TIntProcedure() {
+						edgeFeatureDict.get(ui).get(vi).forEachEntry(new TIntDoubleProcedure() {
+							
 							@Override
-							public boolean execute(int fi) {
-								sb.append(fi).append(",");
+							public boolean execute(int fi, double wi) {
+								sb.append(fi).append(LearningGraphBuilder.FEATURE_WEIGHT_DELIM)
+								.append(wi).append(LearningGraphBuilder.FEATURE_DELIM);
 								return true;
 							}
 						});
+//						edgeFeatureDict.get(ui).get(vi).forEachKey(new TIntProcedure() {
+//							@Override
+//							public boolean execute(int fi) {
+//								sb.append(fi).append(",");
+//								return true;
+//							}
+//						});
 						// drop last ','
 						sb.deleteCharAt(sb.length()-1);
 						return true;

@@ -275,7 +275,7 @@ public class Grounder {
 		int inputFiles = Configuration.USE_QUERIES;
 		int outputFiles = Configuration.USE_GROUNDED;
 		int constants = Configuration.USE_WAM | Configuration.USE_THREADS;
-		int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER;
+		int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
 		
 		ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);
 

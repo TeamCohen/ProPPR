@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -49,22 +50,28 @@ public class Trainer {
 		learner.untrainedFeatures().add("id(restart)");
 		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
-	
+
 	public Trainer(SRW<PosNegRWExample> srw) {
 		this(srw, 1, Multithreading.DEFAULT_THROTTLE);
+	}
+
+	private ParamVector createParamVector() {
+		return new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads));
 	}
 
 	public void doExample(PosNegRWExample x, ParamVector<String,?> paramVec, boolean traceLosses) {
 		this.learner.trainOnExample(paramVec, x);
 	}
+
 	public ParamVector train(Iterable<PosNegRWExample> examples, int numEpochs, boolean traceLosses) {
 		return train(
 				examples,
-				new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)),
+				createParamVector(),
 				numEpochs,
 				traceLosses
 				);
 	}
+
 	public ParamVector train(Iterable<PosNegRWExample> examples, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
@@ -76,61 +83,91 @@ public class Trainer {
 			this.epoch++;
 			this.learner.setEpoch(epoch);
 			log.info("epoch "+epoch+" ...");
-			
+
 			this.learner.clearLoss();
 			numExamplesThisEpoch = 0;
-			
+
 			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 
 			// run examples through Multithreading
 			m.executeJob(
-				this.nthreads, 
-				new FQTrainingExampleStreamer(examples, paramVec), 
-				new Transformer<FQTrainingExample,Integer>() {
-					@Override
-					public Callable<Integer> transformer(
-							FQTrainingExample in, int id) {
-						return new Train(in,id);
-					}
-				}, 
-				new Cleanup<Integer>() {
-					@Override
-					public Runnable cleanup(Future<Integer> in, int id) {
-						return new TraceLosses(in,id);
-					}
-				}, 
-				this.throttle);
+					this.nthreads, 
+					new FQTrainingExampleStreamer(examples, paramVec), 
+					new Transformer<FQTrainingExample,Integer>() {
+						@Override
+						public Callable<Integer> transformer(
+								FQTrainingExample in, int id) {
+							return new Train(in,id);
+						}
+					}, 
+					new Cleanup<Integer>() {
+						@Override
+						public Runnable cleanup(Future<Integer> in, int id) {
+							return new TraceLosses(in,id);
+						}
+					}, 
+					this.throttle);
 
 			//
 			this.learner.cleanupParams(paramVec);
-			
+
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
 				for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / numExamplesThisEpoch);
-			    System.out.print("avg training loss " + lossThisEpoch.total()
-			     + " on "+ numExamplesThisEpoch +" examples");
-			    System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
-			    System.out.print(" : " + lossThisEpoch.loss.get(LOSS.REGULARIZATION));
-			    if (epoch>1) {
-			    	LossData diff = lossLastEpoch.diff(lossThisEpoch);
-			    	System.out.println(" improved by " + diff.total()
-			    			+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
-				    if (diff.total() < 0.0) {
-				    	System.out.println("WARNING: loss INCREASED by " + 
-				    			(diff.total()) + " - what's THAT about?");
-				    }
-			    } else 
-			    	System.out.println();
+				System.out.print("avg training loss " + lossThisEpoch.total()
+						+ " on "+ numExamplesThisEpoch +" examples");
+				System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
+				System.out.print(" : " + lossThisEpoch.loss.get(LOSS.REGULARIZATION));
+				if (epoch>1) {
+					LossData diff = lossLastEpoch.diff(lossThisEpoch);
+					System.out.println(" improved by " + diff.total()
+							+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
+					if (diff.total() < 0.0) {
+						System.out.println("WARNING: loss INCREASED by " + 
+								(diff.total()) + " - what's THAT about?");
+					}
+				} else 
+					System.out.println();
 
-			    lossLastEpoch = lossThisEpoch;
-				
+				lossLastEpoch = lossThisEpoch;
+
 			}
 		}
 		return paramVec;
 	}
-	
+
+	public Map<String, Double> findGradient(
+			GroundedExampleStreamer examples, ParamVector paramVec) {
+
+		log.info("Computing gradient on cooked examples...");
+		Map<String,Double> sumGradient = new TreeMap<String,Double>();
+		if (paramVec==null) {
+			paramVec = createParamVector();
+			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
+		}
+		int k=0;
+
+		//WW: accumulate example-size normalized gradient
+		for (PosNegRWExample x : examples) {
+			this.learner.addDefaultWeights(x.getGraph(),paramVec);
+			this.learner.accumulateGradient(this.learner.gradient(paramVec, x),x.length(),sumGradient);
+			k++;
+		}
+
+		//WW: renormalize by the total number of queries
+		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
+			String feature = it.next();
+			double unnormf = sumGradient.get(feature);
+			double norm = unnormf / k;
+			sumGradient.put(feature, norm);
+			//System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
+		}
+
+		return sumGradient;
+	}
+
 	/////////////////////// Multithreading scaffold ///////////////////////
-	
+
 	/**
 	 * Stream over instances of this class
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
@@ -225,19 +262,19 @@ public class Trainer {
 			throw new UnsupportedOperationException("No removal of examples permitted during training!");
 		}
 	}
-	
+
 	public static void main(String[] args) {
 		int inputFiles = Configuration.USE_TRAIN;
 		int outputFiles = Configuration.USE_PARAMS;
 		int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
 		int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
-//		int flags = Configuration.USE_DEFAULTS 
-//				| Configuration.USE_TRAIN 
-//				| Configuration.USE_SRW 
-//				| Configuration.USE_LEARNINGSET 
-//				| Configuration.USE_PARAMS 
-//				| Configuration.USE_DEFERREDPROGRAM
-//				| Configuration.USE_MAXT;
+		//		int flags = Configuration.USE_DEFAULTS 
+		//				| Configuration.USE_TRAIN 
+		//				| Configuration.USE_SRW 
+		//				| Configuration.USE_LEARNINGSET 
+		//				| Configuration.USE_PARAMS 
+		//				| Configuration.USE_DEFERREDPROGRAM
+		//				| Configuration.USE_MAXT;
 		ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
 		log.info(c.toString());
 
@@ -258,5 +295,6 @@ public class Trainer {
 			ParamsFile.save(params,c.paramsFile, c);
 		}
 	}
-	
+
+
 }

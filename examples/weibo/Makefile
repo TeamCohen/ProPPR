@@ -2,24 +2,24 @@ include ../Makefile.in
 
 DIR=weibo_bones
 SCRIPTS=scripts
-JM=java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr
+JM=java ${JOPTS} -Dconfig.properties=weibo.properties -cp ${CP} edu.cmu.ml.proppr
 PSTEM=weibo1
-P=$(PSTEM).crules
-APR=0.0001:0.1
-L2PLOCAL=l2plocal:0.001:2
-L2P=l2p:0.001:2
+P=$(PSTEM).wam
+#APR=0.0001:0.1
+#L2PLOCAL=l2plocal:0.001:2
+#L2P=l2p:0.001:2
 #SRW1=$(L2P)
 #ifeq ($(SRW),l2plocal)
 #SRW1=$(L2PLOCAL)
 #else
 #SRW1=$(L2P)
 #endif
-WT=tanh
+#WT=tanh
 TRSIZE=12700
-EPOCHS=10
+#EPOCHS=10
 TH=${THREADS}
 
-PR=dpr:0.0001:0.1:adjust
+#PR=dpr:0.0001:0.1:adjust
 #PR=ppr:10
 
 ##############################################################################
@@ -44,23 +44,17 @@ test.data: all.data
 
 ##### compiling the logic program
 
-%.crules: %.rules
-	L=`pwd`; cd ${PROPPR}; ./scripts/compile.sh $$L
+%.wam: %.ppr
+	python ${PROPPR}/src/scripts/compiler.py serialize $< > $@
+#	L=`pwd`; cd ${PROPPR}; python /src/scripts/compile.py $$L
 
 ##### experiments
 
-%.run: $(P) %.data train.data
-	$(JM).Grounder \
-	--programFiles $(P):all.cfacts \
-	--queries train.data --grounded train.grounded \
-	--apr $(APR) --prover $(PR) --threads $(TH) --weightingScheme $(WT)
+%.run: $(P) %.data train.grounded
 	$(JM).Trainer \
-	--train train.grounded --params train.params --srw $(SRW) \
-	--apr $(APR) --traceLosses --threads $(TH) --epochs $(EPOCHS) --weightingScheme $(WT)
+	--train train.grounded --params train.params --srw $(SRW) --threads $(TH) --traceLosses --epochs $(EPOCHS) 
 	$(JM).QueryAnswerer \
-	--programFiles $(P):all.cfacts \
-	--queries $*.data --solutions $*.answers \
-	--apr $(APR) --threads $(TH) --unnormalized
+	--queries $*.data --solutions $*.answers --threads $(TH) --unnormalized
 #	$(JM).Experiment \
 #	--programFiles $(P):all.cfacts --apr $(APR) --prover $(PR) --epochs $(EPOCHS) \
 #	--strict --train train.data --test $*.data --srw $(SRW) --grounded train.grounded \
@@ -70,18 +64,23 @@ test.data: all.data
 	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
 	cat $*.results; \
 
-%.train %.params: %.data $(P)
-	$(JM).Trainer \
-			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
-			 --strict --train $*.data --test $*.data --srw $(SRW) --output train.grounded \
-			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
-			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
+%.grounded: $(P) %.data
+	$(JM).Grounder \
+	--queries $*.data --grounded $@ --threads $(TH)
 
-%.query: %.data train.params
-	$(JM).QueryAnswerer \
-			 --programFiles $(P):all.cfacts --prover $(PR) \
-			 --strict --srw $(SRW) --output $*.answers \
-			 --params train.params --threads $(TH) --weightingScheme $(WT) --queries $*.data --unnormalized; \
-	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results
-	cat $*.results; \
+
+#%.train %.params: %.data $(P)
+#	$(JM).Trainer \
+#			 --programFiles $(P):all.cfacts --prover $(PR) --epochs $(EPOCHS) \
+#			 --strict --train $*.data --test $*.data --srw $(SRW) --output train.grounded \
+#			 --params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
+#			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
+
+#%.query: %.data train.params
+#	$(JM).QueryAnswerer \
+#			 --programFiles $(P):all.cfacts --prover $(PR) \
+#			 --strict --srw $(SRW) --output $*.answers \
+#			 --params train.params --threads $(TH) --weightingScheme $(WT) --queries $*.data --unnormalized; \
+#	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results
+#	cat $*.results; \
 
