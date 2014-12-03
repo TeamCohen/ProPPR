@@ -24,12 +24,13 @@ import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 
-public class ProverTest {
+public class SimpleProgramProverTest {
+	public static final String PROGRAM = "src/testcases/wam/simpleProgram.wam";
 	APROptions apr = new APROptions("depth=6");
 
 	@Test
 	public void test() throws IOException, LogicProgramException {
-		WamProgram program = WamBaseProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
 		Query q = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
 		System.out.println("Query: "+q.toString());
 		ProofGraph p = new ProofGraph(q,apr,program);
@@ -54,7 +55,7 @@ public class ProverTest {
 	
 	@Test
 	public void testFill() throws IOException, LogicProgramException {
-		WamProgram program = WamBaseProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
 		Query q = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
 		System.out.println("Query: "+q.toString());
 		ProofGraph p = new ProofGraph(q,apr,program);

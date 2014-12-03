@@ -28,7 +28,7 @@ public class WamInterpreterTest {
 	int MAXDEPTH=10;
 	@Test
 	public void test() throws IOException {
-		WamProgram program = WamBaseProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		WamProgram program = WamBaseProgram.load(new File(SimpleProgramProverTest.PROGRAM));
 		WamInterpreter interp = new WamInterpreter(program, new WamPlugin[0]);
 		// ? :- coworker(steve,X).
 		Query query = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));

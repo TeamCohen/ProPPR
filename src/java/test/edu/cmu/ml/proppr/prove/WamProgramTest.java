@@ -15,7 +15,7 @@ import edu.cmu.ml.proppr.prove.wam.Instruction.OP;
 public class WamProgramTest {
 	@Test
 	public void testLoad() throws IOException {
-		WamProgram program = WamBaseProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		WamProgram program = WamBaseProgram.load(new File(SimpleProgramProverTest.PROGRAM));
 		OP[] simpleProgram = 
 			{
 				OP.comment,

@@ -27,11 +27,14 @@ import edu.cmu.ml.proppr.util.Dictionary;
 
 public class UngroundedSolutionsTest {
 
+	private static final String FACTS = "src/testcases/ungroundedSolutionsTest/grand.cfacts";
+	private static final String PROGRAM = "src/testcases/ungroundedSolutionsTest/grand.wam";
+
 	@Test
 	public void test() throws IOException, LogicProgramException {
-		WamProgram program = WamBaseProgram.load(new File("testcases/grand/grand.wam"));
+		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
 		APROptions apr = new APROptions("depth=20");
-		GraphlikePlugin facts = LightweightGraphPlugin.load(apr,new File("testcases/grand/grand.cfacts"));
+		GraphlikePlugin facts = LightweightGraphPlugin.load(apr,new File(FACTS));
 		Query q = new Query(new Goal("grandparent",new ConstantArgument("X"),new ConstantArgument("Y")));
 //		q.variabilize();
 		ProofGraph pg = new ProofGraph(q,apr,program,facts);

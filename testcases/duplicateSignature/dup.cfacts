@@ -1,5 +1,0 @@
-location	steve	kitchen	.
-class	steve	wizard	.
-doorPuzzle	kitchen	puzzle_kitchen	.
-doorPuzzle	parlor	puzzle_parlor	.
-solved	steve	puzzle_parlor	.

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import edu.cmu.ml.proppr.GrounderTest;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
@@ -24,9 +25,9 @@ public class FactsPluginTest {
 	@Test
 	public void test() throws LogicProgramException {
 		APROptions apr = new APROptions();
-		FactsPlugin p = FactsPlugin.load(apr, new File("testcases/textcattoy/toylabels.cfacts"), false);
+		FactsPlugin p = FactsPlugin.load(apr, new File(GrounderTest.FACTS), false);
 		WamProgram program = new WamBaseProgram();
-		Query q = new Query(new Goal("isLabel",new ConstantArgument("X")));
+		Query q = Query.parse("validClass(X)");
 		ProofGraph pg = new ProofGraph(q,apr,program,p);
 		Prover prover = new DprProver();
 		Map<String,Double> sols = prover.solutions(pg);

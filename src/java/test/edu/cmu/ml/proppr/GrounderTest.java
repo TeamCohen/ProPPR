@@ -31,10 +31,8 @@ import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 
 public class GrounderTest {
-
-	
-	private static final String FACTS = "src/testcases/classifyPredict.cfacts";
-	private static final String RULES = "src/testcases/classifyPredict.wam";
+	public static final String FACTS = "src/testcases/classifyPredict.cfacts";
+	public static final String RULES = "src/testcases/classifyPredict.wam";
 
 
 	@Before

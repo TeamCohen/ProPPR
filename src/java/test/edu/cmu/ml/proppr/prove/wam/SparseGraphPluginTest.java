@@ -3,11 +3,12 @@ package edu.cmu.ml.proppr.prove.wam;
 import static org.junit.Assert.*;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPlugin;
 
-
+@Ignore
 public class SparseGraphPluginTest {
 	SparseGraphPlugin plugin;
 //	@Before

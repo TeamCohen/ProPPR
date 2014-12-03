@@ -26,11 +26,11 @@ import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 
-public class ProofGraphTest {
+public class SimpleProgramProofGraphTest {
 
 	@Test
 	public void test() throws LogicProgramException, IOException {
-		WamProgram program = WamBaseProgram.load(new File("testcases/wam/simpleProgram.wam"));
+		WamProgram program = WamBaseProgram.load(new File(SimpleProgramProverTest.PROGRAM));
 		Query q = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
 		ProofGraph pg = new ProofGraph(q,new APROptions(), program);
 		
