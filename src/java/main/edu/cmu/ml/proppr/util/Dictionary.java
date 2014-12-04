@@ -237,21 +237,21 @@ public class Dictionary {
 		return sb;
 	}
 
-// // removed by krivard 17 mar 2014 - not called anywhere 
-//	public static void save(TIntDoubleMap map, String filename) {
-//		BufferedWriter writer;
-//		try {
-//			writer = new BufferedWriter(new FileWriter(filename));
-//			for (TIntDoubleIterator e = map.iterator(); e.hasNext(); ) {
-//				e.advance();
-//				writer.write(String.format("%s\t%f\n", String.valueOf(e.key()),e.value()));
-//			}
-//			writer.close();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
+	// // removed by krivard 17 mar 2014 - not called anywhere 
+	//	public static void save(TIntDoubleMap map, String filename) {
+	//		BufferedWriter writer;
+	//		try {
+	//			writer = new BufferedWriter(new FileWriter(filename));
+	//			for (TIntDoubleIterator e = map.iterator(); e.hasNext(); ) {
+	//				e.advance();
+	//				writer.write(String.format("%s\t%f\n", String.valueOf(e.key()),e.value()));
+	//			}
+	//			writer.close();
+	//		} catch (IOException e) {
+	//			// TODO Auto-generated catch block
+	//			e.printStackTrace();
+	//		}
+	//	}
 	public static boolean safeContains(TIntObjectMap<TIntDoubleMap> map,
 			int key1, int key2) {
 		if (!map.containsKey(key1)) return false;
@@ -290,9 +290,14 @@ public class Dictionary {
 		else {
 			map.put(key,sanitize(value, String.valueOf(key)));
 		}
-       }
+	}
 
-       public static <K> void increment(Map<K,Double> map, K key, Double value) { increment(map,key,value,String.valueOf(key)); }
+	public static <K> void increment(Map<K,Double> map, K key, Double value) { increment(map,key,value,String.valueOf(key)); }
+
+	public static <K> void increment(Map<K, Integer> map, K key) {
+		if (!map.containsKey(key)) map.put(key, 1);
+		else map.put(key, map.get(key)+1);
+	}
 
 	/**
 	 * Increment the key's value, or set it if the key is new.
@@ -504,4 +509,5 @@ public class Dictionary {
 			}});
 		return ret;
 	}
+
 }

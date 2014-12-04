@@ -50,24 +50,28 @@ test.data: all.data
 
 ##### experiments
 
-%.run: $(P) %.data train.grounded
-	$(JM).Trainer \
-	--train train.grounded --params train.params --srw $(SRW) --threads $(TH) --traceLosses --epochs $(EPOCHS) 
-	$(JM).QueryAnswerer \
-	--queries $*.data --solutions $*.answers --threads $(TH) --unnormalized
+%.run: $(P) %.answers %.data
+	python ${PROPPR}/scripts/answermetrics.py --data $*.data --answers $*.answers --metric mrr --metric recall | grep -e "metric" -e "micro" -e "macro" > $*.results
+	cat $*.results
 #	$(JM).Experiment \
 #	--programFiles $(P):all.cfacts --apr $(APR) --prover $(PR) --epochs $(EPOCHS) \
 #	--strict --train train.data --test $*.data --srw $(SRW) --grounded train.grounded \
 #	--params train.params --traceLosses --threads $(TH) --weightingScheme $(WT) --queryAnswerer qa:unnorm \
 #			 --solutions $*.answers --queries $*.data --notest --trainer ${TRAINER} --tester ${TESTER}
-
-	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
-	cat $*.results; \
+#	${SCRIPTS}/scoring.pl $*.answers $*.data > $*.results; \
+#	cat $*.results; \
 
 %.grounded: $(P) %.data
 	$(JM).Grounder \
 	--queries $*.data --grounded $@ --threads $(TH)
 
+%.params: %.grounded
+	$(JM).Trainer \
+	--train $< --params $@ --srw $(SRW) --threads $(TH) --traceLosses --epochs $(EPOCHS) 
+
+%.answers: %.data train.params
+	$(JM).QueryAnswerer \
+	--queries $< --params train.params --solutions $@ --threads $(TH) --unnormalized
 
 #%.train %.params: %.data $(P)
 #	$(JM).Trainer \

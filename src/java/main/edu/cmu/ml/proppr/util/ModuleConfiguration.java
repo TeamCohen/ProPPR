@@ -409,7 +409,7 @@ public class ModuleConfiguration extends Configuration {
 	}
 
 	protected void setupSRW(CommandLine line, int flags, Options options) {
-		SRWOptions sp = new SRWOptions();
+		SRWOptions sp = new SRWOptions(apr);
 
 		if (line.hasOption("maxT")) {
 			sp.maxT = Integer.parseInt(line.getOptionValue("maxT"));
@@ -468,10 +468,10 @@ public class ModuleConfiguration extends Configuration {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(super.toString()).append(":\n");
-		if (prover != null)   sb.append("  Prover: ").append(prover.getClass().getCanonicalName()).append("\n");
-		if (grounder != null) sb.append("Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
-		if (srw != null)      sb.append("  Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
-		if (trainer != null)  sb.append(" Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");
+		if (prover != null)   sb.append("   Prover: ").append(prover.getClass().getCanonicalName()).append("\n");
+		if (grounder != null) sb.append(" Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
+		if (srw != null)      sb.append("   Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
+		if (trainer != null)  sb.append("  Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");
 		//sb.append("  Tester: ");
 		//		if (tester != null) 
 		//			sb.append(tester.getClass().getCanonicalName()).append("\n");
@@ -484,6 +484,9 @@ public class ModuleConfiguration extends Configuration {
 		if (weightingScheme != null) sb.append("Weighting Scheme: ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
 		//		sb.append("Pretest? ").append(this.pretest ? "yes" : "no").append("\n");
 		//		sb.append("Strict? ").append(this.strict ? "yes" : "no").append("\n");
+		sb.append("    Alpha: ").append(apr.alpha).append("\n");
+		sb.append("  Epsilon: ").append(apr.epsilon).append("\n");
+		sb.append("Max depth: ").append(apr.maxDepth).append("\n");
 		return sb.toString();
 	}
 }

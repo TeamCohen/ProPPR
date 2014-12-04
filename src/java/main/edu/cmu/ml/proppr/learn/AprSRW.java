@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
@@ -135,8 +136,10 @@ public class AprSRW extends SRW<PosNegRWExample> {
 	
 	private double dotP(TObjectDoubleMap<String> phi, ParamVector<String,?> paramVec) {
 		double dotP = 0;
-		for(String feature : phi.keySet())
-			dotP += paramVec.get(feature);
+		for (TObjectDoubleIterator<String> f = phi.iterator(); f.hasNext();) {
+			f.advance();
+			dotP += paramVec.get(f.key()) * f.value();
+		}
 		return dotP;
 	}
 	

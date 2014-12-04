@@ -24,4 +24,11 @@ public class LinearWeightingScheme extends WeightingScheme {
 	public double projection(double rw, double alpha, int nonRestartNodeNum) {
 		throw new UnsupportedOperationException(this.getClass().getName()+" not support for minAlpha projection");
 	}
+
+	@Override
+	public double inverseEdgeWeightFunction(double x) {
+		return x;
+	}
+	
+	
 }

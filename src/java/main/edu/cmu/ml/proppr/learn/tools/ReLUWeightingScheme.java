@@ -26,4 +26,9 @@ public class ReLUWeightingScheme<G> extends WeightingScheme<G> {
 	public double projection(double rw, double alpha, int nonRestartNodeNum) {
 		return rw * (1 - alpha) / (alpha * nonRestartNodeNum);
 	}
+
+	@Override
+	public double inverseEdgeWeightFunction(double x) {
+		return x;
+	}
 }

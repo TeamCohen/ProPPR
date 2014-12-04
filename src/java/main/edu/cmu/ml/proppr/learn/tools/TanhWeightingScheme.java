@@ -28,4 +28,9 @@ public class TanhWeightingScheme extends WeightingScheme {
 	private double arcTanh (double z) {
 		return 0.5 * (Math.log(1.0 + z) - Math.log(1.0 - z));
 	}
+
+	@Override
+	public double inverseEdgeWeightFunction(double x) {
+		return arcTanh(x);
+	}
 }

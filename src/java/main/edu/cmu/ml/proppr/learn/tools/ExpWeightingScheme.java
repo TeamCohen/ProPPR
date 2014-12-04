@@ -24,4 +24,9 @@ public class ExpWeightingScheme extends WeightingScheme {
 	public double projection(double rw, double alpha, int nonRestartNodeNum) {
 		return Math.log(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
 	}
+	
+	@Override
+	public double inverseEdgeWeightFunction(double x) {
+		return Math.log(x);
+	}
 }

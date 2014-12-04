@@ -28,4 +28,9 @@ public class SigmoidWeightingScheme extends WeightingScheme {
 	private double logit (double p) {
 		return Math.log(p / (1-p));
 	}
+
+	@Override
+	public double inverseEdgeWeightFunction(double x) {
+		return logit(x);
+	}
 }

@@ -52,6 +52,17 @@ public class SRWOptions {
 	
 	/** */
 	public SRWOptions() { this(DEFAULT_MAX_T); }
+	public SRWOptions(APROptions options) {
+		this(
+				DEFAULT_MAX_T, 
+				DEFAULT_MU, 
+				DEFAULT_ETA, 
+				DEFAULT_WEIGHTING_SCHEME(), 
+				DEFAULT_DELTA, 
+				DEFAULT_AFFGRAPH, 
+				DEFAULT_ZETA, 
+				options);
+	}
 	public SRWOptions(int maxT) {
 		this(
 				maxT, 

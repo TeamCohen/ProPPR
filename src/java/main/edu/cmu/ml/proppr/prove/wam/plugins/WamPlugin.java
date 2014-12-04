@@ -12,6 +12,8 @@ import edu.cmu.ml.proppr.util.APROptions;
 
 /**
  * Abstract extension to a WAM program.
+ * 
+ * When making new plugins, be sure to use WamPlugin.pluginFeature() to generate the feature for your plugin, so that we can monitor the minalpha projection assumption correctly.
  * @author "William Cohen <wcohen@cs.cmu.edu>"
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  *

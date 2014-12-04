@@ -57,10 +57,12 @@ public class SRW<E extends RWExample> {
 	public static final int DEFAULT_RATE_LENGTH = 1;
 	public static final double PERTURB_EPSILON=1e-10;
 	protected static final TObjectDoubleMap EMPTY = new TObjectDoubleHashMap();
+	private static final int MAX_VIOLATION_MESSAGES = 5;
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected SRWOptions c;
 	protected Set<String> untrainedFeatures;
 	protected int epoch;
+	private int numAlphaViolations=0;
 	public SRW() { this(new SRWOptions()); }
 	public SRW(int maxT) { this(new SRWOptions(maxT)); }
 	public SRW(SRWOptions params) {
@@ -315,11 +317,11 @@ public class SRW<E extends RWExample> {
 		TObjectDoubleMap<String> phi = graph.getFeatures(u, v);
 		final TObjectDoubleMap<String> result = new TObjectDoubleHashMap<String>(phi.size());
 		final WeightingScheme<String> w = c.weightingScheme;
-		phi.forEachKey(new TObjectProcedure<String>() {
+		phi.forEachEntry(new TObjectDoubleProcedure<String>() {
 			@Override
-			public boolean execute(String featureName) {
+			public boolean execute(String featureName, double featureWeight) {
 				result.put(featureName, w.derivEdgeWeight(
-						Dictionary.safeGet(paramVec, featureName, w.defaultWeight())));
+						Dictionary.safeGet(paramVec, featureName, w.defaultWeight())) * featureWeight);
 				return true;
 			}
 		});
@@ -470,28 +472,48 @@ public class SRW<E extends RWExample> {
 		});
 	}
 
-	protected void projectOneNode(int u, LearningGraph g, ParamVector paramVec,
-			double z, double rw, int queryNode) {
+	protected void projectOneNode(final int u, final LearningGraph g, final ParamVector paramVec,
+			final double z, final double rw, int queryNode) {
 		final Set<String> nonRestartFeatureSet = new TreeSet<String>();
 		int nonRestartNodeNum = 0;
 		for (TIntIterator it = g.near(u).iterator(); it.hasNext();) {
-			int v = it.next();
+			final int v = it.next();
 			if (v == (queryNode)) continue;
 			nonRestartNodeNum ++;
 			g.getFeatures(u, v).forEachKey(new TObjectProcedure<String>() {
-
 				@Override
 				public boolean execute(String feature) {
 					nonRestartFeatureSet.add(feature);
+//					if (!feature.startsWith(WamPlugin.FACTS_FUNCTOR)) {
+//						edgeWeight(g, u, v, paramVec);
+//					}
 					return true;
 				}
 			});
 		}
-		double newValue = c.weightingScheme.projection(rw,c.apr.alpha,nonRestartNodeNum);
-		for (String f : nonRestartFeatureSet) {
-			if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) {
-				throw new MinAlphaException("Minalpha assumption violated: local alpha "+(rw/z)+" but links contain non-db features (" + f + ")");
-			} else {
+		int nonFacts = 0;
+		for (String f : nonRestartFeatureSet) 
+			if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) 
+				nonFacts++;
+		if (nonFacts <= 1) {
+			double newValue = c.weightingScheme.projection(rw,c.apr.alpha,nonRestartNodeNum);
+			for (String f : this.trainableFeatures(nonRestartFeatureSet)) {
+				paramVec.put(f, newValue);
+			}
+		} else {
+			for (String f : nonRestartFeatureSet) {
+				if (!trainable(f)) continue;
+				double ratio = c.weightingScheme.edgeWeightFunction(paramVec.get(f)) / (z - rw);
+				if (numAlphaViolations < MAX_VIOLATION_MESSAGES) {
+					numAlphaViolations++;
+					StringBuilder sb = new StringBuilder("Minalpha assumption violated: local alpha "+(rw/z)+"<"+c.apr.alpha+" but encountered non-db features (" + f + "). Using ratio approximation @"+ratio+"..."+ (numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last time)" : ""));
+					sb.append("\nNode: ").append(u);
+					sb.append("\nNeighbors: "); Dictionary.buildString(g.near(u).toArray(), sb, " ");
+					sb.append("\nnonRestartFeatureSet: "); Dictionary.buildString(nonRestartFeatureSet, sb, " ");
+					log.warn(sb.toString());
+				}
+				double newValue = c.weightingScheme.inverseEdgeWeightFunction(
+						ratio * (1-c.apr.alpha) * rw / c.apr.alpha );
 				paramVec.put(f, newValue);
 			}
 		}
@@ -504,6 +526,7 @@ public class SRW<E extends RWExample> {
 	 */
 	public void setEpoch(int e) {
 		this.epoch = e;
+		this.numAlphaViolations = 0;
 	}
 
 
