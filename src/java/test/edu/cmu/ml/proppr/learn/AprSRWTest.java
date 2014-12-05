@@ -28,6 +28,6 @@ public class AprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void defaultSrwSettings() {
 		super.defaultSrwSettings();
-		srw.setWeightingScheme(new ExpWeightingScheme());
+		srw.getOptions().set("apr","epsilon","1e-7");
 	}
 }

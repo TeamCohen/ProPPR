@@ -25,16 +25,4 @@ public class PropertiesConfigurationTest {
 		assertTrue("Didn't fetch unary argument",c.force);
 		assertEquals("Didn't fetch apr options properly",0.01,c.apr.alpha,1e-10);
 	}
-	
-	@Test
-	public void testWeibo() {
-		System.setProperty(Configuration.PROPFILE, "src/testcases/weibo.properties");
-		ModuleConfiguration c = new ModuleConfiguration(new String[]{},
-				Configuration.USE_QUERIES,
-				Configuration.USE_GROUNDED,
-				Configuration.USE_WAM | Configuration.USE_THREADS,
-				Configuration.USE_GROUNDER | Configuration.USE_PROVER);
-		assertEquals(10,c.epochs);
-		assertEquals(0.1,c.apr.alpha,1e-10);
-	}
 }

@@ -25,7 +25,7 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 	}
 	
 	@Override
-	protected Double derivRegularization(String f, ParamVector<String,?> paramVec) {
+	protected double derivRegularization(String f, ParamVector<String,?> paramVec) {
 		// NB superclass records regularization loss for this clock cycle
 		Double ret = super.derivRegularization(f, paramVec);
 		return ret;

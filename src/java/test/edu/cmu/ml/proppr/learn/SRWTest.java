@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -18,7 +19,6 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.examples.RWExample;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.learn.L2SqLossSRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
@@ -53,6 +53,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	public void defaultSrwSettings() {
 		srw.setMu(0);
+		srw.getOptions().set("apr","alpha","0.1");
 //		srw.setWeightingScheme(new LinearWeightingScheme());
 		srw.setWeightingScheme(new ExpWeightingScheme());
 	}
@@ -167,7 +168,7 @@ public class SRWTest extends RedBlueGraph {
 		assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 				baselineLoss > biasedLoss);
 
-		double perturb_epsilon = 1e-10;
+		double perturb_epsilon = 1e-5;
 		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
 			
 			ParamVector pert = uniformParams.copy();
@@ -177,21 +178,29 @@ public class SRWTest extends RedBlueGraph {
 			TObjectDoubleMap<String> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
 			double newLoss = srw.cumulativeLoss().total();
 			
-			System.err.println("\n1st-order on "+feature+": "+(newLoss-baselineLoss)+" approximation: "+perturb_epsilon*baselineGrad.get(feature));
-//			System.err.println("(difference: "+ (Math.abs((newLoss-baselineLoss) - (perturb_epsilon*baselineGrad.get(feature)))));
+
+			double truediff = (newLoss-baselineLoss);
+			double approxdiff = (perturb_epsilon*baselineGrad.get(feature));
+			double percdiff = (truediff) != 0 ? Math.abs(((approxdiff) / (truediff))-1)*100 : 0;
+			System.err.println(String.format("%5s  true: %+1.8e  approx: %+1.8e  %%diff: %3.2f%%",
+					feature,
+					truediff,
+					approxdiff, 
+					percdiff));
 			
 			assertEquals("first order approximation on "+feature,
-					perturb_epsilon*baselineGrad.get(feature),
-					newLoss-baselineLoss,
-					1e-15);
+					0,
+					percdiff,
+					10);
 		}
 		
 		double eps = .0001;
-		ParamVector nearlyUniformWeightVec = makeParams(new TreeMap<String,Double>());
-		TObjectDoubleMap<String> gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
-		System.err.println("\nbaseline gradient:"+Dictionary.buildString(gradient, new StringBuilder(), "\n").toString());
-		for (String f : gradient.keySet()) nearlyUniformWeightVec.put(f,1.0-eps*gradient.get(f));
+		ParamVector nearlyUniformWeightVec = uniformParams.copy();
+//		TObjectDoubleMap<String> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg);
+		System.err.println("\nbaseline gradient:"+Dictionary.buildString(baselineGrad, new StringBuilder(), "\n").toString());
+		for (String f : baselineGrad.keySet()) Dictionary.increment(nearlyUniformWeightVec,f,-eps*baselineGrad.get(f));
 		System.err.println("\nimproved params:"+Dictionary.buildString(nearlyUniformWeightVec, new StringBuilder(), "\n").toString());
+		srw.clearLoss();
 		double improvedBaselineLoss = makeLoss(this.srw, nearlyUniformWeightVec, startVec, pos,neg);
 		System.err.println("\nbaselineLoss-improvedBaselineLoss="+(baselineLoss-improvedBaselineLoss));
 		assertTrue("baselineLoss "+baselineLoss+" should be > improvedBaselineLoss "+improvedBaselineLoss, baselineLoss > improvedBaselineLoss);

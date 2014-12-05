@@ -2,7 +2,6 @@ package edu.cmu.ml.proppr.learn;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
@@ -20,10 +18,7 @@ import edu.cmu.ml.proppr.examples.RWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.prove.MinAlphaException;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
@@ -105,7 +100,7 @@ public class SRW<E extends RWExample> {
 		for (String key : affinity.keySet()) {
 			diagonalDegree.put(key, affinity.get(key).size());
 		}
-		log.debug("d size:" + diagonalDegree.size());
+		if (log.isDebugEnabled()) log.debug("d size:" + diagonalDegree.size());
 		return diagonalDegree;
 	}
 
@@ -184,7 +179,7 @@ public class SRW<E extends RWExample> {
 			@Override
 			public boolean execute(int u, double uw) {
 				k++;
-				if (k>0 && k%100 == 0) log.debug("Walked from "+k+" nodes...");
+				if (k>0 && k%100 == 0) if (log.isDebugEnabled()) log.debug("Walked from "+k+" nodes...");
 				if (uw == 0) {
 					log.info("0 node weight at u="+u+"; skipping");
 					return true;
@@ -199,7 +194,6 @@ public class SRW<E extends RWExample> {
 					double ew = edgeWeight(g,u,v,paramVec);
 					double inc = uw * ew / z;
 					nextVec.adjustOrPutValue(v, inc, inc);
-					//					Dictionary.increment(nextVec,v,inc);
 				}
 				return true;
 			}
@@ -353,20 +347,6 @@ public class SRW<E extends RWExample> {
 		return trainableFeatures(paramVec.keySet());
 	}
 
-	//	/**
-	//	 * Builds a set of features in the names of the specified Feature set that are not on the untrainedFeatures list.
-	//	 * @param candidates Feature objects
-	//	 * @return
-	//	 */
-	//	public Set<String> trainableFeatures(List<Stringeature> candidates) {
-	//
-	//		TreeSet<String> result = new TreeSet<String>();
-	//		for (Feature f : candidates) {
-	//			if (trainable(f.featureName)) result.add(f.featureName);
-	//		}
-	//		return result;
-	//	}
-
 	/** Allow subclasses to filter feature list **/
 	public Set<String> localFeatures(ParamVector<String,?> paramVec, E example) {
 		return paramVec.keySet();
@@ -389,18 +369,21 @@ public class SRW<E extends RWExample> {
 		});
 	}
 
+	public void trainOnExample(final ParamVector<String,?> paramVec, E example) {
+		trainOnExample(paramVec, example, true);
+	}
 	/**
 	 * Modify the parameter vector paramVec by taking a gradient step along the dir suggested by this example.
 	 * @param weightVec
 	 * @param pairwiseRWExample
 	 */
-	public void trainOnExample(final ParamVector<String,?> paramVec, E example) {
+	public void trainOnExample(final ParamVector<String,?> paramVec, E example, boolean projectMinAlpha) {
 		addDefaultWeights(example.getGraph(),paramVec);
 		prepareGradient(paramVec,example);
 		TObjectDoubleMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
-			//			checkGradient(grad, paramVec, example);
+						checkGradient(grad, paramVec, example);
 		}
 		final double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
@@ -408,17 +391,17 @@ public class SRW<E extends RWExample> {
 			@Override
 			public boolean execute(String f, double value) {
 				Dictionary.increment(paramVec, f, - rate * value);
-				log.debug(f+"->"+paramVec.get(f));
+				if (log.isDebugEnabled()) log.debug(f+"->"+paramVec.get(f));
 				return true;
 			}
 		});
-		project2feasible(example.getGraph(), paramVec, example.getQueryVec());
+		if (projectMinAlpha) project2feasible(example.getGraph(), paramVec, example.getQueryVec());
 	}
 
 	/**
 	 * Check if first-order approximation is close
 	 */
-	protected void checkGradient(TObjectDoubleMap<String> grad, final ParamVector<String,?> paramVec, final E example) {
+	public void checkGradient(TObjectDoubleMap<String> grad, final ParamVector<String,?> paramVec, final E example) {
 		final ParamVector<String,?> perturbedParamVec = paramVec.copy();
 		grad.forEachEntry(new TObjectDoubleProcedure<String>() {
 			double perturbedLoss;
@@ -428,7 +411,7 @@ public class SRW<E extends RWExample> {
 				if (untrainedFeatures.contains(f)) return true;
 				Dictionary.increment(perturbedParamVec, f, PERTURB_EPSILON);
 				perturbedLoss = empiricalLoss(perturbedParamVec, example);
-				log.debug(f + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (PERTURB_EPSILON*value));
+				log.debug(String.format("%31s true: %+1.8g approx: %+1.8g %%diff: %3.2f%%",f,(perturbedLoss-loss),(PERTURB_EPSILON*value), Math.abs(((PERTURB_EPSILON*value) / (perturbedLoss-loss))-1)*100));
 				loss = perturbedLoss;
 				return true;
 			}
@@ -442,10 +425,10 @@ public class SRW<E extends RWExample> {
 	protected void project2feasible (final LearningGraph g,
 			ParamVector paramVec, TIntDoubleMap query) {
 		for (int u : g.getNodes()) {
-			processNode(u,g,paramVec,query);
+			processNodeProjection(u,g,paramVec,query);
 		}
 	}
-	protected void processNode(final int u, final LearningGraph g,
+	protected void processNodeProjection(final int u, final LearningGraph g,
 			final ParamVector paramVec, final TIntDoubleMap query) {
 		query.forEachKey(new TIntProcedure() {
 			@Override
@@ -484,9 +467,6 @@ public class SRW<E extends RWExample> {
 				@Override
 				public boolean execute(String feature) {
 					nonRestartFeatureSet.add(feature);
-//					if (!feature.startsWith(WamPlugin.FACTS_FUNCTOR)) {
-//						edgeWeight(g, u, v, paramVec);
-//					}
 					return true;
 				}
 			});
@@ -496,20 +476,22 @@ public class SRW<E extends RWExample> {
 			if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) 
 				nonFacts++;
 		if (nonFacts <= 1) {
+			// then we use Chao-Yuan's simplification
 			double newValue = c.weightingScheme.projection(rw,c.apr.alpha,nonRestartNodeNum);
 			for (String f : this.trainableFeatures(nonRestartFeatureSet)) {
 				paramVec.put(f, newValue);
 			}
 		} else {
+			// then we use Katie's equal-ratios approximation
 			for (String f : nonRestartFeatureSet) {
 				if (!trainable(f)) continue;
 				double ratio = c.weightingScheme.edgeWeightFunction(paramVec.get(f)) / (z - rw);
 				if (numAlphaViolations < MAX_VIOLATION_MESSAGES) {
 					numAlphaViolations++;
-					StringBuilder sb = new StringBuilder("Minalpha assumption violated: local alpha "+(rw/z)+"<"+c.apr.alpha+" but encountered non-db features (" + f + "). Using ratio approximation @"+ratio+"..."+ (numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last time)" : ""));
-					sb.append("\nNode: ").append(u);
-					sb.append("\nNeighbors: "); Dictionary.buildString(g.near(u).toArray(), sb, " ");
-					sb.append("\nnonRestartFeatureSet: "); Dictionary.buildString(nonRestartFeatureSet, sb, " ");
+					StringBuilder sb = new StringBuilder("Minalpha assumption violated: local alpha "+(rw/z)+"<"+c.apr.alpha+" but encountered non-db features (" + f + "). Using ratio approximation @"+ratio+"..."+ (numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last msg)" : ""));
+//					sb.append("\nNode: ").append(u);
+//					sb.append("\nNeighbors: "); Dictionary.buildString(g.near(u).toArray(), sb, " ");
+//					sb.append("\nnonRestartFeatureSet: "); Dictionary.buildString(nonRestartFeatureSet, sb, " ");
 					log.warn(sb.toString());
 				}
 				double newValue = c.weightingScheme.inverseEdgeWeightFunction(
@@ -522,7 +504,7 @@ public class SRW<E extends RWExample> {
 
 
 	/**
-	 * Increase the epoch count
+	 * Start a new epoch
 	 */
 	public void setEpoch(int e) {
 		this.epoch = e;
@@ -633,5 +615,8 @@ public class SRW<E extends RWExample> {
 	}
 	public void setWeightingScheme(WeightingScheme<String> weightingScheme) {
 		c.weightingScheme = weightingScheme;
+	}
+	public SRWOptions getOptions() {
+		return c;
 	}
 }

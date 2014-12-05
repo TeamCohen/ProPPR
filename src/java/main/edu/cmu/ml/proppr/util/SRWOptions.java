@@ -26,7 +26,8 @@ public class SRWOptions {
 		delta,
 		zeta,
 		affinityFile,
-		weightingScheme
+		weightingScheme,
+		apr
 	}
 	
 	/** regularization */
@@ -35,7 +36,12 @@ public class SRWOptions {
 	public int maxT;
 	/** learning rate */
 	public double eta;
-	/** negative instance booster */
+	/** 
+	 * Negative instance booster. 
+	 * If set < 0.5, the gradient component controlled by negative examples is 
+	 * increased by a factor of:
+	 * log(1/h)/log(1/(1-h))
+	 * where h = max(p|positive examples) + delta */
 	public double delta;
 	/** local L1 group lasso / laplacian */
 	public double zeta; 
@@ -114,6 +120,7 @@ public class SRWOptions {
 			if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
 			this.affinityFile = value; 
 			return;
+		case apr: this.apr.set(new String[] { setting[1], setting[2] });
 //		case alpha: this.alpha = Double.parseDouble(setting[1]); return;
 		}
 	}

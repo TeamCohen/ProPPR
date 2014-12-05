@@ -12,9 +12,9 @@ import java.util.TreeMap;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PairwiseRWExample;
+import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
 import edu.cmu.ml.proppr.graph.RWOutlink;
-import edu.cmu.ml.proppr.learn.L2SqLossSRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -32,7 +32,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
  */
 public class SRWRestartTest extends SRWTest {
 	public void initSrw() {
-		srw = new L2SqLossSRW();
+		srw = new L2PosNegLossTrainedSRW();
 		srw.setAlpha(0.01);
 	}
 	public void setup(){
@@ -47,27 +47,27 @@ public class SRWRestartTest extends SRWTest {
 		}
 		uniformParams.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());
 	}
-	@Override
-	public TObjectDoubleMap<String> makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
-		List<HiLo> trainingPairs = new ArrayList<HiLo>();
-		for (int p : pos) {
-			for (int n : neg) {
-				trainingPairs.add(new HiLo(p,n));
-			}
-		}
-		return srw.gradient(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
-	}
+//	@Override
+//	public TObjectDoubleMap<String> makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
+//		List<HiLo> trainingPairs = new ArrayList<HiLo>();
+//		for (int p : pos) {
+//			for (int n : neg) {
+//				trainingPairs.add(new HiLo(p,n));
+//			}
+//		}
+//		return srw.gradient(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
+//	}
 	
-	@Override
-	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {		
-		List<HiLo> trainingPairs = new ArrayList<HiLo>();
-		for (int p : pos) {
-			for (int n : neg) {
-				trainingPairs.add(new HiLo(p,n));
-			}
-		}
-		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
-	}
+//	@Override
+//	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {		
+//		List<HiLo> trainingPairs = new ArrayList<HiLo>();
+//		for (int p : pos) {
+//			for (int n : neg) {
+//				trainingPairs.add(new HiLo(p,n));
+//			}
+//		}
+//		return srw.empiricalLoss(paramVec, new PairwiseRWExample(brGraph, query, trainingPairs));
+//	}
 	
 //	@Override
 //	public void testUniformRWR() {}
@@ -112,19 +112,21 @@ public class SRWRestartTest extends SRWTest {
 		
 		TIntDoubleMap xxFeatures = new TIntDoubleHashMap();
 		xxFeatures.put(nodes.getId("r0"), 1.0);
-		PairwiseRWExample examples = new PairwiseRWExample(brGraph,xxFeatures,trainingPairs);
+		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
+		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
+		PosNegRWExample example = new PosNegRWExample(brGraph, xxFeatures, pos, neg);
 		
-		ParamVector weightVec = new SimpleParamVector();
-		weightVec.put("fromb",1.01);
-		weightVec.put("tob",1.0);
-		weightVec.put("fromr",1.03);
-		weightVec.put("tor",1.0);
-		weightVec.put("id(restart)",1.02);
+//		ParamVector weightVec = new SimpleParamVector();
+//		weightVec.put("fromb",1.01);
+//		weightVec.put("tob",1.0);
+//		weightVec.put("fromr",1.03);
+//		weightVec.put("tor",1.0);
+//		weightVec.put("id(restart)",1.02);
 		
-		L2SqLossSRW mysrw = (L2SqLossSRW) this.srw;
-		double preLoss = mysrw.empiricalLoss(weightVec, examples);
-		mysrw.trainOnExample(weightVec,examples);
-		double postLoss = mysrw.empiricalLoss(weightVec, examples);
+		ParamVector trainedParams = uniformParams.copy();
+		double preLoss = srw.empiricalLoss(trainedParams, example);
+		srw.trainOnExample(trainedParams,example,false);
+		double postLoss = srw.empiricalLoss(trainedParams, example);
 		assertTrue(String.format("preloss %f >=? postloss %f",preLoss,postLoss), 
 				preLoss == 0 || preLoss > postLoss);
 	}

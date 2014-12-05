@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.learn;
 
 
+
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
@@ -20,9 +21,8 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class AprSRW extends SRW<PosNegRWExample> {
+public class AprSRW extends PosNegLossTrainedSRW {
 	private static final Logger log = Logger.getLogger(AprSRW.class);
-	private static final double bound = 1.0e-15; //Prevent infinite log loss.
 	public static final double DEFAULT_STAYPROB=DprProver.STAYPROB_DEFAULT;
 	
 	private double stayProb;
@@ -47,91 +47,10 @@ public class AprSRW extends SRW<PosNegRWExample> {
 		this.init(istayProb);
 	}
 
-	
 	private void init(double istayProb) {
 		//set walk parameters here
 		stayProb = istayProb;
 		this.cumloss = new LossData();
-	}
-	
-	@Override
-	public TObjectDoubleMap<String> gradient(ParamVector<String,?> paramVec, PosNegRWExample example) {
-		// startNode maps node->weight
-		TIntDoubleMap query = example.getQueryVec();
-		if (query.size() > 1) throw new UnsupportedOperationException("Can't do multi-node queries");
-		int startNode = query.keySet().iterator().next();
-		
-		// gradient maps feature->gradient with respect to that feature
-		TObjectDoubleMap<String> gradient = null;
-		
-		// maps storing the probability and remainder weights of the nodes:
-		TIntDoubleMap p = new TIntDoubleHashMap();
-		TIntDoubleMap r = new TIntDoubleHashMap();
-		
-		// initializing the above maps:
-		for(int node : example.getGraph().getNodes()) {
-			p.put(node, 0.0);
-			r.put(node, 0.0);
-		}
-		
-		r.putAll(query);
-		
-		// maps storing the gradients of p and r for each node:
-		TIntObjectMap<TObjectDoubleMap<String>> dp = new TIntObjectHashMap<TObjectDoubleMap<String>>();
-		TIntObjectMap<TObjectDoubleMap<String>> dr = new TIntObjectHashMap<TObjectDoubleMap<String>>();
-		
-		// initializing the above maps:
-		for(int node : example.getGraph().getNodes()) {
-			dp.put(node, new TObjectDoubleHashMap<String>());
-			dr.put(node, new TObjectDoubleHashMap<String>());
-			for(String feature : (example.getGraph().getFeatureSet()))
-			{
-				dp.get(node).put(feature, 0.0);
-				dr.get(node).put(feature, 0.0);
-			}
-		}
-		
-		// APR Algorithm:
-		int completeCount = 0;
-		while(completeCount < example.getGraph().nodeSize()) {
-			log.debug("Starting pass");
-			completeCount = 0;
-			for(int u : example.getGraph().getNodes()) {
-				double ru = r.get(u);
-				if(ru / (double) example.getGraph().near(u).size() > c.apr.epsilon)
-					while(ru / example.getGraph().near(u).size() > c.apr.epsilon) {
-						this.push(u, p, r, example.getGraph(), paramVec, dp, dr);
-						if (r.get(u) > ru) throw new IllegalStateException("r increasing! :(");
-						ru = r.get(u);
-					}
-				else {
-					completeCount++;
-					log.debug("Counting "+u);
-				}
-			}
-			log.debug(completeCount +" of " + example.getGraph().nodeSize() + " completed this pass");
-		}
-		
-		for (String f : trainableFeatures(localFeatures(paramVec,example))) {
-			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(Dictionary.safeGet(paramVec,f), 2));
-		}
-		double pmax = 0;
-		for (int x : example.getPosList()) {
-			double px = p.get(x);
-			this.cumloss.add(LOSS.LOG, -Math.log(clip(px)));
-			pmax = Math.max(pmax,px);
-		}
-		//negative instance booster
-		double h = pmax + c.delta;
-		double beta = 1;
-		if(c.delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
-		for (int x : example.getNegList()) {
-			this.cumloss.add(LOSS.LOG, -Math.log(clip(1.0-p.get(x))));
-		}
-		
-		gradient = dp.get(startNode);
-		
-		return gradient;
 	}
 	
 	private double dotP(TObjectDoubleMap<String> phi, ParamVector<String,?> paramVec) {
@@ -141,14 +60,6 @@ public class AprSRW extends SRW<PosNegRWExample> {
 			dotP += paramVec.get(f.key()) * f.value();
 		}
 		return dotP;
-	}
-	
-	private double clip(double prob) {
-		if(prob <= 0)
-		{
-			prob = bound;
-		}
-		return prob;
 	}
 	
 	public double totalEdgeProbWeight(LearningGraph g, int u,  ParamVector<String, ?> p) {
@@ -213,9 +124,9 @@ public class AprSRW extends SRW<PosNegRWExample> {
 		// update dr for other vertices:
 		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
 			int v = it.next();
+			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
+			double ddotP = c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 			for(String feature : (graph.getFeatureSet())) {
-				double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
-				double ddotP = c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 				int contained = graph.getFeatures(u, v).containsKey(feature) ? 1 : 0;
 				double vdr = dr.get(v).get(feature);
 				
@@ -235,13 +146,74 @@ public class AprSRW extends SRW<PosNegRWExample> {
 			Dictionary.increment(r, v, (1 - stayProb) * (1 - c.apr.alpha) * (dotP / rowSum) * ru);
 		}
 	}
-	
+
 	@Override
-	public LossData cumulativeLoss() {
-		return cumloss.copy();
+	protected double derivRegularization(String f,
+			ParamVector<String, ?> paramVec) {
+		double value = Dictionary.safeGet(paramVec, f);
+		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
+		this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
+		return ret;
 	}
+
 	@Override
-	public void clearLoss() {
-		cumloss.clear(); // ?
+	protected GradientComponents makeGradientComponents(
+			ParamVector<String, ?> paramVec, PosNegRWExample example) {
+		// startNode maps node->weight
+		TIntDoubleMap query = example.getQueryVec();
+		if (query.size() > 1) throw new UnsupportedOperationException("Can't do multi-node queries");
+		
+		// maps storing the probability and remainder weights of the nodes:
+		TIntDoubleMap p = new TIntDoubleHashMap();
+		TIntDoubleMap r = new TIntDoubleHashMap();
+		
+		// initializing the above maps:
+		for(int node : example.getGraph().getNodes()) {
+			p.put(node, 0.0);
+			r.put(node, 0.0);
+		}
+		
+		r.putAll(query);
+		
+		// maps storing the gradients of p and r for each node:
+		TIntObjectMap<TObjectDoubleMap<String>> dp = new TIntObjectHashMap<TObjectDoubleMap<String>>();
+		TIntObjectMap<TObjectDoubleMap<String>> dr = new TIntObjectHashMap<TObjectDoubleMap<String>>();
+		
+		// initializing the above maps:
+		for(int node : example.getGraph().getNodes()) {
+			dp.put(node, new TObjectDoubleHashMap<String>());
+			dr.put(node, new TObjectDoubleHashMap<String>());
+			for(String feature : (example.getGraph().getFeatureSet()))
+			{
+				dp.get(node).put(feature, 0.0);
+				dr.get(node).put(feature, 0.0);
+			}
+		}
+		
+		// APR Algorithm:
+		int completeCount = 0;
+		while(completeCount < example.getGraph().nodeSize()) {
+			if (log.isDebugEnabled()) log.debug("Starting pass");
+			completeCount = 0;
+			for(int u : example.getGraph().getNodes()) {
+				double ru = r.get(u);
+				if(ru / (double) example.getGraph().near(u).size() > c.apr.epsilon)
+					while(ru / example.getGraph().near(u).size() > c.apr.epsilon) {
+						this.push(u, p, r, example.getGraph(), paramVec, dp, dr);
+						if (r.get(u) > ru) throw new IllegalStateException("r increasing! :(");
+						ru = r.get(u);
+					}
+				else {
+					completeCount++;
+					if (log.isDebugEnabled()) log.debug("Counting "+u);
+				}
+			}
+			if (log.isDebugEnabled()) log.debug(completeCount +" of " + example.getGraph().nodeSize() + " completed this pass");
+		}
+		
+		GradientComponents g = new GradientComponents();
+		g.p = p;
+		g.d = dp;
+		return g;
 	}
 }

@@ -1,13 +1,10 @@
 package edu.cmu.ml.proppr.learn;
 
-import java.io.File;
-import java.util.Map;
 import java.util.Set;
 import java.util.List;
 
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.MuParamVector;
 import edu.cmu.ml.proppr.util.ParamVector;
