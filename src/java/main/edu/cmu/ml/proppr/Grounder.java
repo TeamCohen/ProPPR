@@ -263,8 +263,7 @@ public class Grounder {
 				} else {
 					log.warn("No positive or negative solutions for query "+id+":"+pg.getExample().getQuery().toString()+"; skipping");
 				}
-			}
-			log.warn("Empty graph for example "+id);
+			} else log.warn("Empty graph for example "+id);
 			empty++;
 			return null;
 		}

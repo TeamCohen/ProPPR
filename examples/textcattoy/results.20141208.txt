@@ -1,0 +1,5 @@
+phase.subset uR mR uMRR mMRR
+pre.train 1.0 1.0 0.5 0.5 
+post.train 1.0 0.909090909091 1.0 0.909090909091 
+pre.test 1.0 1.0 0.5 0.5 
+post.test 1.0 1.0 0.928571428571 0.928571428571 

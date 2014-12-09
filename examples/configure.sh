@@ -105,11 +105,8 @@ endif
 ifeq (\$(strip \$(EPOCHS)),)
 EPOCHS=20
 endif
-ifeq (\$(strip \$(TESTER)),)
-TESTER=rt
-endif
-ifeq (\$(strip \$(TRAINER)),)
-TRAINER=trove.mrr
+ifeq (\$(strip \$(APR)),)
+APR=eps=\$(EPSILON):alph=\$(ALPHA)
 endif
 
 EOF
