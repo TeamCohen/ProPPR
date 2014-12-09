@@ -47,16 +47,6 @@
             <fileset dir="." includes="compiled*.pl"/>
             <fileset dir="scripts" includes="*.pyc"/>
             <fileset dir="src/scripts" includes="*.pyc"/>
-            <fileset dir="testcases/textcattoy">
-                <include name="log.log"/>
-                <include name="params.wts"/>
-                <include name="params.overweight"/>
-                <include name="programFiles.arg"/>
-                <include name="toytrain.cooked"/>
-            </fileset>
-            <fileset dir="testcases/lucene/index" includes="*">
-                <exclude name="fields.txt"/>
-            </fileset>
         </delete>
     </target>
     <target name="cleanall" depends="clean,decruft"/>
@@ -87,7 +77,7 @@
     <target name="test" depends="build,build-tests" description="Run unit tests">
         <delete dir="${junit.results}"/>
         <mkdir dir="${junit.results}"/>
-        <junit fork="no" errorProperty="test.failed" failureProperty="test.failed" >
+        <junit fork="yes" errorProperty="test.failed" failureProperty="test.failed" >
             <classpath>
                 <path refid="ProPPRTests.classpath" />
                 <path location="${build}" />
