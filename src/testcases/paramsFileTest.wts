@@ -1,0 +1,11 @@
+#! weightingScheme=ReLU
+#! programFiles=src/testcases/classifyPredict.wam:src/testcases/classifyPredict.cfacts
+#! prover=dpr:1.00000e-05:0.0200000:throw
+zn	0.0400000
+a	0.00000
+b2	0.150000
+e	0.200000
+ca	0.0600000
+fe	0.0600000
+p	0.100000
+b6	0.0200000

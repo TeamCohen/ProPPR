@@ -33,7 +33,7 @@ public class InferenceGraphTest {
 		assertEquals("2",parts[0]);
 		assertEquals("1",parts[1]);
 		assertEquals("quite",parts[2]);
-		assertEquals("1->2:1",parts[3]);
+		assertEquals("1->2:1@1.0",parts[3]);
 	}
 
 }
