@@ -4,78 +4,78 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
-	<property name="build" value="bin"/>
-	<property name="junit.results" value="test-results"/>
-	<property name="ant.junit.failureCollector" value="${junit.results}/FailedTests"/>
+    <property name="build" value="bin"/>
+    <property name="junit.results" value="test-results"/>
+    <property name="ant.junit.failureCollector" value="${junit.results}/FailedTests"/>
 	
     <path id="ProPPR.classpath">
         <pathelement location="lib/bsh-2.0b4.jar"/>
         <pathelement location="lib/commons-cli-1.2.jar"/>
         <pathelement location="lib/concurrentlinkedhashmap-lru-1.3.1.jar"/>
         <pathelement location="lib/geronimo-jta_1.1_spec-1.1.1.jar"/>
-    	<pathelement location="lib/la4j-0.4.5.jar"/>
+        <pathelement location="lib/la4j-0.4.5.jar"/>
         <pathelement location="lib/log4j-1.2.16.jar"/>
-		<pathelement location="lib/lucene-core-3.6.2.jar"/>
-		<pathelement location="lib/neo4j-cypher-1.9.4.jar"/>
-		<pathelement location="lib/neo4j-graph-algo-1.9.4.jar"/>
-		<pathelement location="lib/neo4j-graph-matching-1.9.4.jar"/>
-		<pathelement location="lib/neo4j-jmx-1.9.4.jar"/>
-		<pathelement location="lib/neo4j-kernel-1.9.4.jar"/>
-		<pathelement location="lib/neo4j-lucene-index-1.9.4.jar"/>
-		<pathelement location="lib/neo4j-shell-1.9.4.jar"/>
-		<pathelement location="lib/neo4j-udc-1.9.4.jar"/>
-    	<pathelement location="lib/org.apache.servicemix.bundles.jline-0.9.94_1.jar"/>
-    	<pathelement location="lib/scala-library-2.10.0.jar"/>
+        <pathelement location="lib/lucene-core-3.6.2.jar"/>
+        <pathelement location="lib/neo4j-cypher-1.9.4.jar"/>
+        <pathelement location="lib/neo4j-graph-algo-1.9.4.jar"/>
+        <pathelement location="lib/neo4j-graph-matching-1.9.4.jar"/>
+        <pathelement location="lib/neo4j-jmx-1.9.4.jar"/>
+        <pathelement location="lib/neo4j-kernel-1.9.4.jar"/>
+        <pathelement location="lib/neo4j-lucene-index-1.9.4.jar"/>
+        <pathelement location="lib/neo4j-shell-1.9.4.jar"/>
+        <pathelement location="lib/neo4j-udc-1.9.4.jar"/>
+        <pathelement location="lib/org.apache.servicemix.bundles.jline-0.9.94_1.jar"/>
+        <pathelement location="lib/scala-library-2.10.0.jar"/>
         <pathelement location="lib/trove-3.0.3.jar"/>
-    	<pathelement location="lib/tuprolog.jar"/>
-    	<pathelement location="lib/java-bloomfilter.jar"/>
+        <pathelement location="lib/tuprolog.jar"/>
+        <pathelement location="lib/java-bloomfilter.jar"/>
     </path>
-	<path id="ProPPRTests.classpath">
-		<pathelement location="lib/junit-4.11-SNAPSHOT.jar"/>
-		<pathelement location="lib/junit-dep-4.11-SNAPSHOT.jar"/>
-		<path refid="ProPPR.classpath"/>
-	</path>
+    <path id="ProPPRTests.classpath">
+        <pathelement location="lib/junit-4.11-SNAPSHOT.jar"/>
+        <pathelement location="lib/junit-dep-4.11-SNAPSHOT.jar"/>
+        <path refid="ProPPR.classpath"/>
+    </path>
     <target name="init">
         <mkdir dir="${build}"/>
     </target>
     <target name="clean">
         <delete dir="${build}"/>
     </target>
-	<target name="decruft">
-		<delete dir="${junit.results}"/>
-		<delete verbose="true">
-			<fileset dir="." includes="compiled*.pl"/>
-			<fileset dir="scripts" includes="*.pyc"/>
-			<fileset dir="src/scripts" includes="*.pyc"/>
-			<fileset dir="testcases/textcattoy">
-				<include name="log.log"/>
-				<include name="params.wts"/>
-				<include name="params.overweight"/>
-				<include name="programFiles.arg"/>
-				<include name="toytrain.cooked"/>
-			</fileset>
-			<fileset dir="testcases/lucene/index" includes="*">
-				<exclude name="fields.txt"/>
-			</fileset>
-		</delete>
-	</target>
+    <target name="decruft">
+        <delete dir="${junit.results}"/>
+        <delete verbose="true">
+            <fileset dir="." includes="compiled*.pl"/>
+            <fileset dir="scripts" includes="*.pyc"/>
+            <fileset dir="src/scripts" includes="*.pyc"/>
+            <fileset dir="testcases/textcattoy">
+                <include name="log.log"/>
+                <include name="params.wts"/>
+                <include name="params.overweight"/>
+                <include name="programFiles.arg"/>
+                <include name="toytrain.cooked"/>
+            </fileset>
+            <fileset dir="testcases/lucene/index" includes="*">
+                <exclude name="fields.txt"/>
+            </fileset>
+        </delete>
+    </target>
     <target name="cleanall" depends="clean,decruft"/>
     <target name="build" depends="build-subprojects,build-project"/>
     <target name="build-subprojects"/>
-	
+    
     <target name="build-project" depends="init" >
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
             <src path="src/java/main"/>
             <classpath refid="ProPPR.classpath"/>
         </javac>
-    	<copy todir="${build}">
-    		<fileset dir="src/java/main">
-    			<exclude name="**/*.java"/>
-    		</fileset>
-    	</copy>
+        <copy todir="${build}">
+            <fileset dir="src/java/main">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
     </target>
-	
+    
     <target name="build-tests" depends="init">
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="${build}" source="${source}" target="${target}" includeantruntime="false">
@@ -83,22 +83,21 @@
             <classpath refid="ProPPRTests.classpath"/>
         </javac>
     </target>
-	
-	<target name="test" depends="build,build-tests" description="Run unit tests">
-		<delete dir="${junit.results}"/>
-		<mkdir dir="${junit.results}"/>
-		<junit fork="no" errorProperty="test.failed" failureProperty="test.failed" >
-			<classpath>
-				<path refid="ProPPRTests.classpath" />
-				<path location="${build}" />
-			</classpath>
-			<formatter type="failure" usefile="false"/>
-			<formatter type="xml"/>
-			<batchtest todir="${junit.results}">
-				<fileset dir="${build}" includes="**/*Test.class"/>
-			</batchtest>
-		</junit>
-		<fail message="Tests failed. Please see test reports" if="test.failed" />
-		<echo message="All tests passed."/>
-	</target>
+    
+    <target name="test" depends="build,build-tests" description="Run unit tests">
+        <delete dir="${junit.results}"/>
+        <mkdir dir="${junit.results}"/>
+        <junit fork="no" errorProperty="test.failed" failureProperty="test.failed" >
+            <classpath>
+                <path refid="ProPPRTests.classpath" />
+                <path location="${build}" />
+            </classpath>
+            <formatter type="xml"/>
+            <batchtest todir="${junit.results}">
+                <fileset dir="${build}" includes="**/*Test.class"/>
+            </batchtest>
+        </junit>
+        <fail message="Tests failed. Please see test reports" if="test.failed" />
+        <echo message="All tests passed."/>
+    </target>
 </project>
