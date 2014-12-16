@@ -54,10 +54,10 @@ public abstract class GraphlikePlugin extends WamPlugin {
 		return indexContains(jumpto);
 	}
 
-	@Override
-	public void restartFD(State state, WamInterpreter wamInterp) {
-		throw new RuntimeException("Not yet implemented");
-	}
+//	@Override
+//	public void restartFD(State state, WamInterpreter wamInterp) {
+//		throw new RuntimeException("Not yet implemented");
+//	}
 
 	@Override
 	public List<Outlink> outlinks(State state, WamInterpreter wamInterp,

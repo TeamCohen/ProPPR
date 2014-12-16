@@ -21,7 +21,6 @@ import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 
 public class FactsPluginTest {
-
 	@Test
 	public void test() throws LogicProgramException {
 		APROptions apr = new APROptions();

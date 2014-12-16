@@ -1,0 +1,5402 @@
+0		comment	concept_worker(-1,-2) :- concept_worksfor(-1,-2)  #v:['A', 'B'].
+1	concept_worker/2	allocate	2	['B', 'A']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	concept_worker
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushboundvar	-2
+12		callp	concept_worksfor/2
+13		returnp
+14		comment	concept_citylocatedinstate(-1,-2) :- fact_concept_citylocatedinstate(-1,-2)  #v:['A', 'B'].
+15	concept_citylocatedinstate/2	allocate	2	['B', 'A']
+16		initfreevar	-1	-2
+17		initfreevar	-2	-1
+18		fclear
+19		fpushstart	id	3
+20		fpushconst	concept_citylocatedinstate
+21		fpushconst	2
+22		fpushconst	18
+23		freport
+24		pushboundvar	-1
+25		pushboundvar	-2
+26		callp	fact_concept_citylocatedinstate/2
+27		returnp
+28		comment	concept_citylocatedinstate(-1,-2) :- concept_mutualproxyfor(-1,-3), concept_mutualproxyfor(-3,-4), concept_atlocation(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+29	concept_citylocatedinstate/2	allocate	4	['C', 'B', 'D', 'A']
+30		initfreevar	-1	-2
+31		initfreevar	-2	-1
+32		fclear
+33		fpushstart	id	3
+34		fpushconst	concept_citylocatedinstate
+35		fpushconst	2
+36		fpushconst	32
+37		freport
+38		pushboundvar	-1
+39		pushfreevar	-3
+40		callp	concept_mutualproxyfor/2
+41		pushboundvar	-3
+42		pushfreevar	-4
+43		callp	concept_mutualproxyfor/2
+44		pushboundvar	-4
+45		pushboundvar	-2
+46		callp	concept_atlocation/2
+47		pushboundvar	-2
+48		callp	isLabel/1
+49		returnp
+50		comment	concept_citylocatedinstate(-1,-2) :- fact_concept_citylocatedinstate(-1,-2), isLabel(-2)  #v:['A', 'D'].
+51	concept_citylocatedinstate/2	allocate	2	['D', 'A']
+52		initfreevar	-1	-2
+53		initfreevar	-2	-1
+54		fclear
+55		fpushstart	id	3
+56		fpushconst	concept_citylocatedinstate
+57		fpushconst	2
+58		fpushconst	54
+59		freport
+60		pushboundvar	-1
+61		pushboundvar	-2
+62		callp	fact_concept_citylocatedinstate/2
+63		pushboundvar	-2
+64		callp	isLabel/1
+65		returnp
+66		comment	concept_airportincity(-1,-2) :- concept_mutualproxyfor(-1,-3), concept_proxyfor(-3,-4), concept_competeswith(-4,-5), concept_organizationactsinlocation(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+67	concept_airportincity/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+68		initfreevar	-1	-2
+69		initfreevar	-2	-1
+70		fclear
+71		fpushstart	id	3
+72		fpushconst	concept_airportincity
+73		fpushconst	2
+74		fpushconst	70
+75		freport
+76		pushboundvar	-1
+77		pushfreevar	-3
+78		callp	concept_mutualproxyfor/2
+79		pushboundvar	-3
+80		pushfreevar	-4
+81		callp	concept_proxyfor/2
+82		pushboundvar	-4
+83		pushfreevar	-5
+84		callp	concept_competeswith/2
+85		pushboundvar	-5
+86		pushboundvar	-2
+87		callp	concept_organizationactsinlocation/2
+88		pushboundvar	-2
+89		callp	isLabel/1
+90		returnp
+91		comment	concept_airportincity(-1,-2) :- fact_concept_airportincity(-1,-2), isLabel(-2)  #v:['A', 'E'].
+92	concept_airportincity/2	allocate	2	['E', 'A']
+93		initfreevar	-1	-2
+94		initfreevar	-2	-1
+95		fclear
+96		fpushstart	id	3
+97		fpushconst	concept_airportincity
+98		fpushconst	2
+99		fpushconst	95
+100		freport
+101		pushboundvar	-1
+102		pushboundvar	-2
+103		callp	fact_concept_airportincity/2
+104		pushboundvar	-2
+105		callp	isLabel/1
+106		returnp
+107		comment	concept_journalistwritesforpublication(-1,-2) :- concept_agentcontributedtocreativework(-1,-3), concept_relatedto(-3,-4), concept_agentcollaborateswithagent(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+108	concept_journalistwritesforpublication/2	allocate	4	['C', 'B', 'D', 'A']
+109		initfreevar	-1	-2
+110		initfreevar	-2	-1
+111		fclear
+112		fpushstart	id	3
+113		fpushconst	concept_journalistwritesforpublication
+114		fpushconst	2
+115		fpushconst	111
+116		freport
+117		pushboundvar	-1
+118		pushfreevar	-3
+119		callp	concept_agentcontributedtocreativework/2
+120		pushboundvar	-3
+121		pushfreevar	-4
+122		callp	concept_relatedto/2
+123		pushboundvar	-4
+124		pushboundvar	-2
+125		callp	concept_agentcollaborateswithagent/2
+126		pushboundvar	-2
+127		callp	isLabel/1
+128		returnp
+129		comment	concept_journalistwritesforpublication(-1,-2) :- fact_concept_journalistwritesforpublication(-1,-2), isLabel(-2)  #v:['A', 'D'].
+130	concept_journalistwritesforpublication/2	allocate	2	['D', 'A']
+131		initfreevar	-1	-2
+132		initfreevar	-2	-1
+133		fclear
+134		fpushstart	id	3
+135		fpushconst	concept_journalistwritesforpublication
+136		fpushconst	2
+137		fpushconst	133
+138		freport
+139		pushboundvar	-1
+140		pushboundvar	-2
+141		callp	fact_concept_journalistwritesforpublication/2
+142		pushboundvar	-2
+143		callp	isLabel/1
+144		returnp
+145		comment	concept_cityparks(-1,-2) :- concept_parkincity(-1,-2)  #v:['A', 'B'].
+146	concept_cityparks/2	allocate	2	['B', 'A']
+147		initfreevar	-1	-2
+148		initfreevar	-2	-1
+149		fclear
+150		fpushstart	id	3
+151		fpushconst	concept_cityparks
+152		fpushconst	2
+153		fpushconst	149
+154		freport
+155		pushboundvar	-1
+156		pushboundvar	-2
+157		callp	concept_parkincity/2
+158		returnp
+159		comment	concept_roomcancontainitem(-1,-2) :- concept_itemfoundinroom(-1,-2)  #v:['A', 'B'].
+160	concept_roomcancontainitem/2	allocate	2	['B', 'A']
+161		initfreevar	-1	-2
+162		initfreevar	-2	-1
+163		fclear
+164		fpushstart	id	3
+165		fpushconst	concept_roomcancontainitem
+166		fpushconst	2
+167		fpushconst	163
+168		freport
+169		pushboundvar	-1
+170		pushboundvar	-2
+171		callp	concept_itemfoundinroom/2
+172		returnp
+173		comment	concept_languageofuniversity(-1,-2) :- fact_concept_languageofuniversity(-1,-2)  #v:['A', 'B'].
+174	concept_languageofuniversity/2	allocate	2	['B', 'A']
+175		initfreevar	-1	-2
+176		initfreevar	-2	-1
+177		fclear
+178		fpushstart	id	3
+179		fpushconst	concept_languageofuniversity
+180		fpushconst	2
+181		fpushconst	177
+182		freport
+183		pushboundvar	-1
+184		pushboundvar	-2
+185		callp	fact_concept_languageofuniversity/2
+186		returnp
+187		comment	concept_languageofuniversity(-1,-2) :- concept_languageofcountry(-1,-3), concept_countrylanguage(-3,-4), concept_languageofuniversity(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+188	concept_languageofuniversity/2	allocate	4	['C', 'B', 'D', 'A']
+189		initfreevar	-1	-2
+190		initfreevar	-2	-1
+191		fclear
+192		fpushstart	id	3
+193		fpushconst	concept_languageofuniversity
+194		fpushconst	2
+195		fpushconst	191
+196		freport
+197		pushboundvar	-1
+198		pushfreevar	-3
+199		callp	concept_languageofcountry/2
+200		pushboundvar	-3
+201		pushfreevar	-4
+202		callp	concept_countrylanguage/2
+203		pushboundvar	-4
+204		pushboundvar	-2
+205		callp	concept_languageofuniversity/2
+206		pushboundvar	-2
+207		callp	isLabel/1
+208		returnp
+209		comment	concept_languageofuniversity(-1,-2) :- fact_concept_languageofuniversity(-1,-2), isLabel(-2)  #v:['A', 'D'].
+210	concept_languageofuniversity/2	allocate	2	['D', 'A']
+211		initfreevar	-1	-2
+212		initfreevar	-2	-1
+213		fclear
+214		fpushstart	id	3
+215		fpushconst	concept_languageofuniversity
+216		fpushconst	2
+217		fpushconst	213
+218		freport
+219		pushboundvar	-1
+220		pushboundvar	-2
+221		callp	fact_concept_languageofuniversity/2
+222		pushboundvar	-2
+223		callp	isLabel/1
+224		returnp
+225		comment	concept_agentbelongstoorganization(-1,-2) :- concept_agentcontrols(-1,-2), isLabel(-2)  #v:['A', 'B'].
+226	concept_agentbelongstoorganization/2	allocate	2	['B', 'A']
+227		initfreevar	-1	-2
+228		initfreevar	-2	-1
+229		fclear
+230		fpushstart	id	3
+231		fpushconst	concept_agentbelongstoorganization
+232		fpushconst	2
+233		fpushconst	229
+234		freport
+235		pushboundvar	-1
+236		pushboundvar	-2
+237		callp	concept_agentcontrols/2
+238		pushboundvar	-2
+239		callp	isLabel/1
+240		returnp
+241		comment	concept_agentbelongstoorganization(-1,-2) :- fact_concept_agentbelongstoorganization(-1,-2), isLabel(-2)  #v:['A', 'B'].
+242	concept_agentbelongstoorganization/2	allocate	2	['B', 'A']
+243		initfreevar	-1	-2
+244		initfreevar	-2	-1
+245		fclear
+246		fpushstart	id	3
+247		fpushconst	concept_agentbelongstoorganization
+248		fpushconst	2
+249		fpushconst	245
+250		freport
+251		pushboundvar	-1
+252		pushboundvar	-2
+253		callp	fact_concept_agentbelongstoorganization/2
+254		pushboundvar	-2
+255		callp	isLabel/1
+256		returnp
+257		comment	concept_organizationhasperson(-1,-2) :- concept_personbelongstoorganization(-1,-2)  #v:['A', 'B'].
+258	concept_organizationhasperson/2	allocate	2	['B', 'A']
+259		initfreevar	-1	-2
+260		initfreevar	-2	-1
+261		fclear
+262		fpushstart	id	3
+263		fpushconst	concept_organizationhasperson
+264		fpushconst	2
+265		fpushconst	261
+266		freport
+267		pushboundvar	-1
+268		pushboundvar	-2
+269		callp	concept_personbelongstoorganization/2
+270		returnp
+271		comment	concept_dateoforganzationdissolution(-1,-2) :- concept_organizationdissolvedatdate(-1,-2)  #v:['A', 'B'].
+272	concept_dateoforganzationdissolution/2	allocate	2	['B', 'A']
+273		initfreevar	-1	-2
+274		initfreevar	-2	-1
+275		fclear
+276		fpushstart	id	3
+277		fpushconst	concept_dateoforganzationdissolution
+278		fpushconst	2
+279		fpushconst	275
+280		freport
+281		pushboundvar	-1
+282		pushboundvar	-2
+283		callp	concept_organizationdissolvedatdate/2
+284		returnp
+285		comment	concept_worksfor(-1,-2) :- concept_athleteplaysforteam(-1,-2), isLabel(-2)  #v:['A', 'B'].
+286	concept_worksfor/2	allocate	2	['B', 'A']
+287		initfreevar	-1	-2
+288		initfreevar	-2	-1
+289		fclear
+290		fpushstart	id	3
+291		fpushconst	concept_worksfor
+292		fpushconst	2
+293		fpushconst	289
+294		freport
+295		pushboundvar	-1
+296		pushboundvar	-2
+297		callp	concept_athleteplaysforteam/2
+298		pushboundvar	-2
+299		callp	isLabel/1
+300		returnp
+301		comment	concept_worksfor(-1,-2) :- concept_worker(-1,-2)  #v:['A', 'B'].
+302	concept_worksfor/2	allocate	2	['B', 'A']
+303		initfreevar	-1	-2
+304		initfreevar	-2	-1
+305		fclear
+306		fpushstart	id	3
+307		fpushconst	concept_worksfor
+308		fpushconst	2
+309		fpushconst	305
+310		freport
+311		pushboundvar	-1
+312		pushboundvar	-2
+313		callp	concept_worker/2
+314		returnp
+315		comment	concept_worksfor(-1,-2) :- fact_concept_worksfor(-1,-2)  #v:['A', 'B'].
+316	concept_worksfor/2	allocate	2	['B', 'A']
+317		initfreevar	-1	-2
+318		initfreevar	-2	-1
+319		fclear
+320		fpushstart	id	3
+321		fpushconst	concept_worksfor
+322		fpushconst	2
+323		fpushconst	319
+324		freport
+325		pushboundvar	-1
+326		pushboundvar	-2
+327		callp	fact_concept_worksfor/2
+328		returnp
+329		comment	concept_worksfor(-1,-2) :- fact_concept_worksfor(-1,-2), isLabel(-2)  #v:['A', 'B'].
+330	concept_worksfor/2	allocate	2	['B', 'A']
+331		initfreevar	-1	-2
+332		initfreevar	-2	-1
+333		fclear
+334		fpushstart	id	3
+335		fpushconst	concept_worksfor
+336		fpushconst	2
+337		fpushconst	333
+338		freport
+339		pushboundvar	-1
+340		pushboundvar	-2
+341		callp	fact_concept_worksfor/2
+342		pushboundvar	-2
+343		callp	isLabel/1
+344		returnp
+345		comment	concept_atdate(-1,-2) :- fact_concept_atdate(-1,-2)  #v:['A', 'B'].
+346	concept_atdate/2	allocate	2	['B', 'A']
+347		initfreevar	-1	-2
+348		initfreevar	-2	-1
+349		fclear
+350		fpushstart	id	3
+351		fpushconst	concept_atdate
+352		fpushconst	2
+353		fpushconst	349
+354		freport
+355		pushboundvar	-1
+356		pushboundvar	-2
+357		callp	fact_concept_atdate/2
+358		returnp
+359		comment	concept_atdate(-1,-2) :- concept_proxyfor(-1,-3), concept_mutualproxyfor(-3,-4), concept_atdate(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+360	concept_atdate/2	allocate	4	['C', 'B', 'D', 'A']
+361		initfreevar	-1	-2
+362		initfreevar	-2	-1
+363		fclear
+364		fpushstart	id	3
+365		fpushconst	concept_atdate
+366		fpushconst	2
+367		fpushconst	363
+368		freport
+369		pushboundvar	-1
+370		pushfreevar	-3
+371		callp	concept_proxyfor/2
+372		pushboundvar	-3
+373		pushfreevar	-4
+374		callp	concept_mutualproxyfor/2
+375		pushboundvar	-4
+376		pushboundvar	-2
+377		callp	concept_atdate/2
+378		pushboundvar	-2
+379		callp	isLabel/1
+380		returnp
+381		comment	concept_atdate(-1,-2) :- fact_concept_atdate(-1,-2), isLabel(-2)  #v:['A', 'D'].
+382	concept_atdate/2	allocate	2	['D', 'A']
+383		initfreevar	-1	-2
+384		initfreevar	-2	-1
+385		fclear
+386		fpushstart	id	3
+387		fpushconst	concept_atdate
+388		fpushconst	2
+389		fpushconst	385
+390		freport
+391		pushboundvar	-1
+392		pushboundvar	-2
+393		callp	fact_concept_atdate/2
+394		pushboundvar	-2
+395		callp	isLabel/1
+396		returnp
+397		comment	concept_beveragemadefrombeverage(-1,-2) :- concept_inverseofbeveragemadefrombeverage(-1,-2)  #v:['A', 'B'].
+398	concept_beveragemadefrombeverage/2	allocate	2	['B', 'A']
+399		initfreevar	-1	-2
+400		initfreevar	-2	-1
+401		fclear
+402		fpushstart	id	3
+403		fpushconst	concept_beveragemadefrombeverage
+404		fpushconst	2
+405		fpushconst	401
+406		freport
+407		pushboundvar	-1
+408		pushboundvar	-2
+409		callp	concept_inverseofbeveragemadefrombeverage/2
+410		returnp
+411		comment	concept_beveragemadefrombeverage(-1,-2) :- fact_concept_beveragemadefrombeverage(-1,-2)  #v:['A', 'B'].
+412	concept_beveragemadefrombeverage/2	allocate	2	['B', 'A']
+413		initfreevar	-1	-2
+414		initfreevar	-2	-1
+415		fclear
+416		fpushstart	id	3
+417		fpushconst	concept_beveragemadefrombeverage
+418		fpushconst	2
+419		fpushconst	415
+420		freport
+421		pushboundvar	-1
+422		pushboundvar	-2
+423		callp	fact_concept_beveragemadefrombeverage/2
+424		returnp
+425		comment	concept_beveragemadefrombeverage(-1,-2) :- concept_inverseofbeveragemadefrombeverage(-1,-3), concept_beveragemadefrombeverage(-3,-4), concept_agriculturalproductcontainchemical(-4,-5), concept_inverseofagriculturalproductcontainchemical(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+426	concept_beveragemadefrombeverage/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+427		initfreevar	-1	-2
+428		initfreevar	-2	-1
+429		fclear
+430		fpushstart	id	3
+431		fpushconst	concept_beveragemadefrombeverage
+432		fpushconst	2
+433		fpushconst	429
+434		freport
+435		pushboundvar	-1
+436		pushfreevar	-3
+437		callp	concept_inverseofbeveragemadefrombeverage/2
+438		pushboundvar	-3
+439		pushfreevar	-4
+440		callp	concept_beveragemadefrombeverage/2
+441		pushboundvar	-4
+442		pushfreevar	-5
+443		callp	concept_agriculturalproductcontainchemical/2
+444		pushboundvar	-5
+445		pushboundvar	-2
+446		callp	concept_inverseofagriculturalproductcontainchemical/2
+447		pushboundvar	-2
+448		callp	isLabel/1
+449		returnp
+450		comment	concept_beveragemadefrombeverage(-1,-2) :- fact_concept_beveragemadefrombeverage(-1,-2), isLabel(-2)  #v:['A', 'E'].
+451	concept_beveragemadefrombeverage/2	allocate	2	['E', 'A']
+452		initfreevar	-1	-2
+453		initfreevar	-2	-1
+454		fclear
+455		fpushstart	id	3
+456		fpushconst	concept_beveragemadefrombeverage
+457		fpushconst	2
+458		fpushconst	454
+459		freport
+460		pushboundvar	-1
+461		pushboundvar	-2
+462		callp	fact_concept_beveragemadefrombeverage/2
+463		pushboundvar	-2
+464		callp	isLabel/1
+465		returnp
+466		comment	concept_leaguestadiums(-1,-2) :- concept_leagueteams(-1,-3), concept_agentactsinlocation(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+467	concept_leaguestadiums/2	allocate	3	['B', 'C', 'A']
+468		initfreevar	-1	-2
+469		initfreevar	-2	-1
+470		fclear
+471		fpushstart	id	3
+472		fpushconst	concept_leaguestadiums
+473		fpushconst	2
+474		fpushconst	470
+475		freport
+476		pushboundvar	-1
+477		pushfreevar	-3
+478		callp	concept_leagueteams/2
+479		pushboundvar	-3
+480		pushboundvar	-2
+481		callp	concept_agentactsinlocation/2
+482		pushboundvar	-2
+483		callp	isLabel/1
+484		returnp
+485		comment	concept_leaguestadiums(-1,-2) :- fact_concept_leaguestadiums(-1,-2), isLabel(-2)  #v:['A', 'C'].
+486	concept_leaguestadiums/2	allocate	2	['C', 'A']
+487		initfreevar	-1	-2
+488		initfreevar	-2	-1
+489		fclear
+490		fpushstart	id	3
+491		fpushconst	concept_leaguestadiums
+492		fpushconst	2
+493		fpushconst	489
+494		freport
+495		pushboundvar	-1
+496		pushboundvar	-2
+497		callp	fact_concept_leaguestadiums/2
+498		pushboundvar	-2
+499		callp	isLabel/1
+500		returnp
+501		comment	concept_economicsectorcompany(-1,-2) :- concept_companyeconomicsector(-1,-2)  #v:['A', 'B'].
+502	concept_economicsectorcompany/2	allocate	2	['B', 'A']
+503		initfreevar	-1	-2
+504		initfreevar	-2	-1
+505		fclear
+506		fpushstart	id	3
+507		fpushconst	concept_economicsectorcompany
+508		fpushconst	2
+509		fpushconst	505
+510		freport
+511		pushboundvar	-1
+512		pushboundvar	-2
+513		callp	concept_companyeconomicsector/2
+514		returnp
+515		comment	concept_agriculturalproductcamefromcountry(-1,-2) :- concept_inverseofagriculturalproductcamefromcountry(-1,-2)  #v:['A', 'B'].
+516	concept_agriculturalproductcamefromcountry/2	allocate	2	['B', 'A']
+517		initfreevar	-1	-2
+518		initfreevar	-2	-1
+519		fclear
+520		fpushstart	id	3
+521		fpushconst	concept_agriculturalproductcamefromcountry
+522		fpushconst	2
+523		fpushconst	519
+524		freport
+525		pushboundvar	-1
+526		pushboundvar	-2
+527		callp	concept_inverseofagriculturalproductcamefromcountry/2
+528		returnp
+529		comment	concept_agriculturalproductcamefromcountry(-1,-2) :- fact_concept_agriculturalproductcamefromcountry(-1,-2)  #v:['A', 'B'].
+530	concept_agriculturalproductcamefromcountry/2	allocate	2	['B', 'A']
+531		initfreevar	-1	-2
+532		initfreevar	-2	-1
+533		fclear
+534		fpushstart	id	3
+535		fpushconst	concept_agriculturalproductcamefromcountry
+536		fpushconst	2
+537		fpushconst	533
+538		freport
+539		pushboundvar	-1
+540		pushboundvar	-2
+541		callp	fact_concept_agriculturalproductcamefromcountry/2
+542		returnp
+543		comment	concept_agriculturalproductcamefromcountry(-1,-2) :- concept_inverseofagriculturalproductincludingagriculturalproduct(-1,-3), concept_agriculturalproductgrowinginstateorprovince(-3,-4), concept_geopoliticallocationcontainsstate(-4,-5), concept_statelocatedincountry(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+544	concept_agriculturalproductcamefromcountry/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+545		initfreevar	-1	-2
+546		initfreevar	-2	-1
+547		fclear
+548		fpushstart	id	3
+549		fpushconst	concept_agriculturalproductcamefromcountry
+550		fpushconst	2
+551		fpushconst	547
+552		freport
+553		pushboundvar	-1
+554		pushfreevar	-3
+555		callp	concept_inverseofagriculturalproductincludingagriculturalproduct/2
+556		pushboundvar	-3
+557		pushfreevar	-4
+558		callp	concept_agriculturalproductgrowinginstateorprovince/2
+559		pushboundvar	-4
+560		pushfreevar	-5
+561		callp	concept_geopoliticallocationcontainsstate/2
+562		pushboundvar	-5
+563		pushboundvar	-2
+564		callp	concept_statelocatedincountry/2
+565		pushboundvar	-2
+566		callp	isLabel/1
+567		returnp
+568		comment	concept_agriculturalproductcamefromcountry(-1,-2) :- fact_concept_agriculturalproductcamefromcountry(-1,-2), isLabel(-2)  #v:['A', 'E'].
+569	concept_agriculturalproductcamefromcountry/2	allocate	2	['E', 'A']
+570		initfreevar	-1	-2
+571		initfreevar	-2	-1
+572		fclear
+573		fpushstart	id	3
+574		fpushconst	concept_agriculturalproductcamefromcountry
+575		fpushconst	2
+576		fpushconst	572
+577		freport
+578		pushboundvar	-1
+579		pushboundvar	-2
+580		callp	fact_concept_agriculturalproductcamefromcountry/2
+581		pushboundvar	-2
+582		callp	isLabel/1
+583		returnp
+584		comment	concept_sportsportsgameexample(-1,-2) :- concept_sportsgamesport(-1,-2)  #v:['A', 'B'].
+585	concept_sportsportsgameexample/2	allocate	2	['B', 'A']
+586		initfreevar	-1	-2
+587		initfreevar	-2	-1
+588		fclear
+589		fpushstart	id	3
+590		fpushconst	concept_sportsportsgameexample
+591		fpushconst	2
+592		fpushconst	588
+593		freport
+594		pushboundvar	-1
+595		pushboundvar	-2
+596		callp	concept_sportsgamesport/2
+597		returnp
+598		comment	concept_locationactedinbyorganization(-1,-2) :- concept_organizationactsinlocation(-1,-2)  #v:['A', 'B'].
+599	concept_locationactedinbyorganization/2	allocate	2	['B', 'A']
+600		initfreevar	-1	-2
+601		initfreevar	-2	-1
+602		fclear
+603		fpushstart	id	3
+604		fpushconst	concept_locationactedinbyorganization
+605		fpushconst	2
+606		fpushconst	602
+607		freport
+608		pushboundvar	-1
+609		pushboundvar	-2
+610		callp	concept_organizationactsinlocation/2
+611		returnp
+612		comment	concept_organizationacronymhasname(-1,-2) :- concept_organizationnamehasacronym(-1,-2)  #v:['A', 'B'].
+613	concept_organizationacronymhasname/2	allocate	2	['B', 'A']
+614		initfreevar	-1	-2
+615		initfreevar	-2	-1
+616		fclear
+617		fpushstart	id	3
+618		fpushconst	concept_organizationacronymhasname
+619		fpushconst	2
+620		fpushconst	616
+621		freport
+622		pushboundvar	-1
+623		pushboundvar	-2
+624		callp	concept_organizationnamehasacronym/2
+625		returnp
+626		comment	concept_organizationacronymhasname(-1,-2) :- fact_concept_organizationacronymhasname(-1,-2)  #v:['A', 'B'].
+627	concept_organizationacronymhasname/2	allocate	2	['B', 'A']
+628		initfreevar	-1	-2
+629		initfreevar	-2	-1
+630		fclear
+631		fpushstart	id	3
+632		fpushconst	concept_organizationacronymhasname
+633		fpushconst	2
+634		fpushconst	630
+635		freport
+636		pushboundvar	-1
+637		pushboundvar	-2
+638		callp	fact_concept_organizationacronymhasname/2
+639		returnp
+640		comment	concept_organizationacronymhasname(-1,-2) :- concept_companyalsoknownas(-1,-3), concept_organizationnamehasacronym(-3,-4), concept_companyalsoknownas(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+641	concept_organizationacronymhasname/2	allocate	4	['C', 'B', 'D', 'A']
+642		initfreevar	-1	-2
+643		initfreevar	-2	-1
+644		fclear
+645		fpushstart	id	3
+646		fpushconst	concept_organizationacronymhasname
+647		fpushconst	2
+648		fpushconst	644
+649		freport
+650		pushboundvar	-1
+651		pushfreevar	-3
+652		callp	concept_companyalsoknownas/2
+653		pushboundvar	-3
+654		pushfreevar	-4
+655		callp	concept_organizationnamehasacronym/2
+656		pushboundvar	-4
+657		pushboundvar	-2
+658		callp	concept_companyalsoknownas/2
+659		pushboundvar	-2
+660		callp	isLabel/1
+661		returnp
+662		comment	concept_organizationacronymhasname(-1,-2) :- fact_concept_organizationacronymhasname(-1,-2), isLabel(-2)  #v:['A', 'D'].
+663	concept_organizationacronymhasname/2	allocate	2	['D', 'A']
+664		initfreevar	-1	-2
+665		initfreevar	-2	-1
+666		fclear
+667		fpushstart	id	3
+668		fpushconst	concept_organizationacronymhasname
+669		fpushconst	2
+670		fpushconst	666
+671		freport
+672		pushboundvar	-1
+673		pushboundvar	-2
+674		callp	fact_concept_organizationacronymhasname/2
+675		pushboundvar	-2
+676		callp	isLabel/1
+677		returnp
+678		comment	concept_personhascitizenship(-1,-2) :- fact_concept_personhascitizenship(-1,-2)  #v:['A', 'B'].
+679	concept_personhascitizenship/2	allocate	2	['B', 'A']
+680		initfreevar	-1	-2
+681		initfreevar	-2	-1
+682		fclear
+683		fpushstart	id	3
+684		fpushconst	concept_personhascitizenship
+685		fpushconst	2
+686		fpushconst	682
+687		freport
+688		pushboundvar	-1
+689		pushboundvar	-2
+690		callp	fact_concept_personhascitizenship/2
+691		returnp
+692		comment	concept_personhascitizenship(-1,-2) :- concept_personhasjobposition(-1,-3), concept_relatedto(-3,-4), concept_personhascitizenship(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+693	concept_personhascitizenship/2	allocate	4	['C', 'B', 'D', 'A']
+694		initfreevar	-1	-2
+695		initfreevar	-2	-1
+696		fclear
+697		fpushstart	id	3
+698		fpushconst	concept_personhascitizenship
+699		fpushconst	2
+700		fpushconst	696
+701		freport
+702		pushboundvar	-1
+703		pushfreevar	-3
+704		callp	concept_personhasjobposition/2
+705		pushboundvar	-3
+706		pushfreevar	-4
+707		callp	concept_relatedto/2
+708		pushboundvar	-4
+709		pushboundvar	-2
+710		callp	concept_personhascitizenship/2
+711		pushboundvar	-2
+712		callp	isLabel/1
+713		returnp
+714		comment	concept_personhascitizenship(-1,-2) :- fact_concept_personhascitizenship(-1,-2), isLabel(-2)  #v:['A', 'D'].
+715	concept_personhascitizenship/2	allocate	2	['D', 'A']
+716		initfreevar	-1	-2
+717		initfreevar	-2	-1
+718		fclear
+719		fpushstart	id	3
+720		fpushconst	concept_personhascitizenship
+721		fpushconst	2
+722		fpushconst	718
+723		freport
+724		pushboundvar	-1
+725		pushboundvar	-2
+726		callp	fact_concept_personhascitizenship/2
+727		pushboundvar	-2
+728		callp	isLabel/1
+729		returnp
+730		comment	concept_agriculturalproductcontainchemical(-1,-2) :- concept_inverseofagriculturalproductcontainchemical(-1,-2)  #v:['A', 'B'].
+731	concept_agriculturalproductcontainchemical/2	allocate	2	['B', 'A']
+732		initfreevar	-1	-2
+733		initfreevar	-2	-1
+734		fclear
+735		fpushstart	id	3
+736		fpushconst	concept_agriculturalproductcontainchemical
+737		fpushconst	2
+738		fpushconst	734
+739		freport
+740		pushboundvar	-1
+741		pushboundvar	-2
+742		callp	concept_inverseofagriculturalproductcontainchemical/2
+743		returnp
+744		comment	concept_inverseofanimalsuchasinsect(-1,-2) :- concept_animalsuchasinsect(-1,-2)  #v:['A', 'B'].
+745	concept_inverseofanimalsuchasinsect/2	allocate	2	['B', 'A']
+746		initfreevar	-1	-2
+747		initfreevar	-2	-1
+748		fclear
+749		fpushstart	id	3
+750		fpushconst	concept_inverseofanimalsuchasinsect
+751		fpushconst	2
+752		fpushconst	748
+753		freport
+754		pushboundvar	-1
+755		pushboundvar	-2
+756		callp	concept_animalsuchasinsect/2
+757		returnp
+758		comment	concept_agriculturalproducttoattractinsect(-1,-2) :- concept_inverseofagriculturalproducttoattractinsect(-1,-2)  #v:['A', 'B'].
+759	concept_agriculturalproducttoattractinsect/2	allocate	2	['B', 'A']
+760		initfreevar	-1	-2
+761		initfreevar	-2	-1
+762		fclear
+763		fpushstart	id	3
+764		fpushconst	concept_agriculturalproducttoattractinsect
+765		fpushconst	2
+766		fpushconst	762
+767		freport
+768		pushboundvar	-1
+769		pushboundvar	-2
+770		callp	concept_inverseofagriculturalproducttoattractinsect/2
+771		returnp
+772		comment	concept_inverseofautomobilemakerdealersincountry(-1,-2) :- concept_automobilemakerdealersincountry(-1,-2)  #v:['A', 'B'].
+773	concept_inverseofautomobilemakerdealersincountry/2	allocate	2	['B', 'A']
+774		initfreevar	-1	-2
+775		initfreevar	-2	-1
+776		fclear
+777		fpushstart	id	3
+778		fpushconst	concept_inverseofautomobilemakerdealersincountry
+779		fpushconst	2
+780		fpushconst	776
+781		freport
+782		pushboundvar	-1
+783		pushboundvar	-2
+784		callp	concept_automobilemakerdealersincountry/2
+785		returnp
+786		comment	concept_officeheldbypolitician(-1,-2) :- concept_politicianholdsoffice(-1,-2)  #v:['A', 'B'].
+787	concept_officeheldbypolitician/2	allocate	2	['B', 'A']
+788		initfreevar	-1	-2
+789		initfreevar	-2	-1
+790		fclear
+791		fpushstart	id	3
+792		fpushconst	concept_officeheldbypolitician
+793		fpushconst	2
+794		fpushconst	790
+795		freport
+796		pushboundvar	-1
+797		pushboundvar	-2
+798		callp	concept_politicianholdsoffice/2
+799		returnp
+800		comment	concept_inverseofautomobilemakercardealersinstateorprovince(-1,-2) :- concept_automobilemakercardealersinstateorprovince(-1,-2)  #v:['A', 'B'].
+801	concept_inverseofautomobilemakercardealersinstateorprovince/2	allocate	2	['B', 'A']
+802		initfreevar	-1	-2
+803		initfreevar	-2	-1
+804		fclear
+805		fpushstart	id	3
+806		fpushconst	concept_inverseofautomobilemakercardealersinstateorprovince
+807		fpushconst	2
+808		fpushconst	804
+809		freport
+810		pushboundvar	-1
+811		pushboundvar	-2
+812		callp	concept_automobilemakercardealersinstateorprovince/2
+813		returnp
+814		comment	concept_producedby(-1,-2) :- concept_producesproduct(-1,-2)  #v:['A', 'B'].
+815	concept_producedby/2	allocate	2	['B', 'A']
+816		initfreevar	-1	-2
+817		initfreevar	-2	-1
+818		fclear
+819		fpushstart	id	3
+820		fpushconst	concept_producedby
+821		fpushconst	2
+822		fpushconst	818
+823		freport
+824		pushboundvar	-1
+825		pushboundvar	-2
+826		callp	concept_producesproduct/2
+827		returnp
+828		comment	concept_organizationhasofficialwebsite(-1,-2) :- concept_organizationleadbyperson(-1,-3), concept_personterminatedbyorganization(-3,-4), concept_agenthaswebsite(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+829	concept_organizationhasofficialwebsite/2	allocate	4	['C', 'B', 'D', 'A']
+830		initfreevar	-1	-2
+831		initfreevar	-2	-1
+832		fclear
+833		fpushstart	id	3
+834		fpushconst	concept_organizationhasofficialwebsite
+835		fpushconst	2
+836		fpushconst	832
+837		freport
+838		pushboundvar	-1
+839		pushfreevar	-3
+840		callp	concept_organizationleadbyperson/2
+841		pushboundvar	-3
+842		pushfreevar	-4
+843		callp	concept_personterminatedbyorganization/2
+844		pushboundvar	-4
+845		pushboundvar	-2
+846		callp	concept_agenthaswebsite/2
+847		pushboundvar	-2
+848		callp	isLabel/1
+849		returnp
+850		comment	concept_organizationhasofficialwebsite(-1,-2) :- fact_concept_organizationhasofficialwebsite(-1,-2), isLabel(-2)  #v:['A', 'D'].
+851	concept_organizationhasofficialwebsite/2	allocate	2	['D', 'A']
+852		initfreevar	-1	-2
+853		initfreevar	-2	-1
+854		fclear
+855		fpushstart	id	3
+856		fpushconst	concept_organizationhasofficialwebsite
+857		fpushconst	2
+858		fpushconst	854
+859		freport
+860		pushboundvar	-1
+861		pushboundvar	-2
+862		callp	fact_concept_organizationhasofficialwebsite/2
+863		pushboundvar	-2
+864		callp	isLabel/1
+865		returnp
+866		comment	concept_countrylanguage(-1,-2) :- concept_languageofcountry(-1,-2)  #v:['A', 'B'].
+867	concept_countrylanguage/2	allocate	2	['B', 'A']
+868		initfreevar	-1	-2
+869		initfreevar	-2	-1
+870		fclear
+871		fpushstart	id	3
+872		fpushconst	concept_countrylanguage
+873		fpushconst	2
+874		fpushconst	870
+875		freport
+876		pushboundvar	-1
+877		pushboundvar	-2
+878		callp	concept_languageofcountry/2
+879		returnp
+880		comment	concept_teammember(-1,-2) :- concept_athleteplaysforteam(-1,-2)  #v:['A', 'B'].
+881	concept_teammember/2	allocate	2	['B', 'A']
+882		initfreevar	-1	-2
+883		initfreevar	-2	-1
+884		fclear
+885		fpushstart	id	3
+886		fpushconst	concept_teammember
+887		fpushconst	2
+888		fpushconst	884
+889		freport
+890		pushboundvar	-1
+891		pushboundvar	-2
+892		callp	concept_athleteplaysforteam/2
+893		returnp
+894		comment	concept_inverseofathletebeatathlete(-1,-2) :- concept_athletebeatathlete(-1,-2)  #v:['A', 'B'].
+895	concept_inverseofathletebeatathlete/2	allocate	2	['B', 'A']
+896		initfreevar	-1	-2
+897		initfreevar	-2	-1
+898		fclear
+899		fpushstart	id	3
+900		fpushconst	concept_inverseofathletebeatathlete
+901		fpushconst	2
+902		fpushconst	898
+903		freport
+904		pushboundvar	-1
+905		pushboundvar	-2
+906		callp	concept_athletebeatathlete/2
+907		returnp
+908		comment	concept_teamcoach(-1,-2) :- concept_coachesteam(-1,-2)  #v:['A', 'B'].
+909	concept_teamcoach/2	allocate	2	['B', 'A']
+910		initfreevar	-1	-2
+911		initfreevar	-2	-1
+912		fclear
+913		fpushstart	id	3
+914		fpushconst	concept_teamcoach
+915		fpushconst	2
+916		fpushconst	912
+917		freport
+918		pushboundvar	-1
+919		pushboundvar	-2
+920		callp	concept_coachesteam/2
+921		returnp
+922		comment	concept_teamplaysinleague(-1,-2) :- concept_leagueteams(-1,-2)  #v:['A', 'B'].
+923	concept_teamplaysinleague/2	allocate	2	['B', 'A']
+924		initfreevar	-1	-2
+925		initfreevar	-2	-1
+926		fclear
+927		fpushstart	id	3
+928		fpushconst	concept_teamplaysinleague
+929		fpushconst	2
+930		fpushconst	926
+931		freport
+932		pushboundvar	-1
+933		pushboundvar	-2
+934		callp	concept_leagueteams/2
+935		returnp
+936		comment	concept_teamplaysinleague(-1,-2) :- concept_teamplaysagainstteam(-1,-3), concept_agentcollaborateswithagent(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+937	concept_teamplaysinleague/2	allocate	3	['B', 'C', 'A']
+938		initfreevar	-1	-2
+939		initfreevar	-2	-1
+940		fclear
+941		fpushstart	id	3
+942		fpushconst	concept_teamplaysinleague
+943		fpushconst	2
+944		fpushconst	940
+945		freport
+946		pushboundvar	-1
+947		pushfreevar	-3
+948		callp	concept_teamplaysagainstteam/2
+949		pushboundvar	-3
+950		pushboundvar	-2
+951		callp	concept_agentcollaborateswithagent/2
+952		pushboundvar	-2
+953		callp	isLabel/1
+954		returnp
+955		comment	concept_teamplaysinleague(-1,-2) :- fact_concept_teamplaysinleague(-1,-2), isLabel(-2)  #v:['A', 'C'].
+956	concept_teamplaysinleague/2	allocate	2	['C', 'A']
+957		initfreevar	-1	-2
+958		initfreevar	-2	-1
+959		fclear
+960		fpushstart	id	3
+961		fpushconst	concept_teamplaysinleague
+962		fpushconst	2
+963		fpushconst	959
+964		freport
+965		pushboundvar	-1
+966		pushboundvar	-2
+967		callp	fact_concept_teamplaysinleague/2
+968		pushboundvar	-2
+969		callp	isLabel/1
+970		returnp
+971		comment	concept_personterminatedbyorganization(-1,-2) :- concept_organizationterminatedperson(-1,-2)  #v:['A', 'B'].
+972	concept_personterminatedbyorganization/2	allocate	2	['B', 'A']
+973		initfreevar	-1	-2
+974		initfreevar	-2	-1
+975		fclear
+976		fpushstart	id	3
+977		fpushconst	concept_personterminatedbyorganization
+978		fpushconst	2
+979		fpushconst	975
+980		freport
+981		pushboundvar	-1
+982		pushboundvar	-2
+983		callp	concept_organizationterminatedperson/2
+984		returnp
+985		comment	concept_headquarteredin(-1,-2) :- concept_newspaperincity(-1,-2), isLabel(-2)  #v:['A', 'B'].
+986	concept_headquarteredin/2	allocate	2	['B', 'A']
+987		initfreevar	-1	-2
+988		initfreevar	-2	-1
+989		fclear
+990		fpushstart	id	3
+991		fpushconst	concept_headquarteredin
+992		fpushconst	2
+993		fpushconst	989
+994		freport
+995		pushboundvar	-1
+996		pushboundvar	-2
+997		callp	concept_newspaperincity/2
+998		pushboundvar	-2
+999		callp	isLabel/1
+1000		returnp
+1001		comment	concept_headquarteredin(-1,-2) :- fact_concept_headquarteredin(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1002	concept_headquarteredin/2	allocate	2	['B', 'A']
+1003		initfreevar	-1	-2
+1004		initfreevar	-2	-1
+1005		fclear
+1006		fpushstart	id	3
+1007		fpushconst	concept_headquarteredin
+1008		fpushconst	2
+1009		fpushconst	1005
+1010		freport
+1011		pushboundvar	-1
+1012		pushboundvar	-2
+1013		callp	fact_concept_headquarteredin/2
+1014		pushboundvar	-2
+1015		callp	isLabel/1
+1016		returnp
+1017		comment	concept_subpartof(-1,-2) :- concept_atlocation(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1018	concept_subpartof/2	allocate	2	['B', 'A']
+1019		initfreevar	-1	-2
+1020		initfreevar	-2	-1
+1021		fclear
+1022		fpushstart	id	3
+1023		fpushconst	concept_subpartof
+1024		fpushconst	2
+1025		fpushconst	1021
+1026		freport
+1027		pushboundvar	-1
+1028		pushboundvar	-2
+1029		callp	concept_atlocation/2
+1030		pushboundvar	-2
+1031		callp	isLabel/1
+1032		returnp
+1033		comment	concept_subpartof(-1,-2) :- concept_superpartof(-1,-2)  #v:['A', 'B'].
+1034	concept_subpartof/2	allocate	2	['B', 'A']
+1035		initfreevar	-1	-2
+1036		initfreevar	-2	-1
+1037		fclear
+1038		fpushstart	id	3
+1039		fpushconst	concept_subpartof
+1040		fpushconst	2
+1041		fpushconst	1037
+1042		freport
+1043		pushboundvar	-1
+1044		pushboundvar	-2
+1045		callp	concept_superpartof/2
+1046		returnp
+1047		comment	concept_subpartof(-1,-2) :- fact_concept_subpartof(-1,-2)  #v:['A', 'B'].
+1048	concept_subpartof/2	allocate	2	['B', 'A']
+1049		initfreevar	-1	-2
+1050		initfreevar	-2	-1
+1051		fclear
+1052		fpushstart	id	3
+1053		fpushconst	concept_subpartof
+1054		fpushconst	2
+1055		fpushconst	1051
+1056		freport
+1057		pushboundvar	-1
+1058		pushboundvar	-2
+1059		callp	fact_concept_subpartof/2
+1060		returnp
+1061		comment	concept_subpartof(-1,-2) :- fact_concept_subpartof(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1062	concept_subpartof/2	allocate	2	['B', 'A']
+1063		initfreevar	-1	-2
+1064		initfreevar	-2	-1
+1065		fclear
+1066		fpushstart	id	3
+1067		fpushconst	concept_subpartof
+1068		fpushconst	2
+1069		fpushconst	1065
+1070		freport
+1071		pushboundvar	-1
+1072		pushboundvar	-2
+1073		callp	fact_concept_subpartof/2
+1074		pushboundvar	-2
+1075		callp	isLabel/1
+1076		returnp
+1077		comment	concept_museumincity(-1,-2) :- concept_locatedat(-1,-3), concept_superpartof(-3,-4), concept_athleteplaysforteam(-4,-5), concept_teamplaysincity(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+1078	concept_museumincity/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+1079		initfreevar	-1	-2
+1080		initfreevar	-2	-1
+1081		fclear
+1082		fpushstart	id	3
+1083		fpushconst	concept_museumincity
+1084		fpushconst	2
+1085		fpushconst	1081
+1086		freport
+1087		pushboundvar	-1
+1088		pushfreevar	-3
+1089		callp	concept_locatedat/2
+1090		pushboundvar	-3
+1091		pushfreevar	-4
+1092		callp	concept_superpartof/2
+1093		pushboundvar	-4
+1094		pushfreevar	-5
+1095		callp	concept_athleteplaysforteam/2
+1096		pushboundvar	-5
+1097		pushboundvar	-2
+1098		callp	concept_teamplaysincity/2
+1099		pushboundvar	-2
+1100		callp	isLabel/1
+1101		returnp
+1102		comment	concept_museumincity(-1,-2) :- fact_concept_museumincity(-1,-2), isLabel(-2)  #v:['A', 'E'].
+1103	concept_museumincity/2	allocate	2	['E', 'A']
+1104		initfreevar	-1	-2
+1105		initfreevar	-2	-1
+1106		fclear
+1107		fpushstart	id	3
+1108		fpushconst	concept_museumincity
+1109		fpushconst	2
+1110		fpushconst	1106
+1111		freport
+1112		pushboundvar	-1
+1113		pushboundvar	-2
+1114		callp	fact_concept_museumincity/2
+1115		pushboundvar	-2
+1116		callp	isLabel/1
+1117		returnp
+1118		comment	concept_automakerproducesmodel(-1,-2) :- concept_acquiredby(-1,-3), concept_synonymfor(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+1119	concept_automakerproducesmodel/2	allocate	3	['B', 'C', 'A']
+1120		initfreevar	-1	-2
+1121		initfreevar	-2	-1
+1122		fclear
+1123		fpushstart	id	3
+1124		fpushconst	concept_automakerproducesmodel
+1125		fpushconst	2
+1126		fpushconst	1122
+1127		freport
+1128		pushboundvar	-1
+1129		pushfreevar	-3
+1130		callp	concept_acquiredby/2
+1131		pushboundvar	-3
+1132		pushboundvar	-2
+1133		callp	concept_synonymfor/2
+1134		pushboundvar	-2
+1135		callp	isLabel/1
+1136		returnp
+1137		comment	concept_automakerproducesmodel(-1,-2) :- fact_concept_automakerproducesmodel(-1,-2), isLabel(-2)  #v:['A', 'C'].
+1138	concept_automakerproducesmodel/2	allocate	2	['C', 'A']
+1139		initfreevar	-1	-2
+1140		initfreevar	-2	-1
+1141		fclear
+1142		fpushstart	id	3
+1143		fpushconst	concept_automakerproducesmodel
+1144		fpushconst	2
+1145		fpushconst	1141
+1146		freport
+1147		pushboundvar	-1
+1148		pushboundvar	-2
+1149		callp	fact_concept_automakerproducesmodel/2
+1150		pushboundvar	-2
+1151		callp	isLabel/1
+1152		returnp
+1153		comment	concept_superpartof(-1,-2) :- concept_subpartof(-1,-2)  #v:['A', 'B'].
+1154	concept_superpartof/2	allocate	2	['B', 'A']
+1155		initfreevar	-1	-2
+1156		initfreevar	-2	-1
+1157		fclear
+1158		fpushstart	id	3
+1159		fpushconst	concept_superpartof
+1160		fpushconst	2
+1161		fpushconst	1157
+1162		freport
+1163		pushboundvar	-1
+1164		pushboundvar	-2
+1165		callp	concept_subpartof/2
+1166		returnp
+1167		comment	concept_agriculturalproductincludingagriculturalproduct(-1,-2) :- concept_inverseofagriculturalproductincludingagriculturalproduct(-1,-2)  #v:['A', 'B'].
+1168	concept_agriculturalproductincludingagriculturalproduct/2	allocate	2	['B', 'A']
+1169		initfreevar	-1	-2
+1170		initfreevar	-2	-1
+1171		fclear
+1172		fpushstart	id	3
+1173		fpushconst	concept_agriculturalproductincludingagriculturalproduct
+1174		fpushconst	2
+1175		fpushconst	1171
+1176		freport
+1177		pushboundvar	-1
+1178		pushboundvar	-2
+1179		callp	concept_inverseofagriculturalproductincludingagriculturalproduct/2
+1180		returnp
+1181		comment	concept_televisionstationincity(-1,-2) :- concept_subpartoforganization(-1,-3), concept_companyeconomicsector(-3,-4), concept_relatedto(-4,-5), concept_hasofficeincity(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+1182	concept_televisionstationincity/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+1183		initfreevar	-1	-2
+1184		initfreevar	-2	-1
+1185		fclear
+1186		fpushstart	id	3
+1187		fpushconst	concept_televisionstationincity
+1188		fpushconst	2
+1189		fpushconst	1185
+1190		freport
+1191		pushboundvar	-1
+1192		pushfreevar	-3
+1193		callp	concept_subpartoforganization/2
+1194		pushboundvar	-3
+1195		pushfreevar	-4
+1196		callp	concept_companyeconomicsector/2
+1197		pushboundvar	-4
+1198		pushfreevar	-5
+1199		callp	concept_relatedto/2
+1200		pushboundvar	-5
+1201		pushboundvar	-2
+1202		callp	concept_hasofficeincity/2
+1203		pushboundvar	-2
+1204		callp	isLabel/1
+1205		returnp
+1206		comment	concept_televisionstationincity(-1,-2) :- fact_concept_televisionstationincity(-1,-2), isLabel(-2)  #v:['A', 'E'].
+1207	concept_televisionstationincity/2	allocate	2	['E', 'A']
+1208		initfreevar	-1	-2
+1209		initfreevar	-2	-1
+1210		fclear
+1211		fpushstart	id	3
+1212		fpushconst	concept_televisionstationincity
+1213		fpushconst	2
+1214		fpushconst	1210
+1215		freport
+1216		pushboundvar	-1
+1217		pushboundvar	-2
+1218		callp	fact_concept_televisionstationincity/2
+1219		pushboundvar	-2
+1220		callp	isLabel/1
+1221		returnp
+1222		comment	concept_agentinvolvedwithitem(-1,-2) :- fact_concept_agentinvolvedwithitem(-1,-2)  #v:['A', 'B'].
+1223	concept_agentinvolvedwithitem/2	allocate	2	['B', 'A']
+1224		initfreevar	-1	-2
+1225		initfreevar	-2	-1
+1226		fclear
+1227		fpushstart	id	3
+1228		fpushconst	concept_agentinvolvedwithitem
+1229		fpushconst	2
+1230		fpushconst	1226
+1231		freport
+1232		pushboundvar	-1
+1233		pushboundvar	-2
+1234		callp	fact_concept_agentinvolvedwithitem/2
+1235		returnp
+1236		comment	concept_agentinvolvedwithitem(-1,-2) :- concept_agentcompeteswithagent(-1,-3), concept_agentinvolvedwithitem(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+1237	concept_agentinvolvedwithitem/2	allocate	3	['B', 'C', 'A']
+1238		initfreevar	-1	-2
+1239		initfreevar	-2	-1
+1240		fclear
+1241		fpushstart	id	3
+1242		fpushconst	concept_agentinvolvedwithitem
+1243		fpushconst	2
+1244		fpushconst	1240
+1245		freport
+1246		pushboundvar	-1
+1247		pushfreevar	-3
+1248		callp	concept_agentcompeteswithagent/2
+1249		pushboundvar	-3
+1250		pushboundvar	-2
+1251		callp	concept_agentinvolvedwithitem/2
+1252		pushboundvar	-2
+1253		callp	isLabel/1
+1254		returnp
+1255		comment	concept_agentinvolvedwithitem(-1,-2) :- fact_concept_agentinvolvedwithitem(-1,-2), isLabel(-2)  #v:['A', 'C'].
+1256	concept_agentinvolvedwithitem/2	allocate	2	['C', 'A']
+1257		initfreevar	-1	-2
+1258		initfreevar	-2	-1
+1259		fclear
+1260		fpushstart	id	3
+1261		fpushconst	concept_agentinvolvedwithitem
+1262		fpushconst	2
+1263		fpushconst	1259
+1264		freport
+1265		pushboundvar	-1
+1266		pushboundvar	-2
+1267		callp	fact_concept_agentinvolvedwithitem/2
+1268		pushboundvar	-2
+1269		callp	isLabel/1
+1270		returnp
+1271		comment	concept_politicianrepresentslocation(-1,-2) :- concept_locationrepresentedbypolitician(-1,-2)  #v:['A', 'B'].
+1272	concept_politicianrepresentslocation/2	allocate	2	['B', 'A']
+1273		initfreevar	-1	-2
+1274		initfreevar	-2	-1
+1275		fclear
+1276		fpushstart	id	3
+1277		fpushconst	concept_politicianrepresentslocation
+1278		fpushconst	2
+1279		fpushconst	1275
+1280		freport
+1281		pushboundvar	-1
+1282		pushboundvar	-2
+1283		callp	concept_locationrepresentedbypolitician/2
+1284		returnp
+1285		comment	concept_politicianrepresentslocation(-1,-2) :- fact_concept_politicianrepresentslocation(-1,-2)  #v:['A', 'B'].
+1286	concept_politicianrepresentslocation/2	allocate	2	['B', 'A']
+1287		initfreevar	-1	-2
+1288		initfreevar	-2	-1
+1289		fclear
+1290		fpushstart	id	3
+1291		fpushconst	concept_politicianrepresentslocation
+1292		fpushconst	2
+1293		fpushconst	1289
+1294		freport
+1295		pushboundvar	-1
+1296		pushboundvar	-2
+1297		callp	fact_concept_politicianrepresentslocation/2
+1298		returnp
+1299		comment	concept_politicianrepresentslocation(-1,-2) :- concept_politicianholdsoffice(-1,-3), concept_officeheldbypolitician(-3,-4), concept_politicianrepresentslocation(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+1300	concept_politicianrepresentslocation/2	allocate	4	['C', 'B', 'D', 'A']
+1301		initfreevar	-1	-2
+1302		initfreevar	-2	-1
+1303		fclear
+1304		fpushstart	id	3
+1305		fpushconst	concept_politicianrepresentslocation
+1306		fpushconst	2
+1307		fpushconst	1303
+1308		freport
+1309		pushboundvar	-1
+1310		pushfreevar	-3
+1311		callp	concept_politicianholdsoffice/2
+1312		pushboundvar	-3
+1313		pushfreevar	-4
+1314		callp	concept_officeheldbypolitician/2
+1315		pushboundvar	-4
+1316		pushboundvar	-2
+1317		callp	concept_politicianrepresentslocation/2
+1318		pushboundvar	-2
+1319		callp	isLabel/1
+1320		returnp
+1321		comment	concept_politicianrepresentslocation(-1,-2) :- fact_concept_politicianrepresentslocation(-1,-2), isLabel(-2)  #v:['A', 'D'].
+1322	concept_politicianrepresentslocation/2	allocate	2	['D', 'A']
+1323		initfreevar	-1	-2
+1324		initfreevar	-2	-1
+1325		fclear
+1326		fpushstart	id	3
+1327		fpushconst	concept_politicianrepresentslocation
+1328		fpushconst	2
+1329		fpushconst	1325
+1330		freport
+1331		pushboundvar	-1
+1332		pushboundvar	-2
+1333		callp	fact_concept_politicianrepresentslocation/2
+1334		pushboundvar	-2
+1335		callp	isLabel/1
+1336		returnp
+1337		comment	concept_statelocatedingeopoliticallocation(-1,-2) :- concept_geopoliticallocationcontainsstate(-1,-2)  #v:['A', 'B'].
+1338	concept_statelocatedingeopoliticallocation/2	allocate	2	['B', 'A']
+1339		initfreevar	-1	-2
+1340		initfreevar	-2	-1
+1341		fclear
+1342		fpushstart	id	3
+1343		fpushconst	concept_statelocatedingeopoliticallocation
+1344		fpushconst	2
+1345		fpushconst	1341
+1346		freport
+1347		pushboundvar	-1
+1348		pushboundvar	-2
+1349		callp	concept_geopoliticallocationcontainsstate/2
+1350		returnp
+1351		comment	concept_statelocatedingeopoliticallocation(-1,-2) :- concept_locationofitemexistence(-1,-3), concept_itemexistsatlocation(-3,-4), concept_statelocatedincountry(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+1352	concept_statelocatedingeopoliticallocation/2	allocate	4	['C', 'B', 'D', 'A']
+1353		initfreevar	-1	-2
+1354		initfreevar	-2	-1
+1355		fclear
+1356		fpushstart	id	3
+1357		fpushconst	concept_statelocatedingeopoliticallocation
+1358		fpushconst	2
+1359		fpushconst	1355
+1360		freport
+1361		pushboundvar	-1
+1362		pushfreevar	-3
+1363		callp	concept_locationofitemexistence/2
+1364		pushboundvar	-3
+1365		pushfreevar	-4
+1366		callp	concept_itemexistsatlocation/2
+1367		pushboundvar	-4
+1368		pushboundvar	-2
+1369		callp	concept_statelocatedincountry/2
+1370		pushboundvar	-2
+1371		callp	isLabel/1
+1372		returnp
+1373		comment	concept_statelocatedingeopoliticallocation(-1,-2) :- fact_concept_statelocatedingeopoliticallocation(-1,-2), isLabel(-2)  #v:['A', 'D'].
+1374	concept_statelocatedingeopoliticallocation/2	allocate	2	['D', 'A']
+1375		initfreevar	-1	-2
+1376		initfreevar	-2	-1
+1377		fclear
+1378		fpushstart	id	3
+1379		fpushconst	concept_statelocatedingeopoliticallocation
+1380		fpushconst	2
+1381		fpushconst	1377
+1382		freport
+1383		pushboundvar	-1
+1384		pushboundvar	-2
+1385		callp	fact_concept_statelocatedingeopoliticallocation/2
+1386		pushboundvar	-2
+1387		callp	isLabel/1
+1388		returnp
+1389		comment	concept_buildinglocatedincity(-1,-2) :- concept_attractionofcity(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1390	concept_buildinglocatedincity/2	allocate	2	['B', 'A']
+1391		initfreevar	-1	-2
+1392		initfreevar	-2	-1
+1393		fclear
+1394		fpushstart	id	3
+1395		fpushconst	concept_buildinglocatedincity
+1396		fpushconst	2
+1397		fpushconst	1393
+1398		freport
+1399		pushboundvar	-1
+1400		pushboundvar	-2
+1401		callp	concept_attractionofcity/2
+1402		pushboundvar	-2
+1403		callp	isLabel/1
+1404		returnp
+1405		comment	concept_buildinglocatedincity(-1,-2) :- fact_concept_buildinglocatedincity(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1406	concept_buildinglocatedincity/2	allocate	2	['B', 'A']
+1407		initfreevar	-1	-2
+1408		initfreevar	-2	-1
+1409		fclear
+1410		fpushstart	id	3
+1411		fpushconst	concept_buildinglocatedincity
+1412		fpushconst	2
+1413		fpushconst	1409
+1414		freport
+1415		pushboundvar	-1
+1416		pushboundvar	-2
+1417		callp	fact_concept_buildinglocatedincity/2
+1418		pushboundvar	-2
+1419		callp	isLabel/1
+1420		returnp
+1421		comment	concept_countrystates(-1,-2) :- concept_statelocatedincountry(-1,-2)  #v:['A', 'B'].
+1422	concept_countrystates/2	allocate	2	['B', 'A']
+1423		initfreevar	-1	-2
+1424		initfreevar	-2	-1
+1425		fclear
+1426		fpushstart	id	3
+1427		fpushconst	concept_countrystates
+1428		fpushconst	2
+1429		fpushconst	1425
+1430		freport
+1431		pushboundvar	-1
+1432		pushboundvar	-2
+1433		callp	concept_statelocatedincountry/2
+1434		returnp
+1435		comment	concept_proxyfor(-1,-2) :- concept_proxyof(-1,-2)  #v:['A', 'B'].
+1436	concept_proxyfor/2	allocate	2	['B', 'A']
+1437		initfreevar	-1	-2
+1438		initfreevar	-2	-1
+1439		fclear
+1440		fpushstart	id	3
+1441		fpushconst	concept_proxyfor
+1442		fpushconst	2
+1443		fpushconst	1439
+1444		freport
+1445		pushboundvar	-1
+1446		pushboundvar	-2
+1447		callp	concept_proxyof/2
+1448		returnp
+1449		comment	concept_proxyfor(-1,-2) :- fact_concept_proxyfor(-1,-2)  #v:['A', 'B'].
+1450	concept_proxyfor/2	allocate	2	['B', 'A']
+1451		initfreevar	-1	-2
+1452		initfreevar	-2	-1
+1453		fclear
+1454		fpushstart	id	3
+1455		fpushconst	concept_proxyfor
+1456		fpushconst	2
+1457		fpushconst	1453
+1458		freport
+1459		pushboundvar	-1
+1460		pushboundvar	-2
+1461		callp	fact_concept_proxyfor/2
+1462		returnp
+1463		comment	concept_proxyfor(-1,-2) :- concept_subpartof(-1,-3), concept_superpartof(-3,-4), concept_mutualproxyfor(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+1464	concept_proxyfor/2	allocate	4	['C', 'B', 'D', 'A']
+1465		initfreevar	-1	-2
+1466		initfreevar	-2	-1
+1467		fclear
+1468		fpushstart	id	3
+1469		fpushconst	concept_proxyfor
+1470		fpushconst	2
+1471		fpushconst	1467
+1472		freport
+1473		pushboundvar	-1
+1474		pushfreevar	-3
+1475		callp	concept_subpartof/2
+1476		pushboundvar	-3
+1477		pushfreevar	-4
+1478		callp	concept_superpartof/2
+1479		pushboundvar	-4
+1480		pushboundvar	-2
+1481		callp	concept_mutualproxyfor/2
+1482		pushboundvar	-2
+1483		callp	isLabel/1
+1484		returnp
+1485		comment	concept_proxyfor(-1,-2) :- fact_concept_proxyfor(-1,-2), isLabel(-2)  #v:['A', 'D'].
+1486	concept_proxyfor/2	allocate	2	['D', 'A']
+1487		initfreevar	-1	-2
+1488		initfreevar	-2	-1
+1489		fclear
+1490		fpushstart	id	3
+1491		fpushconst	concept_proxyfor
+1492		fpushconst	2
+1493		fpushconst	1489
+1494		freport
+1495		pushboundvar	-1
+1496		pushboundvar	-2
+1497		callp	fact_concept_proxyfor/2
+1498		pushboundvar	-2
+1499		callp	isLabel/1
+1500		returnp
+1501		comment	concept_ceoof(-1,-2) :- concept_companyceo(-1,-2)  #v:['A', 'B'].
+1502	concept_ceoof/2	allocate	2	['B', 'A']
+1503		initfreevar	-1	-2
+1504		initfreevar	-2	-1
+1505		fclear
+1506		fpushstart	id	3
+1507		fpushconst	concept_ceoof
+1508		fpushconst	2
+1509		fpushconst	1505
+1510		freport
+1511		pushboundvar	-1
+1512		pushboundvar	-2
+1513		callp	concept_companyceo/2
+1514		returnp
+1515		comment	concept_ceoof(-1,-2) :- concept_personterminatedbyorganization(-1,-3), concept_companyceo(-3,-4), concept_personterminatedbyorganization(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+1516	concept_ceoof/2	allocate	4	['C', 'B', 'D', 'A']
+1517		initfreevar	-1	-2
+1518		initfreevar	-2	-1
+1519		fclear
+1520		fpushstart	id	3
+1521		fpushconst	concept_ceoof
+1522		fpushconst	2
+1523		fpushconst	1519
+1524		freport
+1525		pushboundvar	-1
+1526		pushfreevar	-3
+1527		callp	concept_personterminatedbyorganization/2
+1528		pushboundvar	-3
+1529		pushfreevar	-4
+1530		callp	concept_companyceo/2
+1531		pushboundvar	-4
+1532		pushboundvar	-2
+1533		callp	concept_personterminatedbyorganization/2
+1534		pushboundvar	-2
+1535		callp	isLabel/1
+1536		returnp
+1537		comment	concept_ceoof(-1,-2) :- fact_concept_ceoof(-1,-2), isLabel(-2)  #v:['A', 'D'].
+1538	concept_ceoof/2	allocate	2	['D', 'A']
+1539		initfreevar	-1	-2
+1540		initfreevar	-2	-1
+1541		fclear
+1542		fpushstart	id	3
+1543		fpushconst	concept_ceoof
+1544		fpushconst	2
+1545		fpushconst	1541
+1546		freport
+1547		pushboundvar	-1
+1548		pushboundvar	-2
+1549		callp	fact_concept_ceoof/2
+1550		pushboundvar	-2
+1551		callp	isLabel/1
+1552		returnp
+1553		comment	concept_sportusesstadium(-1,-2) :- fact_concept_sportusesstadium(-1,-2)  #v:['A', 'B'].
+1554	concept_sportusesstadium/2	allocate	2	['B', 'A']
+1555		initfreevar	-1	-2
+1556		initfreevar	-2	-1
+1557		fclear
+1558		fpushstart	id	3
+1559		fpushconst	concept_sportusesstadium
+1560		fpushconst	2
+1561		fpushconst	1557
+1562		freport
+1563		pushboundvar	-1
+1564		pushboundvar	-2
+1565		callp	fact_concept_sportusesstadium/2
+1566		returnp
+1567		comment	concept_sportusesstadium(-1,-2) :- concept_sporthassportsteamposition(-1,-3), concept_relatedto(-3,-4), concept_relatedto(-4,-5), concept_teamhomestadium(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+1568	concept_sportusesstadium/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+1569		initfreevar	-1	-2
+1570		initfreevar	-2	-1
+1571		fclear
+1572		fpushstart	id	3
+1573		fpushconst	concept_sportusesstadium
+1574		fpushconst	2
+1575		fpushconst	1571
+1576		freport
+1577		pushboundvar	-1
+1578		pushfreevar	-3
+1579		callp	concept_sporthassportsteamposition/2
+1580		pushboundvar	-3
+1581		pushfreevar	-4
+1582		callp	concept_relatedto/2
+1583		pushboundvar	-4
+1584		pushfreevar	-5
+1585		callp	concept_relatedto/2
+1586		pushboundvar	-5
+1587		pushboundvar	-2
+1588		callp	concept_teamhomestadium/2
+1589		pushboundvar	-2
+1590		callp	isLabel/1
+1591		returnp
+1592		comment	concept_sportusesstadium(-1,-2) :- fact_concept_sportusesstadium(-1,-2), isLabel(-2)  #v:['A', 'E'].
+1593	concept_sportusesstadium/2	allocate	2	['E', 'A']
+1594		initfreevar	-1	-2
+1595		initfreevar	-2	-1
+1596		fclear
+1597		fpushstart	id	3
+1598		fpushconst	concept_sportusesstadium
+1599		fpushconst	2
+1600		fpushconst	1596
+1601		freport
+1602		pushboundvar	-1
+1603		pushboundvar	-2
+1604		callp	fact_concept_sportusesstadium/2
+1605		pushboundvar	-2
+1606		callp	isLabel/1
+1607		returnp
+1608		comment	concept_agentcompeteswithagent(-1,-2) :- concept_animaltypehasanimal(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1609	concept_agentcompeteswithagent/2	allocate	2	['B', 'A']
+1610		initfreevar	-1	-2
+1611		initfreevar	-2	-1
+1612		fclear
+1613		fpushstart	id	3
+1614		fpushconst	concept_agentcompeteswithagent
+1615		fpushconst	2
+1616		fpushconst	1612
+1617		freport
+1618		pushboundvar	-1
+1619		pushboundvar	-2
+1620		callp	concept_animaltypehasanimal/2
+1621		pushboundvar	-2
+1622		callp	isLabel/1
+1623		returnp
+1624		comment	concept_agentcompeteswithagent(-1,-2) :- fact_concept_agentcompeteswithagent(-1,-2)  #v:['A', 'B'].
+1625	concept_agentcompeteswithagent/2	allocate	2	['B', 'A']
+1626		initfreevar	-1	-2
+1627		initfreevar	-2	-1
+1628		fclear
+1629		fpushstart	id	3
+1630		fpushconst	concept_agentcompeteswithagent
+1631		fpushconst	2
+1632		fpushconst	1628
+1633		freport
+1634		pushboundvar	-1
+1635		pushboundvar	-2
+1636		callp	fact_concept_agentcompeteswithagent/2
+1637		returnp
+1638		comment	concept_agentcompeteswithagent(-1,-2) :- fact_concept_agentcompeteswithagent(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1639	concept_agentcompeteswithagent/2	allocate	2	['B', 'A']
+1640		initfreevar	-1	-2
+1641		initfreevar	-2	-1
+1642		fclear
+1643		fpushstart	id	3
+1644		fpushconst	concept_agentcompeteswithagent
+1645		fpushconst	2
+1646		fpushconst	1642
+1647		freport
+1648		pushboundvar	-1
+1649		pushboundvar	-2
+1650		callp	fact_concept_agentcompeteswithagent/2
+1651		pushboundvar	-2
+1652		callp	isLabel/1
+1653		returnp
+1654		comment	concept_organizationterminatedperson(-1,-2) :- concept_organizationhiredperson(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1655	concept_organizationterminatedperson/2	allocate	2	['B', 'A']
+1656		initfreevar	-1	-2
+1657		initfreevar	-2	-1
+1658		fclear
+1659		fpushstart	id	3
+1660		fpushconst	concept_organizationterminatedperson
+1661		fpushconst	2
+1662		fpushconst	1658
+1663		freport
+1664		pushboundvar	-1
+1665		pushboundvar	-2
+1666		callp	concept_organizationhiredperson/2
+1667		pushboundvar	-2
+1668		callp	isLabel/1
+1669		returnp
+1670		comment	concept_organizationterminatedperson(-1,-2) :- concept_personterminatedbyorganization(-1,-2)  #v:['A', 'B'].
+1671	concept_organizationterminatedperson/2	allocate	2	['B', 'A']
+1672		initfreevar	-1	-2
+1673		initfreevar	-2	-1
+1674		fclear
+1675		fpushstart	id	3
+1676		fpushconst	concept_organizationterminatedperson
+1677		fpushconst	2
+1678		fpushconst	1674
+1679		freport
+1680		pushboundvar	-1
+1681		pushboundvar	-2
+1682		callp	concept_personterminatedbyorganization/2
+1683		returnp
+1684		comment	concept_organizationterminatedperson(-1,-2) :- fact_concept_organizationterminatedperson(-1,-2)  #v:['A', 'B'].
+1685	concept_organizationterminatedperson/2	allocate	2	['B', 'A']
+1686		initfreevar	-1	-2
+1687		initfreevar	-2	-1
+1688		fclear
+1689		fpushstart	id	3
+1690		fpushconst	concept_organizationterminatedperson
+1691		fpushconst	2
+1692		fpushconst	1688
+1693		freport
+1694		pushboundvar	-1
+1695		pushboundvar	-2
+1696		callp	fact_concept_organizationterminatedperson/2
+1697		returnp
+1698		comment	concept_organizationterminatedperson(-1,-2) :- fact_concept_organizationterminatedperson(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1699	concept_organizationterminatedperson/2	allocate	2	['B', 'A']
+1700		initfreevar	-1	-2
+1701		initfreevar	-2	-1
+1702		fclear
+1703		fpushstart	id	3
+1704		fpushconst	concept_organizationterminatedperson
+1705		fpushconst	2
+1706		fpushconst	1702
+1707		freport
+1708		pushboundvar	-1
+1709		pushboundvar	-2
+1710		callp	fact_concept_organizationterminatedperson/2
+1711		pushboundvar	-2
+1712		callp	isLabel/1
+1713		returnp
+1714		comment	concept_automobilemakercardealersinstateorprovince(-1,-2) :- concept_inverseofautomobilemakercardealersinstateorprovince(-1,-2)  #v:['A', 'B'].
+1715	concept_automobilemakercardealersinstateorprovince/2	allocate	2	['B', 'A']
+1716		initfreevar	-1	-2
+1717		initfreevar	-2	-1
+1718		fclear
+1719		fpushstart	id	3
+1720		fpushconst	concept_automobilemakercardealersinstateorprovince
+1721		fpushconst	2
+1722		fpushconst	1718
+1723		freport
+1724		pushboundvar	-1
+1725		pushboundvar	-2
+1726		callp	concept_inverseofautomobilemakercardealersinstateorprovince/2
+1727		returnp
+1728		comment	concept_automobilemakercardealersinstateorprovince(-1,-2) :- fact_concept_automobilemakercardealersinstateorprovince(-1,-2)  #v:['A', 'B'].
+1729	concept_automobilemakercardealersinstateorprovince/2	allocate	2	['B', 'A']
+1730		initfreevar	-1	-2
+1731		initfreevar	-2	-1
+1732		fclear
+1733		fpushstart	id	3
+1734		fpushconst	concept_automobilemakercardealersinstateorprovince
+1735		fpushconst	2
+1736		fpushconst	1732
+1737		freport
+1738		pushboundvar	-1
+1739		pushboundvar	-2
+1740		callp	fact_concept_automobilemakercardealersinstateorprovince/2
+1741		returnp
+1742		comment	concept_automobilemakercardealersinstateorprovince(-1,-2) :- concept_automobilemakerdealersincountry(-1,-3), concept_inverseofautomobilemakerdealersincountry(-3,-4), concept_automobilemakercardealersinstateorprovince(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+1743	concept_automobilemakercardealersinstateorprovince/2	allocate	4	['C', 'B', 'D', 'A']
+1744		initfreevar	-1	-2
+1745		initfreevar	-2	-1
+1746		fclear
+1747		fpushstart	id	3
+1748		fpushconst	concept_automobilemakercardealersinstateorprovince
+1749		fpushconst	2
+1750		fpushconst	1746
+1751		freport
+1752		pushboundvar	-1
+1753		pushfreevar	-3
+1754		callp	concept_automobilemakerdealersincountry/2
+1755		pushboundvar	-3
+1756		pushfreevar	-4
+1757		callp	concept_inverseofautomobilemakerdealersincountry/2
+1758		pushboundvar	-4
+1759		pushboundvar	-2
+1760		callp	concept_automobilemakercardealersinstateorprovince/2
+1761		pushboundvar	-2
+1762		callp	isLabel/1
+1763		returnp
+1764		comment	concept_automobilemakercardealersinstateorprovince(-1,-2) :- fact_concept_automobilemakercardealersinstateorprovince(-1,-2), isLabel(-2)  #v:['A', 'D'].
+1765	concept_automobilemakercardealersinstateorprovince/2	allocate	2	['D', 'A']
+1766		initfreevar	-1	-2
+1767		initfreevar	-2	-1
+1768		fclear
+1769		fpushstart	id	3
+1770		fpushconst	concept_automobilemakercardealersinstateorprovince
+1771		fpushconst	2
+1772		fpushconst	1768
+1773		freport
+1774		pushboundvar	-1
+1775		pushboundvar	-2
+1776		callp	fact_concept_automobilemakercardealersinstateorprovince/2
+1777		pushboundvar	-2
+1778		callp	isLabel/1
+1779		returnp
+1780		comment	concept_players(-1,-2) :- concept_athleteplayssport(-1,-2)  #v:['A', 'B'].
+1781	concept_players/2	allocate	2	['B', 'A']
+1782		initfreevar	-1	-2
+1783		initfreevar	-2	-1
+1784		fclear
+1785		fpushstart	id	3
+1786		fpushconst	concept_players
+1787		fpushconst	2
+1788		fpushconst	1784
+1789		freport
+1790		pushboundvar	-1
+1791		pushboundvar	-2
+1792		callp	concept_athleteplayssport/2
+1793		returnp
+1794		comment	concept_relatedto(-1,-2) :- concept_relatedto(-1,-2)  #v:['A', 'B'].
+1795	concept_relatedto/2	allocate	2	['B', 'A']
+1796		initfreevar	-1	-2
+1797		initfreevar	-2	-1
+1798		fclear
+1799		fpushstart	id	3
+1800		fpushconst	concept_relatedto
+1801		fpushconst	2
+1802		fpushconst	1798
+1803		freport
+1804		pushboundvar	-1
+1805		pushboundvar	-2
+1806		callp	concept_relatedto/2
+1807		returnp
+1808		comment	concept_productproducedincountry(-1,-2) :- concept_countryproducesproduct(-1,-2)  #v:['A', 'B'].
+1809	concept_productproducedincountry/2	allocate	2	['B', 'A']
+1810		initfreevar	-1	-2
+1811		initfreevar	-2	-1
+1812		fclear
+1813		fpushstart	id	3
+1814		fpushconst	concept_productproducedincountry
+1815		fpushconst	2
+1816		fpushconst	1812
+1817		freport
+1818		pushboundvar	-1
+1819		pushboundvar	-2
+1820		callp	concept_countryproducesproduct/2
+1821		returnp
+1822		comment	concept_countrylocatedingeopoliticallocation(-1,-2) :- concept_geopoliticallocationcontainsstate(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1823	concept_countrylocatedingeopoliticallocation/2	allocate	2	['B', 'A']
+1824		initfreevar	-1	-2
+1825		initfreevar	-2	-1
+1826		fclear
+1827		fpushstart	id	3
+1828		fpushconst	concept_countrylocatedingeopoliticallocation
+1829		fpushconst	2
+1830		fpushconst	1826
+1831		freport
+1832		pushboundvar	-1
+1833		pushboundvar	-2
+1834		callp	concept_geopoliticallocationcontainsstate/2
+1835		pushboundvar	-2
+1836		callp	isLabel/1
+1837		returnp
+1838		comment	concept_countrylocatedingeopoliticallocation(-1,-2) :- fact_concept_countrylocatedingeopoliticallocation(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1839	concept_countrylocatedingeopoliticallocation/2	allocate	2	['B', 'A']
+1840		initfreevar	-1	-2
+1841		initfreevar	-2	-1
+1842		fclear
+1843		fpushstart	id	3
+1844		fpushconst	concept_countrylocatedingeopoliticallocation
+1845		fpushconst	2
+1846		fpushconst	1842
+1847		freport
+1848		pushboundvar	-1
+1849		pushboundvar	-2
+1850		callp	fact_concept_countrylocatedingeopoliticallocation/2
+1851		pushboundvar	-2
+1852		callp	isLabel/1
+1853		returnp
+1854		comment	concept_agentcollaborateswithagent(-1,-2) :- concept_controlledbyagent(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1855	concept_agentcollaborateswithagent/2	allocate	2	['B', 'A']
+1856		initfreevar	-1	-2
+1857		initfreevar	-2	-1
+1858		fclear
+1859		fpushstart	id	3
+1860		fpushconst	concept_agentcollaborateswithagent
+1861		fpushconst	2
+1862		fpushconst	1858
+1863		freport
+1864		pushboundvar	-1
+1865		pushboundvar	-2
+1866		callp	concept_controlledbyagent/2
+1867		pushboundvar	-2
+1868		callp	isLabel/1
+1869		returnp
+1870		comment	concept_agentcollaborateswithagent(-1,-2) :- fact_concept_agentcollaborateswithagent(-1,-2)  #v:['A', 'B'].
+1871	concept_agentcollaborateswithagent/2	allocate	2	['B', 'A']
+1872		initfreevar	-1	-2
+1873		initfreevar	-2	-1
+1874		fclear
+1875		fpushstart	id	3
+1876		fpushconst	concept_agentcollaborateswithagent
+1877		fpushconst	2
+1878		fpushconst	1874
+1879		freport
+1880		pushboundvar	-1
+1881		pushboundvar	-2
+1882		callp	fact_concept_agentcollaborateswithagent/2
+1883		returnp
+1884		comment	concept_agentcollaborateswithagent(-1,-2) :- fact_concept_agentcollaborateswithagent(-1,-2), isLabel(-2)  #v:['A', 'B'].
+1885	concept_agentcollaborateswithagent/2	allocate	2	['B', 'A']
+1886		initfreevar	-1	-2
+1887		initfreevar	-2	-1
+1888		fclear
+1889		fpushstart	id	3
+1890		fpushconst	concept_agentcollaborateswithagent
+1891		fpushconst	2
+1892		fpushconst	1888
+1893		freport
+1894		pushboundvar	-1
+1895		pushboundvar	-2
+1896		callp	fact_concept_agentcollaborateswithagent/2
+1897		pushboundvar	-2
+1898		callp	isLabel/1
+1899		returnp
+1900		comment	concept_personleadsgeopoliticalorganization(-1,-2) :- concept_politicianrepresentslocation(-1,-3), concept_proxyof(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+1901	concept_personleadsgeopoliticalorganization/2	allocate	3	['B', 'C', 'A']
+1902		initfreevar	-1	-2
+1903		initfreevar	-2	-1
+1904		fclear
+1905		fpushstart	id	3
+1906		fpushconst	concept_personleadsgeopoliticalorganization
+1907		fpushconst	2
+1908		fpushconst	1904
+1909		freport
+1910		pushboundvar	-1
+1911		pushfreevar	-3
+1912		callp	concept_politicianrepresentslocation/2
+1913		pushboundvar	-3
+1914		pushboundvar	-2
+1915		callp	concept_proxyof/2
+1916		pushboundvar	-2
+1917		callp	isLabel/1
+1918		returnp
+1919		comment	concept_personleadsgeopoliticalorganization(-1,-2) :- fact_concept_personleadsgeopoliticalorganization(-1,-2), isLabel(-2)  #v:['A', 'C'].
+1920	concept_personleadsgeopoliticalorganization/2	allocate	2	['C', 'A']
+1921		initfreevar	-1	-2
+1922		initfreevar	-2	-1
+1923		fclear
+1924		fpushstart	id	3
+1925		fpushconst	concept_personleadsgeopoliticalorganization
+1926		fpushconst	2
+1927		fpushconst	1923
+1928		freport
+1929		pushboundvar	-1
+1930		pushboundvar	-2
+1931		callp	fact_concept_personleadsgeopoliticalorganization/2
+1932		pushboundvar	-2
+1933		callp	isLabel/1
+1934		returnp
+1935		comment	concept_itemfoundinroom(-1,-2) :- concept_roomcancontainitem(-1,-2)  #v:['A', 'B'].
+1936	concept_itemfoundinroom/2	allocate	2	['B', 'A']
+1937		initfreevar	-1	-2
+1938		initfreevar	-2	-1
+1939		fclear
+1940		fpushstart	id	3
+1941		fpushconst	concept_itemfoundinroom
+1942		fpushconst	2
+1943		fpushconst	1939
+1944		freport
+1945		pushboundvar	-1
+1946		pushboundvar	-2
+1947		callp	concept_roomcancontainitem/2
+1948		returnp
+1949		comment	concept_mutualproxyfor(-1,-2) :- fact_concept_mutualproxyfor(-1,-2)  #v:['A', 'B'].
+1950	concept_mutualproxyfor/2	allocate	2	['B', 'A']
+1951		initfreevar	-1	-2
+1952		initfreevar	-2	-1
+1953		fclear
+1954		fpushstart	id	3
+1955		fpushconst	concept_mutualproxyfor
+1956		fpushconst	2
+1957		fpushconst	1953
+1958		freport
+1959		pushboundvar	-1
+1960		pushboundvar	-2
+1961		callp	fact_concept_mutualproxyfor/2
+1962		returnp
+1963		comment	concept_mutualproxyfor(-1,-2) :- concept_subpartof(-1,-3), concept_mutualproxyfor(-3,-4), concept_mutualproxyfor(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+1964	concept_mutualproxyfor/2	allocate	4	['C', 'B', 'D', 'A']
+1965		initfreevar	-1	-2
+1966		initfreevar	-2	-1
+1967		fclear
+1968		fpushstart	id	3
+1969		fpushconst	concept_mutualproxyfor
+1970		fpushconst	2
+1971		fpushconst	1967
+1972		freport
+1973		pushboundvar	-1
+1974		pushfreevar	-3
+1975		callp	concept_subpartof/2
+1976		pushboundvar	-3
+1977		pushfreevar	-4
+1978		callp	concept_mutualproxyfor/2
+1979		pushboundvar	-4
+1980		pushboundvar	-2
+1981		callp	concept_mutualproxyfor/2
+1982		pushboundvar	-2
+1983		callp	isLabel/1
+1984		returnp
+1985		comment	concept_mutualproxyfor(-1,-2) :- fact_concept_mutualproxyfor(-1,-2), isLabel(-2)  #v:['A', 'D'].
+1986	concept_mutualproxyfor/2	allocate	2	['D', 'A']
+1987		initfreevar	-1	-2
+1988		initfreevar	-2	-1
+1989		fclear
+1990		fpushstart	id	3
+1991		fpushconst	concept_mutualproxyfor
+1992		fpushconst	2
+1993		fpushconst	1989
+1994		freport
+1995		pushboundvar	-1
+1996		pushboundvar	-2
+1997		callp	fact_concept_mutualproxyfor/2
+1998		pushboundvar	-2
+1999		callp	isLabel/1
+2000		returnp
+2001		comment	concept_agentcontrols(-1,-2) :- concept_controlledbyagent(-1,-2)  #v:['A', 'B'].
+2002	concept_agentcontrols/2	allocate	2	['B', 'A']
+2003		initfreevar	-1	-2
+2004		initfreevar	-2	-1
+2005		fclear
+2006		fpushstart	id	3
+2007		fpushconst	concept_agentcontrols
+2008		fpushconst	2
+2009		fpushconst	2005
+2010		freport
+2011		pushboundvar	-1
+2012		pushboundvar	-2
+2013		callp	concept_controlledbyagent/2
+2014		returnp
+2015		comment	concept_agentcontrols(-1,-2) :- concept_superpartof(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2016	concept_agentcontrols/2	allocate	2	['B', 'A']
+2017		initfreevar	-1	-2
+2018		initfreevar	-2	-1
+2019		fclear
+2020		fpushstart	id	3
+2021		fpushconst	concept_agentcontrols
+2022		fpushconst	2
+2023		fpushconst	2019
+2024		freport
+2025		pushboundvar	-1
+2026		pushboundvar	-2
+2027		callp	concept_superpartof/2
+2028		pushboundvar	-2
+2029		callp	isLabel/1
+2030		returnp
+2031		comment	concept_agentcontrols(-1,-2) :- fact_concept_agentcontrols(-1,-2)  #v:['A', 'B'].
+2032	concept_agentcontrols/2	allocate	2	['B', 'A']
+2033		initfreevar	-1	-2
+2034		initfreevar	-2	-1
+2035		fclear
+2036		fpushstart	id	3
+2037		fpushconst	concept_agentcontrols
+2038		fpushconst	2
+2039		fpushconst	2035
+2040		freport
+2041		pushboundvar	-1
+2042		pushboundvar	-2
+2043		callp	fact_concept_agentcontrols/2
+2044		returnp
+2045		comment	concept_agentcontrols(-1,-2) :- fact_concept_agentcontrols(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2046	concept_agentcontrols/2	allocate	2	['B', 'A']
+2047		initfreevar	-1	-2
+2048		initfreevar	-2	-1
+2049		fclear
+2050		fpushstart	id	3
+2051		fpushconst	concept_agentcontrols
+2052		fpushconst	2
+2053		fpushconst	2049
+2054		freport
+2055		pushboundvar	-1
+2056		pushboundvar	-2
+2057		callp	fact_concept_agentcontrols/2
+2058		pushboundvar	-2
+2059		callp	isLabel/1
+2060		returnp
+2061		comment	concept_organizationhiredperson(-1,-2) :- concept_controlledbyagent(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2062	concept_organizationhiredperson/2	allocate	2	['B', 'A']
+2063		initfreevar	-1	-2
+2064		initfreevar	-2	-1
+2065		fclear
+2066		fpushstart	id	3
+2067		fpushconst	concept_organizationhiredperson
+2068		fpushconst	2
+2069		fpushconst	2065
+2070		freport
+2071		pushboundvar	-1
+2072		pushboundvar	-2
+2073		callp	concept_controlledbyagent/2
+2074		pushboundvar	-2
+2075		callp	isLabel/1
+2076		returnp
+2077		comment	concept_organizationhiredperson(-1,-2) :- fact_concept_organizationhiredperson(-1,-2)  #v:['A', 'B'].
+2078	concept_organizationhiredperson/2	allocate	2	['B', 'A']
+2079		initfreevar	-1	-2
+2080		initfreevar	-2	-1
+2081		fclear
+2082		fpushstart	id	3
+2083		fpushconst	concept_organizationhiredperson
+2084		fpushconst	2
+2085		fpushconst	2081
+2086		freport
+2087		pushboundvar	-1
+2088		pushboundvar	-2
+2089		callp	fact_concept_organizationhiredperson/2
+2090		returnp
+2091		comment	concept_organizationhiredperson(-1,-2) :- fact_concept_organizationhiredperson(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2092	concept_organizationhiredperson/2	allocate	2	['B', 'A']
+2093		initfreevar	-1	-2
+2094		initfreevar	-2	-1
+2095		fclear
+2096		fpushstart	id	3
+2097		fpushconst	concept_organizationhiredperson
+2098		fpushconst	2
+2099		fpushconst	2095
+2100		freport
+2101		pushboundvar	-1
+2102		pushboundvar	-2
+2103		callp	fact_concept_organizationhiredperson/2
+2104		pushboundvar	-2
+2105		callp	isLabel/1
+2106		returnp
+2107		comment	concept_inverseofagriculturalproductcookedwithagricultureproduct(-1,-2) :- concept_agriculturalproductcookedwithagriculturalproduct(-1,-2)  #v:['A', 'B'].
+2108	concept_inverseofagriculturalproductcookedwithagricultureproduct/2	allocate	2	['B', 'A']
+2109		initfreevar	-1	-2
+2110		initfreevar	-2	-1
+2111		fclear
+2112		fpushstart	id	3
+2113		fpushconst	concept_inverseofagriculturalproductcookedwithagricultureproduct
+2114		fpushconst	2
+2115		fpushconst	2111
+2116		freport
+2117		pushboundvar	-1
+2118		pushboundvar	-2
+2119		callp	concept_agriculturalproductcookedwithagriculturalproduct/2
+2120		returnp
+2121		comment	concept_inverseofweaponmadeincountry(-1,-2) :- concept_weaponmadeincountry(-1,-2)  #v:['A', 'B'].
+2122	concept_inverseofweaponmadeincountry/2	allocate	2	['B', 'A']
+2123		initfreevar	-1	-2
+2124		initfreevar	-2	-1
+2125		fclear
+2126		fpushstart	id	3
+2127		fpushconst	concept_inverseofweaponmadeincountry
+2128		fpushconst	2
+2129		fpushconst	2125
+2130		freport
+2131		pushboundvar	-1
+2132		pushboundvar	-2
+2133		callp	concept_weaponmadeincountry/2
+2134		returnp
+2135		comment	concept_sportsteampositionforsport(-1,-2) :- concept_sporthassportsteamposition(-1,-2)  #v:['A', 'B'].
+2136	concept_sportsteampositionforsport/2	allocate	2	['B', 'A']
+2137		initfreevar	-1	-2
+2138		initfreevar	-2	-1
+2139		fclear
+2140		fpushstart	id	3
+2141		fpushconst	concept_sportsteampositionforsport
+2142		fpushconst	2
+2143		fpushconst	2139
+2144		freport
+2145		pushboundvar	-1
+2146		pushboundvar	-2
+2147		callp	concept_sporthassportsteamposition/2
+2148		returnp
+2149		comment	concept_athleteplaysforteam(-1,-2) :- concept_teammember(-1,-2)  #v:['A', 'B'].
+2150	concept_athleteplaysforteam/2	allocate	2	['B', 'A']
+2151		initfreevar	-1	-2
+2152		initfreevar	-2	-1
+2153		fclear
+2154		fpushstart	id	3
+2155		fpushconst	concept_athleteplaysforteam
+2156		fpushconst	2
+2157		fpushconst	2153
+2158		freport
+2159		pushboundvar	-1
+2160		pushboundvar	-2
+2161		callp	concept_teammember/2
+2162		returnp
+2163		comment	concept_athleteplaysforteam(-1,-2) :- fact_concept_athleteplaysforteam(-1,-2)  #v:['A', 'B'].
+2164	concept_athleteplaysforteam/2	allocate	2	['B', 'A']
+2165		initfreevar	-1	-2
+2166		initfreevar	-2	-1
+2167		fclear
+2168		fpushstart	id	3
+2169		fpushconst	concept_athleteplaysforteam
+2170		fpushconst	2
+2171		fpushconst	2167
+2172		freport
+2173		pushboundvar	-1
+2174		pushboundvar	-2
+2175		callp	fact_concept_athleteplaysforteam/2
+2176		returnp
+2177		comment	concept_athleteplaysforteam(-1,-2) :- concept_athleteplayssport(-1,-3), concept_sportteam(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+2178	concept_athleteplaysforteam/2	allocate	3	['B', 'C', 'A']
+2179		initfreevar	-1	-2
+2180		initfreevar	-2	-1
+2181		fclear
+2182		fpushstart	id	3
+2183		fpushconst	concept_athleteplaysforteam
+2184		fpushconst	2
+2185		fpushconst	2181
+2186		freport
+2187		pushboundvar	-1
+2188		pushfreevar	-3
+2189		callp	concept_athleteplayssport/2
+2190		pushboundvar	-3
+2191		pushboundvar	-2
+2192		callp	concept_sportteam/2
+2193		pushboundvar	-2
+2194		callp	isLabel/1
+2195		returnp
+2196		comment	concept_athleteplaysforteam(-1,-2) :- fact_concept_athleteplaysforteam(-1,-2), isLabel(-2)  #v:['A', 'C'].
+2197	concept_athleteplaysforteam/2	allocate	2	['C', 'A']
+2198		initfreevar	-1	-2
+2199		initfreevar	-2	-1
+2200		fclear
+2201		fpushstart	id	3
+2202		fpushconst	concept_athleteplaysforteam
+2203		fpushconst	2
+2204		fpushconst	2200
+2205		freport
+2206		pushboundvar	-1
+2207		pushboundvar	-2
+2208		callp	fact_concept_athleteplaysforteam/2
+2209		pushboundvar	-2
+2210		callp	isLabel/1
+2211		returnp
+2212		comment	concept_ownedbyagent(-1,-2) :- concept_agentowns(-1,-2)  #v:['A', 'B'].
+2213	concept_ownedbyagent/2	allocate	2	['B', 'A']
+2214		initfreevar	-1	-2
+2215		initfreevar	-2	-1
+2216		fclear
+2217		fpushstart	id	3
+2218		fpushconst	concept_ownedbyagent
+2219		fpushconst	2
+2220		fpushconst	2216
+2221		freport
+2222		pushboundvar	-1
+2223		pushboundvar	-2
+2224		callp	concept_agentowns/2
+2225		returnp
+2226		comment	concept_organizationdissolvedatdate(-1,-2) :- concept_dateoforganzationdissolution(-1,-2)  #v:['A', 'B'].
+2227	concept_organizationdissolvedatdate/2	allocate	2	['B', 'A']
+2228		initfreevar	-1	-2
+2229		initfreevar	-2	-1
+2230		fclear
+2231		fpushstart	id	3
+2232		fpushconst	concept_organizationdissolvedatdate
+2233		fpushconst	2
+2234		fpushconst	2230
+2235		freport
+2236		pushboundvar	-1
+2237		pushboundvar	-2
+2238		callp	concept_dateoforganzationdissolution/2
+2239		returnp
+2240		comment	concept_automobilemakerdealersincountry(-1,-2) :- concept_inverseofautomobilemakerdealersincountry(-1,-2)  #v:['A', 'B'].
+2241	concept_automobilemakerdealersincountry/2	allocate	2	['B', 'A']
+2242		initfreevar	-1	-2
+2243		initfreevar	-2	-1
+2244		fclear
+2245		fpushstart	id	3
+2246		fpushconst	concept_automobilemakerdealersincountry
+2247		fpushconst	2
+2248		fpushconst	2244
+2249		freport
+2250		pushboundvar	-1
+2251		pushboundvar	-2
+2252		callp	concept_inverseofautomobilemakerdealersincountry/2
+2253		returnp
+2254		comment	concept_automobilemakerdealersincountry(-1,-2) :- fact_concept_automobilemakerdealersincountry(-1,-2)  #v:['A', 'B'].
+2255	concept_automobilemakerdealersincountry/2	allocate	2	['B', 'A']
+2256		initfreevar	-1	-2
+2257		initfreevar	-2	-1
+2258		fclear
+2259		fpushstart	id	3
+2260		fpushconst	concept_automobilemakerdealersincountry
+2261		fpushconst	2
+2262		fpushconst	2258
+2263		freport
+2264		pushboundvar	-1
+2265		pushboundvar	-2
+2266		callp	fact_concept_automobilemakerdealersincountry/2
+2267		returnp
+2268		comment	concept_automobilemakerdealersincountry(-1,-2) :- concept_automobilemakercardealersinstateorprovince(-1,-3), concept_inverseofautomobilemakercardealersinstateorprovince(-3,-4), concept_automobilemakerdealersincountry(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+2269	concept_automobilemakerdealersincountry/2	allocate	4	['C', 'B', 'D', 'A']
+2270		initfreevar	-1	-2
+2271		initfreevar	-2	-1
+2272		fclear
+2273		fpushstart	id	3
+2274		fpushconst	concept_automobilemakerdealersincountry
+2275		fpushconst	2
+2276		fpushconst	2272
+2277		freport
+2278		pushboundvar	-1
+2279		pushfreevar	-3
+2280		callp	concept_automobilemakercardealersinstateorprovince/2
+2281		pushboundvar	-3
+2282		pushfreevar	-4
+2283		callp	concept_inverseofautomobilemakercardealersinstateorprovince/2
+2284		pushboundvar	-4
+2285		pushboundvar	-2
+2286		callp	concept_automobilemakerdealersincountry/2
+2287		pushboundvar	-2
+2288		callp	isLabel/1
+2289		returnp
+2290		comment	concept_automobilemakerdealersincountry(-1,-2) :- fact_concept_automobilemakerdealersincountry(-1,-2), isLabel(-2)  #v:['A', 'D'].
+2291	concept_automobilemakerdealersincountry/2	allocate	2	['D', 'A']
+2292		initfreevar	-1	-2
+2293		initfreevar	-2	-1
+2294		fclear
+2295		fpushstart	id	3
+2296		fpushconst	concept_automobilemakerdealersincountry
+2297		fpushconst	2
+2298		fpushconst	2294
+2299		freport
+2300		pushboundvar	-1
+2301		pushboundvar	-2
+2302		callp	fact_concept_automobilemakerdealersincountry/2
+2303		pushboundvar	-2
+2304		callp	isLabel/1
+2305		returnp
+2306		comment	concept_animaltypehasanimal(-1,-2) :- concept_animalistypeofanimal(-1,-2)  #v:['A', 'B'].
+2307	concept_animaltypehasanimal/2	allocate	2	['B', 'A']
+2308		initfreevar	-1	-2
+2309		initfreevar	-2	-1
+2310		fclear
+2311		fpushstart	id	3
+2312		fpushconst	concept_animaltypehasanimal
+2313		fpushconst	2
+2314		fpushconst	2310
+2315		freport
+2316		pushboundvar	-1
+2317		pushboundvar	-2
+2318		callp	concept_animalistypeofanimal/2
+2319		returnp
+2320		comment	concept_subpartoforganization(-1,-2) :- concept_agentcontrols(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2321	concept_subpartoforganization/2	allocate	2	['B', 'A']
+2322		initfreevar	-1	-2
+2323		initfreevar	-2	-1
+2324		fclear
+2325		fpushstart	id	3
+2326		fpushconst	concept_subpartoforganization
+2327		fpushconst	2
+2328		fpushconst	2324
+2329		freport
+2330		pushboundvar	-1
+2331		pushboundvar	-2
+2332		callp	concept_agentcontrols/2
+2333		pushboundvar	-2
+2334		callp	isLabel/1
+2335		returnp
+2336		comment	concept_subpartoforganization(-1,-2) :- fact_concept_subpartoforganization(-1,-2)  #v:['A', 'B'].
+2337	concept_subpartoforganization/2	allocate	2	['B', 'A']
+2338		initfreevar	-1	-2
+2339		initfreevar	-2	-1
+2340		fclear
+2341		fpushstart	id	3
+2342		fpushconst	concept_subpartoforganization
+2343		fpushconst	2
+2344		fpushconst	2340
+2345		freport
+2346		pushboundvar	-1
+2347		pushboundvar	-2
+2348		callp	fact_concept_subpartoforganization/2
+2349		returnp
+2350		comment	concept_subpartoforganization(-1,-2) :- fact_concept_subpartoforganization(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2351	concept_subpartoforganization/2	allocate	2	['B', 'A']
+2352		initfreevar	-1	-2
+2353		initfreevar	-2	-1
+2354		fclear
+2355		fpushstart	id	3
+2356		fpushconst	concept_subpartoforganization
+2357		fpushconst	2
+2358		fpushconst	2354
+2359		freport
+2360		pushboundvar	-1
+2361		pushboundvar	-2
+2362		callp	fact_concept_subpartoforganization/2
+2363		pushboundvar	-2
+2364		callp	isLabel/1
+2365		returnp
+2366		comment	concept_itemexistsatlocation(-1,-2) :- concept_locationofitemexistence(-1,-2)  #v:['A', 'B'].
+2367	concept_itemexistsatlocation/2	allocate	2	['B', 'A']
+2368		initfreevar	-1	-2
+2369		initfreevar	-2	-1
+2370		fclear
+2371		fpushstart	id	3
+2372		fpushconst	concept_itemexistsatlocation
+2373		fpushconst	2
+2374		fpushconst	2370
+2375		freport
+2376		pushboundvar	-1
+2377		pushboundvar	-2
+2378		callp	concept_locationofitemexistence/2
+2379		returnp
+2380		comment	concept_itemexistsatlocation(-1,-2) :- fact_concept_itemexistsatlocation(-1,-2)  #v:['A', 'B'].
+2381	concept_itemexistsatlocation/2	allocate	2	['B', 'A']
+2382		initfreevar	-1	-2
+2383		initfreevar	-2	-1
+2384		fclear
+2385		fpushstart	id	3
+2386		fpushconst	concept_itemexistsatlocation
+2387		fpushconst	2
+2388		fpushconst	2384
+2389		freport
+2390		pushboundvar	-1
+2391		pushboundvar	-2
+2392		callp	fact_concept_itemexistsatlocation/2
+2393		returnp
+2394		comment	concept_itemexistsatlocation(-1,-2) :- concept_agriculturalproductincludingagriculturalproduct(-1,-3), concept_agriculturalproductproducedbyfarm(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+2395	concept_itemexistsatlocation/2	allocate	3	['B', 'C', 'A']
+2396		initfreevar	-1	-2
+2397		initfreevar	-2	-1
+2398		fclear
+2399		fpushstart	id	3
+2400		fpushconst	concept_itemexistsatlocation
+2401		fpushconst	2
+2402		fpushconst	2398
+2403		freport
+2404		pushboundvar	-1
+2405		pushfreevar	-3
+2406		callp	concept_agriculturalproductincludingagriculturalproduct/2
+2407		pushboundvar	-3
+2408		pushboundvar	-2
+2409		callp	concept_agriculturalproductproducedbyfarm/2
+2410		pushboundvar	-2
+2411		callp	isLabel/1
+2412		returnp
+2413		comment	concept_itemexistsatlocation(-1,-2) :- fact_concept_itemexistsatlocation(-1,-2), isLabel(-2)  #v:['A', 'C'].
+2414	concept_itemexistsatlocation/2	allocate	2	['C', 'A']
+2415		initfreevar	-1	-2
+2416		initfreevar	-2	-1
+2417		fclear
+2418		fpushstart	id	3
+2419		fpushconst	concept_itemexistsatlocation
+2420		fpushconst	2
+2421		fpushconst	2417
+2422		freport
+2423		pushboundvar	-1
+2424		pushboundvar	-2
+2425		callp	fact_concept_itemexistsatlocation/2
+2426		pushboundvar	-2
+2427		callp	isLabel/1
+2428		returnp
+2429		comment	concept_istallerthan(-1,-2) :- fact_concept_istallerthan(-1,-2)  #v:['A', 'B'].
+2430	concept_istallerthan/2	allocate	2	['B', 'A']
+2431		initfreevar	-1	-2
+2432		initfreevar	-2	-1
+2433		fclear
+2434		fpushstart	id	3
+2435		fpushconst	concept_istallerthan
+2436		fpushconst	2
+2437		fpushconst	2433
+2438		freport
+2439		pushboundvar	-1
+2440		pushboundvar	-2
+2441		callp	fact_concept_istallerthan/2
+2442		returnp
+2443		comment	concept_istallerthan(-1,-2) :- concept_atdate(-1,-3), concept_proxyfor(-3,-4), concept_statelocatedincountry(-4,-5), concept_istallerthan(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+2444	concept_istallerthan/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+2445		initfreevar	-1	-2
+2446		initfreevar	-2	-1
+2447		fclear
+2448		fpushstart	id	3
+2449		fpushconst	concept_istallerthan
+2450		fpushconst	2
+2451		fpushconst	2447
+2452		freport
+2453		pushboundvar	-1
+2454		pushfreevar	-3
+2455		callp	concept_atdate/2
+2456		pushboundvar	-3
+2457		pushfreevar	-4
+2458		callp	concept_proxyfor/2
+2459		pushboundvar	-4
+2460		pushfreevar	-5
+2461		callp	concept_statelocatedincountry/2
+2462		pushboundvar	-5
+2463		pushboundvar	-2
+2464		callp	concept_istallerthan/2
+2465		pushboundvar	-2
+2466		callp	isLabel/1
+2467		returnp
+2468		comment	concept_istallerthan(-1,-2) :- fact_concept_istallerthan(-1,-2), isLabel(-2)  #v:['A', 'E'].
+2469	concept_istallerthan/2	allocate	2	['E', 'A']
+2470		initfreevar	-1	-2
+2471		initfreevar	-2	-1
+2472		fclear
+2473		fpushstart	id	3
+2474		fpushconst	concept_istallerthan
+2475		fpushconst	2
+2476		fpushconst	2472
+2477		freport
+2478		pushboundvar	-1
+2479		pushboundvar	-2
+2480		callp	fact_concept_istallerthan/2
+2481		pushboundvar	-2
+2482		callp	isLabel/1
+2483		returnp
+2484		comment	concept_parkincity(-1,-2) :- concept_cityparks(-1,-2)  #v:['A', 'B'].
+2485	concept_parkincity/2	allocate	2	['B', 'A']
+2486		initfreevar	-1	-2
+2487		initfreevar	-2	-1
+2488		fclear
+2489		fpushstart	id	3
+2490		fpushconst	concept_parkincity
+2491		fpushconst	2
+2492		fpushconst	2488
+2493		freport
+2494		pushboundvar	-1
+2495		pushboundvar	-2
+2496		callp	concept_cityparks/2
+2497		returnp
+2498		comment	concept_teamplayssport(-1,-2) :- concept_sportteam(-1,-2)  #v:['A', 'B'].
+2499	concept_teamplayssport/2	allocate	2	['B', 'A']
+2500		initfreevar	-1	-2
+2501		initfreevar	-2	-1
+2502		fclear
+2503		fpushstart	id	3
+2504		fpushconst	concept_teamplayssport
+2505		fpushconst	2
+2506		fpushconst	2502
+2507		freport
+2508		pushboundvar	-1
+2509		pushboundvar	-2
+2510		callp	concept_sportteam/2
+2511		returnp
+2512		comment	concept_teamplayssport(-1,-2) :- fact_concept_teamplayssport(-1,-2)  #v:['A', 'B'].
+2513	concept_teamplayssport/2	allocate	2	['B', 'A']
+2514		initfreevar	-1	-2
+2515		initfreevar	-2	-1
+2516		fclear
+2517		fpushstart	id	3
+2518		fpushconst	concept_teamplayssport
+2519		fpushconst	2
+2520		fpushconst	2516
+2521		freport
+2522		pushboundvar	-1
+2523		pushboundvar	-2
+2524		callp	fact_concept_teamplayssport/2
+2525		returnp
+2526		comment	concept_teamplayssport(-1,-2) :- concept_agentcompeteswithagent(-1,-3), concept_teamplayssport(-3,-4), concept_sportsportsgameexample(-4,-5), concept_relatedto(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+2527	concept_teamplayssport/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+2528		initfreevar	-1	-2
+2529		initfreevar	-2	-1
+2530		fclear
+2531		fpushstart	id	3
+2532		fpushconst	concept_teamplayssport
+2533		fpushconst	2
+2534		fpushconst	2530
+2535		freport
+2536		pushboundvar	-1
+2537		pushfreevar	-3
+2538		callp	concept_agentcompeteswithagent/2
+2539		pushboundvar	-3
+2540		pushfreevar	-4
+2541		callp	concept_teamplayssport/2
+2542		pushboundvar	-4
+2543		pushfreevar	-5
+2544		callp	concept_sportsportsgameexample/2
+2545		pushboundvar	-5
+2546		pushboundvar	-2
+2547		callp	concept_relatedto/2
+2548		pushboundvar	-2
+2549		callp	isLabel/1
+2550		returnp
+2551		comment	concept_teamplayssport(-1,-2) :- fact_concept_teamplayssport(-1,-2), isLabel(-2)  #v:['A', 'E'].
+2552	concept_teamplayssport/2	allocate	2	['E', 'A']
+2553		initfreevar	-1	-2
+2554		initfreevar	-2	-1
+2555		fclear
+2556		fpushstart	id	3
+2557		fpushconst	concept_teamplayssport
+2558		fpushconst	2
+2559		fpushconst	2555
+2560		freport
+2561		pushboundvar	-1
+2562		pushboundvar	-2
+2563		callp	fact_concept_teamplayssport/2
+2564		pushboundvar	-2
+2565		callp	isLabel/1
+2566		returnp
+2567		comment	concept_sportsgamesport(-1,-2) :- concept_sportsportsgameexample(-1,-2)  #v:['A', 'B'].
+2568	concept_sportsgamesport/2	allocate	2	['B', 'A']
+2569		initfreevar	-1	-2
+2570		initfreevar	-2	-1
+2571		fclear
+2572		fpushstart	id	3
+2573		fpushconst	concept_sportsgamesport
+2574		fpushconst	2
+2575		fpushconst	2571
+2576		freport
+2577		pushboundvar	-1
+2578		pushboundvar	-2
+2579		callp	concept_sportsportsgameexample/2
+2580		returnp
+2581		comment	concept_agentcontributedtocreativework(-1,-2) :- concept_creativeworkcontributedtobyagent(-1,-2)  #v:['A', 'B'].
+2582	concept_agentcontributedtocreativework/2	allocate	2	['B', 'A']
+2583		initfreevar	-1	-2
+2584		initfreevar	-2	-1
+2585		fclear
+2586		fpushstart	id	3
+2587		fpushconst	concept_agentcontributedtocreativework
+2588		fpushconst	2
+2589		fpushconst	2585
+2590		freport
+2591		pushboundvar	-1
+2592		pushboundvar	-2
+2593		callp	concept_creativeworkcontributedtobyagent/2
+2594		returnp
+2595		comment	concept_inverseofbeveragemadefrombeverage(-1,-2) :- concept_beveragemadefrombeverage(-1,-2)  #v:['A', 'B'].
+2596	concept_inverseofbeveragemadefrombeverage/2	allocate	2	['B', 'A']
+2597		initfreevar	-1	-2
+2598		initfreevar	-2	-1
+2599		fclear
+2600		fpushstart	id	3
+2601		fpushconst	concept_inverseofbeveragemadefrombeverage
+2602		fpushconst	2
+2603		fpushconst	2599
+2604		freport
+2605		pushboundvar	-1
+2606		pushboundvar	-2
+2607		callp	concept_beveragemadefrombeverage/2
+2608		returnp
+2609		comment	concept_weaponmadeincountry(-1,-2) :- concept_inverseofweaponmadeincountry(-1,-2)  #v:['A', 'B'].
+2610	concept_weaponmadeincountry/2	allocate	2	['B', 'A']
+2611		initfreevar	-1	-2
+2612		initfreevar	-2	-1
+2613		fclear
+2614		fpushstart	id	3
+2615		fpushconst	concept_weaponmadeincountry
+2616		fpushconst	2
+2617		fpushconst	2613
+2618		freport
+2619		pushboundvar	-1
+2620		pushboundvar	-2
+2621		callp	concept_inverseofweaponmadeincountry/2
+2622		returnp
+2623		comment	concept_acquired(-1,-2) :- concept_acquiredby(-1,-2)  #v:['A', 'B'].
+2624	concept_acquired/2	allocate	2	['B', 'A']
+2625		initfreevar	-1	-2
+2626		initfreevar	-2	-1
+2627		fclear
+2628		fpushstart	id	3
+2629		fpushconst	concept_acquired
+2630		fpushconst	2
+2631		fpushconst	2627
+2632		freport
+2633		pushboundvar	-1
+2634		pushboundvar	-2
+2635		callp	concept_acquiredby/2
+2636		returnp
+2637		comment	concept_acquired(-1,-2) :- concept_companyeconomicsector(-1,-3), concept_economicsectorcompany(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+2638	concept_acquired/2	allocate	3	['B', 'C', 'A']
+2639		initfreevar	-1	-2
+2640		initfreevar	-2	-1
+2641		fclear
+2642		fpushstart	id	3
+2643		fpushconst	concept_acquired
+2644		fpushconst	2
+2645		fpushconst	2641
+2646		freport
+2647		pushboundvar	-1
+2648		pushfreevar	-3
+2649		callp	concept_companyeconomicsector/2
+2650		pushboundvar	-3
+2651		pushboundvar	-2
+2652		callp	concept_economicsectorcompany/2
+2653		pushboundvar	-2
+2654		callp	isLabel/1
+2655		returnp
+2656		comment	concept_acquired(-1,-2) :- fact_concept_acquired(-1,-2), isLabel(-2)  #v:['A', 'C'].
+2657	concept_acquired/2	allocate	2	['C', 'A']
+2658		initfreevar	-1	-2
+2659		initfreevar	-2	-1
+2660		fclear
+2661		fpushstart	id	3
+2662		fpushconst	concept_acquired
+2663		fpushconst	2
+2664		fpushconst	2660
+2665		freport
+2666		pushboundvar	-1
+2667		pushboundvar	-2
+2668		callp	fact_concept_acquired/2
+2669		pushboundvar	-2
+2670		callp	isLabel/1
+2671		returnp
+2672		comment	concept_geopoliticallocationcontainsstate(-1,-2) :- concept_statelocatedingeopoliticallocation(-1,-2)  #v:['A', 'B'].
+2673	concept_geopoliticallocationcontainsstate/2	allocate	2	['B', 'A']
+2674		initfreevar	-1	-2
+2675		initfreevar	-2	-1
+2676		fclear
+2677		fpushstart	id	3
+2678		fpushconst	concept_geopoliticallocationcontainsstate
+2679		fpushconst	2
+2680		fpushconst	2676
+2681		freport
+2682		pushboundvar	-1
+2683		pushboundvar	-2
+2684		callp	concept_statelocatedingeopoliticallocation/2
+2685		returnp
+2686		comment	concept_politicianholdsoffice(-1,-2) :- concept_officeheldbypolitician(-1,-2)  #v:['A', 'B'].
+2687	concept_politicianholdsoffice/2	allocate	2	['B', 'A']
+2688		initfreevar	-1	-2
+2689		initfreevar	-2	-1
+2690		fclear
+2691		fpushstart	id	3
+2692		fpushconst	concept_politicianholdsoffice
+2693		fpushconst	2
+2694		fpushconst	2690
+2695		freport
+2696		pushboundvar	-1
+2697		pushboundvar	-2
+2698		callp	concept_officeheldbypolitician/2
+2699		returnp
+2700		comment	concept_politicianholdsoffice(-1,-2) :- fact_concept_politicianholdsoffice(-1,-2)  #v:['A', 'B'].
+2701	concept_politicianholdsoffice/2	allocate	2	['B', 'A']
+2702		initfreevar	-1	-2
+2703		initfreevar	-2	-1
+2704		fclear
+2705		fpushstart	id	3
+2706		fpushconst	concept_politicianholdsoffice
+2707		fpushconst	2
+2708		fpushconst	2704
+2709		freport
+2710		pushboundvar	-1
+2711		pushboundvar	-2
+2712		callp	fact_concept_politicianholdsoffice/2
+2713		returnp
+2714		comment	concept_politicianholdsoffice(-1,-2) :- concept_politicianrepresentslocation(-1,-3), concept_locationrepresentedbypolitician(-3,-4), concept_politicianholdsoffice(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+2715	concept_politicianholdsoffice/2	allocate	4	['C', 'B', 'D', 'A']
+2716		initfreevar	-1	-2
+2717		initfreevar	-2	-1
+2718		fclear
+2719		fpushstart	id	3
+2720		fpushconst	concept_politicianholdsoffice
+2721		fpushconst	2
+2722		fpushconst	2718
+2723		freport
+2724		pushboundvar	-1
+2725		pushfreevar	-3
+2726		callp	concept_politicianrepresentslocation/2
+2727		pushboundvar	-3
+2728		pushfreevar	-4
+2729		callp	concept_locationrepresentedbypolitician/2
+2730		pushboundvar	-4
+2731		pushboundvar	-2
+2732		callp	concept_politicianholdsoffice/2
+2733		pushboundvar	-2
+2734		callp	isLabel/1
+2735		returnp
+2736		comment	concept_politicianholdsoffice(-1,-2) :- fact_concept_politicianholdsoffice(-1,-2), isLabel(-2)  #v:['A', 'D'].
+2737	concept_politicianholdsoffice/2	allocate	2	['D', 'A']
+2738		initfreevar	-1	-2
+2739		initfreevar	-2	-1
+2740		fclear
+2741		fpushstart	id	3
+2742		fpushconst	concept_politicianholdsoffice
+2743		fpushconst	2
+2744		fpushconst	2740
+2745		freport
+2746		pushboundvar	-1
+2747		pushboundvar	-2
+2748		callp	fact_concept_politicianholdsoffice/2
+2749		pushboundvar	-2
+2750		callp	isLabel/1
+2751		returnp
+2752		comment	concept_producesproduct(-1,-2) :- concept_producedby(-1,-2)  #v:['A', 'B'].
+2753	concept_producesproduct/2	allocate	2	['B', 'A']
+2754		initfreevar	-1	-2
+2755		initfreevar	-2	-1
+2756		fclear
+2757		fpushstart	id	3
+2758		fpushconst	concept_producesproduct
+2759		fpushconst	2
+2760		fpushconst	2756
+2761		freport
+2762		pushboundvar	-1
+2763		pushboundvar	-2
+2764		callp	concept_producedby/2
+2765		returnp
+2766		comment	concept_radiostationincity(-1,-2) :- concept_cityradiostation(-1,-2)  #v:['A', 'B'].
+2767	concept_radiostationincity/2	allocate	2	['B', 'A']
+2768		initfreevar	-1	-2
+2769		initfreevar	-2	-1
+2770		fclear
+2771		fpushstart	id	3
+2772		fpushconst	concept_radiostationincity
+2773		fpushconst	2
+2774		fpushconst	2770
+2775		freport
+2776		pushboundvar	-1
+2777		pushboundvar	-2
+2778		callp	concept_cityradiostation/2
+2779		returnp
+2780		comment	concept_agriculturalproductproducedbyfarm(-1,-2) :- concept_farmproducesagriculturalproduct(-1,-2)  #v:['A', 'B'].
+2781	concept_agriculturalproductproducedbyfarm/2	allocate	2	['B', 'A']
+2782		initfreevar	-1	-2
+2783		initfreevar	-2	-1
+2784		fclear
+2785		fpushstart	id	3
+2786		fpushconst	concept_agriculturalproductproducedbyfarm
+2787		fpushconst	2
+2788		fpushconst	2784
+2789		freport
+2790		pushboundvar	-1
+2791		pushboundvar	-2
+2792		callp	concept_farmproducesagriculturalproduct/2
+2793		returnp
+2794		comment	concept_sportschoolincountry(-1,-2) :- fact_concept_sportschoolincountry(-1,-2)  #v:['A', 'B'].
+2795	concept_sportschoolincountry/2	allocate	2	['B', 'A']
+2796		initfreevar	-1	-2
+2797		initfreevar	-2	-1
+2798		fclear
+2799		fpushstart	id	3
+2800		fpushconst	concept_sportschoolincountry
+2801		fpushconst	2
+2802		fpushconst	2798
+2803		freport
+2804		pushboundvar	-1
+2805		pushboundvar	-2
+2806		callp	fact_concept_sportschoolincountry/2
+2807		returnp
+2808		comment	concept_sportschoolincountry(-1,-2) :- concept_sportfansincountry(-1,-3), concept_inverseofagriculturalproductcamefromcountry(-3,-4), concept_agriculturalproductcookedwithagriculturalproduct(-4,-5), concept_agriculturalproductcamefromcountry(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+2809	concept_sportschoolincountry/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+2810		initfreevar	-1	-2
+2811		initfreevar	-2	-1
+2812		fclear
+2813		fpushstart	id	3
+2814		fpushconst	concept_sportschoolincountry
+2815		fpushconst	2
+2816		fpushconst	2812
+2817		freport
+2818		pushboundvar	-1
+2819		pushfreevar	-3
+2820		callp	concept_sportfansincountry/2
+2821		pushboundvar	-3
+2822		pushfreevar	-4
+2823		callp	concept_inverseofagriculturalproductcamefromcountry/2
+2824		pushboundvar	-4
+2825		pushfreevar	-5
+2826		callp	concept_agriculturalproductcookedwithagriculturalproduct/2
+2827		pushboundvar	-5
+2828		pushboundvar	-2
+2829		callp	concept_agriculturalproductcamefromcountry/2
+2830		pushboundvar	-2
+2831		callp	isLabel/1
+2832		returnp
+2833		comment	concept_sportschoolincountry(-1,-2) :- fact_concept_sportschoolincountry(-1,-2), isLabel(-2)  #v:['A', 'E'].
+2834	concept_sportschoolincountry/2	allocate	2	['E', 'A']
+2835		initfreevar	-1	-2
+2836		initfreevar	-2	-1
+2837		fclear
+2838		fpushstart	id	3
+2839		fpushconst	concept_sportschoolincountry
+2840		fpushconst	2
+2841		fpushconst	2837
+2842		freport
+2843		pushboundvar	-1
+2844		pushboundvar	-2
+2845		callp	fact_concept_sportschoolincountry/2
+2846		pushboundvar	-2
+2847		callp	isLabel/1
+2848		returnp
+2849		comment	concept_agentinteractswithagent(-1,-2) :- concept_agentinteractswithagent(-1,-2)  #v:['A', 'B'].
+2850	concept_agentinteractswithagent/2	allocate	2	['B', 'A']
+2851		initfreevar	-1	-2
+2852		initfreevar	-2	-1
+2853		fclear
+2854		fpushstart	id	3
+2855		fpushconst	concept_agentinteractswithagent
+2856		fpushconst	2
+2857		fpushconst	2853
+2858		freport
+2859		pushboundvar	-1
+2860		pushboundvar	-2
+2861		callp	concept_agentinteractswithagent/2
+2862		returnp
+2863		comment	concept_inverseofagriculturalproductincludingagriculturalproduct(-1,-2) :- concept_agriculturalproductincludingagriculturalproduct(-1,-2)  #v:['A', 'B'].
+2864	concept_inverseofagriculturalproductincludingagriculturalproduct/2	allocate	2	['B', 'A']
+2865		initfreevar	-1	-2
+2866		initfreevar	-2	-1
+2867		fclear
+2868		fpushstart	id	3
+2869		fpushconst	concept_inverseofagriculturalproductincludingagriculturalproduct
+2870		fpushconst	2
+2871		fpushconst	2867
+2872		freport
+2873		pushboundvar	-1
+2874		pushboundvar	-2
+2875		callp	concept_agriculturalproductincludingagriculturalproduct/2
+2876		returnp
+2877		comment	concept_teamhomestadium(-1,-2) :- concept_stadiumhometeam(-1,-2)  #v:['A', 'B'].
+2878	concept_teamhomestadium/2	allocate	2	['B', 'A']
+2879		initfreevar	-1	-2
+2880		initfreevar	-2	-1
+2881		fclear
+2882		fpushstart	id	3
+2883		fpushconst	concept_teamhomestadium
+2884		fpushconst	2
+2885		fpushconst	2881
+2886		freport
+2887		pushboundvar	-1
+2888		pushboundvar	-2
+2889		callp	concept_stadiumhometeam/2
+2890		returnp
+2891		comment	concept_teamhomestadium(-1,-2) :- fact_concept_teamhomestadium(-1,-2)  #v:['A', 'B'].
+2892	concept_teamhomestadium/2	allocate	2	['B', 'A']
+2893		initfreevar	-1	-2
+2894		initfreevar	-2	-1
+2895		fclear
+2896		fpushstart	id	3
+2897		fpushconst	concept_teamhomestadium
+2898		fpushconst	2
+2899		fpushconst	2895
+2900		freport
+2901		pushboundvar	-1
+2902		pushboundvar	-2
+2903		callp	fact_concept_teamhomestadium/2
+2904		returnp
+2905		comment	concept_teamhomestadium(-1,-2) :- concept_teamplayssport(-1,-3), concept_sportusesstadium(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+2906	concept_teamhomestadium/2	allocate	3	['B', 'C', 'A']
+2907		initfreevar	-1	-2
+2908		initfreevar	-2	-1
+2909		fclear
+2910		fpushstart	id	3
+2911		fpushconst	concept_teamhomestadium
+2912		fpushconst	2
+2913		fpushconst	2909
+2914		freport
+2915		pushboundvar	-1
+2916		pushfreevar	-3
+2917		callp	concept_teamplayssport/2
+2918		pushboundvar	-3
+2919		pushboundvar	-2
+2920		callp	concept_sportusesstadium/2
+2921		pushboundvar	-2
+2922		callp	isLabel/1
+2923		returnp
+2924		comment	concept_teamhomestadium(-1,-2) :- fact_concept_teamhomestadium(-1,-2), isLabel(-2)  #v:['A', 'C'].
+2925	concept_teamhomestadium/2	allocate	2	['C', 'A']
+2926		initfreevar	-1	-2
+2927		initfreevar	-2	-1
+2928		fclear
+2929		fpushstart	id	3
+2930		fpushconst	concept_teamhomestadium
+2931		fpushconst	2
+2932		fpushconst	2928
+2933		freport
+2934		pushboundvar	-1
+2935		pushboundvar	-2
+2936		callp	fact_concept_teamhomestadium/2
+2937		pushboundvar	-2
+2938		callp	isLabel/1
+2939		returnp
+2940		comment	concept_hospitalincity(-1,-2) :- concept_cityhashospital(-1,-2)  #v:['A', 'B'].
+2941	concept_hospitalincity/2	allocate	2	['B', 'A']
+2942		initfreevar	-1	-2
+2943		initfreevar	-2	-1
+2944		fclear
+2945		fpushstart	id	3
+2946		fpushconst	concept_hospitalincity
+2947		fpushconst	2
+2948		fpushconst	2944
+2949		freport
+2950		pushboundvar	-1
+2951		pushboundvar	-2
+2952		callp	concept_cityhashospital/2
+2953		returnp
+2954		comment	concept_teamalsoknownas(-1,-2) :- concept_teamplaysagainstteam(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2955	concept_teamalsoknownas/2	allocate	2	['B', 'A']
+2956		initfreevar	-1	-2
+2957		initfreevar	-2	-1
+2958		fclear
+2959		fpushstart	id	3
+2960		fpushconst	concept_teamalsoknownas
+2961		fpushconst	2
+2962		fpushconst	2958
+2963		freport
+2964		pushboundvar	-1
+2965		pushboundvar	-2
+2966		callp	concept_teamplaysagainstteam/2
+2967		pushboundvar	-2
+2968		callp	isLabel/1
+2969		returnp
+2970		comment	concept_teamalsoknownas(-1,-2) :- fact_concept_teamalsoknownas(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2971	concept_teamalsoknownas/2	allocate	2	['B', 'A']
+2972		initfreevar	-1	-2
+2973		initfreevar	-2	-1
+2974		fclear
+2975		fpushstart	id	3
+2976		fpushconst	concept_teamalsoknownas
+2977		fpushconst	2
+2978		fpushconst	2974
+2979		freport
+2980		pushboundvar	-1
+2981		pushboundvar	-2
+2982		callp	fact_concept_teamalsoknownas/2
+2983		pushboundvar	-2
+2984		callp	isLabel/1
+2985		returnp
+2986		comment	concept_personleadscity(-1,-2) :- concept_personterminatedbyorganization(-1,-2), isLabel(-2)  #v:['A', 'B'].
+2987	concept_personleadscity/2	allocate	2	['B', 'A']
+2988		initfreevar	-1	-2
+2989		initfreevar	-2	-1
+2990		fclear
+2991		fpushstart	id	3
+2992		fpushconst	concept_personleadscity
+2993		fpushconst	2
+2994		fpushconst	2990
+2995		freport
+2996		pushboundvar	-1
+2997		pushboundvar	-2
+2998		callp	concept_personterminatedbyorganization/2
+2999		pushboundvar	-2
+3000		callp	isLabel/1
+3001		returnp
+3002		comment	concept_personleadscity(-1,-2) :- fact_concept_personleadscity(-1,-2), isLabel(-2)  #v:['A', 'B'].
+3003	concept_personleadscity/2	allocate	2	['B', 'A']
+3004		initfreevar	-1	-2
+3005		initfreevar	-2	-1
+3006		fclear
+3007		fpushstart	id	3
+3008		fpushconst	concept_personleadscity
+3009		fpushconst	2
+3010		fpushconst	3006
+3011		freport
+3012		pushboundvar	-1
+3013		pushboundvar	-2
+3014		callp	fact_concept_personleadscity/2
+3015		pushboundvar	-2
+3016		callp	isLabel/1
+3017		returnp
+3018		comment	concept_agentcreated(-1,-2) :- concept_agentcontributedtocreativework(-1,-3), concept_relatedto(-3,-4), concept_agentcontributedtocreativework(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+3019	concept_agentcreated/2	allocate	4	['C', 'B', 'D', 'A']
+3020		initfreevar	-1	-2
+3021		initfreevar	-2	-1
+3022		fclear
+3023		fpushstart	id	3
+3024		fpushconst	concept_agentcreated
+3025		fpushconst	2
+3026		fpushconst	3022
+3027		freport
+3028		pushboundvar	-1
+3029		pushfreevar	-3
+3030		callp	concept_agentcontributedtocreativework/2
+3031		pushboundvar	-3
+3032		pushfreevar	-4
+3033		callp	concept_relatedto/2
+3034		pushboundvar	-4
+3035		pushboundvar	-2
+3036		callp	concept_agentcontributedtocreativework/2
+3037		pushboundvar	-2
+3038		callp	isLabel/1
+3039		returnp
+3040		comment	concept_agentcreated(-1,-2) :- fact_concept_agentcreated(-1,-2), isLabel(-2)  #v:['A', 'D'].
+3041	concept_agentcreated/2	allocate	2	['D', 'A']
+3042		initfreevar	-1	-2
+3043		initfreevar	-2	-1
+3044		fclear
+3045		fpushstart	id	3
+3046		fpushconst	concept_agentcreated
+3047		fpushconst	2
+3048		fpushconst	3044
+3049		freport
+3050		pushboundvar	-1
+3051		pushboundvar	-2
+3052		callp	fact_concept_agentcreated/2
+3053		pushboundvar	-2
+3054		callp	isLabel/1
+3055		returnp
+3056		comment	concept_countryalsoknownas(-1,-2) :- fact_concept_countryalsoknownas(-1,-2)  #v:['A', 'B'].
+3057	concept_countryalsoknownas/2	allocate	2	['B', 'A']
+3058		initfreevar	-1	-2
+3059		initfreevar	-2	-1
+3060		fclear
+3061		fpushstart	id	3
+3062		fpushconst	concept_countryalsoknownas
+3063		fpushconst	2
+3064		fpushconst	3060
+3065		freport
+3066		pushboundvar	-1
+3067		pushboundvar	-2
+3068		callp	fact_concept_countryalsoknownas/2
+3069		returnp
+3070		comment	concept_countryalsoknownas(-1,-2) :- concept_countrylanguage(-1,-3), concept_languageofcountry(-3,-4), concept_countryalsoknownas(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+3071	concept_countryalsoknownas/2	allocate	4	['C', 'B', 'D', 'A']
+3072		initfreevar	-1	-2
+3073		initfreevar	-2	-1
+3074		fclear
+3075		fpushstart	id	3
+3076		fpushconst	concept_countryalsoknownas
+3077		fpushconst	2
+3078		fpushconst	3074
+3079		freport
+3080		pushboundvar	-1
+3081		pushfreevar	-3
+3082		callp	concept_countrylanguage/2
+3083		pushboundvar	-3
+3084		pushfreevar	-4
+3085		callp	concept_languageofcountry/2
+3086		pushboundvar	-4
+3087		pushboundvar	-2
+3088		callp	concept_countryalsoknownas/2
+3089		pushboundvar	-2
+3090		callp	isLabel/1
+3091		returnp
+3092		comment	concept_countryalsoknownas(-1,-2) :- fact_concept_countryalsoknownas(-1,-2), isLabel(-2)  #v:['A', 'D'].
+3093	concept_countryalsoknownas/2	allocate	2	['D', 'A']
+3094		initfreevar	-1	-2
+3095		initfreevar	-2	-1
+3096		fclear
+3097		fpushstart	id	3
+3098		fpushconst	concept_countryalsoknownas
+3099		fpushconst	2
+3100		fpushconst	3096
+3101		freport
+3102		pushboundvar	-1
+3103		pushboundvar	-2
+3104		callp	fact_concept_countryalsoknownas/2
+3105		pushboundvar	-2
+3106		callp	isLabel/1
+3107		returnp
+3108		comment	concept_stadiumlocatedincity(-1,-2) :- concept_stadiumhometeam(-1,-3), concept_teamcoach(-3,-4), concept_worksfor(-4,-5), concept_teamplaysincity(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+3109	concept_stadiumlocatedincity/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+3110		initfreevar	-1	-2
+3111		initfreevar	-2	-1
+3112		fclear
+3113		fpushstart	id	3
+3114		fpushconst	concept_stadiumlocatedincity
+3115		fpushconst	2
+3116		fpushconst	3112
+3117		freport
+3118		pushboundvar	-1
+3119		pushfreevar	-3
+3120		callp	concept_stadiumhometeam/2
+3121		pushboundvar	-3
+3122		pushfreevar	-4
+3123		callp	concept_teamcoach/2
+3124		pushboundvar	-4
+3125		pushfreevar	-5
+3126		callp	concept_worksfor/2
+3127		pushboundvar	-5
+3128		pushboundvar	-2
+3129		callp	concept_teamplaysincity/2
+3130		pushboundvar	-2
+3131		callp	isLabel/1
+3132		returnp
+3133		comment	concept_stadiumlocatedincity(-1,-2) :- fact_concept_stadiumlocatedincity(-1,-2), isLabel(-2)  #v:['A', 'E'].
+3134	concept_stadiumlocatedincity/2	allocate	2	['E', 'A']
+3135		initfreevar	-1	-2
+3136		initfreevar	-2	-1
+3137		fclear
+3138		fpushstart	id	3
+3139		fpushconst	concept_stadiumlocatedincity
+3140		fpushconst	2
+3141		fpushconst	3137
+3142		freport
+3143		pushboundvar	-1
+3144		pushboundvar	-2
+3145		callp	fact_concept_stadiumlocatedincity/2
+3146		pushboundvar	-2
+3147		callp	isLabel/1
+3148		returnp
+3149		comment	concept_creativeworkcontributedtobyagent(-1,-2) :- concept_agentcontributedtocreativework(-1,-2)  #v:['A', 'B'].
+3150	concept_creativeworkcontributedtobyagent/2	allocate	2	['B', 'A']
+3151		initfreevar	-1	-2
+3152		initfreevar	-2	-1
+3153		fclear
+3154		fpushstart	id	3
+3155		fpushconst	concept_creativeworkcontributedtobyagent
+3156		fpushconst	2
+3157		fpushconst	3153
+3158		freport
+3159		pushboundvar	-1
+3160		pushboundvar	-2
+3161		callp	concept_agentcontributedtocreativework/2
+3162		returnp
+3163		comment	concept_personleadsorganization(-1,-2) :- concept_organizationleadbyperson(-1,-2)  #v:['A', 'B'].
+3164	concept_personleadsorganization/2	allocate	2	['B', 'A']
+3165		initfreevar	-1	-2
+3166		initfreevar	-2	-1
+3167		fclear
+3168		fpushstart	id	3
+3169		fpushconst	concept_personleadsorganization
+3170		fpushconst	2
+3171		fpushconst	3167
+3172		freport
+3173		pushboundvar	-1
+3174		pushboundvar	-2
+3175		callp	concept_organizationleadbyperson/2
+3176		returnp
+3177		comment	concept_personleadsorganization(-1,-2) :- concept_personbelongstoorganization(-1,-2), isLabel(-2)  #v:['A', 'B'].
+3178	concept_personleadsorganization/2	allocate	2	['B', 'A']
+3179		initfreevar	-1	-2
+3180		initfreevar	-2	-1
+3181		fclear
+3182		fpushstart	id	3
+3183		fpushconst	concept_personleadsorganization
+3184		fpushconst	2
+3185		fpushconst	3181
+3186		freport
+3187		pushboundvar	-1
+3188		pushboundvar	-2
+3189		callp	concept_personbelongstoorganization/2
+3190		pushboundvar	-2
+3191		callp	isLabel/1
+3192		returnp
+3193		comment	concept_personleadsorganization(-1,-2) :- fact_concept_personleadsorganization(-1,-2), isLabel(-2)  #v:['A', 'B'].
+3194	concept_personleadsorganization/2	allocate	2	['B', 'A']
+3195		initfreevar	-1	-2
+3196		initfreevar	-2	-1
+3197		fclear
+3198		fpushstart	id	3
+3199		fpushconst	concept_personleadsorganization
+3200		fpushconst	2
+3201		fpushconst	3197
+3202		freport
+3203		pushboundvar	-1
+3204		pushboundvar	-2
+3205		callp	fact_concept_personleadsorganization/2
+3206		pushboundvar	-2
+3207		callp	isLabel/1
+3208		returnp
+3209		comment	concept_organizationnamehasacronym(-1,-2) :- concept_organizationacronymhasname(-1,-2)  #v:['A', 'B'].
+3210	concept_organizationnamehasacronym/2	allocate	2	['B', 'A']
+3211		initfreevar	-1	-2
+3212		initfreevar	-2	-1
+3213		fclear
+3214		fpushstart	id	3
+3215		fpushconst	concept_organizationnamehasacronym
+3216		fpushconst	2
+3217		fpushconst	3213
+3218		freport
+3219		pushboundvar	-1
+3220		pushboundvar	-2
+3221		callp	concept_organizationacronymhasname/2
+3222		returnp
+3223		comment	concept_coachesteam(-1,-2) :- concept_teamcoach(-1,-2)  #v:['A', 'B'].
+3224	concept_coachesteam/2	allocate	2	['B', 'A']
+3225		initfreevar	-1	-2
+3226		initfreevar	-2	-1
+3227		fclear
+3228		fpushstart	id	3
+3229		fpushconst	concept_coachesteam
+3230		fpushconst	2
+3231		fpushconst	3227
+3232		freport
+3233		pushboundvar	-1
+3234		pushboundvar	-2
+3235		callp	concept_teamcoach/2
+3236		returnp
+3237		comment	concept_athleteledsportsteam(-1,-2) :- concept_athleteplaysinleague(-1,-3), concept_organizationhasperson(-3,-4), concept_athleteplaysforteam(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+3238	concept_athleteledsportsteam/2	allocate	4	['C', 'B', 'D', 'A']
+3239		initfreevar	-1	-2
+3240		initfreevar	-2	-1
+3241		fclear
+3242		fpushstart	id	3
+3243		fpushconst	concept_athleteledsportsteam
+3244		fpushconst	2
+3245		fpushconst	3241
+3246		freport
+3247		pushboundvar	-1
+3248		pushfreevar	-3
+3249		callp	concept_athleteplaysinleague/2
+3250		pushboundvar	-3
+3251		pushfreevar	-4
+3252		callp	concept_organizationhasperson/2
+3253		pushboundvar	-4
+3254		pushboundvar	-2
+3255		callp	concept_athleteplaysforteam/2
+3256		pushboundvar	-2
+3257		callp	isLabel/1
+3258		returnp
+3259		comment	concept_athleteledsportsteam(-1,-2) :- fact_concept_athleteledsportsteam(-1,-2), isLabel(-2)  #v:['A', 'D'].
+3260	concept_athleteledsportsteam/2	allocate	2	['D', 'A']
+3261		initfreevar	-1	-2
+3262		initfreevar	-2	-1
+3263		fclear
+3264		fpushstart	id	3
+3265		fpushconst	concept_athleteledsportsteam
+3266		fpushconst	2
+3267		fpushconst	3263
+3268		freport
+3269		pushboundvar	-1
+3270		pushboundvar	-2
+3271		callp	fact_concept_athleteledsportsteam/2
+3272		pushboundvar	-2
+3273		callp	isLabel/1
+3274		returnp
+3275		comment	concept_personhasresidenceingeopoliticallocation(-1,-2) :- concept_politicianrepresentslocation(-1,-2), isLabel(-2)  #v:['A', 'B'].
+3276	concept_personhasresidenceingeopoliticallocation/2	allocate	2	['B', 'A']
+3277		initfreevar	-1	-2
+3278		initfreevar	-2	-1
+3279		fclear
+3280		fpushstart	id	3
+3281		fpushconst	concept_personhasresidenceingeopoliticallocation
+3282		fpushconst	2
+3283		fpushconst	3279
+3284		freport
+3285		pushboundvar	-1
+3286		pushboundvar	-2
+3287		callp	concept_politicianrepresentslocation/2
+3288		pushboundvar	-2
+3289		callp	isLabel/1
+3290		returnp
+3291		comment	concept_personhasresidenceingeopoliticallocation(-1,-2) :- fact_concept_personhasresidenceingeopoliticallocation(-1,-2), isLabel(-2)  #v:['A', 'B'].
+3292	concept_personhasresidenceingeopoliticallocation/2	allocate	2	['B', 'A']
+3293		initfreevar	-1	-2
+3294		initfreevar	-2	-1
+3295		fclear
+3296		fpushstart	id	3
+3297		fpushconst	concept_personhasresidenceingeopoliticallocation
+3298		fpushconst	2
+3299		fpushconst	3295
+3300		freport
+3301		pushboundvar	-1
+3302		pushboundvar	-2
+3303		callp	fact_concept_personhasresidenceingeopoliticallocation/2
+3304		pushboundvar	-2
+3305		callp	isLabel/1
+3306		returnp
+3307		comment	concept_stadiumhometeam(-1,-2) :- concept_teamhomestadium(-1,-2)  #v:['A', 'B'].
+3308	concept_stadiumhometeam/2	allocate	2	['B', 'A']
+3309		initfreevar	-1	-2
+3310		initfreevar	-2	-1
+3311		fclear
+3312		fpushstart	id	3
+3313		fpushconst	concept_stadiumhometeam
+3314		fpushconst	2
+3315		fpushconst	3311
+3316		freport
+3317		pushboundvar	-1
+3318		pushboundvar	-2
+3319		callp	concept_teamhomestadium/2
+3320		returnp
+3321		comment	concept_statehascapital(-1,-2) :- concept_statelocatedincountry(-1,-3), concept_geopoliticallocationcontainscity(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+3322	concept_statehascapital/2	allocate	3	['B', 'C', 'A']
+3323		initfreevar	-1	-2
+3324		initfreevar	-2	-1
+3325		fclear
+3326		fpushstart	id	3
+3327		fpushconst	concept_statehascapital
+3328		fpushconst	2
+3329		fpushconst	3325
+3330		freport
+3331		pushboundvar	-1
+3332		pushfreevar	-3
+3333		callp	concept_statelocatedincountry/2
+3334		pushboundvar	-3
+3335		pushboundvar	-2
+3336		callp	concept_geopoliticallocationcontainscity/2
+3337		pushboundvar	-2
+3338		callp	isLabel/1
+3339		returnp
+3340		comment	concept_statehascapital(-1,-2) :- fact_concept_statehascapital(-1,-2), isLabel(-2)  #v:['A', 'C'].
+3341	concept_statehascapital/2	allocate	2	['C', 'A']
+3342		initfreevar	-1	-2
+3343		initfreevar	-2	-1
+3344		fclear
+3345		fpushstart	id	3
+3346		fpushconst	concept_statehascapital
+3347		fpushconst	2
+3348		fpushconst	3344
+3349		freport
+3350		pushboundvar	-1
+3351		pushboundvar	-2
+3352		callp	fact_concept_statehascapital/2
+3353		pushboundvar	-2
+3354		callp	isLabel/1
+3355		returnp
+3356		comment	concept_agenthaswebsite(-1,-2) :- fact_concept_agenthaswebsite(-1,-2)  #v:['A', 'B'].
+3357	concept_agenthaswebsite/2	allocate	2	['B', 'A']
+3358		initfreevar	-1	-2
+3359		initfreevar	-2	-1
+3360		fclear
+3361		fpushstart	id	3
+3362		fpushconst	concept_agenthaswebsite
+3363		fpushconst	2
+3364		fpushconst	3360
+3365		freport
+3366		pushboundvar	-1
+3367		pushboundvar	-2
+3368		callp	fact_concept_agenthaswebsite/2
+3369		returnp
+3370		comment	concept_agenthaswebsite(-1,-2) :- concept_organizationterminatedperson(-1,-3), concept_personbelongstoorganization(-3,-4), concept_agentcompeteswithagent(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+3371	concept_agenthaswebsite/2	allocate	4	['C', 'B', 'D', 'A']
+3372		initfreevar	-1	-2
+3373		initfreevar	-2	-1
+3374		fclear
+3375		fpushstart	id	3
+3376		fpushconst	concept_agenthaswebsite
+3377		fpushconst	2
+3378		fpushconst	3374
+3379		freport
+3380		pushboundvar	-1
+3381		pushfreevar	-3
+3382		callp	concept_organizationterminatedperson/2
+3383		pushboundvar	-3
+3384		pushfreevar	-4
+3385		callp	concept_personbelongstoorganization/2
+3386		pushboundvar	-4
+3387		pushboundvar	-2
+3388		callp	concept_agentcompeteswithagent/2
+3389		pushboundvar	-2
+3390		callp	isLabel/1
+3391		returnp
+3392		comment	concept_agenthaswebsite(-1,-2) :- fact_concept_agenthaswebsite(-1,-2), isLabel(-2)  #v:['A', 'D'].
+3393	concept_agenthaswebsite/2	allocate	2	['D', 'A']
+3394		initfreevar	-1	-2
+3395		initfreevar	-2	-1
+3396		fclear
+3397		fpushstart	id	3
+3398		fpushconst	concept_agenthaswebsite
+3399		fpushconst	2
+3400		fpushconst	3396
+3401		freport
+3402		pushboundvar	-1
+3403		pushboundvar	-2
+3404		callp	fact_concept_agenthaswebsite/2
+3405		pushboundvar	-2
+3406		callp	isLabel/1
+3407		returnp
+3408		comment	concept_locatedat(-1,-2) :- concept_atlocation(-1,-2)  #v:['A', 'B'].
+3409	concept_locatedat/2	allocate	2	['B', 'A']
+3410		initfreevar	-1	-2
+3411		initfreevar	-2	-1
+3412		fclear
+3413		fpushstart	id	3
+3414		fpushconst	concept_locatedat
+3415		fpushconst	2
+3416		fpushconst	3412
+3417		freport
+3418		pushboundvar	-1
+3419		pushboundvar	-2
+3420		callp	concept_atlocation/2
+3421		returnp
+3422		comment	concept_companyeconomicsector(-1,-2) :- concept_economicsectorcompany(-1,-2)  #v:['A', 'B'].
+3423	concept_companyeconomicsector/2	allocate	2	['B', 'A']
+3424		initfreevar	-1	-2
+3425		initfreevar	-2	-1
+3426		fclear
+3427		fpushstart	id	3
+3428		fpushconst	concept_companyeconomicsector
+3429		fpushconst	2
+3430		fpushconst	3426
+3431		freport
+3432		pushboundvar	-1
+3433		pushboundvar	-2
+3434		callp	concept_economicsectorcompany/2
+3435		returnp
+3436		comment	concept_companyeconomicsector(-1,-2) :- fact_concept_companyeconomicsector(-1,-2)  #v:['A', 'B'].
+3437	concept_companyeconomicsector/2	allocate	2	['B', 'A']
+3438		initfreevar	-1	-2
+3439		initfreevar	-2	-1
+3440		fclear
+3441		fpushstart	id	3
+3442		fpushconst	concept_companyeconomicsector
+3443		fpushconst	2
+3444		fpushconst	3440
+3445		freport
+3446		pushboundvar	-1
+3447		pushboundvar	-2
+3448		callp	fact_concept_companyeconomicsector/2
+3449		returnp
+3450		comment	concept_companyeconomicsector(-1,-2) :- concept_agentcompeteswithagent(-1,-3), concept_agentcompeteswithagent(-3,-4), concept_companyeconomicsector(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+3451	concept_companyeconomicsector/2	allocate	4	['C', 'B', 'D', 'A']
+3452		initfreevar	-1	-2
+3453		initfreevar	-2	-1
+3454		fclear
+3455		fpushstart	id	3
+3456		fpushconst	concept_companyeconomicsector
+3457		fpushconst	2
+3458		fpushconst	3454
+3459		freport
+3460		pushboundvar	-1
+3461		pushfreevar	-3
+3462		callp	concept_agentcompeteswithagent/2
+3463		pushboundvar	-3
+3464		pushfreevar	-4
+3465		callp	concept_agentcompeteswithagent/2
+3466		pushboundvar	-4
+3467		pushboundvar	-2
+3468		callp	concept_companyeconomicsector/2
+3469		pushboundvar	-2
+3470		callp	isLabel/1
+3471		returnp
+3472		comment	concept_companyeconomicsector(-1,-2) :- fact_concept_companyeconomicsector(-1,-2), isLabel(-2)  #v:['A', 'D'].
+3473	concept_companyeconomicsector/2	allocate	2	['D', 'A']
+3474		initfreevar	-1	-2
+3475		initfreevar	-2	-1
+3476		fclear
+3477		fpushstart	id	3
+3478		fpushconst	concept_companyeconomicsector
+3479		fpushconst	2
+3480		fpushconst	3476
+3481		freport
+3482		pushboundvar	-1
+3483		pushboundvar	-2
+3484		callp	fact_concept_companyeconomicsector/2
+3485		pushboundvar	-2
+3486		callp	isLabel/1
+3487		returnp
+3488		comment	concept_teamplaysagainstteam(-1,-2) :- fact_concept_teamplaysagainstteam(-1,-2)  #v:['A', 'B'].
+3489	concept_teamplaysagainstteam/2	allocate	2	['B', 'A']
+3490		initfreevar	-1	-2
+3491		initfreevar	-2	-1
+3492		fclear
+3493		fpushstart	id	3
+3494		fpushconst	concept_teamplaysagainstteam
+3495		fpushconst	2
+3496		fpushconst	3492
+3497		freport
+3498		pushboundvar	-1
+3499		pushboundvar	-2
+3500		callp	fact_concept_teamplaysagainstteam/2
+3501		returnp
+3502		comment	concept_teamplaysagainstteam(-1,-2) :- concept_teamplayssport(-1,-3), concept_sportteam(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+3503	concept_teamplaysagainstteam/2	allocate	3	['B', 'C', 'A']
+3504		initfreevar	-1	-2
+3505		initfreevar	-2	-1
+3506		fclear
+3507		fpushstart	id	3
+3508		fpushconst	concept_teamplaysagainstteam
+3509		fpushconst	2
+3510		fpushconst	3506
+3511		freport
+3512		pushboundvar	-1
+3513		pushfreevar	-3
+3514		callp	concept_teamplayssport/2
+3515		pushboundvar	-3
+3516		pushboundvar	-2
+3517		callp	concept_sportteam/2
+3518		pushboundvar	-2
+3519		callp	isLabel/1
+3520		returnp
+3521		comment	concept_teamplaysagainstteam(-1,-2) :- fact_concept_teamplaysagainstteam(-1,-2), isLabel(-2)  #v:['A', 'C'].
+3522	concept_teamplaysagainstteam/2	allocate	2	['C', 'A']
+3523		initfreevar	-1	-2
+3524		initfreevar	-2	-1
+3525		fclear
+3526		fpushstart	id	3
+3527		fpushconst	concept_teamplaysagainstteam
+3528		fpushconst	2
+3529		fpushconst	3525
+3530		freport
+3531		pushboundvar	-1
+3532		pushboundvar	-2
+3533		callp	fact_concept_teamplaysagainstteam/2
+3534		pushboundvar	-2
+3535		callp	isLabel/1
+3536		returnp
+3537		comment	concept_cityhastransportation(-1,-2) :- concept_transportationincity(-1,-2)  #v:['A', 'B'].
+3538	concept_cityhastransportation/2	allocate	2	['B', 'A']
+3539		initfreevar	-1	-2
+3540		initfreevar	-2	-1
+3541		fclear
+3542		fpushstart	id	3
+3543		fpushconst	concept_cityhastransportation
+3544		fpushconst	2
+3545		fpushconst	3541
+3546		freport
+3547		pushboundvar	-1
+3548		pushboundvar	-2
+3549		callp	concept_transportationincity/2
+3550		returnp
+3551		comment	concept_organizationleadbyperson(-1,-2) :- concept_personleadsorganization(-1,-2)  #v:['A', 'B'].
+3552	concept_organizationleadbyperson/2	allocate	2	['B', 'A']
+3553		initfreevar	-1	-2
+3554		initfreevar	-2	-1
+3555		fclear
+3556		fpushstart	id	3
+3557		fpushconst	concept_organizationleadbyperson
+3558		fpushconst	2
+3559		fpushconst	3555
+3560		freport
+3561		pushboundvar	-1
+3562		pushboundvar	-2
+3563		callp	concept_personleadsorganization/2
+3564		returnp
+3565		comment	concept_competeswith(-1,-2) :- fact_concept_competeswith(-1,-2)  #v:['A', 'B'].
+3566	concept_competeswith/2	allocate	2	['B', 'A']
+3567		initfreevar	-1	-2
+3568		initfreevar	-2	-1
+3569		fclear
+3570		fpushstart	id	3
+3571		fpushconst	concept_competeswith
+3572		fpushconst	2
+3573		fpushconst	3569
+3574		freport
+3575		pushboundvar	-1
+3576		pushboundvar	-2
+3577		callp	fact_concept_competeswith/2
+3578		returnp
+3579		comment	concept_competeswith(-1,-2) :- concept_companyeconomicsector(-1,-3), concept_economicsectorcompany(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+3580	concept_competeswith/2	allocate	3	['B', 'C', 'A']
+3581		initfreevar	-1	-2
+3582		initfreevar	-2	-1
+3583		fclear
+3584		fpushstart	id	3
+3585		fpushconst	concept_competeswith
+3586		fpushconst	2
+3587		fpushconst	3583
+3588		freport
+3589		pushboundvar	-1
+3590		pushfreevar	-3
+3591		callp	concept_companyeconomicsector/2
+3592		pushboundvar	-3
+3593		pushboundvar	-2
+3594		callp	concept_economicsectorcompany/2
+3595		pushboundvar	-2
+3596		callp	isLabel/1
+3597		returnp
+3598		comment	concept_competeswith(-1,-2) :- fact_concept_competeswith(-1,-2), isLabel(-2)  #v:['A', 'C'].
+3599	concept_competeswith/2	allocate	2	['C', 'A']
+3600		initfreevar	-1	-2
+3601		initfreevar	-2	-1
+3602		fclear
+3603		fpushstart	id	3
+3604		fpushconst	concept_competeswith
+3605		fpushconst	2
+3606		fpushconst	3602
+3607		freport
+3608		pushboundvar	-1
+3609		pushboundvar	-2
+3610		callp	fact_concept_competeswith/2
+3611		pushboundvar	-2
+3612		callp	isLabel/1
+3613		returnp
+3614		comment	concept_organizationactsinlocation(-1,-2) :- concept_locationactedinbyorganization(-1,-2)  #v:['A', 'B'].
+3615	concept_organizationactsinlocation/2	allocate	2	['B', 'A']
+3616		initfreevar	-1	-2
+3617		initfreevar	-2	-1
+3618		fclear
+3619		fpushstart	id	3
+3620		fpushconst	concept_organizationactsinlocation
+3621		fpushconst	2
+3622		fpushconst	3618
+3623		freport
+3624		pushboundvar	-1
+3625		pushboundvar	-2
+3626		callp	concept_locationactedinbyorganization/2
+3627		returnp
+3628		comment	concept_inverseofagriculturalproductcamefromcountry(-1,-2) :- concept_agriculturalproductcamefromcountry(-1,-2)  #v:['A', 'B'].
+3629	concept_inverseofagriculturalproductcamefromcountry/2	allocate	2	['B', 'A']
+3630		initfreevar	-1	-2
+3631		initfreevar	-2	-1
+3632		fclear
+3633		fpushstart	id	3
+3634		fpushconst	concept_inverseofagriculturalproductcamefromcountry
+3635		fpushconst	2
+3636		fpushconst	3632
+3637		freport
+3638		pushboundvar	-1
+3639		pushboundvar	-2
+3640		callp	concept_agriculturalproductcamefromcountry/2
+3641		returnp
+3642		comment	concept_sportfansincountry(-1,-2) :- fact_concept_sportfansincountry(-1,-2)  #v:['A', 'B'].
+3643	concept_sportfansincountry/2	allocate	2	['B', 'A']
+3644		initfreevar	-1	-2
+3645		initfreevar	-2	-1
+3646		fclear
+3647		fpushstart	id	3
+3648		fpushconst	concept_sportfansincountry
+3649		fpushconst	2
+3650		fpushconst	3646
+3651		freport
+3652		pushboundvar	-1
+3653		pushboundvar	-2
+3654		callp	fact_concept_sportfansincountry/2
+3655		returnp
+3656		comment	concept_sportfansincountry(-1,-2) :- concept_sportschoolincountry(-1,-3), concept_countrylanguage(-3,-4), concept_languageschoolincity(-4,-5), concept_citylocatedincountry(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+3657	concept_sportfansincountry/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+3658		initfreevar	-1	-2
+3659		initfreevar	-2	-1
+3660		fclear
+3661		fpushstart	id	3
+3662		fpushconst	concept_sportfansincountry
+3663		fpushconst	2
+3664		fpushconst	3660
+3665		freport
+3666		pushboundvar	-1
+3667		pushfreevar	-3
+3668		callp	concept_sportschoolincountry/2
+3669		pushboundvar	-3
+3670		pushfreevar	-4
+3671		callp	concept_countrylanguage/2
+3672		pushboundvar	-4
+3673		pushfreevar	-5
+3674		callp	concept_languageschoolincity/2
+3675		pushboundvar	-5
+3676		pushboundvar	-2
+3677		callp	concept_citylocatedincountry/2
+3678		pushboundvar	-2
+3679		callp	isLabel/1
+3680		returnp
+3681		comment	concept_sportfansincountry(-1,-2) :- fact_concept_sportfansincountry(-1,-2), isLabel(-2)  #v:['A', 'E'].
+3682	concept_sportfansincountry/2	allocate	2	['E', 'A']
+3683		initfreevar	-1	-2
+3684		initfreevar	-2	-1
+3685		fclear
+3686		fpushstart	id	3
+3687		fpushconst	concept_sportfansincountry
+3688		fpushconst	2
+3689		fpushconst	3685
+3690		freport
+3691		pushboundvar	-1
+3692		pushboundvar	-2
+3693		callp	fact_concept_sportfansincountry/2
+3694		pushboundvar	-2
+3695		callp	isLabel/1
+3696		returnp
+3697		comment	concept_leagueteams(-1,-2) :- concept_teamplaysinleague(-1,-2)  #v:['A', 'B'].
+3698	concept_leagueteams/2	allocate	2	['B', 'A']
+3699		initfreevar	-1	-2
+3700		initfreevar	-2	-1
+3701		fclear
+3702		fpushstart	id	3
+3703		fpushconst	concept_leagueteams
+3704		fpushconst	2
+3705		fpushconst	3701
+3706		freport
+3707		pushboundvar	-1
+3708		pushboundvar	-2
+3709		callp	concept_teamplaysinleague/2
+3710		returnp
+3711		comment	concept_teamplaysincity(-1,-2) :- concept_citysportsteams(-1,-2)  #v:['A', 'B'].
+3712	concept_teamplaysincity/2	allocate	2	['B', 'A']
+3713		initfreevar	-1	-2
+3714		initfreevar	-2	-1
+3715		fclear
+3716		fpushstart	id	3
+3717		fpushconst	concept_teamplaysincity
+3718		fpushconst	2
+3719		fpushconst	3715
+3720		freport
+3721		pushboundvar	-1
+3722		pushboundvar	-2
+3723		callp	concept_citysportsteams/2
+3724		returnp
+3725		comment	concept_teamplaysincity(-1,-2) :- fact_concept_teamplaysincity(-1,-2)  #v:['A', 'B'].
+3726	concept_teamplaysincity/2	allocate	2	['B', 'A']
+3727		initfreevar	-1	-2
+3728		initfreevar	-2	-1
+3729		fclear
+3730		fpushstart	id	3
+3731		fpushconst	concept_teamplaysincity
+3732		fpushconst	2
+3733		fpushconst	3729
+3734		freport
+3735		pushboundvar	-1
+3736		pushboundvar	-2
+3737		callp	fact_concept_teamplaysincity/2
+3738		returnp
+3739		comment	concept_teamplaysincity(-1,-2) :- concept_teamhomestadium(-1,-3), concept_locationactedinbyorganization(-3,-4), concept_proxyof(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+3740	concept_teamplaysincity/2	allocate	4	['C', 'B', 'D', 'A']
+3741		initfreevar	-1	-2
+3742		initfreevar	-2	-1
+3743		fclear
+3744		fpushstart	id	3
+3745		fpushconst	concept_teamplaysincity
+3746		fpushconst	2
+3747		fpushconst	3743
+3748		freport
+3749		pushboundvar	-1
+3750		pushfreevar	-3
+3751		callp	concept_teamhomestadium/2
+3752		pushboundvar	-3
+3753		pushfreevar	-4
+3754		callp	concept_locationactedinbyorganization/2
+3755		pushboundvar	-4
+3756		pushboundvar	-2
+3757		callp	concept_proxyof/2
+3758		pushboundvar	-2
+3759		callp	isLabel/1
+3760		returnp
+3761		comment	concept_teamplaysincity(-1,-2) :- fact_concept_teamplaysincity(-1,-2), isLabel(-2)  #v:['A', 'D'].
+3762	concept_teamplaysincity/2	allocate	2	['D', 'A']
+3763		initfreevar	-1	-2
+3764		initfreevar	-2	-1
+3765		fclear
+3766		fpushstart	id	3
+3767		fpushconst	concept_teamplaysincity
+3768		fpushconst	2
+3769		fpushconst	3765
+3770		freport
+3771		pushboundvar	-1
+3772		pushboundvar	-2
+3773		callp	fact_concept_teamplaysincity/2
+3774		pushboundvar	-2
+3775		callp	isLabel/1
+3776		returnp
+3777		comment	concept_acquiredby(-1,-2) :- concept_acquired(-1,-2)  #v:['A', 'B'].
+3778	concept_acquiredby/2	allocate	2	['B', 'A']
+3779		initfreevar	-1	-2
+3780		initfreevar	-2	-1
+3781		fclear
+3782		fpushstart	id	3
+3783		fpushconst	concept_acquiredby
+3784		fpushconst	2
+3785		fpushconst	3781
+3786		freport
+3787		pushboundvar	-1
+3788		pushboundvar	-2
+3789		callp	concept_acquired/2
+3790		returnp
+3791		comment	concept_newspaperincity(-1,-2) :- fact_concept_newspaperincity(-1,-2)  #v:['A', 'B'].
+3792	concept_newspaperincity/2	allocate	2	['B', 'A']
+3793		initfreevar	-1	-2
+3794		initfreevar	-2	-1
+3795		fclear
+3796		fpushstart	id	3
+3797		fpushconst	concept_newspaperincity
+3798		fpushconst	2
+3799		fpushconst	3795
+3800		freport
+3801		pushboundvar	-1
+3802		pushboundvar	-2
+3803		callp	fact_concept_newspaperincity/2
+3804		returnp
+3805		comment	concept_newspaperincity(-1,-2) :- concept_worker(-1,-3), concept_worksfor(-3,-4), concept_hasofficeincity(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+3806	concept_newspaperincity/2	allocate	4	['C', 'B', 'D', 'A']
+3807		initfreevar	-1	-2
+3808		initfreevar	-2	-1
+3809		fclear
+3810		fpushstart	id	3
+3811		fpushconst	concept_newspaperincity
+3812		fpushconst	2
+3813		fpushconst	3809
+3814		freport
+3815		pushboundvar	-1
+3816		pushfreevar	-3
+3817		callp	concept_worker/2
+3818		pushboundvar	-3
+3819		pushfreevar	-4
+3820		callp	concept_worksfor/2
+3821		pushboundvar	-4
+3822		pushboundvar	-2
+3823		callp	concept_hasofficeincity/2
+3824		pushboundvar	-2
+3825		callp	isLabel/1
+3826		returnp
+3827		comment	concept_newspaperincity(-1,-2) :- fact_concept_newspaperincity(-1,-2), isLabel(-2)  #v:['A', 'D'].
+3828	concept_newspaperincity/2	allocate	2	['D', 'A']
+3829		initfreevar	-1	-2
+3830		initfreevar	-2	-1
+3831		fclear
+3832		fpushstart	id	3
+3833		fpushconst	concept_newspaperincity
+3834		fpushconst	2
+3835		fpushconst	3831
+3836		freport
+3837		pushboundvar	-1
+3838		pushboundvar	-2
+3839		callp	fact_concept_newspaperincity/2
+3840		pushboundvar	-2
+3841		callp	isLabel/1
+3842		returnp
+3843		comment	concept_transportationincity(-1,-2) :- concept_cityhastransportation(-1,-2)  #v:['A', 'B'].
+3844	concept_transportationincity/2	allocate	2	['B', 'A']
+3845		initfreevar	-1	-2
+3846		initfreevar	-2	-1
+3847		fclear
+3848		fpushstart	id	3
+3849		fpushconst	concept_transportationincity
+3850		fpushconst	2
+3851		fpushconst	3847
+3852		freport
+3853		pushboundvar	-1
+3854		pushboundvar	-2
+3855		callp	concept_cityhastransportation/2
+3856		returnp
+3857		comment	concept_locationlocatedwithinlocation(-1,-2) :- concept_countryalsoknownas(-1,-3), concept_atlocation(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+3858	concept_locationlocatedwithinlocation/2	allocate	3	['B', 'C', 'A']
+3859		initfreevar	-1	-2
+3860		initfreevar	-2	-1
+3861		fclear
+3862		fpushstart	id	3
+3863		fpushconst	concept_locationlocatedwithinlocation
+3864		fpushconst	2
+3865		fpushconst	3861
+3866		freport
+3867		pushboundvar	-1
+3868		pushfreevar	-3
+3869		callp	concept_countryalsoknownas/2
+3870		pushboundvar	-3
+3871		pushboundvar	-2
+3872		callp	concept_atlocation/2
+3873		pushboundvar	-2
+3874		callp	isLabel/1
+3875		returnp
+3876		comment	concept_locationlocatedwithinlocation(-1,-2) :- fact_concept_locationlocatedwithinlocation(-1,-2), isLabel(-2)  #v:['A', 'C'].
+3877	concept_locationlocatedwithinlocation/2	allocate	2	['C', 'A']
+3878		initfreevar	-1	-2
+3879		initfreevar	-2	-1
+3880		fclear
+3881		fpushstart	id	3
+3882		fpushconst	concept_locationlocatedwithinlocation
+3883		fpushconst	2
+3884		fpushconst	3880
+3885		freport
+3886		pushboundvar	-1
+3887		pushboundvar	-2
+3888		callp	fact_concept_locationlocatedwithinlocation/2
+3889		pushboundvar	-2
+3890		callp	isLabel/1
+3891		returnp
+3892		comment	concept_bankbankincountry(-1,-2) :- fact_concept_bankbankincountry(-1,-2)  #v:['A', 'B'].
+3893	concept_bankbankincountry/2	allocate	2	['B', 'A']
+3894		initfreevar	-1	-2
+3895		initfreevar	-2	-1
+3896		fclear
+3897		fpushstart	id	3
+3898		fpushconst	concept_bankbankincountry
+3899		fpushconst	2
+3900		fpushconst	3896
+3901		freport
+3902		pushboundvar	-1
+3903		pushboundvar	-2
+3904		callp	fact_concept_bankbankincountry/2
+3905		returnp
+3906		comment	concept_bankbankincountry(-1,-2) :- concept_agentcollaborateswithagent(-1,-3), concept_agentcontrols(-3,-4), concept_subpartof(-4,-5), concept_bankbankincountry(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+3907	concept_bankbankincountry/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+3908		initfreevar	-1	-2
+3909		initfreevar	-2	-1
+3910		fclear
+3911		fpushstart	id	3
+3912		fpushconst	concept_bankbankincountry
+3913		fpushconst	2
+3914		fpushconst	3910
+3915		freport
+3916		pushboundvar	-1
+3917		pushfreevar	-3
+3918		callp	concept_agentcollaborateswithagent/2
+3919		pushboundvar	-3
+3920		pushfreevar	-4
+3921		callp	concept_agentcontrols/2
+3922		pushboundvar	-4
+3923		pushfreevar	-5
+3924		callp	concept_subpartof/2
+3925		pushboundvar	-5
+3926		pushboundvar	-2
+3927		callp	concept_bankbankincountry/2
+3928		pushboundvar	-2
+3929		callp	isLabel/1
+3930		returnp
+3931		comment	concept_bankbankincountry(-1,-2) :- fact_concept_bankbankincountry(-1,-2), isLabel(-2)  #v:['A', 'E'].
+3932	concept_bankbankincountry/2	allocate	2	['E', 'A']
+3933		initfreevar	-1	-2
+3934		initfreevar	-2	-1
+3935		fclear
+3936		fpushstart	id	3
+3937		fpushconst	concept_bankbankincountry
+3938		fpushconst	2
+3939		fpushconst	3935
+3940		freport
+3941		pushboundvar	-1
+3942		pushboundvar	-2
+3943		callp	fact_concept_bankbankincountry/2
+3944		pushboundvar	-2
+3945		callp	isLabel/1
+3946		returnp
+3947		comment	concept_athleteplayssport(-1,-2) :- concept_players(-1,-2)  #v:['A', 'B'].
+3948	concept_athleteplayssport/2	allocate	2	['B', 'A']
+3949		initfreevar	-1	-2
+3950		initfreevar	-2	-1
+3951		fclear
+3952		fpushstart	id	3
+3953		fpushconst	concept_athleteplayssport
+3954		fpushconst	2
+3955		fpushconst	3951
+3956		freport
+3957		pushboundvar	-1
+3958		pushboundvar	-2
+3959		callp	concept_players/2
+3960		returnp
+3961		comment	concept_athleteplayssport(-1,-2) :- fact_concept_athleteplayssport(-1,-2)  #v:['A', 'B'].
+3962	concept_athleteplayssport/2	allocate	2	['B', 'A']
+3963		initfreevar	-1	-2
+3964		initfreevar	-2	-1
+3965		fclear
+3966		fpushstart	id	3
+3967		fpushconst	concept_athleteplayssport
+3968		fpushconst	2
+3969		fpushconst	3965
+3970		freport
+3971		pushboundvar	-1
+3972		pushboundvar	-2
+3973		callp	fact_concept_athleteplayssport/2
+3974		returnp
+3975		comment	concept_athleteplayssport(-1,-2) :- concept_athletebeatathlete(-1,-3), concept_athleteplayssport(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+3976	concept_athleteplayssport/2	allocate	3	['B', 'C', 'A']
+3977		initfreevar	-1	-2
+3978		initfreevar	-2	-1
+3979		fclear
+3980		fpushstart	id	3
+3981		fpushconst	concept_athleteplayssport
+3982		fpushconst	2
+3983		fpushconst	3979
+3984		freport
+3985		pushboundvar	-1
+3986		pushfreevar	-3
+3987		callp	concept_athletebeatathlete/2
+3988		pushboundvar	-3
+3989		pushboundvar	-2
+3990		callp	concept_athleteplayssport/2
+3991		pushboundvar	-2
+3992		callp	isLabel/1
+3993		returnp
+3994		comment	concept_athleteplayssport(-1,-2) :- fact_concept_athleteplayssport(-1,-2), isLabel(-2)  #v:['A', 'C'].
+3995	concept_athleteplayssport/2	allocate	2	['C', 'A']
+3996		initfreevar	-1	-2
+3997		initfreevar	-2	-1
+3998		fclear
+3999		fpushstart	id	3
+4000		fpushconst	concept_athleteplayssport
+4001		fpushconst	2
+4002		fpushconst	3998
+4003		freport
+4004		pushboundvar	-1
+4005		pushboundvar	-2
+4006		callp	fact_concept_athleteplayssport/2
+4007		pushboundvar	-2
+4008		callp	isLabel/1
+4009		returnp
+4010		comment	concept_televisionstationaffiliatedwith(-1,-2) :- fact_concept_televisionstationaffiliatedwith(-1,-2)  #v:['A', 'B'].
+4011	concept_televisionstationaffiliatedwith/2	allocate	2	['B', 'A']
+4012		initfreevar	-1	-2
+4013		initfreevar	-2	-1
+4014		fclear
+4015		fpushstart	id	3
+4016		fpushconst	concept_televisionstationaffiliatedwith
+4017		fpushconst	2
+4018		fpushconst	4014
+4019		freport
+4020		pushboundvar	-1
+4021		pushboundvar	-2
+4022		callp	fact_concept_televisionstationaffiliatedwith/2
+4023		returnp
+4024		comment	concept_televisionstationaffiliatedwith(-1,-2) :- concept_hasofficeincity(-1,-3), concept_locatedat(-3,-4), concept_televisionstationaffiliatedwith(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+4025	concept_televisionstationaffiliatedwith/2	allocate	4	['C', 'B', 'D', 'A']
+4026		initfreevar	-1	-2
+4027		initfreevar	-2	-1
+4028		fclear
+4029		fpushstart	id	3
+4030		fpushconst	concept_televisionstationaffiliatedwith
+4031		fpushconst	2
+4032		fpushconst	4028
+4033		freport
+4034		pushboundvar	-1
+4035		pushfreevar	-3
+4036		callp	concept_hasofficeincity/2
+4037		pushboundvar	-3
+4038		pushfreevar	-4
+4039		callp	concept_locatedat/2
+4040		pushboundvar	-4
+4041		pushboundvar	-2
+4042		callp	concept_televisionstationaffiliatedwith/2
+4043		pushboundvar	-2
+4044		callp	isLabel/1
+4045		returnp
+4046		comment	concept_televisionstationaffiliatedwith(-1,-2) :- fact_concept_televisionstationaffiliatedwith(-1,-2), isLabel(-2)  #v:['A', 'D'].
+4047	concept_televisionstationaffiliatedwith/2	allocate	2	['D', 'A']
+4048		initfreevar	-1	-2
+4049		initfreevar	-2	-1
+4050		fclear
+4051		fpushstart	id	3
+4052		fpushconst	concept_televisionstationaffiliatedwith
+4053		fpushconst	2
+4054		fpushconst	4050
+4055		freport
+4056		pushboundvar	-1
+4057		pushboundvar	-2
+4058		callp	fact_concept_televisionstationaffiliatedwith/2
+4059		pushboundvar	-2
+4060		callp	isLabel/1
+4061		returnp
+4062		comment	concept_hasofficeincity(-1,-2) :- concept_organizationheadquarteredincity(-1,-2), isLabel(-2)  #v:['A', 'B'].
+4063	concept_hasofficeincity/2	allocate	2	['B', 'A']
+4064		initfreevar	-1	-2
+4065		initfreevar	-2	-1
+4066		fclear
+4067		fpushstart	id	3
+4068		fpushconst	concept_hasofficeincity
+4069		fpushconst	2
+4070		fpushconst	4066
+4071		freport
+4072		pushboundvar	-1
+4073		pushboundvar	-2
+4074		callp	concept_organizationheadquarteredincity/2
+4075		pushboundvar	-2
+4076		callp	isLabel/1
+4077		returnp
+4078		comment	concept_hasofficeincity(-1,-2) :- fact_concept_hasofficeincity(-1,-2)  #v:['A', 'B'].
+4079	concept_hasofficeincity/2	allocate	2	['B', 'A']
+4080		initfreevar	-1	-2
+4081		initfreevar	-2	-1
+4082		fclear
+4083		fpushstart	id	3
+4084		fpushconst	concept_hasofficeincity
+4085		fpushconst	2
+4086		fpushconst	4082
+4087		freport
+4088		pushboundvar	-1
+4089		pushboundvar	-2
+4090		callp	fact_concept_hasofficeincity/2
+4091		returnp
+4092		comment	concept_hasofficeincity(-1,-2) :- fact_concept_hasofficeincity(-1,-2), isLabel(-2)  #v:['A', 'B'].
+4093	concept_hasofficeincity/2	allocate	2	['B', 'A']
+4094		initfreevar	-1	-2
+4095		initfreevar	-2	-1
+4096		fclear
+4097		fpushstart	id	3
+4098		fpushconst	concept_hasofficeincity
+4099		fpushconst	2
+4100		fpushconst	4096
+4101		freport
+4102		pushboundvar	-1
+4103		pushboundvar	-2
+4104		callp	fact_concept_hasofficeincity/2
+4105		pushboundvar	-2
+4106		callp	isLabel/1
+4107		returnp
+4108		comment	concept_cityradiostation(-1,-2) :- concept_radiostationincity(-1,-2)  #v:['A', 'B'].
+4109	concept_cityradiostation/2	allocate	2	['B', 'A']
+4110		initfreevar	-1	-2
+4111		initfreevar	-2	-1
+4112		fclear
+4113		fpushstart	id	3
+4114		fpushconst	concept_cityradiostation
+4115		fpushconst	2
+4116		fpushconst	4112
+4117		freport
+4118		pushboundvar	-1
+4119		pushboundvar	-2
+4120		callp	concept_radiostationincity/2
+4121		returnp
+4122		comment	concept_athletebeatathlete(-1,-2) :- concept_inverseofathletebeatathlete(-1,-2)  #v:['A', 'B'].
+4123	concept_athletebeatathlete/2	allocate	2	['B', 'A']
+4124		initfreevar	-1	-2
+4125		initfreevar	-2	-1
+4126		fclear
+4127		fpushstart	id	3
+4128		fpushconst	concept_athletebeatathlete
+4129		fpushconst	2
+4130		fpushconst	4126
+4131		freport
+4132		pushboundvar	-1
+4133		pushboundvar	-2
+4134		callp	concept_inverseofathletebeatathlete/2
+4135		returnp
+4136		comment	concept_synonymfor(-1,-2) :- concept_synonymfor(-1,-2)  #v:['A', 'B'].
+4137	concept_synonymfor/2	allocate	2	['B', 'A']
+4138		initfreevar	-1	-2
+4139		initfreevar	-2	-1
+4140		fclear
+4141		fpushstart	id	3
+4142		fpushconst	concept_synonymfor
+4143		fpushconst	2
+4144		fpushconst	4140
+4145		freport
+4146		pushboundvar	-1
+4147		pushboundvar	-2
+4148		callp	concept_synonymfor/2
+4149		returnp
+4150		comment	concept_citysportsteams(-1,-2) :- concept_teamplaysincity(-1,-2)  #v:['A', 'B'].
+4151	concept_citysportsteams/2	allocate	2	['B', 'A']
+4152		initfreevar	-1	-2
+4153		initfreevar	-2	-1
+4154		fclear
+4155		fpushstart	id	3
+4156		fpushconst	concept_citysportsteams
+4157		fpushconst	2
+4158		fpushconst	4154
+4159		freport
+4160		pushboundvar	-1
+4161		pushboundvar	-2
+4162		callp	concept_teamplaysincity/2
+4163		returnp
+4164		comment	concept_locationrepresentedbypolitician(-1,-2) :- concept_politicianrepresentslocation(-1,-2)  #v:['A', 'B'].
+4165	concept_locationrepresentedbypolitician/2	allocate	2	['B', 'A']
+4166		initfreevar	-1	-2
+4167		initfreevar	-2	-1
+4168		fclear
+4169		fpushstart	id	3
+4170		fpushconst	concept_locationrepresentedbypolitician
+4171		fpushconst	2
+4172		fpushconst	4168
+4173		freport
+4174		pushboundvar	-1
+4175		pushboundvar	-2
+4176		callp	concept_politicianrepresentslocation/2
+4177		returnp
+4178		comment	concept_languageschoolincity(-1,-2) :- fact_concept_languageschoolincity(-1,-2)  #v:['A', 'B'].
+4179	concept_languageschoolincity/2	allocate	2	['B', 'A']
+4180		initfreevar	-1	-2
+4181		initfreevar	-2	-1
+4182		fclear
+4183		fpushstart	id	3
+4184		fpushconst	concept_languageschoolincity
+4185		fpushconst	2
+4186		fpushconst	4182
+4187		freport
+4188		pushboundvar	-1
+4189		pushboundvar	-2
+4190		callp	fact_concept_languageschoolincity/2
+4191		returnp
+4192		comment	concept_languageschoolincity(-1,-2) :- concept_languageofcity(-1,-3), concept_atlocation(-3,-4), concept_locatedat(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+4193	concept_languageschoolincity/2	allocate	4	['C', 'B', 'D', 'A']
+4194		initfreevar	-1	-2
+4195		initfreevar	-2	-1
+4196		fclear
+4197		fpushstart	id	3
+4198		fpushconst	concept_languageschoolincity
+4199		fpushconst	2
+4200		fpushconst	4196
+4201		freport
+4202		pushboundvar	-1
+4203		pushfreevar	-3
+4204		callp	concept_languageofcity/2
+4205		pushboundvar	-3
+4206		pushfreevar	-4
+4207		callp	concept_atlocation/2
+4208		pushboundvar	-4
+4209		pushboundvar	-2
+4210		callp	concept_locatedat/2
+4211		pushboundvar	-2
+4212		callp	isLabel/1
+4213		returnp
+4214		comment	concept_languageschoolincity(-1,-2) :- fact_concept_languageschoolincity(-1,-2), isLabel(-2)  #v:['A', 'D'].
+4215	concept_languageschoolincity/2	allocate	2	['D', 'A']
+4216		initfreevar	-1	-2
+4217		initfreevar	-2	-1
+4218		fclear
+4219		fpushstart	id	3
+4220		fpushconst	concept_languageschoolincity
+4221		fpushconst	2
+4222		fpushconst	4218
+4223		freport
+4224		pushboundvar	-1
+4225		pushboundvar	-2
+4226		callp	fact_concept_languageschoolincity/2
+4227		pushboundvar	-2
+4228		callp	isLabel/1
+4229		returnp
+4230		comment	concept_citylocatedingeopoliticallocation(-1,-2) :- concept_geopoliticallocationcontainscity(-1,-2)  #v:['A', 'B'].
+4231	concept_citylocatedingeopoliticallocation/2	allocate	2	['B', 'A']
+4232		initfreevar	-1	-2
+4233		initfreevar	-2	-1
+4234		fclear
+4235		fpushstart	id	3
+4236		fpushconst	concept_citylocatedingeopoliticallocation
+4237		fpushconst	2
+4238		fpushconst	4234
+4239		freport
+4240		pushboundvar	-1
+4241		pushboundvar	-2
+4242		callp	concept_geopoliticallocationcontainscity/2
+4243		returnp
+4244		comment	concept_citylocatedingeopoliticallocation(-1,-2) :- concept_proxyfor(-1,-3), concept_proxyof(-3,-4), concept_atlocation(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+4245	concept_citylocatedingeopoliticallocation/2	allocate	4	['C', 'B', 'D', 'A']
+4246		initfreevar	-1	-2
+4247		initfreevar	-2	-1
+4248		fclear
+4249		fpushstart	id	3
+4250		fpushconst	concept_citylocatedingeopoliticallocation
+4251		fpushconst	2
+4252		fpushconst	4248
+4253		freport
+4254		pushboundvar	-1
+4255		pushfreevar	-3
+4256		callp	concept_proxyfor/2
+4257		pushboundvar	-3
+4258		pushfreevar	-4
+4259		callp	concept_proxyof/2
+4260		pushboundvar	-4
+4261		pushboundvar	-2
+4262		callp	concept_atlocation/2
+4263		pushboundvar	-2
+4264		callp	isLabel/1
+4265		returnp
+4266		comment	concept_citylocatedingeopoliticallocation(-1,-2) :- fact_concept_citylocatedingeopoliticallocation(-1,-2), isLabel(-2)  #v:['A', 'D'].
+4267	concept_citylocatedingeopoliticallocation/2	allocate	2	['D', 'A']
+4268		initfreevar	-1	-2
+4269		initfreevar	-2	-1
+4270		fclear
+4271		fpushstart	id	3
+4272		fpushconst	concept_citylocatedingeopoliticallocation
+4273		fpushconst	2
+4274		fpushconst	4270
+4275		freport
+4276		pushboundvar	-1
+4277		pushboundvar	-2
+4278		callp	fact_concept_citylocatedingeopoliticallocation/2
+4279		pushboundvar	-2
+4280		callp	isLabel/1
+4281		returnp
+4282		comment	concept_personbelongstoorganization(-1,-2) :- concept_organizationhasperson(-1,-2)  #v:['A', 'B'].
+4283	concept_personbelongstoorganization/2	allocate	2	['B', 'A']
+4284		initfreevar	-1	-2
+4285		initfreevar	-2	-1
+4286		fclear
+4287		fpushstart	id	3
+4288		fpushconst	concept_personbelongstoorganization
+4289		fpushconst	2
+4290		fpushconst	4286
+4291		freport
+4292		pushboundvar	-1
+4293		pushboundvar	-2
+4294		callp	concept_organizationhasperson/2
+4295		returnp
+4296		comment	concept_personbelongstoorganization(-1,-2) :- fact_concept_personbelongstoorganization(-1,-2)  #v:['A', 'B'].
+4297	concept_personbelongstoorganization/2	allocate	2	['B', 'A']
+4298		initfreevar	-1	-2
+4299		initfreevar	-2	-1
+4300		fclear
+4301		fpushstart	id	3
+4302		fpushconst	concept_personbelongstoorganization
+4303		fpushconst	2
+4304		fpushconst	4300
+4305		freport
+4306		pushboundvar	-1
+4307		pushboundvar	-2
+4308		callp	fact_concept_personbelongstoorganization/2
+4309		returnp
+4310		comment	concept_personbelongstoorganization(-1,-2) :- concept_agentcontrols(-1,-3), concept_organizationhasperson(-3,-4), concept_agentcontrols(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+4311	concept_personbelongstoorganization/2	allocate	4	['C', 'B', 'D', 'A']
+4312		initfreevar	-1	-2
+4313		initfreevar	-2	-1
+4314		fclear
+4315		fpushstart	id	3
+4316		fpushconst	concept_personbelongstoorganization
+4317		fpushconst	2
+4318		fpushconst	4314
+4319		freport
+4320		pushboundvar	-1
+4321		pushfreevar	-3
+4322		callp	concept_agentcontrols/2
+4323		pushboundvar	-3
+4324		pushfreevar	-4
+4325		callp	concept_organizationhasperson/2
+4326		pushboundvar	-4
+4327		pushboundvar	-2
+4328		callp	concept_agentcontrols/2
+4329		pushboundvar	-2
+4330		callp	isLabel/1
+4331		returnp
+4332		comment	concept_personbelongstoorganization(-1,-2) :- fact_concept_personbelongstoorganization(-1,-2), isLabel(-2)  #v:['A', 'D'].
+4333	concept_personbelongstoorganization/2	allocate	2	['D', 'A']
+4334		initfreevar	-1	-2
+4335		initfreevar	-2	-1
+4336		fclear
+4337		fpushstart	id	3
+4338		fpushconst	concept_personbelongstoorganization
+4339		fpushconst	2
+4340		fpushconst	4336
+4341		freport
+4342		pushboundvar	-1
+4343		pushboundvar	-2
+4344		callp	fact_concept_personbelongstoorganization/2
+4345		pushboundvar	-2
+4346		callp	isLabel/1
+4347		returnp
+4348		comment	concept_animalistypeofanimal(-1,-2) :- concept_animaltypehasanimal(-1,-2)  #v:['A', 'B'].
+4349	concept_animalistypeofanimal/2	allocate	2	['B', 'A']
+4350		initfreevar	-1	-2
+4351		initfreevar	-2	-1
+4352		fclear
+4353		fpushstart	id	3
+4354		fpushconst	concept_animalistypeofanimal
+4355		fpushconst	2
+4356		fpushconst	4352
+4357		freport
+4358		pushboundvar	-1
+4359		pushboundvar	-2
+4360		callp	concept_animaltypehasanimal/2
+4361		returnp
+4362		comment	concept_countryproducesproduct(-1,-2) :- concept_productproducedincountry(-1,-2)  #v:['A', 'B'].
+4363	concept_countryproducesproduct/2	allocate	2	['B', 'A']
+4364		initfreevar	-1	-2
+4365		initfreevar	-2	-1
+4366		fclear
+4367		fpushstart	id	3
+4368		fpushconst	concept_countryproducesproduct
+4369		fpushconst	2
+4370		fpushconst	4366
+4371		freport
+4372		pushboundvar	-1
+4373		pushboundvar	-2
+4374		callp	concept_productproducedincountry/2
+4375		returnp
+4376		comment	concept_agriculturalproductcookedwithagriculturalproduct(-1,-2) :- concept_inverseofagriculturalproductcookedwithagricultureproduct(-1,-2)  #v:['A', 'B'].
+4377	concept_agriculturalproductcookedwithagriculturalproduct/2	allocate	2	['B', 'A']
+4378		initfreevar	-1	-2
+4379		initfreevar	-2	-1
+4380		fclear
+4381		fpushstart	id	3
+4382		fpushconst	concept_agriculturalproductcookedwithagriculturalproduct
+4383		fpushconst	2
+4384		fpushconst	4380
+4385		freport
+4386		pushboundvar	-1
+4387		pushboundvar	-2
+4388		callp	concept_inverseofagriculturalproductcookedwithagricultureproduct/2
+4389		returnp
+4390		comment	concept_atlocation(-1,-2) :- concept_locatedat(-1,-2)  #v:['A', 'B'].
+4391	concept_atlocation/2	allocate	2	['B', 'A']
+4392		initfreevar	-1	-2
+4393		initfreevar	-2	-1
+4394		fclear
+4395		fpushstart	id	3
+4396		fpushconst	concept_atlocation
+4397		fpushconst	2
+4398		fpushconst	4394
+4399		freport
+4400		pushboundvar	-1
+4401		pushboundvar	-2
+4402		callp	concept_locatedat/2
+4403		returnp
+4404		comment	concept_atlocation(-1,-2) :- concept_subpartof(-1,-2), isLabel(-2)  #v:['A', 'B'].
+4405	concept_atlocation/2	allocate	2	['B', 'A']
+4406		initfreevar	-1	-2
+4407		initfreevar	-2	-1
+4408		fclear
+4409		fpushstart	id	3
+4410		fpushconst	concept_atlocation
+4411		fpushconst	2
+4412		fpushconst	4408
+4413		freport
+4414		pushboundvar	-1
+4415		pushboundvar	-2
+4416		callp	concept_subpartof/2
+4417		pushboundvar	-2
+4418		callp	isLabel/1
+4419		returnp
+4420		comment	concept_atlocation(-1,-2) :- fact_concept_atlocation(-1,-2)  #v:['A', 'B'].
+4421	concept_atlocation/2	allocate	2	['B', 'A']
+4422		initfreevar	-1	-2
+4423		initfreevar	-2	-1
+4424		fclear
+4425		fpushstart	id	3
+4426		fpushconst	concept_atlocation
+4427		fpushconst	2
+4428		fpushconst	4424
+4429		freport
+4430		pushboundvar	-1
+4431		pushboundvar	-2
+4432		callp	fact_concept_atlocation/2
+4433		returnp
+4434		comment	concept_atlocation(-1,-2) :- fact_concept_atlocation(-1,-2), isLabel(-2)  #v:['A', 'B'].
+4435	concept_atlocation/2	allocate	2	['B', 'A']
+4436		initfreevar	-1	-2
+4437		initfreevar	-2	-1
+4438		fclear
+4439		fpushstart	id	3
+4440		fpushconst	concept_atlocation
+4441		fpushconst	2
+4442		fpushconst	4438
+4443		freport
+4444		pushboundvar	-1
+4445		pushboundvar	-2
+4446		callp	fact_concept_atlocation/2
+4447		pushboundvar	-2
+4448		callp	isLabel/1
+4449		returnp
+4450		comment	concept_agentactsinlocation(-1,-2) :- fact_concept_agentactsinlocation(-1,-2)  #v:['A', 'B'].
+4451	concept_agentactsinlocation/2	allocate	2	['B', 'A']
+4452		initfreevar	-1	-2
+4453		initfreevar	-2	-1
+4454		fclear
+4455		fpushstart	id	3
+4456		fpushconst	concept_agentactsinlocation
+4457		fpushconst	2
+4458		fpushconst	4454
+4459		freport
+4460		pushboundvar	-1
+4461		pushboundvar	-2
+4462		callp	fact_concept_agentactsinlocation/2
+4463		returnp
+4464		comment	concept_agentactsinlocation(-1,-2) :- concept_proxyof(-1,-3), concept_citysportsteams(-3,-4), concept_proxyof(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+4465	concept_agentactsinlocation/2	allocate	4	['C', 'B', 'D', 'A']
+4466		initfreevar	-1	-2
+4467		initfreevar	-2	-1
+4468		fclear
+4469		fpushstart	id	3
+4470		fpushconst	concept_agentactsinlocation
+4471		fpushconst	2
+4472		fpushconst	4468
+4473		freport
+4474		pushboundvar	-1
+4475		pushfreevar	-3
+4476		callp	concept_proxyof/2
+4477		pushboundvar	-3
+4478		pushfreevar	-4
+4479		callp	concept_citysportsteams/2
+4480		pushboundvar	-4
+4481		pushboundvar	-2
+4482		callp	concept_proxyof/2
+4483		pushboundvar	-2
+4484		callp	isLabel/1
+4485		returnp
+4486		comment	concept_agentactsinlocation(-1,-2) :- fact_concept_agentactsinlocation(-1,-2), isLabel(-2)  #v:['A', 'D'].
+4487	concept_agentactsinlocation/2	allocate	2	['D', 'A']
+4488		initfreevar	-1	-2
+4489		initfreevar	-2	-1
+4490		fclear
+4491		fpushstart	id	3
+4492		fpushconst	concept_agentactsinlocation
+4493		fpushconst	2
+4494		fpushconst	4490
+4495		freport
+4496		pushboundvar	-1
+4497		pushboundvar	-2
+4498		callp	fact_concept_agentactsinlocation/2
+4499		pushboundvar	-2
+4500		callp	isLabel/1
+4501		returnp
+4502		comment	concept_personhasjobposition(-1,-2) :- fact_concept_personhasjobposition(-1,-2)  #v:['A', 'B'].
+4503	concept_personhasjobposition/2	allocate	2	['B', 'A']
+4504		initfreevar	-1	-2
+4505		initfreevar	-2	-1
+4506		fclear
+4507		fpushstart	id	3
+4508		fpushconst	concept_personhasjobposition
+4509		fpushconst	2
+4510		fpushconst	4506
+4511		freport
+4512		pushboundvar	-1
+4513		pushboundvar	-2
+4514		callp	fact_concept_personhasjobposition/2
+4515		returnp
+4516		comment	concept_personhasjobposition(-1,-2) :- concept_proxyfor(-1,-3), concept_geopoliticallocationcontainsstate(-3,-4), concept_locationrepresentedbypolitician(-4,-5), concept_politicianholdsoffice(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+4517	concept_personhasjobposition/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+4518		initfreevar	-1	-2
+4519		initfreevar	-2	-1
+4520		fclear
+4521		fpushstart	id	3
+4522		fpushconst	concept_personhasjobposition
+4523		fpushconst	2
+4524		fpushconst	4520
+4525		freport
+4526		pushboundvar	-1
+4527		pushfreevar	-3
+4528		callp	concept_proxyfor/2
+4529		pushboundvar	-3
+4530		pushfreevar	-4
+4531		callp	concept_geopoliticallocationcontainsstate/2
+4532		pushboundvar	-4
+4533		pushfreevar	-5
+4534		callp	concept_locationrepresentedbypolitician/2
+4535		pushboundvar	-5
+4536		pushboundvar	-2
+4537		callp	concept_politicianholdsoffice/2
+4538		pushboundvar	-2
+4539		callp	isLabel/1
+4540		returnp
+4541		comment	concept_personhasjobposition(-1,-2) :- fact_concept_personhasjobposition(-1,-2), isLabel(-2)  #v:['A', 'E'].
+4542	concept_personhasjobposition/2	allocate	2	['E', 'A']
+4543		initfreevar	-1	-2
+4544		initfreevar	-2	-1
+4545		fclear
+4546		fpushstart	id	3
+4547		fpushconst	concept_personhasjobposition
+4548		fpushconst	2
+4549		fpushconst	4545
+4550		freport
+4551		pushboundvar	-1
+4552		pushboundvar	-2
+4553		callp	fact_concept_personhasjobposition/2
+4554		pushboundvar	-2
+4555		callp	isLabel/1
+4556		returnp
+4557		comment	concept_attractionofcity(-1,-2) :- fact_concept_attractionofcity(-1,-2)  #v:['A', 'B'].
+4558	concept_attractionofcity/2	allocate	2	['B', 'A']
+4559		initfreevar	-1	-2
+4560		initfreevar	-2	-1
+4561		fclear
+4562		fpushstart	id	3
+4563		fpushconst	concept_attractionofcity
+4564		fpushconst	2
+4565		fpushconst	4561
+4566		freport
+4567		pushboundvar	-1
+4568		pushboundvar	-2
+4569		callp	fact_concept_attractionofcity/2
+4570		returnp
+4571		comment	concept_attractionofcity(-1,-2) :- concept_stadiumhometeam(-1,-3), concept_proxyof(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+4572	concept_attractionofcity/2	allocate	3	['B', 'C', 'A']
+4573		initfreevar	-1	-2
+4574		initfreevar	-2	-1
+4575		fclear
+4576		fpushstart	id	3
+4577		fpushconst	concept_attractionofcity
+4578		fpushconst	2
+4579		fpushconst	4575
+4580		freport
+4581		pushboundvar	-1
+4582		pushfreevar	-3
+4583		callp	concept_stadiumhometeam/2
+4584		pushboundvar	-3
+4585		pushboundvar	-2
+4586		callp	concept_proxyof/2
+4587		pushboundvar	-2
+4588		callp	isLabel/1
+4589		returnp
+4590		comment	concept_attractionofcity(-1,-2) :- fact_concept_attractionofcity(-1,-2), isLabel(-2)  #v:['A', 'C'].
+4591	concept_attractionofcity/2	allocate	2	['C', 'A']
+4592		initfreevar	-1	-2
+4593		initfreevar	-2	-1
+4594		fclear
+4595		fpushstart	id	3
+4596		fpushconst	concept_attractionofcity
+4597		fpushconst	2
+4598		fpushconst	4594
+4599		freport
+4600		pushboundvar	-1
+4601		pushboundvar	-2
+4602		callp	fact_concept_attractionofcity/2
+4603		pushboundvar	-2
+4604		callp	isLabel/1
+4605		returnp
+4606		comment	concept_politicianusendorsespoliticianus(-1,-2) :- concept_politicianusendorsedbypoliticianus(-1,-2)  #v:['A', 'B'].
+4607	concept_politicianusendorsespoliticianus/2	allocate	2	['B', 'A']
+4608		initfreevar	-1	-2
+4609		initfreevar	-2	-1
+4610		fclear
+4611		fpushstart	id	3
+4612		fpushconst	concept_politicianusendorsespoliticianus
+4613		fpushconst	2
+4614		fpushconst	4610
+4615		freport
+4616		pushboundvar	-1
+4617		pushboundvar	-2
+4618		callp	concept_politicianusendorsedbypoliticianus/2
+4619		returnp
+4620		comment	concept_languageofcountry(-1,-2) :- concept_countrylanguage(-1,-2)  #v:['A', 'B'].
+4621	concept_languageofcountry/2	allocate	2	['B', 'A']
+4622		initfreevar	-1	-2
+4623		initfreevar	-2	-1
+4624		fclear
+4625		fpushstart	id	3
+4626		fpushconst	concept_languageofcountry
+4627		fpushconst	2
+4628		fpushconst	4624
+4629		freport
+4630		pushboundvar	-1
+4631		pushboundvar	-2
+4632		callp	concept_countrylanguage/2
+4633		returnp
+4634		comment	concept_languageofcountry(-1,-2) :- fact_concept_languageofcountry(-1,-2)  #v:['A', 'B'].
+4635	concept_languageofcountry/2	allocate	2	['B', 'A']
+4636		initfreevar	-1	-2
+4637		initfreevar	-2	-1
+4638		fclear
+4639		fpushstart	id	3
+4640		fpushconst	concept_languageofcountry
+4641		fpushconst	2
+4642		fpushconst	4638
+4643		freport
+4644		pushboundvar	-1
+4645		pushboundvar	-2
+4646		callp	fact_concept_languageofcountry/2
+4647		returnp
+4648		comment	concept_languageofcountry(-1,-2) :- concept_languageofuniversity(-1,-3), concept_relatedto(-3,-4), concept_languageschoolincity(-4,-5), concept_citylocatedincountry(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+4649	concept_languageofcountry/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+4650		initfreevar	-1	-2
+4651		initfreevar	-2	-1
+4652		fclear
+4653		fpushstart	id	3
+4654		fpushconst	concept_languageofcountry
+4655		fpushconst	2
+4656		fpushconst	4652
+4657		freport
+4658		pushboundvar	-1
+4659		pushfreevar	-3
+4660		callp	concept_languageofuniversity/2
+4661		pushboundvar	-3
+4662		pushfreevar	-4
+4663		callp	concept_relatedto/2
+4664		pushboundvar	-4
+4665		pushfreevar	-5
+4666		callp	concept_languageschoolincity/2
+4667		pushboundvar	-5
+4668		pushboundvar	-2
+4669		callp	concept_citylocatedincountry/2
+4670		pushboundvar	-2
+4671		callp	isLabel/1
+4672		returnp
+4673		comment	concept_languageofcountry(-1,-2) :- fact_concept_languageofcountry(-1,-2), isLabel(-2)  #v:['A', 'E'].
+4674	concept_languageofcountry/2	allocate	2	['E', 'A']
+4675		initfreevar	-1	-2
+4676		initfreevar	-2	-1
+4677		fclear
+4678		fpushstart	id	3
+4679		fpushconst	concept_languageofcountry
+4680		fpushconst	2
+4681		fpushconst	4677
+4682		freport
+4683		pushboundvar	-1
+4684		pushboundvar	-2
+4685		callp	fact_concept_languageofcountry/2
+4686		pushboundvar	-2
+4687		callp	isLabel/1
+4688		returnp
+4689		comment	concept_agentparticipatedinevent(-1,-2) :- fact_concept_agentparticipatedinevent(-1,-2)  #v:['A', 'B'].
+4690	concept_agentparticipatedinevent/2	allocate	2	['B', 'A']
+4691		initfreevar	-1	-2
+4692		initfreevar	-2	-1
+4693		fclear
+4694		fpushstart	id	3
+4695		fpushconst	concept_agentparticipatedinevent
+4696		fpushconst	2
+4697		fpushconst	4693
+4698		freport
+4699		pushboundvar	-1
+4700		pushboundvar	-2
+4701		callp	fact_concept_agentparticipatedinevent/2
+4702		returnp
+4703		comment	concept_agentparticipatedinevent(-1,-2) :- concept_agentcompeteswithagent(-1,-3), concept_agentcompeteswithagent(-3,-4), concept_agentcompeteswithagent(-4,-5), concept_agentparticipatedinevent(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+4704	concept_agentparticipatedinevent/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+4705		initfreevar	-1	-2
+4706		initfreevar	-2	-1
+4707		fclear
+4708		fpushstart	id	3
+4709		fpushconst	concept_agentparticipatedinevent
+4710		fpushconst	2
+4711		fpushconst	4707
+4712		freport
+4713		pushboundvar	-1
+4714		pushfreevar	-3
+4715		callp	concept_agentcompeteswithagent/2
+4716		pushboundvar	-3
+4717		pushfreevar	-4
+4718		callp	concept_agentcompeteswithagent/2
+4719		pushboundvar	-4
+4720		pushfreevar	-5
+4721		callp	concept_agentcompeteswithagent/2
+4722		pushboundvar	-5
+4723		pushboundvar	-2
+4724		callp	concept_agentparticipatedinevent/2
+4725		pushboundvar	-2
+4726		callp	isLabel/1
+4727		returnp
+4728		comment	concept_agentparticipatedinevent(-1,-2) :- fact_concept_agentparticipatedinevent(-1,-2), isLabel(-2)  #v:['A', 'E'].
+4729	concept_agentparticipatedinevent/2	allocate	2	['E', 'A']
+4730		initfreevar	-1	-2
+4731		initfreevar	-2	-1
+4732		fclear
+4733		fpushstart	id	3
+4734		fpushconst	concept_agentparticipatedinevent
+4735		fpushconst	2
+4736		fpushconst	4732
+4737		freport
+4738		pushboundvar	-1
+4739		pushboundvar	-2
+4740		callp	fact_concept_agentparticipatedinevent/2
+4741		pushboundvar	-2
+4742		callp	isLabel/1
+4743		returnp
+4744		comment	concept_companyalsoknownas(-1,-2) :- concept_organizationacronymhasname(-1,-2), isLabel(-2)  #v:['A', 'B'].
+4745	concept_companyalsoknownas/2	allocate	2	['B', 'A']
+4746		initfreevar	-1	-2
+4747		initfreevar	-2	-1
+4748		fclear
+4749		fpushstart	id	3
+4750		fpushconst	concept_companyalsoknownas
+4751		fpushconst	2
+4752		fpushconst	4748
+4753		freport
+4754		pushboundvar	-1
+4755		pushboundvar	-2
+4756		callp	concept_organizationacronymhasname/2
+4757		pushboundvar	-2
+4758		callp	isLabel/1
+4759		returnp
+4760		comment	concept_companyalsoknownas(-1,-2) :- fact_concept_companyalsoknownas(-1,-2)  #v:['A', 'B'].
+4761	concept_companyalsoknownas/2	allocate	2	['B', 'A']
+4762		initfreevar	-1	-2
+4763		initfreevar	-2	-1
+4764		fclear
+4765		fpushstart	id	3
+4766		fpushconst	concept_companyalsoknownas
+4767		fpushconst	2
+4768		fpushconst	4764
+4769		freport
+4770		pushboundvar	-1
+4771		pushboundvar	-2
+4772		callp	fact_concept_companyalsoknownas/2
+4773		returnp
+4774		comment	concept_companyalsoknownas(-1,-2) :- fact_concept_companyalsoknownas(-1,-2), isLabel(-2)  #v:['A', 'B'].
+4775	concept_companyalsoknownas/2	allocate	2	['B', 'A']
+4776		initfreevar	-1	-2
+4777		initfreevar	-2	-1
+4778		fclear
+4779		fpushstart	id	3
+4780		fpushconst	concept_companyalsoknownas
+4781		fpushconst	2
+4782		fpushconst	4778
+4783		freport
+4784		pushboundvar	-1
+4785		pushboundvar	-2
+4786		callp	fact_concept_companyalsoknownas/2
+4787		pushboundvar	-2
+4788		callp	isLabel/1
+4789		returnp
+4790		comment	concept_cityhashospital(-1,-2) :- concept_hospitalincity(-1,-2)  #v:['A', 'B'].
+4791	concept_cityhashospital/2	allocate	2	['B', 'A']
+4792		initfreevar	-1	-2
+4793		initfreevar	-2	-1
+4794		fclear
+4795		fpushstart	id	3
+4796		fpushconst	concept_cityhashospital
+4797		fpushconst	2
+4798		fpushconst	4794
+4799		freport
+4800		pushboundvar	-1
+4801		pushboundvar	-2
+4802		callp	concept_hospitalincity/2
+4803		returnp
+4804		comment	concept_sportteam(-1,-2) :- concept_teamplayssport(-1,-2)  #v:['A', 'B'].
+4805	concept_sportteam/2	allocate	2	['B', 'A']
+4806		initfreevar	-1	-2
+4807		initfreevar	-2	-1
+4808		fclear
+4809		fpushstart	id	3
+4810		fpushconst	concept_sportteam
+4811		fpushconst	2
+4812		fpushconst	4808
+4813		freport
+4814		pushboundvar	-1
+4815		pushboundvar	-2
+4816		callp	concept_teamplayssport/2
+4817		returnp
+4818		comment	concept_countrycurrency(-1,-2) :- fact_concept_countrycurrency(-1,-2)  #v:['A', 'B'].
+4819	concept_countrycurrency/2	allocate	2	['B', 'A']
+4820		initfreevar	-1	-2
+4821		initfreevar	-2	-1
+4822		fclear
+4823		fpushstart	id	3
+4824		fpushconst	concept_countrycurrency
+4825		fpushconst	2
+4826		fpushconst	4822
+4827		freport
+4828		pushboundvar	-1
+4829		pushboundvar	-2
+4830		callp	fact_concept_countrycurrency/2
+4831		returnp
+4832		comment	concept_countrycurrency(-1,-2) :- concept_countrylanguage(-1,-3), concept_languageofcountry(-3,-4), concept_countrycurrency(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+4833	concept_countrycurrency/2	allocate	4	['C', 'B', 'D', 'A']
+4834		initfreevar	-1	-2
+4835		initfreevar	-2	-1
+4836		fclear
+4837		fpushstart	id	3
+4838		fpushconst	concept_countrycurrency
+4839		fpushconst	2
+4840		fpushconst	4836
+4841		freport
+4842		pushboundvar	-1
+4843		pushfreevar	-3
+4844		callp	concept_countrylanguage/2
+4845		pushboundvar	-3
+4846		pushfreevar	-4
+4847		callp	concept_languageofcountry/2
+4848		pushboundvar	-4
+4849		pushboundvar	-2
+4850		callp	concept_countrycurrency/2
+4851		pushboundvar	-2
+4852		callp	isLabel/1
+4853		returnp
+4854		comment	concept_countrycurrency(-1,-2) :- fact_concept_countrycurrency(-1,-2), isLabel(-2)  #v:['A', 'D'].
+4855	concept_countrycurrency/2	allocate	2	['D', 'A']
+4856		initfreevar	-1	-2
+4857		initfreevar	-2	-1
+4858		fclear
+4859		fpushstart	id	3
+4860		fpushconst	concept_countrycurrency
+4861		fpushconst	2
+4862		fpushconst	4858
+4863		freport
+4864		pushboundvar	-1
+4865		pushboundvar	-2
+4866		callp	fact_concept_countrycurrency/2
+4867		pushboundvar	-2
+4868		callp	isLabel/1
+4869		returnp
+4870		comment	concept_sporthassportsteamposition(-1,-2) :- concept_sportsteampositionforsport(-1,-2)  #v:['A', 'B'].
+4871	concept_sporthassportsteamposition/2	allocate	2	['B', 'A']
+4872		initfreevar	-1	-2
+4873		initfreevar	-2	-1
+4874		fclear
+4875		fpushstart	id	3
+4876		fpushconst	concept_sporthassportsteamposition
+4877		fpushconst	2
+4878		fpushconst	4874
+4879		freport
+4880		pushboundvar	-1
+4881		pushboundvar	-2
+4882		callp	concept_sportsteampositionforsport/2
+4883		returnp
+4884		comment	concept_automobilemakerdealersincity(-1,-2) :- concept_automobilemakercardealersinstateorprovince(-1,-3), concept_inverseofautomobilemakercardealersinstateorprovince(-3,-4), concept_hasofficeincity(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+4885	concept_automobilemakerdealersincity/2	allocate	4	['C', 'B', 'D', 'A']
+4886		initfreevar	-1	-2
+4887		initfreevar	-2	-1
+4888		fclear
+4889		fpushstart	id	3
+4890		fpushconst	concept_automobilemakerdealersincity
+4891		fpushconst	2
+4892		fpushconst	4888
+4893		freport
+4894		pushboundvar	-1
+4895		pushfreevar	-3
+4896		callp	concept_automobilemakercardealersinstateorprovince/2
+4897		pushboundvar	-3
+4898		pushfreevar	-4
+4899		callp	concept_inverseofautomobilemakercardealersinstateorprovince/2
+4900		pushboundvar	-4
+4901		pushboundvar	-2
+4902		callp	concept_hasofficeincity/2
+4903		pushboundvar	-2
+4904		callp	isLabel/1
+4905		returnp
+4906		comment	concept_automobilemakerdealersincity(-1,-2) :- fact_concept_automobilemakerdealersincity(-1,-2), isLabel(-2)  #v:['A', 'D'].
+4907	concept_automobilemakerdealersincity/2	allocate	2	['D', 'A']
+4908		initfreevar	-1	-2
+4909		initfreevar	-2	-1
+4910		fclear
+4911		fpushstart	id	3
+4912		fpushconst	concept_automobilemakerdealersincity
+4913		fpushconst	2
+4914		fpushconst	4910
+4915		freport
+4916		pushboundvar	-1
+4917		pushboundvar	-2
+4918		callp	fact_concept_automobilemakerdealersincity/2
+4919		pushboundvar	-2
+4920		callp	isLabel/1
+4921		returnp
+4922		comment	concept_politicianusholdsoffice(-1,-2) :- concept_agentinteractswithagent(-1,-3), concept_politicianholdsoffice(-3,-4), concept_synonymfor(-4,-5), concept_synonymfor(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+4923	concept_politicianusholdsoffice/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+4924		initfreevar	-1	-2
+4925		initfreevar	-2	-1
+4926		fclear
+4927		fpushstart	id	3
+4928		fpushconst	concept_politicianusholdsoffice
+4929		fpushconst	2
+4930		fpushconst	4926
+4931		freport
+4932		pushboundvar	-1
+4933		pushfreevar	-3
+4934		callp	concept_agentinteractswithagent/2
+4935		pushboundvar	-3
+4936		pushfreevar	-4
+4937		callp	concept_politicianholdsoffice/2
+4938		pushboundvar	-4
+4939		pushfreevar	-5
+4940		callp	concept_synonymfor/2
+4941		pushboundvar	-5
+4942		pushboundvar	-2
+4943		callp	concept_synonymfor/2
+4944		pushboundvar	-2
+4945		callp	isLabel/1
+4946		returnp
+4947		comment	concept_politicianusholdsoffice(-1,-2) :- fact_concept_politicianusholdsoffice(-1,-2), isLabel(-2)  #v:['A', 'E'].
+4948	concept_politicianusholdsoffice/2	allocate	2	['E', 'A']
+4949		initfreevar	-1	-2
+4950		initfreevar	-2	-1
+4951		fclear
+4952		fpushstart	id	3
+4953		fpushconst	concept_politicianusholdsoffice
+4954		fpushconst	2
+4955		fpushconst	4951
+4956		freport
+4957		pushboundvar	-1
+4958		pushboundvar	-2
+4959		callp	fact_concept_politicianusholdsoffice/2
+4960		pushboundvar	-2
+4961		callp	isLabel/1
+4962		returnp
+4963		comment	concept_proxyof(-1,-2) :- concept_proxyfor(-1,-2)  #v:['A', 'B'].
+4964	concept_proxyof/2	allocate	2	['B', 'A']
+4965		initfreevar	-1	-2
+4966		initfreevar	-2	-1
+4967		fclear
+4968		fpushstart	id	3
+4969		fpushconst	concept_proxyof
+4970		fpushconst	2
+4971		fpushconst	4967
+4972		freport
+4973		pushboundvar	-1
+4974		pushboundvar	-2
+4975		callp	concept_proxyfor/2
+4976		returnp
+4977		comment	concept_agentowns(-1,-2) :- concept_ownedbyagent(-1,-2)  #v:['A', 'B'].
+4978	concept_agentowns/2	allocate	2	['B', 'A']
+4979		initfreevar	-1	-2
+4980		initfreevar	-2	-1
+4981		fclear
+4982		fpushstart	id	3
+4983		fpushconst	concept_agentowns
+4984		fpushconst	2
+4985		fpushconst	4981
+4986		freport
+4987		pushboundvar	-1
+4988		pushboundvar	-2
+4989		callp	concept_ownedbyagent/2
+4990		returnp
+4991		comment	concept_athleteplaysinleague(-1,-2) :- fact_concept_athleteplaysinleague(-1,-2)  #v:['A', 'B'].
+4992	concept_athleteplaysinleague/2	allocate	2	['B', 'A']
+4993		initfreevar	-1	-2
+4994		initfreevar	-2	-1
+4995		fclear
+4996		fpushstart	id	3
+4997		fpushconst	concept_athleteplaysinleague
+4998		fpushconst	2
+4999		fpushconst	4995
+5000		freport
+5001		pushboundvar	-1
+5002		pushboundvar	-2
+5003		callp	fact_concept_athleteplaysinleague/2
+5004		returnp
+5005		comment	concept_athleteplaysinleague(-1,-2) :- concept_athleteplaysforteam(-1,-3), concept_teammember(-3,-4), concept_athleteplaysinleague(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+5006	concept_athleteplaysinleague/2	allocate	4	['C', 'B', 'D', 'A']
+5007		initfreevar	-1	-2
+5008		initfreevar	-2	-1
+5009		fclear
+5010		fpushstart	id	3
+5011		fpushconst	concept_athleteplaysinleague
+5012		fpushconst	2
+5013		fpushconst	5009
+5014		freport
+5015		pushboundvar	-1
+5016		pushfreevar	-3
+5017		callp	concept_athleteplaysforteam/2
+5018		pushboundvar	-3
+5019		pushfreevar	-4
+5020		callp	concept_teammember/2
+5021		pushboundvar	-4
+5022		pushboundvar	-2
+5023		callp	concept_athleteplaysinleague/2
+5024		pushboundvar	-2
+5025		callp	isLabel/1
+5026		returnp
+5027		comment	concept_athleteplaysinleague(-1,-2) :- fact_concept_athleteplaysinleague(-1,-2), isLabel(-2)  #v:['A', 'D'].
+5028	concept_athleteplaysinleague/2	allocate	2	['D', 'A']
+5029		initfreevar	-1	-2
+5030		initfreevar	-2	-1
+5031		fclear
+5032		fpushstart	id	3
+5033		fpushconst	concept_athleteplaysinleague
+5034		fpushconst	2
+5035		fpushconst	5031
+5036		freport
+5037		pushboundvar	-1
+5038		pushboundvar	-2
+5039		callp	fact_concept_athleteplaysinleague/2
+5040		pushboundvar	-2
+5041		callp	isLabel/1
+5042		returnp
+5043		comment	concept_organizationheadquarteredincity(-1,-2) :- concept_cityoforganizationheadquarters(-1,-2)  #v:['A', 'B'].
+5044	concept_organizationheadquarteredincity/2	allocate	2	['B', 'A']
+5045		initfreevar	-1	-2
+5046		initfreevar	-2	-1
+5047		fclear
+5048		fpushstart	id	3
+5049		fpushconst	concept_organizationheadquarteredincity
+5050		fpushconst	2
+5051		fpushconst	5047
+5052		freport
+5053		pushboundvar	-1
+5054		pushboundvar	-2
+5055		callp	concept_cityoforganizationheadquarters/2
+5056		returnp
+5057		comment	concept_locationofitemexistence(-1,-2) :- concept_itemexistsatlocation(-1,-2)  #v:['A', 'B'].
+5058	concept_locationofitemexistence/2	allocate	2	['B', 'A']
+5059		initfreevar	-1	-2
+5060		initfreevar	-2	-1
+5061		fclear
+5062		fpushstart	id	3
+5063		fpushconst	concept_locationofitemexistence
+5064		fpushconst	2
+5065		fpushconst	5061
+5066		freport
+5067		pushboundvar	-1
+5068		pushboundvar	-2
+5069		callp	concept_itemexistsatlocation/2
+5070		returnp
+5071		comment	concept_politicianusendorsedbypoliticianus(-1,-2) :- concept_politicianusendorsespoliticianus(-1,-2)  #v:['A', 'B'].
+5072	concept_politicianusendorsedbypoliticianus/2	allocate	2	['B', 'A']
+5073		initfreevar	-1	-2
+5074		initfreevar	-2	-1
+5075		fclear
+5076		fpushstart	id	3
+5077		fpushconst	concept_politicianusendorsedbypoliticianus
+5078		fpushconst	2
+5079		fpushconst	5075
+5080		freport
+5081		pushboundvar	-1
+5082		pushboundvar	-2
+5083		callp	concept_politicianusendorsespoliticianus/2
+5084		returnp
+5085		comment	concept_inverseofagriculturalproducttoattractinsect(-1,-2) :- concept_agriculturalproducttoattractinsect(-1,-2)  #v:['A', 'B'].
+5086	concept_inverseofagriculturalproducttoattractinsect/2	allocate	2	['B', 'A']
+5087		initfreevar	-1	-2
+5088		initfreevar	-2	-1
+5089		fclear
+5090		fpushstart	id	3
+5091		fpushconst	concept_inverseofagriculturalproducttoattractinsect
+5092		fpushconst	2
+5093		fpushconst	5089
+5094		freport
+5095		pushboundvar	-1
+5096		pushboundvar	-2
+5097		callp	concept_agriculturalproducttoattractinsect/2
+5098		returnp
+5099		comment	concept_companyceo(-1,-2) :- concept_ceoof(-1,-2)  #v:['A', 'B'].
+5100	concept_companyceo/2	allocate	2	['B', 'A']
+5101		initfreevar	-1	-2
+5102		initfreevar	-2	-1
+5103		fclear
+5104		fpushstart	id	3
+5105		fpushconst	concept_companyceo
+5106		fpushconst	2
+5107		fpushconst	5103
+5108		freport
+5109		pushboundvar	-1
+5110		pushboundvar	-2
+5111		callp	concept_ceoof/2
+5112		returnp
+5113		comment	concept_statelocatedincountry(-1,-2) :- concept_countrystates(-1,-2)  #v:['A', 'B'].
+5114	concept_statelocatedincountry/2	allocate	2	['B', 'A']
+5115		initfreevar	-1	-2
+5116		initfreevar	-2	-1
+5117		fclear
+5118		fpushstart	id	3
+5119		fpushconst	concept_statelocatedincountry
+5120		fpushconst	2
+5121		fpushconst	5117
+5122		freport
+5123		pushboundvar	-1
+5124		pushboundvar	-2
+5125		callp	concept_countrystates/2
+5126		returnp
+5127		comment	concept_cityoforganizationheadquarters(-1,-2) :- concept_organizationheadquarteredincity(-1,-2)  #v:['A', 'B'].
+5128	concept_cityoforganizationheadquarters/2	allocate	2	['B', 'A']
+5129		initfreevar	-1	-2
+5130		initfreevar	-2	-1
+5131		fclear
+5132		fpushstart	id	3
+5133		fpushconst	concept_cityoforganizationheadquarters
+5134		fpushconst	2
+5135		fpushconst	5131
+5136		freport
+5137		pushboundvar	-1
+5138		pushboundvar	-2
+5139		callp	concept_organizationheadquarteredincity/2
+5140		returnp
+5141		comment	concept_controlledbyagent(-1,-2) :- concept_agentcontrols(-1,-2)  #v:['A', 'B'].
+5142	concept_controlledbyagent/2	allocate	2	['B', 'A']
+5143		initfreevar	-1	-2
+5144		initfreevar	-2	-1
+5145		fclear
+5146		fpushstart	id	3
+5147		fpushconst	concept_controlledbyagent
+5148		fpushconst	2
+5149		fpushconst	5145
+5150		freport
+5151		pushboundvar	-1
+5152		pushboundvar	-2
+5153		callp	concept_agentcontrols/2
+5154		returnp
+5155		comment	concept_inverseofagriculturalproductcontainchemical(-1,-2) :- concept_agriculturalproductcontainchemical(-1,-2)  #v:['A', 'B'].
+5156	concept_inverseofagriculturalproductcontainchemical/2	allocate	2	['B', 'A']
+5157		initfreevar	-1	-2
+5158		initfreevar	-2	-1
+5159		fclear
+5160		fpushstart	id	3
+5161		fpushconst	concept_inverseofagriculturalproductcontainchemical
+5162		fpushconst	2
+5163		fpushconst	5159
+5164		freport
+5165		pushboundvar	-1
+5166		pushboundvar	-2
+5167		callp	concept_agriculturalproductcontainchemical/2
+5168		returnp
+5169		comment	concept_sportsgameteam(-1,-2) :- concept_sportsgamesport(-1,-3), concept_players(-3,-4), concept_athleteplaysforteam(-4,-2), isLabel(-2)  #v:['A', 'D', 'B', 'C'].
+5170	concept_sportsgameteam/2	allocate	4	['C', 'B', 'D', 'A']
+5171		initfreevar	-1	-2
+5172		initfreevar	-2	-1
+5173		fclear
+5174		fpushstart	id	3
+5175		fpushconst	concept_sportsgameteam
+5176		fpushconst	2
+5177		fpushconst	5173
+5178		freport
+5179		pushboundvar	-1
+5180		pushfreevar	-3
+5181		callp	concept_sportsgamesport/2
+5182		pushboundvar	-3
+5183		pushfreevar	-4
+5184		callp	concept_players/2
+5185		pushboundvar	-4
+5186		pushboundvar	-2
+5187		callp	concept_athleteplaysforteam/2
+5188		pushboundvar	-2
+5189		callp	isLabel/1
+5190		returnp
+5191		comment	concept_sportsgameteam(-1,-2) :- fact_concept_sportsgameteam(-1,-2), isLabel(-2)  #v:['A', 'D'].
+5192	concept_sportsgameteam/2	allocate	2	['D', 'A']
+5193		initfreevar	-1	-2
+5194		initfreevar	-2	-1
+5195		fclear
+5196		fpushstart	id	3
+5197		fpushconst	concept_sportsgameteam
+5198		fpushconst	2
+5199		fpushconst	5195
+5200		freport
+5201		pushboundvar	-1
+5202		pushboundvar	-2
+5203		callp	fact_concept_sportsgameteam/2
+5204		pushboundvar	-2
+5205		callp	isLabel/1
+5206		returnp
+5207		comment	concept_animalsuchasinsect(-1,-2) :- concept_inverseofanimalsuchasinsect(-1,-2)  #v:['A', 'B'].
+5208	concept_animalsuchasinsect/2	allocate	2	['B', 'A']
+5209		initfreevar	-1	-2
+5210		initfreevar	-2	-1
+5211		fclear
+5212		fpushstart	id	3
+5213		fpushconst	concept_animalsuchasinsect
+5214		fpushconst	2
+5215		fpushconst	5211
+5216		freport
+5217		pushboundvar	-1
+5218		pushboundvar	-2
+5219		callp	concept_inverseofanimalsuchasinsect/2
+5220		returnp
+5221		comment	concept_languageofcity(-1,-2) :- fact_concept_languageofcity(-1,-2)  #v:['A', 'B'].
+5222	concept_languageofcity/2	allocate	2	['B', 'A']
+5223		initfreevar	-1	-2
+5224		initfreevar	-2	-1
+5225		fclear
+5226		fpushstart	id	3
+5227		fpushconst	concept_languageofcity
+5228		fpushconst	2
+5229		fpushconst	5225
+5230		freport
+5231		pushboundvar	-1
+5232		pushboundvar	-2
+5233		callp	fact_concept_languageofcity/2
+5234		returnp
+5235		comment	concept_languageofcity(-1,-2) :- concept_languageofcountry(-1,-3), concept_proxyof(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+5236	concept_languageofcity/2	allocate	3	['B', 'C', 'A']
+5237		initfreevar	-1	-2
+5238		initfreevar	-2	-1
+5239		fclear
+5240		fpushstart	id	3
+5241		fpushconst	concept_languageofcity
+5242		fpushconst	2
+5243		fpushconst	5239
+5244		freport
+5245		pushboundvar	-1
+5246		pushfreevar	-3
+5247		callp	concept_languageofcountry/2
+5248		pushboundvar	-3
+5249		pushboundvar	-2
+5250		callp	concept_proxyof/2
+5251		pushboundvar	-2
+5252		callp	isLabel/1
+5253		returnp
+5254		comment	concept_languageofcity(-1,-2) :- fact_concept_languageofcity(-1,-2), isLabel(-2)  #v:['A', 'C'].
+5255	concept_languageofcity/2	allocate	2	['C', 'A']
+5256		initfreevar	-1	-2
+5257		initfreevar	-2	-1
+5258		fclear
+5259		fpushstart	id	3
+5260		fpushconst	concept_languageofcity
+5261		fpushconst	2
+5262		fpushconst	5258
+5263		freport
+5264		pushboundvar	-1
+5265		pushboundvar	-2
+5266		callp	fact_concept_languageofcity/2
+5267		pushboundvar	-2
+5268		callp	isLabel/1
+5269		returnp
+5270		comment	concept_citylocatedincountry(-1,-2) :- fact_concept_citylocatedincountry(-1,-2)  #v:['A', 'B'].
+5271	concept_citylocatedincountry/2	allocate	2	['B', 'A']
+5272		initfreevar	-1	-2
+5273		initfreevar	-2	-1
+5274		fclear
+5275		fpushstart	id	3
+5276		fpushconst	concept_citylocatedincountry
+5277		fpushconst	2
+5278		fpushconst	5274
+5279		freport
+5280		pushboundvar	-1
+5281		pushboundvar	-2
+5282		callp	fact_concept_citylocatedincountry/2
+5283		returnp
+5284		comment	concept_citylocatedincountry(-1,-2) :- concept_citylocatedinstate(-1,-3), concept_statelocatedincountry(-3,-2), isLabel(-2)  #v:['A', 'C', 'B'].
+5285	concept_citylocatedincountry/2	allocate	3	['B', 'C', 'A']
+5286		initfreevar	-1	-2
+5287		initfreevar	-2	-1
+5288		fclear
+5289		fpushstart	id	3
+5290		fpushconst	concept_citylocatedincountry
+5291		fpushconst	2
+5292		fpushconst	5288
+5293		freport
+5294		pushboundvar	-1
+5295		pushfreevar	-3
+5296		callp	concept_citylocatedinstate/2
+5297		pushboundvar	-3
+5298		pushboundvar	-2
+5299		callp	concept_statelocatedincountry/2
+5300		pushboundvar	-2
+5301		callp	isLabel/1
+5302		returnp
+5303		comment	concept_citylocatedincountry(-1,-2) :- fact_concept_citylocatedincountry(-1,-2), isLabel(-2)  #v:['A', 'C'].
+5304	concept_citylocatedincountry/2	allocate	2	['C', 'A']
+5305		initfreevar	-1	-2
+5306		initfreevar	-2	-1
+5307		fclear
+5308		fpushstart	id	3
+5309		fpushconst	concept_citylocatedincountry
+5310		fpushconst	2
+5311		fpushconst	5307
+5312		freport
+5313		pushboundvar	-1
+5314		pushboundvar	-2
+5315		callp	fact_concept_citylocatedincountry/2
+5316		pushboundvar	-2
+5317		callp	isLabel/1
+5318		returnp
+5319		comment	concept_farmproducesagriculturalproduct(-1,-2) :- concept_agriculturalproductproducedbyfarm(-1,-2)  #v:['A', 'B'].
+5320	concept_farmproducesagriculturalproduct/2	allocate	2	['B', 'A']
+5321		initfreevar	-1	-2
+5322		initfreevar	-2	-1
+5323		fclear
+5324		fpushstart	id	3
+5325		fpushconst	concept_farmproducesagriculturalproduct
+5326		fpushconst	2
+5327		fpushconst	5323
+5328		freport
+5329		pushboundvar	-1
+5330		pushboundvar	-2
+5331		callp	concept_agriculturalproductproducedbyfarm/2
+5332		returnp
+5333		comment	concept_geopoliticallocationcontainscity(-1,-2) :- concept_citylocatedingeopoliticallocation(-1,-2)  #v:['A', 'B'].
+5334	concept_geopoliticallocationcontainscity/2	allocate	2	['B', 'A']
+5335		initfreevar	-1	-2
+5336		initfreevar	-2	-1
+5337		fclear
+5338		fpushstart	id	3
+5339		fpushconst	concept_geopoliticallocationcontainscity
+5340		fpushconst	2
+5341		fpushconst	5337
+5342		freport
+5343		pushboundvar	-1
+5344		pushboundvar	-2
+5345		callp	concept_citylocatedingeopoliticallocation/2
+5346		returnp
+5347		comment	concept_agriculturalproductgrowinginstateorprovince(-1,-2) :- fact_concept_agriculturalproductgrowinginstateorprovince(-1,-2)  #v:['A', 'B'].
+5348	concept_agriculturalproductgrowinginstateorprovince/2	allocate	2	['B', 'A']
+5349		initfreevar	-1	-2
+5350		initfreevar	-2	-1
+5351		fclear
+5352		fpushstart	id	3
+5353		fpushconst	concept_agriculturalproductgrowinginstateorprovince
+5354		fpushconst	2
+5355		fpushconst	5351
+5356		freport
+5357		pushboundvar	-1
+5358		pushboundvar	-2
+5359		callp	fact_concept_agriculturalproductgrowinginstateorprovince/2
+5360		returnp
+5361		comment	concept_agriculturalproductgrowinginstateorprovince(-1,-2) :- concept_agriculturalproducttoattractinsect(-1,-3), concept_animalsuchasinsect(-3,-4), concept_inverseofagriculturalproducttoattractinsect(-4,-5), concept_atlocation(-5,-2), isLabel(-2)  #v:['A', 'E', 'B', 'C', 'D'].
+5362	concept_agriculturalproductgrowinginstateorprovince/2	allocate	5	['D', 'C', 'B', 'E', 'A']
+5363		initfreevar	-1	-2
+5364		initfreevar	-2	-1
+5365		fclear
+5366		fpushstart	id	3
+5367		fpushconst	concept_agriculturalproductgrowinginstateorprovince
+5368		fpushconst	2
+5369		fpushconst	5365
+5370		freport
+5371		pushboundvar	-1
+5372		pushfreevar	-3
+5373		callp	concept_agriculturalproducttoattractinsect/2
+5374		pushboundvar	-3
+5375		pushfreevar	-4
+5376		callp	concept_animalsuchasinsect/2
+5377		pushboundvar	-4
+5378		pushfreevar	-5
+5379		callp	concept_inverseofagriculturalproducttoattractinsect/2
+5380		pushboundvar	-5
+5381		pushboundvar	-2
+5382		callp	concept_atlocation/2
+5383		pushboundvar	-2
+5384		callp	isLabel/1
+5385		returnp
+5386		comment	concept_agriculturalproductgrowinginstateorprovince(-1,-2) :- fact_concept_agriculturalproductgrowinginstateorprovince(-1,-2), isLabel(-2)  #v:['A', 'E'].
+5387	concept_agriculturalproductgrowinginstateorprovince/2	allocate	2	['E', 'A']
+5388		initfreevar	-1	-2
+5389		initfreevar	-2	-1
+5390		fclear
+5391		fpushstart	id	3
+5392		fpushconst	concept_agriculturalproductgrowinginstateorprovince
+5393		fpushconst	2
+5394		fpushconst	5390
+5395		freport
+5396		pushboundvar	-1
+5397		pushboundvar	-2
+5398		callp	fact_concept_agriculturalproductgrowinginstateorprovince/2
+5399		pushboundvar	-2
+5400		callp	isLabel/1
+5401		returnp

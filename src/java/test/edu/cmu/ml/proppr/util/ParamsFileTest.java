@@ -16,7 +16,7 @@ import edu.cmu.ml.proppr.util.ParamsFile;
 
 public class ParamsFileTest {
 	private static final String PARAMSFILE = "src/testcases/paramsFileTest.wts";
-	static final String[] CMDLINE = "--programFiles src/testcases/classifyPredict.wam:src/testcases/classifyPredict.cfacts --prover dpr:1e-5:.02".split(" ");
+	static final String[] CMDLINE = "--programFiles src/testcases/classifyPredict.wam:src/testcases/classifyPredict.cfacts --prover dpr --apr eps=1e-5:alph=.02".split(" ");
 	Map<String,Double> params;
 	
 	@Before
@@ -73,7 +73,7 @@ public class ParamsFileTest {
 		ParamsFile file = new ParamsFile(paramsFile);
 		Map<String,Double> loadedParams = Dictionary.load(file);
 		file.check(c);
-		ModuleConfiguration c2 = new ModuleConfiguration(new String[]{CMDLINE[0],CMDLINE[1],"--prover","dpr:1e-5:2e-2"},0,0,Configuration.USE_WAM,Configuration.USE_PROVER);
+		ModuleConfiguration c2 = new ModuleConfiguration(new String[]{CMDLINE[0],CMDLINE[1],"--prover","dpr","--apr","eps=1e-5:alph=2e-2"},0,0,Configuration.USE_WAM,Configuration.USE_PROVER);
 		file.check(c2);
 	}
 

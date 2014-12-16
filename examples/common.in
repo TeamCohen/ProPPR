@@ -3,7 +3,7 @@ results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.resu
 	cat $^ >> $@
 
 %.results.txt: %.solutions.txt
-	python ${PROPPR}/scripts/answermetrics.py --data $(word 2,$(subst ., ,$*)).examples --answers $< --metric recall --metric mrr |\
+	python ${PROPPR}/scripts/answermetrics.py --data $(subst $(word 1,$(subst ., ,$*)).,,$*).examples --answers $< --metric recall --metric mrr |\
 	grep -e "micro:" -e "macro:" |\
 	awk '{print $$3}' |\
 	tr "\n" " " |\
@@ -22,3 +22,5 @@ endif
 
 %.examples.grounded: %.examples #$(subst :, ,$(PROGRAM))
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
+
+.SECONDARY:

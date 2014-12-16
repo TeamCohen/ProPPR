@@ -26,40 +26,46 @@ public class GradientFinder {
 	private static final Logger log = Logger.getLogger(GradientFinder.class);
 
 	public static void main(String[] args) {
-		int inputFiles = 0;
-		int outputFiles = Configuration.USE_QUERIES | Configuration.USE_GROUNDED | Configuration.USE_PARAMS | Configuration.USE_GRADIENT;
-		int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
-		int constants = Configuration.USE_EPOCHS | Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_WAM;
-		ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
-			@Override
-			protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
-				super.retrieveSettings(line, allFlags, options);
-				if (epochs < 0 && (paramsFile==null || !paramsFile.exists())) usageOptions(options, allFlags, "You specified no training (epochs<0) but params file does not exist! @"+paramsFile.getAbsolutePath());
-				if (!( (queryFile != null && queryFile.exists()) || (groundedFile != null && groundedFile.exists()))) 
-					usageOptions(options, allFlags, "Must specify queries somehow using --"+Configuration.QUERIES_FILE_OPTION+" or --"+Configuration.GROUNDED_FILE_OPTION);
+		try {
+			int inputFiles = 0;
+			int outputFiles = Configuration.USE_QUERIES | Configuration.USE_GROUNDED | Configuration.USE_PARAMS | Configuration.USE_GRADIENT;
+			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
+			int constants = Configuration.USE_EPOCHS | Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_WAM;
+			ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
+				@Override
+				protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
+					super.retrieveSettings(line, allFlags, options);
+					if (epochs < 0 && (paramsFile==null || !paramsFile.exists())) usageOptions(options, allFlags, "You specified no training (epochs<0) but params file does not exist! @"+paramsFile.getAbsolutePath());
+					if (!( (queryFile != null && queryFile.exists()) || (groundedFile != null && groundedFile.exists()))) 
+						usageOptions(options, allFlags, "Must specify queries somehow using --"+Configuration.QUERIES_FILE_OPTION+" or --"+Configuration.GROUNDED_FILE_OPTION);
+				}
+			};
+			System.out.println(c.toString());
+
+			if (!c.groundedFile.exists()) {
+				log.info("Grounding examples from "+c.queryFile.getName()+"...");
+				c.grounder.groundExamples(c.queryFile, c.groundedFile);
 			}
-		};
-		System.out.println(c.toString());
-		
-		if (!c.groundedFile.exists()) {
-			log.info("Grounding examples from "+c.queryFile.getName()+"...");
-			c.grounder.groundExamples(c.queryFile, c.groundedFile);
-		}
-		
-		ParamVector params = null;
-		if (c.epochs > 0) {
-			params = c.trainer.train(
-					new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new SimpleLearningGraph.SLGBuilder()), 
-					c.epochs, 
-					c.traceLosses);
-		} else {
-			params = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(c.paramsFile)));
-		}
-		
-		Map<String,Double> batchGradient = c.trainer.findGradient(
+
+			ParamVector params = null;
+			if (c.epochs > 0) {
+				params = c.trainer.train(
+						new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new SimpleLearningGraph.SLGBuilder()), 
+						c.epochs, 
+						c.traceLosses);
+			} else {
+				params = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(c.paramsFile)));
+			}
+
+			Map<String,Double> batchGradient = c.trainer.findGradient(
 					new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new SimpleLearningGraph.SLGBuilder()), 
 					params);
-		
-		ParamsFile.save(batchGradient, c.gradientFile, c);
+
+			ParamsFile.save(batchGradient, c.gradientFile, c);
+
+		} catch (Throwable t) {
+			t.printStackTrace();
+			System.exit(-1);
+		}
 	}
 }

@@ -68,7 +68,7 @@ public class QueryAnswerer {
 		this.nthreads = Math.max(1, threads);
 		this.numSolutions = topk;
 	}
-	
+
 	static class QueryAnswererConfiguration extends ModuleConfiguration {
 		boolean normalize;
 		int topk;
@@ -156,12 +156,12 @@ public class QueryAnswerer {
 					public Callable<String> transformer(Query in, int id) {
 						return new Answer(in,id);
 					}}, 
-				outputFile, 
-				Multithreading.DEFAULT_THROTTLE);
+					outputFile, 
+					Multithreading.DEFAULT_THROTTLE);
 	}
-	
+
 	//////////////////////// Multithreading scaffold ///////////////////////////
-	
+
 
 	/** Transforms from inputs to outputs
 	 * 
@@ -183,7 +183,7 @@ public class QueryAnswerer {
 			}
 		}
 	}
-	
+
 	private class QueryStreamer implements Iterable<Query>, Iterator<Query> {
 		ParsedFile reader;
 		public QueryStreamer(File queryFile) {
@@ -210,25 +210,31 @@ public class QueryAnswerer {
 		public Iterator<Query> iterator() {
 			return this;
 		}
-		
+
 	}
 
 	public static void main(String[] args) throws IOException {
-		int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
-		int outputFiles = Configuration.USE_ANSWERS;
-		int modules = Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
-		int constants = Configuration.USE_WAM | Configuration.USE_THREADS;
-		QueryAnswererConfiguration c = new QueryAnswererConfiguration(
-				args,
-				inputFiles, outputFiles, constants, modules);
-		System.out.println(c.toString());
-		QueryAnswerer qa = new QueryAnswerer(c.apr, c.program, c.plugins, c.prover, c.normalize, c.nthreads, c.topk);
-		log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
-		if (c.paramsFile != null) {
-			ParamsFile file = new ParamsFile(c.paramsFile);
-			qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file)), c.weightingScheme);
-			file.check(c);
+		try {
+			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
+			int outputFiles = Configuration.USE_ANSWERS;
+			int modules = Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
+			int constants = Configuration.USE_WAM | Configuration.USE_THREADS;
+			QueryAnswererConfiguration c = new QueryAnswererConfiguration(
+					args,
+					inputFiles, outputFiles, constants, modules);
+			System.out.println(c.toString());
+			QueryAnswerer qa = new QueryAnswerer(c.apr, c.program, c.plugins, c.prover, c.normalize, c.nthreads, c.topk);
+			log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
+			if (c.paramsFile != null) {
+				ParamsFile file = new ParamsFile(c.paramsFile);
+				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file)), c.weightingScheme);
+				file.check(c);
+			}
+			qa.findSolutions(c.queryFile, c.solutionsFile);
+
+		} catch (Throwable t) {
+			t.printStackTrace();
+			System.exit(-1);
 		}
-		qa.findSolutions(c.queryFile, c.solutionsFile);
 	}
 }

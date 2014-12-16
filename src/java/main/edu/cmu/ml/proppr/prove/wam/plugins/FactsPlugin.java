@@ -68,10 +68,10 @@ public class FactsPlugin extends WamPlugin {
 		return this.indexJ.containsKey(jumpto);
 	}
 
-	@Override
-	public void restartFD(State state, WamInterpreter wamInterp) {
-		throw new RuntimeException("Not yet implemented");
-	}
+//	@Override
+//	public void restartFD(State state, WamInterpreter wamInterp) {
+//		throw new RuntimeException("Not yet implemented");
+//	}
 
 	@Override
 	public List<Outlink> outlinks(State state, WamInterpreter wamInterp,
@@ -158,14 +158,17 @@ public class FactsPlugin extends WamPlugin {
 		}
 	}
 
-	public static FactsPlugin load(APROptions apr, File f, boolean ternary) {
-		FactsPlugin p = new FactsPlugin(apr, f.getName(), ternary);
+	public void load(File f) {
 		ParsedFile parsed = new ParsedFile(f);
 		for (String line : parsed) {
 			String[] parts =line.split("\t",2);
 			if (parts.length != 2) parsed.parseError("expected at least 2 tab-delimited fields");
-			p.addFact(parts[0], parts[1].split("\t"));
+			addFact(parts[0], parts[1].split("\t"));
 		}
+	}
+	public static FactsPlugin load(APROptions apr, File f, boolean ternary) {
+		FactsPlugin p = new FactsPlugin(apr, f.getName(), ternary);
+		p.load(f);
 		return p;
 		
 	}
