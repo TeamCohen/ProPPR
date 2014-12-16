@@ -9,16 +9,16 @@ results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.resu
 	tr "\n" " " |\
 	awk '{name="$*"; gsub("\."," ",name); print name,$$0}' > $@
 
-pre.%.solutions.txt: %.examples
+pre.%.solutions.txt: %.examples $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
 
 ifeq (1,$(words $(TRAIN)))
-post.%.solutions.txt: %.examples params.wts
+post.%.solutions.txt: %.examples params.wts $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR}
 
 params.wts: ${TRAIN}.examples.grounded
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${SRW} --epochs ${EPOCHS} --apr ${APR}
 endif
 
-%.examples.grounded: %.examples #$(subst :, ,$(PROGRAM))
+%.examples.grounded: %.examples $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
