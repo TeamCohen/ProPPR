@@ -15,7 +15,8 @@ import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamsFile;
 
 public class ParamsFileTest {
-	static final String[] CMDLINE = "--programFiles testcases/family.wam:testcases/family.cfacts:testcases/family.graph --prover dpr:1e-5:.02".split(" ");
+	private static final String PARAMSFILE = "src/testcases/paramsFileTest.wts";
+	static final String[] CMDLINE = "--programFiles src/testcases/classifyPredict.wam:src/testcases/classifyPredict.cfacts --prover dpr --apr eps=1e-5:alph=.02".split(" ");
 	Map<String,Double> params;
 	
 	@Before
@@ -33,7 +34,7 @@ public class ParamsFileTest {
 	
 	@Test
 	public void test() {
-		File paramsFile=new File("testcases/paramsFileTest.wts");
+		File paramsFile=new File(PARAMSFILE);
 
 		ParamsFile.save(params, paramsFile, null);
 		{
@@ -66,13 +67,13 @@ public class ParamsFileTest {
 	@Test
 	public void testValidation() {
 		ModuleConfiguration c = new ModuleConfiguration(CMDLINE,0,0,Configuration.USE_WAM,Configuration.USE_PROVER);
-		File paramsFile=new File("testcases/paramsFileTest.wts");
+		File paramsFile=new File(PARAMSFILE);
 		ParamsFile.save(params,paramsFile,c);
 		
 		ParamsFile file = new ParamsFile(paramsFile);
 		Map<String,Double> loadedParams = Dictionary.load(file);
 		file.check(c);
-		ModuleConfiguration c2 = new ModuleConfiguration(new String[]{CMDLINE[0],CMDLINE[1],"--prover","dpr:1e-5:2e-2"},0,0,Configuration.USE_WAM,Configuration.USE_PROVER);
+		ModuleConfiguration c2 = new ModuleConfiguration(new String[]{CMDLINE[0],CMDLINE[1],"--prover","dpr","--apr","eps=1e-5:alph=2e-2"},0,0,Configuration.USE_WAM,Configuration.USE_PROVER);
 		file.check(c2);
 	}
 

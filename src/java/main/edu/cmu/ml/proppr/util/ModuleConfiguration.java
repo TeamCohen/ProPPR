@@ -1,8 +1,6 @@
 package edu.cmu.ml.proppr.util;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
@@ -35,17 +33,9 @@ public class ModuleConfiguration extends Configuration {
 
 	private enum PROVERS { ppr, dpr, dfs, tr };
 	private enum WEIGHTINGSCHEMES { linear, sigmoid, tanh, ReLU, exp };
-	/** queries, notest, srw **/
-	//	public static final int USE_QUERYANSWERER = USE_QUERIES | USE_SOLUTIONS | USE_NOTEST | USE_SRW;
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
-	//	public Tester tester;
-	//	public QueryAnswerer queryAnswerer;
-	//	public boolean pretest;//=false;
-	//	public boolean strict;//=false;
-	//	public boolean normalize;
-	//	public String solutionsFile;
 	public WeightingScheme weightingScheme;
 	public Prover prover;
 	public ModuleConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
@@ -55,16 +45,6 @@ public class ModuleConfiguration extends Configuration {
 	@Override
 	protected void addOptions(Options options, int[] allFlags) {
 		super.addOptions(options, allFlags);
-		//		options.addOption(
-		//				OptionBuilder
-		//				.withLongOpt("strict")
-		//				.withDescription("Fail immediately if an unexpected state occurs (default off)")
-		//				.create());
-		//		options.addOption(
-		//				OptionBuilder
-		//				.withLongOpt("pretest")
-		//				.withDescription("Run and report accuracy on test examples before training")
-		//				.create());
 		int flags;
 
 		//modules
@@ -92,7 +72,7 @@ public class ModuleConfiguration extends Configuration {
 					.withDescription("Default: dpr\n"
 							+ "Available options:\n"
 							+ "ppr\n"
-							+ "dpr[:strat] (default strategy=throw(boost,adjust))\n"
+							+ "dpr[:strat] (default strategy=boost(exception,adjust))\n"
 							+ "df"
 							+ "tr")
 							.create());
@@ -144,40 +124,6 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Seed the SRW random number generator")
 					.create());
-		//		if (isOn(flags, USE_QUERYANSWERER)) {
-		//			options.addOption(
-		//					OptionBuilder
-		//					.withLongOpt("queryAnswerer")
-		//					.withArgName("class[:arg]")
-		//					.hasArgs()
-		//					.withValueSeparator(':')
-		//					.withDescription("Runs QA after training. Default: none\n"
-		//							+"Available options:\n"
-		//							+"qa[:{norm|unnorm}] QueryAnswerer, normalized (default) or unnormalized\n"
-		//							+"rqa[:{norm|unnorm}] RerankingQueryAnswerer")
-		//							.create());
-		//			options.addOption(
-		//					OptionBuilder
-		//					.withLongOpt("notest")
-		//					.withDescription("Don't run Tester on test examples")
-		//					.create());
-		//			options.addOption(
-		//					OptionBuilder
-		//					.withLongOpt("solutions")
-		//					.withArgName("file.txt")
-		//					.hasArg()
-		//					.withDescription("Save QA solutions here")
-		//					.create());
-		//		}
-		//		if (isOn(flags, USE_MAXT)) {
-		//			options.addOption(
-		//					OptionBuilder
-		//					.withLongOpt("maxT")
-		//					.withArgName("<int>")
-		//					.hasArg()
-		//					.withDescription("Depth for SRW")
-		//					.create());	
-		//		}
 	}
 
 	private void seed(CommandLine line) {
@@ -189,26 +135,6 @@ public class ModuleConfiguration extends Configuration {
 	@Override
 	protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
 		super.retrieveSettings(line, allFlags, options);
-
-		//		this.pretest=false;
-		//		if (line.hasOption("pretest")) this.pretest = true;
-		//		this.strict=false;
-		//		if (line.hasOption("strict")) this.strict = true;
-
-		//		if (isOn(flags,Configuration.USE_PROGRAMFILES)) {
-		//			if (this.programFiles != null) 
-		//				this.program = new LogicProgram(Component.loadComponents(programFiles, this.alpha, this));
-		//			else if (!isOn(flags,Configuration.USE_DEFERREDPROGRAM)) missing(Configuration.USE_PROGRAMFILES, flags);
-		//		}
-
-		// TODO: There are likely other logic errors below for things that need a program if we've deferred it
-
-		//		if (isOn(flags, USE_COMPLEX_FEATURES) && line.hasOption("complexFeatures")) {
-		//			ComplexFeatureLibrary.init(this.program, this.complexFeatureConfigFile);
-		//		}
-
-		//		int threads = 3;
-		//		if(line.hasOption("threads")) threads = this.nthreads;
 
 		int flags;
 		// modules
@@ -226,12 +152,11 @@ public class ModuleConfiguration extends Configuration {
 					if (values.length==1)
 						this.prover = new DprProver(apr);
 					else {
-						int strategy = DprProver.STRATEGY_DEFAULT;
-						if ("throw".equals(values[1])) strategy = DprProver.THROW_ALPHA_ERRORS;
-						if ("boost".equals(values[1])) strategy = DprProver.BOOST_ALPHA;
-						if ("adjust".equals(values[1])) strategy = DprProver.ADJUST_ALPHA;
-						this.prover = new DprProver(apr, strategy);
-//						alpha += epsilon;
+						APROptions.ALPHA_STRATEGY strategy = APROptions.ALPHA_STRATEGY_DEFAULT;
+						if ("throw".equals(values[1])) strategy = APROptions.ALPHA_STRATEGY.exception;
+						else strategy = APROptions.ALPHA_STRATEGY.valueOf(values[1]);
+						apr.alphaErrorStrategy = strategy;
+						this.prover = new DprProver(apr);
 					}
 					break;
 				case dfs:
@@ -274,126 +199,13 @@ public class ModuleConfiguration extends Configuration {
 				this.grounder = new Grounder(threads,throttle,apr,prover,program,plugins);
 			}
 		}
-		//		if (line.hasOption("cooker")) {
-		//			String[] values = line.getOptionValues("cooker");
-		//			if (values[0].equals("ec")) {
-		//				this.grounder = new ExampleCooker(this.prover,this.program);
-		//			} else {
-		//				if (values.length > 1) threads = Integer.parseInt(values[1]);
-		//				if (values[0].equals("mec")) {
-		//					this.grounder = new MultithreadedExampleCooker(this.prover, this.program, threads);
-		//				} else if (values[0].equals("mmc")) {
-		//					this.grounder = new ModularMultiExampleCooker(this.prover, this.program, threads);
-		//				}
-		//			}
-		//		} else this.grounder = new ModularMultiExampleCooker(this.prover, this.program, threads);
-
-		//		this.trove=true;
-		//		threads = 3;
-		//		if(line.hasOption("threads")) threads = this.nthreads;
-		//		if (line.hasOption("trainer")) {
-		//			String[] values = line.getOptionValues("trainer");
-		//			this.setupSRW(line, flags, options);
-		//			seed(line);
-		//			if (values.length > 1) {
-		//				threads = Integer.parseInt(values[1]);
-		//			}
-		////			if (values[0].equals("t")) {
-		////				this.trainer = new edu.cmu.ml.proppr.v1.Trainer<String>(
-		////						(edu.cmu.ml.proppr.learn.SRW<PosNegRWExample<String>>) this.srw);
-		////			} else if (values[0].equals("mt")) {
-		////				this.trainer = new edu.cmu.ml.proppr.v1.MultithreadedTrainer<String>(
-		////						(edu.cmu.ml.proppr.learn.SRW<PosNegRWExample<String>>) this.srw, threads);
-		////			} else if (values[0].equals("mrr")) {
-		////				this.trainer = new edu.cmu.ml.proppr.v1.MultithreadedRRTrainer<String>(
-		////						(edu.cmu.ml.proppr.learn.SRW<PosNegRWExample<String>>) this.srw, threads);
-		////			} else if (values[0].equals("trove.t")) {
-		////				this.trainer = new Trainer( 
-		////						(edu.cmu.ml.proppr.trove.learn.SRW<edu.cmu.ml.proppr.trove.learn.tools.PosNegRWExample>) this.srw);
-		////			} else if (values[0].equals("trove.mt")) {
-		////				this.trainer = new MultithreadedTrainer( 
-		////						(edu.cmu.ml.proppr.trove.learn.SRW<edu.cmu.ml.proppr.trove.learn.tools.PosNegRWExample>) this.srw, threads);				
-		////			} else if (values[0].equals("trove.mrr")) {
-		////				this.trainer = new MultithreadedRRTrainer( 
-		////						(edu.cmu.ml.proppr.trove.learn.SRW<edu.cmu.ml.proppr.trove.learn.tools.PosNegRWExample>) this.srw, threads);		
-		////			} else if (values[0].equals("u")) {
-		////				int throttle=Multithreading.DEFAULT_THROTTLE;
-		////				if (values.length > 2) 
-		////					throttle = Integer.parseInt(values[2]);
-		////				this.trainer = new Trainer2((edu.cmu.ml.proppr.learn.SRW<PosNegRWExample<String>>) this.srw, threads, throttle);
-		////			}
-		//		} else {
 		if (isOn(flags,USE_TRAIN)) {
 			this.setupSRW(line, flags, options);
 			seed(line);
 			this.trainer = new Trainer(this.srw, this.nthreads, Multithreading.DEFAULT_THROTTLE);
 		}
-		//		}
-
-		//		threads = 3;
-		//		if(line.hasOption("threads")) threads = this.nthreads;
-		//		if (isOn(flags,USE_NOTEST)) { // if NOTEST is available...
-		//			if (line.hasOption("notest")) { // ..and the user has engaged it...
-		//				this.tester = null; // don't use a Tester
-		//			} else { // ...and we need to test,
-		//				if (isOn(flags,USE_TEST) && !line.hasOption("test")) { // ...but the user hasn't specified a file...
-		//					// give up
-		//					usageOptions(options, flags,"Missing required option: one of\n\t--test <file>\n\t--notest");
-		//				}
-		//			}
-		//		}
-		//		if (!isOn(flags,USE_NOTEST) || !line.hasOption("notest")) {
-		//			if (line.hasOption("tester")) {
-		//				String[] values = line.getOptionValues("tester");
-		//				if (values[0].equals("t")) {
-		//					this.tester = new Tester(this.prover, this.program);
-		//				} else {
-		//					if (values.length > 1) threads = Integer.parseInt(values[1]);
-		//					if (values[0].equals("mt")) {
-		//						this.tester = new MultithreadedTester(this.prover, this.program, threads);
-		//					} else if (values[0].endsWith("rt")) {
-		//						this.trove = values[0].startsWith("trove.");
-		//						if (this.srw == null) this.setupSRW(line,flags,options);
-		//						if (this.trove) {
-		//							this.tester = new edu.cmu.ml.proppr.trove.RerankingTester(
-		//									this.prover, 
-		//									this.program, 
-		//									(edu.cmu.ml.proppr.trove.learn.SRW<edu.cmu.ml.proppr.trove.learn.tools.PosNegRWExample>) this.srw);
-		//						} else {
-		//							this.tester = new edu.cmu.ml.proppr.v1.RerankingTester(
-		//									this.prover, 
-		//									this.program, 
-		//									(edu.cmu.ml.proppr.learn.SRW<PosNegRWExample<String>>) this.srw);
-		//						}
-		//					} else {
-		//						this.usageOptions(options, flags,"No tester called '"+values[0]+"'");
-		//					}
-		//				}
-		//			} else this.tester = new Tester(this.prover, this.program);
-		//		}
 
 		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
-
-		//		this.normalize = true;
-		//		if (line.hasOption("queryAnswerer")) {
-		//			String[] values = line.getOptionValues("queryAnswerer");
-		//			if (values[0].equals("qa"))
-		//				this.queryAnswerer = new QueryAnswerer();
-		//			else if (values[0].equals("rqa"))
-		//				this.queryAnswerer = new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) this.srw);
-		//			else {
-		//				usageOptions(options, flags,"No queryAnswerer option '"+values[0]+"'");
-		//			}
-		//			if (values.length > 1) {
-		//				this.normalize = values[1].equals("norm");
-		//			}
-		//
-		//			if (line.hasOption("solutions")) {
-		//				this.solutionsFile = line.getOptionValue("solutions");
-		//			} else {
-		//				usageOptions(options,flags,"Missing required option: solutions");
-		//			}
-		//		}
 	}
 
 	@Override
@@ -469,9 +281,9 @@ public class ModuleConfiguration extends Configuration {
 	public String toString() {
 		StringBuilder sb = new StringBuilder(super.toString()).append(":\n");
 		if (prover != null)   sb.append("   Prover: ").append(prover.getClass().getCanonicalName()).append("\n");
-		if (grounder != null) sb.append(" Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
+//		if (grounder != null) sb.append(" Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
 		if (srw != null)      sb.append("   Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
-		if (trainer != null)  sb.append("  Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");
+//		if (trainer != null)  sb.append("  Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");
 		//sb.append("  Tester: ");
 		//		if (tester != null) 
 		//			sb.append(tester.getClass().getCanonicalName()).append("\n");
@@ -487,6 +299,7 @@ public class ModuleConfiguration extends Configuration {
 		sb.append("    Alpha: ").append(apr.alpha).append("\n");
 		sb.append("  Epsilon: ").append(apr.epsilon).append("\n");
 		sb.append("Max depth: ").append(apr.maxDepth).append("\n");
+		sb.append(" Strategy: ").append(apr.alphaErrorStrategy.name()).append("\n");
 		return sb.toString();
 	}
 }

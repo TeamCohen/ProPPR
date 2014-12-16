@@ -5,38 +5,24 @@ include ../Makefile.in
 TRAIN=${NAME}.train
 TEST=${NAME}.test
 NAME=top-1000-near-google
-PROGRAM=${NAME}-nonrecursive.wam:${NAME}.cfacts:${NAME}-fact.graph
+PROGRAM=${NAME}-recursive.wam:${NAME}.cfacts:${NAME}-fact.graph
 
 
 ### TARGETS
+include ../common.in
 
 all: results.txt
 
 clean:
-	rm -f *results.txt params.wts *.cooked
+	rm -f *results.txt params.wts *.grounded *.solutions.txt
 
-results.txt: pre.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TRAIN}.results.txt post.${TEST}.results.txt
-	cat $^ > $@
+graphKey: pre.${TRAIN}.examples.grounded post.${TRAIN}.examples.grounded
 
-%.results.txt: %.Tester.log
-	tail -1 $< | awk '{print "$*",$$2,$$3,$$4,$$5,$$6,$$7,$$8,$$9}' > $@
+pre.%.examples.grounded: %.examples
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} --graphKey $@.key
 
-pre.%.Tester.log: %.examples
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Tester --tester $(TESTER) --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} | tee pre.$*.Tester.log
+post.%.examples.grounded: %.examples params.wts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER}:adjust --threads ${THREADS} --apr ${APR} --params params.wts --graphKey $@.key
 
-post.%.Tester.log: %.examples params.wts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Tester --tester $(TESTER) --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params params.wts --srw $(SRW) | tee post.$*.Tester.log
-
-params.wts: ${TRAIN}.examples.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --trainer ${TRAINER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS) | tee Trainer.log
-
-%.examples.cooked: %.examples
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}
-
-#%.examples: %.solutions.txt %.queries
-#	${SCRIPTS}/solutions2train.pl $*.queries $< $*.unreachable $@
-
-#%.solutions.txt: %.queries
-#	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --output $@ --prover ${PROVER}
 
 .PRECIOUS: params.wts

@@ -60,6 +60,7 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 	}
 	
 	private void prepareFeature(ParamVector<String,?> paramVec, String f) {
+		if (!trainable(f)) return;
 		// use last-1 here because superclass will apply regularization for this clock cycle
 		// during the gradient() call
 		int gap = ((MuParamVector)paramVec).getLast(f);
@@ -67,7 +68,7 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 		double value = Dictionary.safeGet(paramVec,f);
 		double powerTerm = Math.pow(1 - 2 * c.mu * this.learningRate(), gap);
 		double weightDecay = value * (powerTerm - 1);
-	       Dictionary.increment(paramVec, f, weightDecay);
+	    Dictionary.increment(paramVec, f, weightDecay);
 		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.pow(value, 2));
 	}
 }

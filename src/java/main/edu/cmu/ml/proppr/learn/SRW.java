@@ -20,10 +20,12 @@ import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
+import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
@@ -45,6 +47,8 @@ import gnu.trove.procedure.TObjectProcedure;
  *
  */
 public class SRW<E extends RWExample> {
+	private static final String FEATURE_RESTART = "id(restart)";
+	private static final String FEATURE_ALPHA_BOOSTER = "id(alphaBooster)";
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
@@ -114,7 +118,7 @@ public class SRW<E extends RWExample> {
 	public void addDefaultWeights(LearningGraph graph, ParamVector<String,?> params) {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
-				params.put(f,c.weightingScheme.defaultWeight()+0.01*random.nextDouble());
+				params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
 			}
 		}
 	}
@@ -383,13 +387,14 @@ public class SRW<E extends RWExample> {
 		TObjectDoubleMap<String> grad = gradient(paramVec,example);
 		if (log.isDebugEnabled()) {
 			log.debug("Gradient: "+Dictionary.buildString(grad, new StringBuilder(), "\n\t").toString());
-						checkGradient(grad, paramVec, example);
+			checkGradient(grad, paramVec, example);
 		}
 		final double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
 		grad.forEachEntry(new TObjectDoubleProcedure<String>() {
 			@Override
 			public boolean execute(String f, double value) {
+				if (!trainable(f)) log.warn("Modifying untrainable feature "+f);
 				Dictionary.increment(paramVec, f, - rate * value);
 				if (log.isDebugEnabled()) log.debug(f+"->"+paramVec.get(f));
 				return true;
@@ -436,7 +441,7 @@ public class SRW<E extends RWExample> {
 				// if the node can restart
 				TObjectDoubleMap<String> restart = g.getFeatures(u, q);
 				if (restart.isEmpty()) return true;
-				if (restart.containsKey("id(restart)") || restart.containsKey("id(alphaBooster)")){
+				if (restart.containsKey(FEATURE_RESTART) || restart.containsKey(FEATURE_ALPHA_BOOSTER)){
 
 					// check & project for each node
 					double z = totalEdgeWeight(g, u, paramVec);
@@ -471,6 +476,7 @@ public class SRW<E extends RWExample> {
 				}
 			});
 		}
+		StringBuilder sb = new StringBuilder("Minalpha projection: local alpha ").append(rw/z).append("<").append(c.apr.alpha).append(";");
 		int nonFacts = 0;
 		for (String f : nonRestartFeatureSet) 
 			if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) 
@@ -478,26 +484,56 @@ public class SRW<E extends RWExample> {
 		if (nonFacts <= 1) {
 			// then we use Chao-Yuan's simplification
 			double newValue = c.weightingScheme.projection(rw,c.apr.alpha,nonRestartNodeNum);
+			sb.append(" using single-feature simplification: ").append(newValue).append("@").append(nonRestartNodeNum);
 			for (String f : this.trainableFeatures(nonRestartFeatureSet)) {
 				paramVec.put(f, newValue);
 			}
 		} else {
-			// then we use Katie's equal-ratios approximation
-			for (String f : nonRestartFeatureSet) {
-				if (!trainable(f)) continue;
-				double ratio = c.weightingScheme.edgeWeightFunction(paramVec.get(f)) / (z - rw);
-				if (numAlphaViolations < MAX_VIOLATION_MESSAGES) {
-					numAlphaViolations++;
-					StringBuilder sb = new StringBuilder("Minalpha assumption violated: local alpha "+(rw/z)+"<"+c.apr.alpha+" but encountered non-db features (" + f + "). Using ratio approximation @"+ratio+"..."+ (numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last msg)" : ""));
-//					sb.append("\nNode: ").append(u);
-//					sb.append("\nNeighbors: "); Dictionary.buildString(g.near(u).toArray(), sb, " ");
-//					sb.append("\nnonRestartFeatureSet: "); Dictionary.buildString(nonRestartFeatureSet, sb, " ");
-					log.warn(sb.toString());
+			switch(this.c.apr.alphaErrorStrategy) {
+			case boost:
+				// then we use Wcohen's alpha booster
+				// NB alphaBooster cannot be fixed by regularization, so there's potential for runaway here
+				double newAlphaBooster = c.weightingScheme.inverseEdgeWeightFunction( (c.apr.alpha / (1-c.apr.alpha)) * (z - rw));
+				double phiAB = 0;
+				for (TObjectDoubleIterator<String> it = g.getFeatures(u, queryNode).iterator(); it.hasNext(); ) {
+					it.advance();
+					if (it.key().equals(FEATURE_ALPHA_BOOSTER)) {
+						phiAB = it.value(); continue;
+					}
+					newAlphaBooster -= it.value() * Dictionary.safeGet(paramVec, it.key(), c.weightingScheme.defaultWeight());
 				}
-				double newValue = c.weightingScheme.inverseEdgeWeightFunction(
-						ratio * (1-c.apr.alpha) * rw / c.apr.alpha );
-				paramVec.put(f, newValue);
+				newAlphaBooster/= phiAB;
+				sb.append(" using alpha boost: ").append(newAlphaBooster).append("@").append(FEATURE_ALPHA_BOOSTER);
+				paramVec.put(FEATURE_ALPHA_BOOSTER, newAlphaBooster);
+				break;
+			case suppress:
+			default:
+				// then we use Katie's equal-ratios approximation
+				sb.append(" using feature supression: ");
+				for (String f : trainableFeatures(nonRestartFeatureSet)) {
+					if (!trainable(f)) continue;
+					double ratio = c.weightingScheme.edgeWeightFunction(paramVec.get(f)) / (z - rw);
+//					if (numAlphaViolations < MAX_VIOLATION_MESSAGES) {
+//						numAlphaViolations++;
+//						StringBuilder sb = new StringBuilder("Minalpha assumption violated: local alpha "+(rw/z)+"<"+c.apr.alpha+" but encountered non-db features (" + f + "). Using ratio approximation @"+ratio+"..."+ (numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last msg)" : ""));
+//	//					sb.append("\nNode: ").append(u);
+//	//					sb.append("\nNeighbors: "); Dictionary.buildString(g.near(u).toArray(), sb, " ");
+//	//					sb.append("\nnonRestartFeatureSet: "); Dictionary.buildString(nonRestartFeatureSet, sb, " ");
+//						log.warn(sb.toString());
+//					}
+					double newValue = c.weightingScheme.inverseEdgeWeightFunction(
+							ratio * (1-c.apr.alpha) * rw / c.apr.alpha );
+					sb.append(newValue).append("@").append(f).append(" ");
+					paramVec.put(f, newValue);
+				}
+				break;
 			}
+//			if (numAlphaViolations < MAX_VIOLATION_MESSAGES) {
+				numAlphaViolations++;
+//				sb.append(";").append(numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last msg)" : "");
+				log.warn(sb.toString());
+//			}
+				
 		}
 	}
 

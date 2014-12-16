@@ -34,7 +34,8 @@ public abstract class InferenceGraph {
 	public abstract boolean outlinksDefined(State u);
 	public abstract List<State> near(State u);
 	public abstract Map<Goal,Double> getFeatures(State u, State v);
-	public abstract State asState(State u);
+	public abstract State getState(int id);
+	public abstract int getId(State state);
 	public abstract int nodeSize();
 	public abstract int edgeSize();
 	public abstract String serialize();

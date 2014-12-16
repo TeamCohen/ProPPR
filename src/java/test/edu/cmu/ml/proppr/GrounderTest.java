@@ -73,10 +73,6 @@ public class GrounderTest {
 		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, new File(FACTS), false)};
 		Grounder grounder = new Grounder(apr, p, program, plugins);
 		
-		ArrayList<String> pos = new ArrayList<String>(), neg = new ArrayList<String>();
-		pos.add("predict howard bird");
-		neg.add("predict howard mammal");
-		
 		Query query = Query.parse("predict(howard,Y)");
 		GroundedExample ex = grounder.groundExample(p, new InferenceExample(query, 
 				new Query[] {Query.parse("predict(howard,bird)")}, 

@@ -30,8 +30,8 @@ public class LightweightStateGraph extends InferenceGraph {
 	private int edgeCount = 0;
 
 	@Override
-	public State asState(State u) {
-		return u;
+	public State getState(int u) {
+		return nodeTab.getSymbol(u);
 	}
 	
 	@Override
@@ -39,6 +39,7 @@ public class LightweightStateGraph extends InferenceGraph {
 		return nodeTab.getSymbol(1);
 	}
 	
+	@Override
 	public int getId(State u) {
 		return nodeTab.getId(u);
 	}

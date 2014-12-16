@@ -264,35 +264,40 @@ public class Trainer {
 	}
 
 	public static void main(String[] args) {
-		int inputFiles = Configuration.USE_TRAIN;
-		int outputFiles = Configuration.USE_PARAMS;
-		int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
-		int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
-		//		int flags = Configuration.USE_DEFAULTS 
-		//				| Configuration.USE_TRAIN 
-		//				| Configuration.USE_SRW 
-		//				| Configuration.USE_LEARNINGSET 
-		//				| Configuration.USE_PARAMS 
-		//				| Configuration.USE_DEFERREDPROGRAM
-		//				| Configuration.USE_MAXT;
-		ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
-		log.info(c.toString());
+		try {
+			int inputFiles = Configuration.USE_TRAIN;
+			int outputFiles = Configuration.USE_PARAMS;
+			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
+			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
+			//		int flags = Configuration.USE_DEFAULTS 
+			//				| Configuration.USE_TRAIN 
+			//				| Configuration.USE_SRW 
+			//				| Configuration.USE_LEARNINGSET 
+			//				| Configuration.USE_PARAMS 
+			//				| Configuration.USE_DEFERREDPROGRAM
+			//				| Configuration.USE_MAXT;
+			ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
+			log.info(c.toString());
 
-		String groundedFile=c.queryFile.getPath();
-		if (!c.queryFile.getName().endsWith(Grounder.GROUNDED_SUFFIX)) {
-			throw new IllegalStateException("Run Grounder on "+c.queryFile.getName()+" first. Ground+Train in one go is not supported yet.");
-		}
-		log.info("Training model parameters on "+groundedFile+"...");
-		long start = System.currentTimeMillis();
-		ParamVector params = c.trainer.train(
-				new GroundedExampleStreamer(groundedFile, new SLGBuilder()), 
-				c.epochs, 
-				c.traceLosses);
-		log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");
+			String groundedFile=c.queryFile.getPath();
+			if (!c.queryFile.getName().endsWith(Grounder.GROUNDED_SUFFIX)) {
+				throw new IllegalStateException("Run Grounder on "+c.queryFile.getName()+" first. Ground+Train in one go is not supported yet.");
+			}
+			log.info("Training model parameters on "+groundedFile+"...");
+			long start = System.currentTimeMillis();
+			ParamVector params = c.trainer.train(
+					new GroundedExampleStreamer(groundedFile, new SLGBuilder()), 
+					c.epochs, 
+					c.traceLosses);
+			log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");
 
-		if (c.paramsFile != null) {
-			log.info("Saving parameters to "+c.paramsFile+"...");
-			ParamsFile.save(params,c.paramsFile, c);
+			if (c.paramsFile != null) {
+				log.info("Saving parameters to "+c.paramsFile+"...");
+				ParamsFile.save(params,c.paramsFile, c);
+			}
+		} catch (Throwable t) {
+			t.printStackTrace();
+			System.exit(-1);
 		}
 	}
 

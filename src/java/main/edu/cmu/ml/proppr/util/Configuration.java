@@ -1,5 +1,6 @@
 package edu.cmu.ml.proppr.util;
 
+import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
@@ -22,6 +23,7 @@ import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.SplitFactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 
 
@@ -197,6 +199,7 @@ public class Configuration {
 		int i=0;
 		int wam,graph,facts;
 		wam = graph = facts = 0;
+		int iFacts = -1;
 		for (String s : programFiles) {
 			if (s.endsWith(".wam")) {
 				if (this.program != null) throw new IllegalArgumentException("Multiple WAM programs not supported");
@@ -206,14 +209,29 @@ public class Configuration {
 				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s));
 				graph++;
 			} else if (s.endsWith("facts")) {
-				this.plugins[i++] = FactsPlugin.load(this.apr, this.getExistingFile(s), this.ternaryIndex);
+				FactsPlugin p = FactsPlugin.load(this.apr, this.getExistingFile(s), this.ternaryIndex);
+				if (iFacts<0) {
+					iFacts = i;
+					this.plugins[i++] = p;
+				} else {
+					SplitFactsPlugin sf;
+					if (this.plugins[iFacts] instanceof FactsPlugin) {
+						sf = new SplitFactsPlugin(this.apr);
+						sf.add((FactsPlugin) this.plugins[iFacts]);
+						this.plugins[iFacts] = sf;
+					} else sf = (SplitFactsPlugin) this.plugins[iFacts];
+					sf.add(p);
+				}
 				facts++;
 			} else {
 				throw new IllegalArgumentException("Plugin type for "+s+" unsupported/unknown");
 			}
 		}
-		if (graph>1 || facts>1) {
-			log.warn("Consolidated files not yet supported! If the same functor exists in two files, facts in the later file will be hidden from the prover!");
+		if (facts>1) { // trim array
+			this.plugins = Arrays.copyOfRange(this.plugins,0,i);
+		}
+		if (graph>1) {
+			log.warn("Consolidated graph files not yet supported! If the same functor exists in two files, facts in the later file will be hidden from the prover!");
 		}
 	}
 

@@ -7,3 +7,7 @@ hasFeature	dundee	hasFur
 hasFeature	dundee	laysEggs
 hasFeature	elsie	hasFur
 hasFeature	elsie	liveBirth
+hasFeature	tweetie	hasBeak
+hasFeature	tweetie	laysEggs
+hasFeature	foghorn	hasBeak
+hasFeature	foghorn	hasFeathers

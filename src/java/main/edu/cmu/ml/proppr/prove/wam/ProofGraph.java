@@ -30,10 +30,10 @@ import edu.cmu.ml.proppr.util.SymbolTable;
 public class ProofGraph {
 	public static final boolean DEFAULT_RESTART = false;
 	public static final boolean DEFAULT_TRUELOOP = true;
-	private static final Goal TRUELOOP = new Goal("id",new ConstantArgument("trueLoop"));
-	private static final Goal TRUELOOP_RESTART = new Goal("id",new ConstantArgument("trueLoopRestart"));
-	private static final Goal RESTART = new Goal("id",new ConstantArgument("restart"));
-	private static final Goal ALPHABOOSTER = new Goal("id",new ConstantArgument("alphaBooster"));
+	public static final Goal TRUELOOP = new Goal("id",new ConstantArgument("trueLoop"));
+	public static final Goal TRUELOOP_RESTART = new Goal("id",new ConstantArgument("trueLoopRestart"));
+	public static final Goal RESTART = new Goal("id",new ConstantArgument("restart"));
+	public static final Goal ALPHABOOSTER = new Goal("id",new ConstantArgument("alphaBooster"));
 	
 	private InferenceExample example;
 	private WamProgram program;
@@ -115,10 +115,11 @@ public class ProofGraph {
 		} else {
 			result = this.interpreter.wamOutlinks(state);
 			if (restart) {
-				int n = result.size(); //this.pgDegree(state);// TODO why not result.size()?
+//				int n = result.size(); //this.pgDegree(state);// TODO why not result.size()?
 				Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
 				restartFD.put(this.restartFeature,1.0);
-				restartFD.put(this.restartBoosterFeature,(double) n * this.apr.alpha / (1 - this.apr.alpha));
+				// adjust this in prover:
+				restartFD.put(this.restartBoosterFeature,0.0); //(double) n * this.apr.alpha / (1 - this.apr.alpha));
 				result.add(new Outlink(restartFD,this.startState));
 			}
 		}

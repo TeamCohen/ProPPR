@@ -37,12 +37,12 @@ public abstract class WamPlugin {
 	 * @return
 	 */
 	public abstract boolean claim(String jumpto);
-	/** The feature dictionary for the restart state.
-	 * 
-	 * @param state
-	 * @param wamInterp
-	 */
-	public abstract void restartFD(State state, WamInterpreter wamInterp);
+//	/** The feature dictionary for the restart state.
+//	 * 
+//	 * @param state
+//	 * @param wamInterp
+//	 */
+//	public abstract void restartFD(State state, WamInterpreter wamInterp);
 	/** Yield a list of successor states, not including the restart state.
 	 * 
 	 * @param state
@@ -68,5 +68,9 @@ public abstract class WamPlugin {
 	 */
 	public int degree(String jumpto, State state, WamInterpreter wamInterp) {
 		throw new UnsupportedOperationException("degree method not implemented");
+	}
+	
+	public String toString() {
+		return this.about();
 	}
 }

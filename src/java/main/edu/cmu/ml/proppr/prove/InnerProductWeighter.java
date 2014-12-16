@@ -39,31 +39,22 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	}
 	@Override
 	public double w(Map<Goal, Double> featureDict) {
-////		double result = 0;
 		for (Goal g : featureDict.keySet()) {
 			if (!this.weights.containsKey(g) && !unknownFeatures.contains(g)) {
 				log.warn("Using default weight 1.0 for unknown feature "+g+" (this message only prints once)");
 				unknownFeatures.add(g);
 			}
 		}
-////			result += e.getValue() * Dictionary.safeGet(this.weights, e.getKey(), 1.0);
-////			if (log.isDebugEnabled()) log.debug("+="+e.getKey()+":"+e.getValue()+"*"+Dictionary.safeGet(this.weights, e.getKey(), 1.0)
-////					+"="+(e.getValue() * Dictionary.safeGet(this.weights, e.getKey(), 1.0))
-////					+" = "+result);
-////		}
-//		return result;
 		return this.weightingScheme.edgeWeight(this.weights, featureDict);
 	}
 	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec) {
 		return fromParamVec(paramVec, DEFAULT_WEIGHTING_SCHEME());
 	}
 	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec, WeightingScheme wScheme) {
-		//         goalDict = dict(( (rc.parser.parseGoal(s),w) for s,w in paramVec.items() ))
 		Map<Goal,Double> weights = new HashMap<Goal,Double>();
 		for (Map.Entry<String,Double> s : paramVec.entrySet()) {
 			weights.put(Query.parseGoal(s.getKey()), s.getValue());
 		}
 		return new InnerProductWeighter(wScheme, weights);
 	}
-
 }

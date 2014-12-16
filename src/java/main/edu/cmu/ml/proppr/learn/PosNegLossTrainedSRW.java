@@ -46,10 +46,12 @@ public abstract class PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
         d/df F(w) = <regularization> + sum_{x in pos}[ - 1/p[x] * d/df p[x] ] + sum_{x in neg}[ + 1/(1-p[x]) * d/df p[x] ]
 	 */
 	public TObjectDoubleMap<String> gradient(ParamVector<String,?> paramVec, PosNegRWExample example) {
+
+		Set<String> trainableFeatures = trainableFeatures(localFeatures(paramVec,example));
 		
 		// compute regularization
 		TObjectDoubleMap<String> derivFparamVec = new TObjectDoubleHashMap<String>();
-		for (String f : localFeatures(paramVec,example)) {
+		for (String f : trainableFeatures) {
 			derivFparamVec.put(f,derivRegularization(f,paramVec));
 		}
 		
@@ -57,7 +59,6 @@ public abstract class PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
 		TIntObjectMap<TObjectDoubleMap<String>> d = derivRWRbyParams(example.getGraph(), example.getQueryVec(), paramVec);
 
-		Set<String> trainableFeatures = trainableFeatures(localFeatures(paramVec,example));
 
 		//compute gradient
 		double pmax = 0;
