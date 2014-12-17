@@ -1,4 +1,25 @@
 #!/usr/bin/perl
+#
+# Input: cfacts file named functor_arg1type_arg2type.cfacts, with lines like
+# functor[TAB]arg1[TAB]arg2
+# -or-
+# functor[TAB]arg2[TAB]arg2[TAB]weight
+# 
+# Implicit input: index file named arg1type.i, with lines like
+# aaaarg1
+# bbbarg1
+# cccarg1
+# ...
+# (so in lex order)
+#
+# Implicit input: index file named arg2type.i, same format
+#
+# Intermediate output: temp file with lines like
+# arg1_id[TAB]arg2[TAB]weight
+# 
+# Output: functor_arg1type_arg2type.index, with lines like
+# arg1_id[TAB]arg2_id[TAB]weight
+#
 
 my $facts = shift;
 my ($head,$tail) = split(/\./,$facts);
@@ -20,8 +41,10 @@ close($fa1);
 print "Reading from $facts; writing to tmp...\n";
 while(<$ff>) {
     chomp;
-    my ($functor, $src, $dst) = split;
-    print $fo "$arg{$src}\t$dst\n";
+    my ($functor, $src, $dst, $wt) = split;
+    print $fo "$arg{$src}\t$dst";
+    $wt and print $fo "\t$wt";
+    print $fo "\n";
 }
 close($ff);
 close($fo);
@@ -42,8 +65,10 @@ open($fo,">$head.index") or die "Couldn't open $head.index for writing:\n$!\n";
 print "Reading from tmp, writing to $head.index...\n";
 while(<$ff>) {
     chomp;
-    my ($src,$dst) = split;
-    print $fo "$src\t$arg{$dst}\n";
+    my ($src,$dst,$wt) = split;
+    print $fo "$src\t$arg{$dst}";
+    $wt and print $fo "\t$wt";
+    print $fo "\n";
 }
 close($ff);
 close($fo);

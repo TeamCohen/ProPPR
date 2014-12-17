@@ -11,12 +11,13 @@ open(my $ci,">$cifile") or die "Couldn't open $cifile for writing:\n$!\n";
 my $n=0,$lastrow=-1;
 while(<$fi>) {
     chomp;
-    my ($src,$dst) = split;
+    my ($src,$dst,$wt) = split;
     if ($src > $lastrow) {
 	while($lastrow < $src) {
 	    $lastrow++;
-	    print $ro "$n\n";
-	    #print "line=$n src=$src ro=$n \n"
+	    print $ro "$n";
+	    $wt and print $ro "\t$wt";
+	    print $ro "\n";
 	}
     }
     print $ci "$dst\n";
