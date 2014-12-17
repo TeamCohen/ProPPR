@@ -16,6 +16,7 @@ endif
 TRAIN=train
 TEST=test
 PROGRAM=cora.wam:cora.graph
+PROGRAM_DEPS=cora.graph
 
 ### TARGETS
 include ../common.in
