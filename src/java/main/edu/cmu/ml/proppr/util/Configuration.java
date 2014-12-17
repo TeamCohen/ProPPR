@@ -22,7 +22,9 @@ import edu.cmu.ml.proppr.prove.TracingDfsProver;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.GraphlikePlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.SplitFactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 
@@ -205,10 +207,10 @@ public class Configuration {
 				if (this.program != null) throw new IllegalArgumentException("Multiple WAM programs not supported");
 				this.program = WamBaseProgram.load(this.getExistingFile(s));
 				wam++;
-			} else if (s.endsWith(".graph")) {
+			} else if (s.endsWith(GraphlikePlugin.FILE_EXTENSION)) {
 				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s));
 				graph++;
-			} else if (s.endsWith("facts")) {
+			} else if (s.endsWith(FactsPlugin.FILE_EXTENSION)) {
 				FactsPlugin p = FactsPlugin.load(this.apr, this.getExistingFile(s), this.ternaryIndex);
 				if (iFacts<0) {
 					iFacts = i;
@@ -223,6 +225,8 @@ public class Configuration {
 					sf.add(p);
 				}
 				facts++;
+			} else if (s.endsWith(SparseGraphPlugin.FILE_EXTENSION)) {
+				this.plugins[i++] = SparseGraphPlugin.load(this.apr, this.getExistingFile(s));
 			} else {
 				throw new IllegalArgumentException("Plugin type for "+s+" unsupported/unknown");
 			}

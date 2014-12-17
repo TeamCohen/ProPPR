@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParsedFile;
+import gnu.trove.map.TObjectDoubleMap;
 
 /**
  * Alpha is used to limit the minimum restart weight, when you
@@ -29,7 +30,7 @@ import edu.cmu.ml.proppr.util.ParsedFile;
  *
  */
 public class LightweightGraphPlugin extends GraphlikePlugin {
-	protected Map<String,Map<String,List<String>>> graph = new HashMap<String,Map<String,List<String>>>();
+	protected Map<String,Map<String,TObjectDoubleMap<String>>> graph = new HashMap<String,Map<String,TObjectDoubleMap<String>>>();
 	protected Map<Goal,Double> fd=new HashMap<Goal,Double>();
 	protected String name;
 	public LightweightGraphPlugin(APROptions apr, String name) {
@@ -44,19 +45,19 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 	}
 
 	@Override
-	protected List<String> indexGet(String label, String src) {
+	protected TObjectDoubleMap<String> indexGet(String label, String src) {
 		return Dictionary.safeGetGet(graph,label,src,DEFAULT_DSTLIST);
 	}
 
 	@Override
 	protected Collection<String> indexGet(String label) {
-		if (!graph.containsKey(label)) return DEFAULT_DSTLIST;
+		if (!graph.containsKey(label)) return DEFAULT_SRCLIST;
 		return graph.get(label).keySet();
 	}
 	
 	@Override
 	protected void indexAdd(String label, String src, String dst) {
-		Dictionary.safeAppend(graph, label, src, dst);
+		Dictionary.safePut(graph, label, src, dst, DEFAULT_DSTWEIGHT);
 	}
 
 	@Override

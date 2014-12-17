@@ -9,7 +9,9 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.util.ParsedFile;
+import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
 
 
@@ -41,13 +43,13 @@ public class SparseMatrixIndex {
 	float[] values;
 
 	public SparseMatrixIndex() {}
-	public SparseMatrixIndex(String dir, String functor_arg1type_arg2type, final TObjectIntMap<String> arg1, final String[] arg2) throws IOException {
+	public SparseMatrixIndex(File matrixDir, String functor_arg1type_arg2type, final TObjectIntMap<String> arg1, final String[] arg2) throws IOException {
 		this.arg1=arg1;
 		this.arg2=arg2;
-		this.load(dir,functor_arg1type_arg2type);
+		this.load(matrixDir,functor_arg1type_arg2type);
 	}
-	public void load(String dir, String functor_arg1type_arg2type) throws IOException {
-		log.info("Loading matrix "+functor_arg1type_arg2type+" from "+dir+"...");
+	public void load(File dir, String functor_arg1type_arg2type) throws IOException {
+		log.info("Loading matrix "+functor_arg1type_arg2type+" from "+dir.getName()+"...");
 		this.name = dir+":"+functor_arg1type_arg2type;
 		long start0 = System.currentTimeMillis();
 		/* Read the number of rows, columns, and entries - entry is a triple (i,j,m[i,j])
@@ -143,15 +145,15 @@ public class SparseMatrixIndex {
 	/** Given string key='a' such that arg1[i] = key, find all strings
 	 * 'b' such that m[i,j] != 0 and arg2[j]==b.
 	 **/
-	public List<String> near(String key) {
+	public TObjectDoubleMap<String> near(String key) {
 		if (!this.arg1.containsKey(key)) return null;
 		int r = this.arg1.get(key);
 		if (r >= rows) return null;
-		ArrayList<String> ret = new ArrayList<String>(this.rowOffsets[r+1]-this.rowOffsets[r]);
+		TObjectDoubleMap<String> ret = new TObjectDoubleHashMap<String>(this.rowOffsets[r+1]-this.rowOffsets[r]);
 		for (int k=this.rowOffsets[r]; k<this.rowOffsets[r+1]; k++) {
 			if (this.arg2[this.colIndices[k]] == null) 
 				throw new IllegalStateException("Found null argument in index "+this.name+" arg2[colIndices["+k+"]="+colIndices[k]+"] (arg2.length="+arg2.length+")");
-			ret.add(this.arg2[this.colIndices[k]]);
+			ret.put(this.arg2[this.colIndices[k]], this.values[k]);
 		}
 		return ret;
 	}

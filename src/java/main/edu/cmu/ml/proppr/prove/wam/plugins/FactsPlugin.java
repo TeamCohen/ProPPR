@@ -16,7 +16,7 @@ import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ParsedFile;
 
 public class FactsPlugin extends WamPlugin {
-	public static final String FILE_EXTENSION=".cfacts";
+	public static final String FILE_EXTENSION="facts";
 	public static final boolean DEFAULT_INDICES=false;
 	protected Map<Goal,Double> fd = new HashMap<Goal,Double>();
 	protected Map<String,List<String[]>> indexJ = new HashMap<String,List<String[]>>();

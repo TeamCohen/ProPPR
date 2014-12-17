@@ -446,6 +446,16 @@ public class Dictionary {
 		}
 		safeAppend(map.get(key1),key2,newVal);
 	}
+	public static <K,L,M> void safePut(Map<K, Map<L, TObjectDoubleMap<M>>> map,
+			K key1, L key2, M key3, double wt) {
+		if (!map.containsKey(key1)) map.put(key1, new HashMap<L,TObjectDoubleMap<M>>());
+		safePut(map.get(key1),key2,key3,wt);
+	}
+	public static <K,L> void safePut(Map<K, TObjectDoubleMap<L>> map,
+			K key1, L key2 ,double wt) {
+		if (!map.containsKey(key1)) map.put(key1, new TObjectDoubleHashMap<L>());
+		map.get(key1).put(key2,wt);
+	}
 	public static <K,V> List<V> safeGet(
 			Map<K, List<V>> map,
 			K key, List<V> dflt) {
@@ -509,5 +519,6 @@ public class Dictionary {
 			}});
 		return ret;
 	}
+
 
 }
