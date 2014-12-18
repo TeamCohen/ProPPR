@@ -23,4 +23,7 @@ endif
 %.examples.grounded: %.examples $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
 
+%.wam: %.ppr
+	python ${PROPPR}/src/scripts/compiler.py serialize $< > $@
+
 .SECONDARY:

@@ -1,0 +1,82 @@
+SHELL:=/bin/bash
+
+# Configuration: list your .cfacts files here.
+SOURCES:=hasWord_doc_kw.cfacts wordIn_kw_doc.cfacts
+
+# Configuration: if you want to package up the sparsegraph in a directory, name it here.
+NAME:=output
+
+# Configuration: we can do inverse relations without having to store
+# double the cfacts data.  just touch the .cfacts file for the
+# inverted functor, and list the pair here, forward functor first:
+INVERSE:=hasWord_doc_kw.wordIn_kw_doc
+# Then be sure to 'make inverse' before you 'make' the whole sparsegraph.
+
+# TYPES definition:
+# drop .cfacts from SOURCES
+# foreach elt:
+## change _ to space
+## get the first word
+## drop the first word+_
+# change _ to space
+# sort and drop duplicates
+# add .i to each elt
+TYPES=$(addsuffix .i,$(sort $(subst _, ,$(foreach f,$(subst .cfacts,,$(SOURCES)),$(subst $(firstword $(subst _, ,$(f)))_,,$(f))))))
+SPARSEN=$(SOURCES:.cfacts=.rce)
+ROWOFFSET=$(SOURCES:.cfacts=.rowOffset)
+COLINDEX=$(SOURCES:.cfacts=.colIndex)
+
+all: $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt
+
+inverse: $(addsuffix .index,$(basename $(INVERSE)))
+	for f in $(INVERSE); do \
+	FWD=$${f%.*}; \
+	REV=$${f##*.}; \
+	awk 'BEGIN{FS=OFS="\t"}{print $$2,$$1,$$3}' $${FWD}.index > $${REV}.index; \
+	done
+
+$(NAME): all
+	mkdir $(NAME)
+	mv $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt $(NAME)
+
+clean:
+	rm -f *.i *.index *.rowOffset *.colIndex *.rce sparseIndex.txt
+
+sparseIndex.txt:
+	for k in $(subst .cfacts,,$(SOURCES)) ; \
+	do echo "$$k" >> sparseIndex.txt ; \
+	done
+
+%.i: %.i1 %.i2
+	cat $^ | sort | uniq > $@
+# double-colon rule: execute none, any, any set, or all rules, independently, by dependency
+%.i1:: *_%_*.cfacts
+	cut -f 2 $^ | sort | uniq >> $@
+%.i1:: *_%_*.cfacts.gz
+	zcat $^ | cut -f 2 | sort | uniq >> $@
+%.i1:: 
+	touch $@
+%.i2:: *_*_%.cfacts
+	cut -f 3 $^ | sort | uniq >> $@
+%.i2:: *_*_%.cfacts.gz
+	zcat $^ | cut -f 3 | sort | uniq >> $@
+%.i2:: 
+	touch $@
+
+%.index: %.cfacts* $(TYPES) bin/cfacts2sparse_index.pl
+	FACTS="$<"; EXT="$${FACTS##*.}"; \
+	if [ "$$EXT" == "gz" ]; then zcat $< | bin/cfacts2sparse_index.pl $< -; \
+	else bin/cfacts2sparse_index.pl $<; \
+	fi
+	sort -n $@ -o $@
+
+%.rowOffset %.colIndex: %.index
+	bin/index2sparse.pl $<
+
+%.rce: %.rowOffset %.colIndex
+#rows
+	wc -l $*.rowOffset | awk '{print $$1}' >$@ 
+#columns
+	wc -l $(word 3,$(subst _, ,$(subst .rowOffset,,$<))).i | awk '{print $$1}' >>$@
+#entries
+	wc -l $*.colIndex | awk '{print $$1}' >>$@

@@ -1,6 +1,7 @@
 sparseGraphTools - converting from .cfacts to sparseMatrix format
 Katie Mazaitis (krivard@cs.cmu.edu)
-31 October 2013
+Created: 31 October 2013
+Last Updated: 18 December 2014
 
 
 (1) Set up .cfacts files
@@ -14,9 +15,9 @@ Naming convention: [functor]_[arg1type]_[arg2type].cfacts
 
 (2) Set up Makefile
 
-Edit the SOURCES definition in the Makefile to include all the cfacts files you wish to include in your sparseGraphComponent, separated by spaces.
+Edit the SOURCES definition in the Makefile to include all the cfacts files you wish to include in your sparseGraph, separated by spaces.
 
-You can also set the name of the folder they'll be dropped in, if you wish (NAME). Make sure the folder name ends in .sparse so that it will be recognized by the component builder.
+You can also set the name of the folder they'll be dropped in, if you wish (NAME). Make sure the folder name ends in .sparse so that it will be recognized by the plugin builder.
 
 
 (3) Run
@@ -24,16 +25,7 @@ You can also set the name of the folder they'll be dropped in, if you wish (NAME
 $ make
 
 
-(4) Test
+(4) Use
 
-Run SparseGraphComponent to make sure it works. Run some outlinks queries, expressing the goal query in compiled format (comma-delimited, using negative integers as variable names).
-
-$ java -cp bin/:lib/*.jar:conf/ edu.cmu.ml.proppr.prove.SparseGraphComponent $(NAME)
-> outlinks some_functor,some_arg1,-1
-goal(some_functor,c[some_arg1],v[-1]) ... goal(some_functor,c[some_arg1],c[some_value])
-
-
-(5) Use
-
-Put the folder anywhere you like. Include the path to it in the --programFiles argument, as you would for any other component.
+Put the folder anywhere you like. Include the path to it in the --programFiles argument, as you would for any other plugin.
 

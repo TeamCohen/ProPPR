@@ -1,0 +1,3 @@
+predict(Document,Label) :- seed(Document,Label) {seed}.
+predict(Document,Label) :- hasWord(Document,Word),wordIn(Word,OtherDocument),predict(Document,Label),propagate(OtherDocument,Word,Label) {nonseed}.
+propagate(Document,Word,Label) :- {propagate(Word,Label)}.
