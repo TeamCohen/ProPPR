@@ -1,5 +1,17 @@
-SOURCES=f2n_cid_nid.cfacts
-NAME=output
+SHELL:=/bin/bash
+
+# Configuration: list your .cfacts files here. Use the naming convention functor_arg1type_arg2type.cfacts.
+SOURCES:=
+
+# Configuration: if you want to package up the sparsegraph in a directory, name it here.
+NAME:=output
+
+# Configuration: we can do inverse relations without having to store
+# double the cfacts data.  Just touch the .cfacts file for the
+# inverted functor, and list the pair here as
+# forwardfunctor_arg1type_arg2type.inversefunctor_arg1type_arg2type
+INVERSE:=
+# Then be sure to 'make inverse' before you 'make' the whole sparsegraph.
 
 # TYPES definition:
 # drop .cfacts from SOURCES
@@ -16,6 +28,15 @@ ROWOFFSET=$(SOURCES:.cfacts=.rowOffset)
 COLINDEX=$(SOURCES:.cfacts=.colIndex)
 
 all: $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt
+
+inverse: $(addsuffix .index,$(basename $(INVERSE)))
+	for f in $(INVERSE); do \
+	FWD=$${f%.*}; \
+	REV=$${f##*.}; \
+	awk 'BEGIN{FS=OFS="\t"}{print $$2,$$1,$$3}' $${FWD}.index > $${REV}.index; \
+	done
+
+$(NAME): all
 	mkdir $(NAME)
 	mv $(SPARSEN) $(ROWOFFSET) $(COLINDEX) $(TYPES) sparseIndex.txt $(NAME)
 
@@ -32,15 +53,22 @@ sparseIndex.txt:
 # double-colon rule: execute none, any, any set, or all rules, independently, by dependency
 %.i1:: *_%_*.cfacts
 	cut -f 2 $^ | sort | uniq >> $@
+%.i1:: *_%_*.cfacts.gz
+	zcat $^ | cut -f 2 | sort | uniq >> $@
 %.i1:: 
 	touch $@
 %.i2:: *_*_%.cfacts
 	cut -f 3 $^ | sort | uniq >> $@
+%.i2:: *_*_%.cfacts.gz
+	zcat $^ | cut -f 3 | sort | uniq >> $@
 %.i2:: 
 	touch $@
 
-%.index: %.cfacts $(TYPES) bin/cfacts2sparse_index.pl
-	bin/cfacts2sparse_index.pl $<
+%.index: %.cfacts* $(TYPES) bin/cfacts2sparse_index.pl
+	FACTS="$<"; EXT="$${FACTS##*.}"; \
+	if [ "$$EXT" == "gz" ]; then zcat $< | bin/cfacts2sparse_index.pl $< -; \
+	else bin/cfacts2sparse_index.pl $<; \
+	fi
 	sort -n $@ -o $@
 
 %.rowOffset %.colIndex: %.index

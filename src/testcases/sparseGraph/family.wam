@@ -1,0 +1,214 @@
+0		comment	cousin(-1,-2) :- child(-3,-1), sibling(-3,-4), child(-4,-2)  #v:['X', 'Y', 'Z', 'U'].
+1	cousin/2	allocate	4	['U', 'Z', 'Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	cousin
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushfreevar	-3
+11		pushboundvar	-1
+12		callp	child/2
+13		pushboundvar	-3
+14		pushfreevar	-4
+15		callp	sibling/2
+16		pushboundvar	-4
+17		pushboundvar	-2
+18		callp	child/2
+19		returnp
+20		comment	kids(-1,-2) :- child(-1,-2)  #v:['X', 'Y'].
+21	kids/2	allocate	2	['Y', 'X']
+22		initfreevar	-1	-2
+23		initfreevar	-2	-1
+24		fclear
+25		fpushstart	id	3
+26		fpushconst	kids
+27		fpushconst	2
+28		fpushconst	24
+29		freport
+30		pushboundvar	-1
+31		pushboundvar	-2
+32		callp	child/2
+33		returnp
+34		comment	kids(-1,-2) :- kids(-1,-3), sister(-3,-2)  #v:['X', 'Y', 'Z'].
+35	kids/2	allocate	3	['Z', 'Y', 'X']
+36		initfreevar	-1	-2
+37		initfreevar	-2	-1
+38		fclear
+39		fpushstart	id	3
+40		fpushconst	kids
+41		fpushconst	2
+42		fpushconst	38
+43		freport
+44		pushboundvar	-1
+45		pushfreevar	-3
+46		callp	kids/2
+47		pushboundvar	-3
+48		pushboundvar	-2
+49		callp	sister/2
+50		returnp
+51		comment	sibling(-1,-2) :- sister(-1,-2)  #v:['X', 'Y'].
+52	sibling/2	allocate	2	['Y', 'X']
+53		initfreevar	-1	-2
+54		initfreevar	-2	-1
+55		fclear
+56		fpushstart	id	3
+57		fpushconst	sibling
+58		fpushconst	2
+59		fpushconst	55
+60		freport
+61		pushboundvar	-1
+62		pushboundvar	-2
+63		callp	sister/2
+64		returnp
+65		comment	relative(-1,-2) :- sibling(-1,-2)  #v:['X', 'Y'].
+66	relative/2	allocate	2	['Y', 'X']
+67		initfreevar	-1	-2
+68		initfreevar	-2	-1
+69		fclear
+70		fpushstart	id	3
+71		fpushconst	relative
+72		fpushconst	2
+73		fpushconst	69
+74		freport
+75		pushboundvar	-1
+76		pushboundvar	-2
+77		callp	sibling/2
+78		returnp
+79		comment	relative(-1,-2) :- spouse(-1,-2)  #v:['X', 'Y'].
+80	relative/2	allocate	2	['Y', 'X']
+81		initfreevar	-1	-2
+82		initfreevar	-2	-1
+83		fclear
+84		fpushstart	id	3
+85		fpushconst	relative
+86		fpushconst	2
+87		fpushconst	83
+88		freport
+89		pushboundvar	-1
+90		pushboundvar	-2
+91		callp	spouse/2
+92		returnp
+93		comment	relative(-1,-2) :- descendant(-1,-2)  #v:['X', 'Y'].
+94	relative/2	allocate	2	['Y', 'X']
+95		initfreevar	-1	-2
+96		initfreevar	-2	-1
+97		fclear
+98		fpushstart	id	3
+99		fpushconst	relative
+100		fpushconst	2
+101		fpushconst	97
+102		freport
+103		pushboundvar	-1
+104		pushboundvar	-2
+105		callp	descendant/2
+106		returnp
+107		comment	relative(-1,-2) :- descendant(-2,-1)  #v:['X', 'Y'].
+108	relative/2	allocate	2	['Y', 'X']
+109		initfreevar	-1	-2
+110		initfreevar	-2	-1
+111		fclear
+112		fpushstart	id	3
+113		fpushconst	relative
+114		fpushconst	2
+115		fpushconst	111
+116		freport
+117		pushboundvar	-2
+118		pushboundvar	-1
+119		callp	descendant/2
+120		returnp
+121		comment	relative(-1,-2) :- cousin(-1,-2)  #v:['X', 'Y'].
+122	relative/2	allocate	2	['Y', 'X']
+123		initfreevar	-1	-2
+124		initfreevar	-2	-1
+125		fclear
+126		fpushstart	id	3
+127		fpushconst	relative
+128		fpushconst	2
+129		fpushconst	125
+130		freport
+131		pushboundvar	-1
+132		pushboundvar	-2
+133		callp	cousin/2
+134		returnp
+135		comment	relative(-1,-2) :- relative(-1,-3), relative(-3,-2)  #v:['X', 'Y', 'Z'].
+136	relative/2	allocate	3	['Z', 'Y', 'X']
+137		initfreevar	-1	-2
+138		initfreevar	-2	-1
+139		fclear
+140		fpushstart	id	3
+141		fpushconst	relative
+142		fpushconst	2
+143		fpushconst	139
+144		freport
+145		pushboundvar	-1
+146		pushfreevar	-3
+147		callp	relative/2
+148		pushboundvar	-3
+149		pushboundvar	-2
+150		callp	relative/2
+151		returnp
+152		comment	descendant(-1,-2) :- child(-1,-2)  #v:['X', 'Y'].
+153	descendant/2	allocate	2	['Y', 'X']
+154		initfreevar	-1	-2
+155		initfreevar	-2	-1
+156		fclear
+157		fpushstart	id	3
+158		fpushconst	descendant
+159		fpushconst	2
+160		fpushconst	156
+161		freport
+162		pushboundvar	-1
+163		pushboundvar	-2
+164		callp	child/2
+165		returnp
+166		comment	descendant(-1,-2) :- child(-1,-3)  #v:['X', 'Y', 'Z'].
+167	descendant/2	allocate	3	['Z', 'Y', 'X']
+168		initfreevar	-1	-2
+169		initfreevar	-2	-1
+170		fclear
+171		fpushstart	id	3
+172		fpushconst	descendant
+173		fpushconst	2
+174		fpushconst	170
+175		freport
+176		pushboundvar	-1
+177		pushfreevar	-3
+178		callp	child/2
+179		returnp
+180		comment	descendant(-1,-2) :- child(-1,-3), sibling(-3,-4)  #v:['X', 'Y', 'Z', 'S'].
+181	descendant/2	allocate	4	['S', 'Z', 'Y', 'X']
+182		initfreevar	-1	-2
+183		initfreevar	-2	-1
+184		fclear
+185		fpushstart	id	3
+186		fpushconst	descendant
+187		fpushconst	2
+188		fpushconst	184
+189		freport
+190		pushboundvar	-1
+191		pushfreevar	-3
+192		callp	child/2
+193		pushboundvar	-3
+194		pushfreevar	-4
+195		callp	sibling/2
+196		returnp
+197		comment	descendant(-1,-2) :- descendant(-1,-3), descendant(-3,-2)  #v:['X', 'Y', 'Z'].
+198	descendant/2	allocate	3	['Z', 'Y', 'X']
+199		initfreevar	-1	-2
+200		initfreevar	-2	-1
+201		fclear
+202		fpushstart	id	3
+203		fpushconst	descendant
+204		fpushconst	2
+205		fpushconst	201
+206		freport
+207		pushboundvar	-1
+208		pushfreevar	-3
+209		callp	descendant/2
+210		pushboundvar	-3
+211		pushboundvar	-2
+212		callp	descendant/2
+213		returnp

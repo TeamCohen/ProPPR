@@ -3,7 +3,7 @@ include ../Makefile.in
 ### DATASET
 TRAIN=train
 TEST=test
-SEED=seed_doc_label.1per.cfacts
+SEED=seed_doc_label.10per.cfacts
 PROGRAM=20news.wam:20news.sparse:labels.cfacts:$(SEED)
 PROGRAM_DEPS=20news.wam 20news.sparse/sparseIndex.txt $(SEED)
 

@@ -38,6 +38,7 @@ public class DprProver extends Prover {
 	protected long last;
 	// for debug
 	protected Backtrace<State> backtrace = new Backtrace<State>(log);
+	protected ProofGraph current;
 
 	@Override
 	public String toString() { 
@@ -70,6 +71,7 @@ public class DprProver extends Prover {
 
 
 	public Map<State, Double> prove(ProofGraph pg) {
+		this.current = pg;
 
 		Map<State,Double> p = new HashMap<State,Double>();
 		Map<State,Double> r = new HashMap<State,Double>();
@@ -95,6 +97,9 @@ public class DprProver extends Prover {
 			numPushes+=pushCounter;
 		}
 		if(log.isInfoEnabled()) log.info("total iterations "+numIterations+" total pushes "+numPushes);
+		
+		//clear state
+		this.current = null;
 		return p;
 	}
 	
@@ -205,8 +210,8 @@ public class DprProver extends Prover {
 						throw new MinAlphaException(apr.alpha,localAlpha,u);
 					}
 				}
-				Dictionary.increment(p,u,apr.alpha * ru,"(elided)");
-				r.put(u, r.get(u) * stayProbability * (1.0-apr.alpha));
+				addToP(p,u,ru);
+				r.put(u, ru * stayProbability * (1.0-apr.alpha));
 
 				restart.wt = ( z * (localAlpha - apr.alpha) );
 				for (Outlink o : outs) {
@@ -229,6 +234,11 @@ public class DprProver extends Prover {
 		}
 		return pushCounter;
 	}
+	
+	protected void addToP(Map<State, Double> p, State u, double ru) {
+		Dictionary.increment(p,u,apr.alpha * ru,"(elided)");
+	}
+
 	protected void includeState(Outlink o, Map<State, Double> r,
 			Map<State, Integer> deg, double z, double ru, ProofGraph pg) throws LogicProgramException {
 		backtrace.push(o.child);

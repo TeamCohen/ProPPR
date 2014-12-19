@@ -290,7 +290,8 @@ public class Grounder {
 			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
 
 			ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);
-
+			System.out.println(c.toString());
+			
 			if (c.getCustomSetting("graphKey") != null) c.grounder.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);

@@ -135,7 +135,7 @@ public class SparseMatrixIndex {
 		this.arg1.forEachEntry(new TObjectIntProcedure<String>() {
 			@Override
 			public boolean execute(String a, int r) {
-				if ((rowOffsets[r+1]-rowOffsets[r]) > 0) ret.add(a);
+				if ((r+1 < rowOffsets.length) && (rowOffsets[r+1]-rowOffsets[r]) > 0) ret.add(a);
 				return true;
 			}
 		});

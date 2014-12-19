@@ -137,6 +137,9 @@ public class ProofGraph {
 	
 	/* ***************************** grounding ******************* */
 	
+	public int asId(State s) {
+		return this.graph.getId(s);
+	}
 
 	public Map<Argument,String> asDict(State s) {
 		Map<Argument,String> result = new HashMap<Argument,String>();

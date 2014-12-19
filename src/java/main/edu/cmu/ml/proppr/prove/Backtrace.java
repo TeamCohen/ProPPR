@@ -12,7 +12,7 @@ public class Backtrace<T> {
 	public Backtrace(Logger parent) { 
 		this.log = parent; 
 	}
-	private ArrayDeque<T> backtrace;
+	protected ArrayDeque<T> backtrace;
 	public void start() {
 		this.backtrace = new ArrayDeque<T>();
 	}

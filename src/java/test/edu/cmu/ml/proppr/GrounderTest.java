@@ -67,7 +67,6 @@ public class GrounderTest {
 				APROptions.MINALPH_DEFAULT); 
 	}
 	public void doGroundExampleTest(String msg, Prover p, int nodes, int edges, double value, String npos, String nneg,double alpha) throws IOException, LogicProgramException {
-		String data = null;//"testcases/toyTrain.cdata";
 		APROptions apr = new APROptions();
 		WamProgram program = WamBaseProgram.load(new File(RULES));
 		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, new File(FACTS), false)};

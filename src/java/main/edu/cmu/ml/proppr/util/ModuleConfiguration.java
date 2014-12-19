@@ -18,6 +18,7 @@ import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
+import edu.cmu.ml.proppr.prove.PathDprProver;
 import edu.cmu.ml.proppr.prove.PprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
@@ -31,7 +32,7 @@ public class ModuleConfiguration extends Configuration {
 	private static final String WEIGHTINGSCHEME_MODULE_OPTION = "weightingScheme";
 	private static final String PROVER_MODULE_OPTION = "prover";
 
-	private enum PROVERS { ppr, dpr, dfs, tr };
+	private enum PROVERS { ppr, dpr, pdpr, dfs, tr };
 	private enum WEIGHTINGSCHEMES { linear, sigmoid, tanh, ReLU, exp };
 	public Grounder grounder;
 	public SRW srw;
@@ -159,6 +160,8 @@ public class ModuleConfiguration extends Configuration {
 						this.prover = new DprProver(apr);
 					}
 					break;
+				case pdpr:
+					this.prover = new PathDprProver(apr);
 				case dfs:
 					this.prover = new DfsProver(apr);
 					break;
