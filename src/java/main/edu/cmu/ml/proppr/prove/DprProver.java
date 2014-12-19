@@ -129,9 +129,12 @@ public class DprProver extends Prover {
 		double numerator = (this.weighter.weightingScheme.inverseEdgeWeightFunction( (this.apr.alpha + ALPHA_BUFFER) * z ) - nonBoosterReset); 
 		return Math.max(0,numerator / thetaAB);
 	}
-
 	protected int dfsPushes(ProofGraph pg, Map<State,Double> p, Map<State, Double> r,
 			Map<State, Integer> deg, State u, int pushCounter) {
+		return dfsPushes(pg, p, r, deg, u, pushCounter, 1);
+	}
+	protected int dfsPushes(ProofGraph pg, Map<State,Double> p, Map<State, Double> r,
+			Map<State, Integer> deg, State u, int pushCounter, int depth) {
 		double ru = r.get(u);
 		if (ru / deg.get(u) > apr.epsilon) {
 			backtrace.push(u);
@@ -139,7 +142,7 @@ public class DprProver extends Prover {
 //				long now = System.currentTimeMillis(); 
 //				log.info("push "+pushCounter+"->"+(pushCounter+1)+" ru "+ru+" "+r.size()+" r-states u "+u);
 //				last = now;
-				if (log.isDebugEnabled()) log.debug("PUSHPATH include "+(pushCounter+1)+" "+u);
+				if (log.isDebugEnabled()) log.debug("PUSHPATH on "+ru+"@"+depth+" "+u);
 //			}
 			pushCounter += 1;
 			Outlink restart=null;
@@ -214,8 +217,10 @@ public class DprProver extends Prover {
 				r.put(u, ru * stayProbability * (1.0-apr.alpha));
 
 				restart.wt = ( z * (localAlpha - apr.alpha) );
+				if (log.isDebugEnabled()) log.debug("PUSHPATH deg "+outs.size()+"@"+depth);
 				for (Outlink o : outs) {
-					if (log.isDebugEnabled()) log.debug("PUSHPATH candidate "+(pushCounter+1)+" "+u+" -> "+o.child);
+					if (log.isDebugEnabled()) log.debug("PUSHPATH add "+moveProbability * (o.wt / z) * ru+"@"+depth+" "+ o.child);
+//					if (log.isDebugEnabled()) log.debug("PUSHPATH candidate "+(pushCounter+1)+" "+u+" -> "+o.child);
 					includeState(o,r,deg,z,ru,pg);
 				}
 
@@ -223,14 +228,14 @@ public class DprProver extends Prover {
 					if (o.equals(restart)) continue;
 					// current pushcounter is passed down, gets incremented and returned, and 
 					// on the next for loop iter is passed down again...
-					pushCounter = this.dfsPushes(pg,p,r,deg,o.child,pushCounter);
+					pushCounter = this.dfsPushes(pg,p,r,deg,o.child,pushCounter,depth+1);
 				}
 			} catch (LogicProgramException e) {
 				backtrace.print(e);
 			}
 			backtrace.pop(u);
 		} else {
-			if (log.isDebugEnabled()) log.debug("PUSHPATH exclude "+(pushCounter+1)+" "+u);
+			if (log.isDebugEnabled()) log.debug("PUSHPATH remove "+ru+"@"+depth+" "+u);
 		}
 		return pushCounter;
 	}
@@ -242,8 +247,6 @@ public class DprProver extends Prover {
 	protected void includeState(Outlink o, Map<State, Double> r,
 			Map<State, Integer> deg, double z, double ru, ProofGraph pg) throws LogicProgramException {
 		backtrace.push(o.child);
-
-		//		boolean followup = !r.containsKey(o.child);
 		Dictionary.increment(r, o.child, moveProbability * (o.wt / z) * ru,"(elided)");
 		if(!deg.containsKey(o.child)) {
 			try {

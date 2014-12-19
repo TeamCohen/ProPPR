@@ -17,12 +17,12 @@ public class Backtrace<T> {
 		this.backtrace = new ArrayDeque<T>();
 	}
 	public void push(T state) {
-		if(log.isDebugEnabled()) log.debug("push "+state);
+//		if(log.isDebugEnabled()) log.debug("push "+state);
 		this.backtrace.push(state);
 	}
 	public void pop(T state) {
 		T p = this.backtrace.pop();
-		if(log.isDebugEnabled()) log.debug("pop "+state);
+//		if(log.isDebugEnabled()) log.debug("pop "+state);
 		if (!p.equals(state)) log.error("popped unexpected state\nexpected "+state+"\ngot"+p);
 	}
 	public void print(LogicProgramException e) {
