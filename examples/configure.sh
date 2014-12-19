@@ -78,7 +78,7 @@ endif
 ifeq (\$(suffix \$(PROPPR)),'jar')
 CP:=.:\${PROPPR}
 else
-CP:=.:\${PROPPR}/bin:\${PROPPR}/conf/:\${PROPPR}/lib/*
+CP:=.:\${PROPPR}/conf/:\${PROPPR}/bin:\${PROPPR}/lib/*
 endif
 #### Hyperparameters
 ifeq (\$(strip \$(EPSILON)),)

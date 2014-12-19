@@ -139,7 +139,7 @@ public class DprProver extends Prover {
 //				long now = System.currentTimeMillis(); 
 //				log.info("push "+pushCounter+"->"+(pushCounter+1)+" ru "+ru+" "+r.size()+" r-states u "+u);
 //				last = now;
-//				if (log.isDebugEnabled()) log.debug("PUSHPATH include "+(pushCounter+1)+" "+u);
+				if (log.isDebugEnabled()) log.debug("PUSHPATH include "+(pushCounter+1)+" "+u);
 //			}
 			pushCounter += 1;
 			Outlink restart=null;

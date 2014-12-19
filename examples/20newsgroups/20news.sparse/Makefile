@@ -32,7 +32,7 @@ inverse: $(addsuffix .index,$(basename $(INVERSE)))
 	for f in $(INVERSE); do \
 	FWD=$${f%.*}; \
 	REV=$${f##*.}; \
-	awk 'BEGIN{FS=OFS="\t"}{print $$2,$$1,$$3}' $${FWD}.index > $${REV}.index; \
+	awk 'BEGIN{FS=OFS="\t"}{print $$2,$$1,$$3}' $${FWD}.index | sort -n > $${REV}.index; \
 	done
 
 $(NAME): all
