@@ -94,6 +94,8 @@ public class FactsPlugin extends WamPlugin {
 			} else {
 				values = indexJA1.get(new JumpArgKey(state.getJumpTo(), argConst[0]));
 				List<String[]> alternate = indexJA2.get(new JumpArgKey(state.getJumpTo(), argConst[1]));
+				// treat null lists as empty lists here - wwc
+				if (alternate == null) alternate = new java.util.ArrayList<String[]>();
 				if (values.size() > alternate.size()) values = alternate;
 			}
 		} else {
