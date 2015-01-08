@@ -81,12 +81,12 @@ public class WamInterpreter {
 			Instruction inst = this.program.getInstruction(state.getProgramCounter());
 			execute(inst,computeFeatures);
 		}
-		if(state.isCompleted()) log.debug(this.constantTable.toString());
+		if(state.isCompleted() && log.isDebugEnabled()) log.debug(this.constantTable.toString());
 		return this.reportedFeatures;
 	}
 	
 	public void execute(Instruction inst, boolean computeFeatures) {
-		log.debug(inst);
+		if (log.isDebugEnabled()) log.debug(inst);
 		if (!computeFeatures && inst.opcode.isFeature()) {
 			//TODO: pc+= 1 here?
 		}
@@ -111,7 +111,7 @@ public class WamInterpreter {
 		} catch(LogicProgramException e) {
 			throw new RuntimeException(e);
 		}
-		log.debug("at "+this.state.getProgramCounter()+": state "+state);
+		if (log.isDebugEnabled()) log.debug("at "+this.state.getProgramCounter()+": state "+state);
 	}
 
 	private void doFeatureFindallDFS(State state, int depth) throws LogicProgramException {
@@ -133,9 +133,9 @@ public class WamInterpreter {
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (WamPlugin plugin : this.plugins) {
 			if (plugin.claim(s.getJumpTo())) {
-				log.debug("Executing "+s.getJumpTo()+" from "+plugin.about());
+				if (log.isDebugEnabled()) log.debug("Executing "+s.getJumpTo()+" from "+plugin.about());
 				this.restoreState(s);
-				log.debug(this.constantTable.toString());
+				if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
 				for (Outlink o : plugin.outlinks(s, this, computeFeatures)) {
 					result.add(o);
 				}
@@ -145,9 +145,9 @@ public class WamInterpreter {
 		if (!this.program.hasLabel(s.getJumpTo())) 
 			throw new LogicProgramException("Unknown predicate "+s.getJumpTo());
 		for (Integer address : program.getAddresses(s.getJumpTo())) {
-			log.debug("Executing "+s.getJumpTo()+" from "+address);
+			if (log.isDebugEnabled()) log.debug("Executing "+s.getJumpTo()+" from "+address);
 			this.restoreState(s);
-			log.debug(this.constantTable.toString());
+			if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
 			if (computeFeatures) {
 				Map<Goal,Double> features = this.executeWithoutBranching(address);
 				if (!features.isEmpty() && !this.state.isFailed()) {
@@ -361,11 +361,11 @@ public class WamInterpreter {
 		int j = getHeapwiseIndex(k, i);
 		int rj = state.dereference(j);
 		if (!state.hasFreeAt(rj)) throw new LogicProgramException("var "+rj+" is not free in setArg("+k+","+i+","+value+"):\n"+state.toString());
-		log.debug("setArg("+k+","+i+","+value+")");
+		if (log.isDebugEnabled()) log.debug("setArg("+k+","+i+","+value+")");
 		int id = constantTable.getId(value);
 		state.setHeap(rj, state.createConstantCell(id));
 		state.collapsePointers(j, rj);
-		log.debug("at _: state "+state);
+		if (log.isDebugEnabled()) log.debug("at _: state "+state);
 	}
 
 	/* ************************** trace access ************************* */

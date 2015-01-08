@@ -31,6 +31,7 @@ import gnu.trove.procedure.TObjectIntProcedure;
  */
 public class SparseMatrixIndex {
 	private static final Logger log = Logger.getLogger(SparseMatrixIndex.class);
+	private static final String WEIGHT_DELIMITER = "\t";
 	private static final int LOGUPDATE_MS=5000;
 	String name;
 	/** counts */
@@ -52,8 +53,7 @@ public class SparseMatrixIndex {
 		log.info("Loading matrix "+functor_arg1type_arg2type+" from "+dir.getName()+"...");
 		this.name = dir+":"+functor_arg1type_arg2type;
 		long start0 = System.currentTimeMillis();
-		/* Read the number of rows, columns, and entries - entry is a triple (i,j,m[i,j])
-		 * except I don't store m[i,j] since it's always 1.0 for me. */
+		/* Read the number of rows, columns, and entries - entry is a triple (i,j,m[i,j]) */
 		ParsedFile file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".rce"));
 		{
 			Iterator<String> it = file.iterator();
@@ -70,7 +70,7 @@ public class SparseMatrixIndex {
 		 * array, and values is a parallel array.  rowsOffsets is another array so that 
 		 * rowOffsets[i] is where the column indices for row i start. Thus
 		 *
-		 * (for k=rowOffsets[i]; k<rowOffsets[i+1]; k++) {
+		 * for (k=rowOffsets[i]; k<rowOffsets[i+1]; k++) {
 		 *   j = colIndices[k];
 		 *   m_ij = values[k];
 		 *   // this would retrieve i,j and the corresponding value in the sparse matrix m[i,j]
@@ -100,7 +100,7 @@ public class SparseMatrixIndex {
 		file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".colIndex"));
 		for(String line : file) {
 			int ln = file.getLineNumber();
-			String[] parts = line.split("\t");
+			String[] parts = line.split(WEIGHT_DELIMITER);
 			colIndices[ln] = Integer.parseInt(parts[0]);
 			values[ln] = (float) (parts.length>1?Float.parseFloat(parts[1]):1.0);
 			if (colIndices[ln] >= arg2.length) {

@@ -83,15 +83,15 @@ public class LightweightStateGraph extends InferenceGraph {
 			log.warn("Overwriting previous outlinks for state "+u);
 			edgeCount -= near.get(ui).size();
 		}
-		near.put(ui, new TIntArrayList());
-		edgeFeatureDict.put(ui, new TIntObjectHashMap<TIntDoubleHashMap>());
-		TIntArrayList nearui = near.get(ui);
-		TIntObjectHashMap<TIntDoubleHashMap> fui = edgeFeatureDict.get(ui);
+		TIntArrayList nearui = new TIntArrayList(outlinks.size());
+		near.put(ui, nearui);
+		TIntObjectHashMap<TIntDoubleHashMap> fui = new TIntObjectHashMap<TIntDoubleHashMap>();
+		edgeFeatureDict.put(ui, fui);
 		for (Outlink o : outlinks) {
 			int vi = this.nodeTab.getId(o.child);
 			nearui.add(vi);
 			edgeCount++;
-			TIntDoubleHashMap fvui = new TIntDoubleHashMap();
+			TIntDoubleHashMap fvui = new TIntDoubleHashMap(o.fd.size());
 			for (Map.Entry<Goal,Double> e : o.fd.entrySet()) {
 				fvui.put(this.featureTab.getId(e.getKey()), e.getValue());
 			}

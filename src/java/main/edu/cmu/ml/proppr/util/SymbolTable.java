@@ -51,6 +51,7 @@ public class SymbolTable<T> {
 	public int size() {
 		return this.symbolList.size();
 	}
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("SymbolTable:");
 		for (int i=0; i<this.symbolList.size(); i++) {
