@@ -75,7 +75,7 @@ public class Rule {
 		convertGoals(this.findall, varTab);
 //		this.variableList = varTab.getSymbolList();
 //		this.nvars = this.variableList.size();
-		this.nvars = varTab.getSymbolList().size() - before;
+		this.nvars = varTab.size() - before;
 		return varTab;
 	}
 

@@ -129,14 +129,14 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 
 	/** subroutine - populates an array of strings from a file **/
 	private void loadArgs(String[] args,File file) {
-		log.info("Loading args file "+file.getName()+" in ConstantArgument...");
+		log.debug("Loading args file "+file.getName()+" in ConstantArgument...");
 		ParsedFile parsed = new ParsedFile(file);
 		for (String line : parsed)
 			args[parsed.getLineNumber()] = line.trim();
 		parsed.close();
 	}
 	private void loadArgs(TObjectIntMap<String> args,File file) {
-		log.info("Loading args file "+file.getName()+" in String...");
+		log.debug("Loading args file "+file.getName()+" in String...");
 		ParsedFile parsed = new ParsedFile(file);
 		for (String line : parsed)
 			args.put((line.trim()),parsed.getLineNumber());

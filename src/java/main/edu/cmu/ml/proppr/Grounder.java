@@ -51,6 +51,7 @@ import edu.cmu.ml.proppr.util.multithreading.Transformer;
  */
 public class Grounder {
 	private static final Logger log = Logger.getLogger(Grounder.class);
+	private static final int LOGUPDATE_MS = 5000;
 	public static final String GROUNDED_SUFFIX = ".grounded";
 	protected File graphKeyFile=null;
 	protected Writer graphKeyWriter=null;
@@ -82,7 +83,7 @@ public class Grounder {
 
 	public class GroundingStatistics {
 		public GroundingStatistics() {
-			log.info("Resetting grounding statistics...");
+			if(log.isInfoEnabled()) log.info("Resetting grounding statistics...");
 		}
 		// statistics
 		int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
@@ -101,6 +102,14 @@ public class Grounder {
 			if (fractionCovered < smallestFractionCovered) {
 				worstX = ex;
 				smallestFractionCovered = fractionCovered;
+			}
+			
+			if (log.isInfoEnabled()) {
+				long now = System.currentTimeMillis();
+				if (now-lastPrint > LOGUPDATE_MS) {
+					lastPrint = now;
+					log.info("Grounded "+count+" examples...");
+				}
 			}
 		}
 	}
@@ -123,7 +132,8 @@ public class Grounder {
 						}}, 
 						groundedFile, 
 						this.throttle);
-			if (empty>0) log.info("Skipped "+empty+" of "+this.statistics.count+" examples due to empty graphs");
+//			if (empty>0) log.info("Skipped "+empty+" of "+this.statistics.count+" examples due to empty graphs");
+			reportStatistics(empty);
 
 			if (this.graphKeyFile != null) this.graphKeyWriter.close();
 		} catch (IOException e) {
@@ -131,17 +141,10 @@ public class Grounder {
 		}
 	}
 
-	long lastPrint = System.currentTimeMillis();
+	long lastPrint = 0;//System.currentTimeMillis();
 
 	/** Requires non-empty graph; non-empty example */
 	public String serializeGroundedExample(ProofGraph pg, GroundedExample x) {
-		if (log.isInfoEnabled()) {
-			long now = System.currentTimeMillis();
-			if (now-lastPrint > 5000) {
-				lastPrint = now;
-			}
-		}
-
 		return pg.serialize(x);
 	}
 
@@ -186,10 +189,6 @@ public class Grounder {
 			log.trace("thawed example: "+pg.getExample().toString());
 		Map<State,Double> ans = p.prove(pg);
 		GroundedExample ground = pg.makeRWExample(ans);
-		InferenceExample ex = pg.getExample();
-		statistics.updateStatistics(ex,
-				ex.getPosSet().length,ex.getNegSet().length,
-				ground.getPosList().size(),ground.getNegList().size());
 		if (this.graphKeyFile!= null) { saveGraphKey(ground, pg); }
 		return ground;
 	}
@@ -200,6 +199,7 @@ public class Grounder {
 	}
 
 	protected void reportStatistics(int empty) {
+		if(!log.isInfoEnabled()) return;
 		if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
 		log.info("totalPos: " + statistics.totalPos 
 				+ " totalNeg: "+statistics.totalNeg
@@ -268,10 +268,14 @@ public class Grounder {
 		@Override
 		public String call() throws Exception {
 			ProofGraph pg = new ProofGraph(inf,apr,masterProgram,masterPlugins);
-			GroundedExample x = groundExample(getProver().copy(), pg);
-			if (x.getGraph().edgeSize() > 0) {
-				if (x.length() > 0) {
-					return (serializeGroundedExample(pg, x));
+			GroundedExample gx = groundExample(getProver().copy(), pg);
+			InferenceExample ix = pg.getExample();
+			statistics.updateStatistics(ix,
+					ix.getPosSet().length,ix.getNegSet().length,
+					gx.getPosList().size(),gx.getNegList().size());
+			if (gx.getGraph().edgeSize() > 0) {
+				if (gx.length() > 0) {
+					return (serializeGroundedExample(pg, gx));
 				} else {
 					log.warn("No positive or negative solutions for query "+id+":"+pg.getExample().getQuery().toString()+"; skipping");
 				}

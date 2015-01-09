@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.prove.wam;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -15,7 +16,6 @@ import edu.cmu.ml.proppr.util.Dictionary;
  *
  */
 public class MutableState extends State {
-	private static final Logger log = Logger.getLogger(MutableState.class);
 	private int hn;
 	private int rn;
 	
@@ -32,11 +32,15 @@ public class MutableState extends State {
 	}
 
 	public MutableState(ImmutableState state) {
-		this.heap = new int[state.getHeapSize()];
-		for (int i=0; i<state.getHeapSize(); i++) this.heap[i] = state.heap[i];
-		this.registers = new int[state.getRegisterSize()];
-		for (int i=0; i<state.getRegisterSize(); i++) this.registers[i] = state.registers[i];
-		this.calls = new ArrayList<CallStackFrame>(); this.calls.addAll(state.calls);
+//		this.heap = new int[state.getHeapSize()];
+//		for (int i=0; i<state.getHeapSize(); i++) this.heap[i] = state.heap[i];
+//		this.registers = new int[state.getRegisterSize()];
+//		for (int i=0; i<state.getRegisterSize(); i++) this.registers[i] = state.registers[i];
+//		this.calls = new ArrayList<CallStackFrame>(state.calls.size()); this.calls.addAll(state.calls);
+
+		this.heap = Arrays.copyOf(state.heap, state.getHeapSize());
+		this.registers = Arrays.copyOf(state.registers, state.getRegisterSize());
+		this.calls = new ArrayList<CallStackFrame>(state.calls.size()); this.calls.addAll(state.calls);
 		
 		this.hn = this.heap.length;
 		this.rn = this.registers.length;

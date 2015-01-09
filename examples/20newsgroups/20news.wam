@@ -20,7 +20,7 @@
 19		pushboundvar	-2
 20		callp	seed/2
 21		returnp
-22		comment	predict(-1,-2) :- hasWord(-1,-3), wordIn(-3,-4), predict(-1,-2), propagate(-4,-3,-2) {nonseed}  #v:['Document', 'Label', 'Word', 'OtherDocument'].
+22		comment	predict(-1,-2) :- hasWord(-1,-3), wordIn(-3,-4), predict(-4,-2), propagate(-4,-3,-2) {nonseed}  #v:['Document', 'Label', 'Word', 'OtherDocument'].
 23	predict/2	allocate	4	['OtherDocument', 'Word', 'Label', 'Document']
 24		initfreevar	-1	-2
 25		initfreevar	-2	-1
@@ -33,7 +33,7 @@
 32		pushboundvar	-3
 33		pushfreevar	-4
 34		callp	wordIn/2
-35		pushboundvar	-1
+35		pushboundvar	-4
 36		pushboundvar	-2
 37		callp	predict/2
 38		pushboundvar	-4

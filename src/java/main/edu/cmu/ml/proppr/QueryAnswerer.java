@@ -116,7 +116,7 @@ public class QueryAnswerer {
 
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
 		ProofGraph pg = new ProofGraph(query, apr, program, plugins);
-		log.info("Querying: "+query);
+		if(log.isInfoEnabled()) log.info("Querying: "+query);
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);
 		long end = System.currentTimeMillis();
@@ -134,7 +134,7 @@ public class QueryAnswerer {
 		}
 		List<Map.Entry<Query,Double>> solutionDist = Dictionary.sort(solutions);
 		//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
-		log.info("Writing "+solutionDist.size()+" solutions...");
+		if(log.isInfoEnabled()) log.info("Writing "+solutionDist.size()+" solutions...");
 		StringBuilder sb = new StringBuilder("# proved ").append(String.valueOf(id)).append("\t").append(query.toString())
 				.append("\t").append((end - start) + " msec\n");
 		int rank = 0;
@@ -224,7 +224,7 @@ public class QueryAnswerer {
 					inputFiles, outputFiles, constants, modules);
 			System.out.println(c.toString());
 			QueryAnswerer qa = new QueryAnswerer(c.apr, c.program, c.plugins, c.prover, c.normalize, c.nthreads, c.topk);
-			log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
+			if(log.isInfoEnabled()) log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
 				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file)), c.weightingScheme);
