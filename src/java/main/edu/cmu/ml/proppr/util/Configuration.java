@@ -181,6 +181,11 @@ public class Configuration {
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))     this.paramsFile = new File(line.getOptionValue(PARAMS_FILE_OPTION));
 		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION)) this.gradientFile = new File(line.getOptionValue(GRADIENT_FILE_OPTION));
 		
+		System.out.println("flags = "+flags);
+		System.out.println("gradient flag = " + isOn(flags,USE_GRADIENT));
+		System.out.println("has gradient = " + line.hasOption(GRADIENT_FILE_OPTION));
+		System.out.println("gradientFile = " + this.gradientFile);
+
 		// constants
 		flags = constants(allFlags);
 		if (isOn(flags,USE_WAM)) {
@@ -328,6 +333,15 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Output grounded examples.")
 					.create());
+		if(isOn(flags, USE_GRADIENT))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(GRADIENT_FILE_OPTION)
+					.isRequired()
+					.withArgName("file")
+					.hasArg()
+					.withDescription("Output gradient.")
+					.create());	
 		if (isOn(flags, USE_TRAIN))
 			options.addOption(
 					OptionBuilder
