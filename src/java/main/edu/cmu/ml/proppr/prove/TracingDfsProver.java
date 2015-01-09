@@ -22,10 +22,11 @@ public class TracingDfsProver extends DfsProver {
 	protected void beforeDfs(State state, ProofGraph pg, int depth) throws LogicProgramException {
 		StringBuilder sb = new StringBuilder();
 		for (int i=0;i<depth;i++) sb.append("| ");
-		if (state.isCompleted()) {
-			Dictionary.buildString(pg.asDict(state),sb,", ");
-		} else {
+		if (!state.isCompleted()) {
 			Dictionary.buildString(pg.getInterpreter().pendingGoals(state), sb, ", ");
+			sb.append(" => ");
 		}
+		sb.append(pg.fill(state));
+		System.out.println(sb.toString());
 	}
 }

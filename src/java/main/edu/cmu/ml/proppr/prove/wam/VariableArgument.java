@@ -6,7 +6,7 @@ public class VariableArgument extends Argument {
 
 	public VariableArgument(int i) {
 		this.index = i;
-		this.name = String.valueOf(this.index);
+		this.name = "X"+String.valueOf(this.index);
 	}
 	
 	@Override
@@ -24,6 +24,6 @@ public class VariableArgument extends Argument {
 //		return new VariableArgument(this.index-offset);
 //	}
 	public String toString() {
-		return "v["+this.name+"]";//String.format("v[%s]",this.index);
+		return this.getName();//"v["+this.name+"]";//String.format("v[%s]",this.index);
 	}
 }

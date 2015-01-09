@@ -72,7 +72,8 @@ public class DfsProver extends Prover {
 		if (!s.isCompleted() && depth < this.apr.maxDepth) {
 			backtrace.push(s);
 			List<Outlink> outlinks = pg.pgOutlinks(s, trueLoop, restart);
-			if (outlinks.size() == 0) log.debug("exit dfs: no outlinks for "+s);
+			if (outlinks.size() == 0) 
+				log.debug("exit dfs: no outlinks for "+s);
 			for (Outlink o : outlinks) {
 				double w = this.weighter.w(o.fd);
 				dfs(pg, o.child, depth+1, w, tail);
