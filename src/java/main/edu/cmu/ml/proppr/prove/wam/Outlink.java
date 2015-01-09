@@ -1,10 +1,12 @@
 package edu.cmu.ml.proppr.prove.wam;
 
+import java.util.Collections;
 import java.util.Map;
 
 import edu.cmu.ml.proppr.util.Dictionary;
 
 public class Outlink {
+	public static final Map<Goal, Double> EMPTY_FD = Collections.emptyMap();
 	public State child;
 	public Map<Goal,Double> fd;
 	public double wt=0.0;

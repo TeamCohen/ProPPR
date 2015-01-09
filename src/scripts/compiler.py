@@ -373,12 +373,14 @@ if __name__ == "__main__":
         wp = Compiler().compileRules(rules)
         wp.serialization()
     def help(argv):
-        print "Options:\n\tdebug\n\tlist - print listing\n\tserialize - print serialization"
+        print "Options:\n\tdebug <file>\n\tlist <file> - print listing\n\tserialize <file> - print serialization"
     if len(sys.argv)<=1: help(None)
     else:
-        {
+        cmds = {
             'debug':debug,
             'list':listing,
             'serialize':serialize,
             'help':help
-        }[sys.argv[1]](sys.argv[1:])
+        }
+        if sys.argv[1] in cmds: cmds[sys.argv[1]](sys.argv[1:])
+        else: cmds['help'](sys.argv[1:])

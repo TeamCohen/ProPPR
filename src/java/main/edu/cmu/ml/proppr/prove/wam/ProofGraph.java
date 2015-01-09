@@ -1,24 +1,18 @@
 package edu.cmu.ml.proppr.prove.wam;
 
-import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
-import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
-import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.builtin.FilterPluginCollection;
+import edu.cmu.ml.proppr.prove.wam.plugins.builtin.PluginFunction;
 import edu.cmu.ml.proppr.util.APROptions;
-import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.SymbolTable;
 
 /**
  * # Creates the graph defined by a query, a wam program, and a list of
@@ -54,8 +48,8 @@ public class ProofGraph {
 		this.example = ex; 
 		this.apr = apr;
 		this.program = new WamQueryProgram(program);
-		// TODO: builtin plugins
-		this.interpreter = new WamInterpreter(this.program, plugins);
+		WamPlugin[] fullPluginList = addBuiltinPlugins(plugins);
+		this.interpreter = new WamInterpreter(this.program, fullPluginList);
 		this.startState = this.createStartState();
 		
 		this.trueLoopFD = new HashMap<Goal,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
@@ -86,11 +80,22 @@ public class ProofGraph {
 		}
 		return interpreter.saveState();
 	}
+	private WamPlugin[] addBuiltinPlugins(WamPlugin ... plugins) {
+		WamPlugin[] result = Arrays.copyOf(plugins,plugins.length+1);
+		FilterPluginCollection filters = new FilterPluginCollection(this.apr);
+		result[plugins.length] = filters;
+		filters.register("neq/2", new PluginFunction(){
+			@Override
+			public boolean run(WamInterpreter wamInterp) throws LogicProgramException {
+				String arg1 = wamInterp.getConstantArg(2,1);
+				String arg2 = wamInterp.getConstantArg(2,2);
+				if (arg1==null || arg2==null) throw new LogicProgramException("cannot call neq/2 unless both variables are bound");
+				return arg1!=arg2;
+			}});
+		return result;
+	}
 	
 	/* **************** proving ****************** */
-//	public List<Outlink> pgOutlinks(State state) throws LogicProgramException {
-//		return pgOutlinks(state,DEFAULT_TRUELOOP,DEFAULT_RESTART);
-//	}
 	public List<Outlink> pgOutlinks(State state, boolean trueLoop, boolean restart) throws LogicProgramException {
 		if (!this.graph.outlinksDefined(state)) {
 			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop,restart);
@@ -115,11 +120,10 @@ public class ProofGraph {
 		} else {
 			result = this.interpreter.wamOutlinks(state);
 			if (restart) {
-//				int n = result.size(); //this.pgDegree(state);// TODO why not result.size()?
 				Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
 				restartFD.put(this.restartFeature,1.0);
-				// adjust this in prover:
-				restartFD.put(this.restartBoosterFeature,0.0); //(double) n * this.apr.alpha / (1 - this.apr.alpha));
+				// We set a default value here, and adjust it in prover:
+				restartFD.put(this.restartBoosterFeature,0.0); // was: (double) n * this.apr.alpha / (1 - this.apr.alpha));
 				result.add(new Outlink(restartFD,this.startState));
 			}
 		}

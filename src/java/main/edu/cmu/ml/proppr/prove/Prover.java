@@ -77,7 +77,8 @@ public abstract class Prover {
 			normalizer += e.getValue();
 			if (e.getKey().isCompleted()) {
 				Map<Argument,String> d = pg.asDict(e.getKey());
-				String dstr = Dictionary.buildString(d,new StringBuilder()," ").substring(1);
+				String dstr = "";
+				if (!d.isEmpty()) dstr = Dictionary.buildString(d,new StringBuilder()," ").substring(1);
 				filtered.put(dstr, Dictionary.safeGet(filtered,dstr)+e.getValue());
 			}
 		}

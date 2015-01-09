@@ -1,5 +1,8 @@
 package edu.cmu.ml.proppr.prove.wam;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.LineNumberReader;
 import java.util.List;
 
 public abstract class WamProgram {
@@ -30,4 +33,10 @@ public abstract class WamProgram {
 
 	public abstract void revert();
 
+	public static WamProgram load(File file) throws IOException {
+		return WamBaseProgram.load(file);
+	}
+	public static WamProgram load(LineNumberReader reader) throws IOException {
+		return WamBaseProgram.load(reader);
+	}
 }

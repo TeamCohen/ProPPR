@@ -1,0 +1,11 @@
+0		comment	different(-1,-2) :- neq(-1,-2) {r}  #v:['P', 'Q'].
+1	different/2	allocate	2	['Q', 'P']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	r	0
+6		freport
+7		pushboundvar	-1
+8		pushboundvar	-2
+9		callp	neq/2
+10		returnp
