@@ -27,5 +27,6 @@ public class TracingDfsProver extends DfsProver {
 		} else {
 			Dictionary.buildString(pg.getInterpreter().pendingGoals(state), sb, ", ");
 		}
+		System.out.println(sb.toString());
 	}
 }
