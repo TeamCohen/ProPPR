@@ -17,6 +17,9 @@ public class TracingDfsProver extends DfsProver {
 	public TracingDfsProver(APROptions apr) {
 		super(apr);
 	}
+	public TracingDfsProver(FeatureDictWeighter w, APROptions apr, boolean trueLoop, boolean restart) {
+		super(w,apr,trueLoop,restart);
+	}
 	@Override
 	protected void beforeDfs(State state, ProofGraph pg, int depth) throws LogicProgramException {
 		StringBuilder sb = new StringBuilder();
@@ -27,5 +30,9 @@ public class TracingDfsProver extends DfsProver {
 		}
 		sb.append(pg.fill(state));
 		System.out.println(sb.toString());
+	}
+	@Override
+	public Prover copy() {
+		return new TracingDfsProver(this.weighter, this.apr, this.trueLoop, this.restart);
 	}
 }
