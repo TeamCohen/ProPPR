@@ -193,7 +193,7 @@ public class WamInterpreter {
 	}
 	public void callp(String predicate) {
 		state.incrementProgramCounter();
-		state.getCalls().add(new CallStackFrame(state));
+		state.getCalls().push(new CallStackFrame(state));
 		state.setJumpTo(predicate);
 		state.setProgramCounter(-1);
 	}
@@ -204,7 +204,7 @@ public class WamInterpreter {
 			state.setCompleted(true);
 			return;
 		}
-		CallStackFrame frame = state.getCalls().remove(state.getCalls().size()-1);
+		CallStackFrame frame = state.getCalls().pop();
 		//TODO: debugmode
 		state.truncateHeap(frame.getHeapPointer());
 		state.truncateRegisters(frame.getRegisterPointer());

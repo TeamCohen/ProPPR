@@ -2,6 +2,7 @@ package edu.cmu.ml.proppr.prove.wam;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -28,7 +29,7 @@ public class MutableState extends State {
 		
 		this.pc = -1;
 		
-		this.calls = new ArrayList<CallStackFrame>();
+		this.calls = new LinkedList<CallStackFrame>();
 	}
 
 	public MutableState(ImmutableState state) {
@@ -40,7 +41,7 @@ public class MutableState extends State {
 
 		this.heap = Arrays.copyOf(state.heap, state.getHeapSize());
 		this.registers = Arrays.copyOf(state.registers, state.getRegisterSize());
-		this.calls = new ArrayList<CallStackFrame>(state.calls.size()); this.calls.addAll(state.calls);
+		this.calls = new LinkedList<CallStackFrame>(); this.calls.addAll(state.calls);
 		
 		this.hn = this.heap.length;
 		this.rn = this.registers.length;
@@ -80,7 +81,7 @@ public class MutableState extends State {
 	}
 
 
-	public List<CallStackFrame> getCalls() {
+	public LinkedList<CallStackFrame> getCalls() {
 		return this.calls;
 	}
 

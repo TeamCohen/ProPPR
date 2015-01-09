@@ -2,6 +2,7 @@ package edu.cmu.ml.proppr.prove.wam;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -30,7 +31,7 @@ public abstract class State {
 	protected String jumpTo;
 	protected boolean completed;
 	protected boolean failed;
-	protected List<CallStackFrame> calls;
+	protected LinkedList<CallStackFrame> calls;
 	/** True iff there is a constant at heap position i. */
 	public boolean hasConstantAt(int i) { return heap[i]<0; }
 	/** True iff there is a variable at heap position i. */
@@ -147,20 +148,14 @@ public abstract class State {
 				this.completed != s.completed ||
 				this.failed != s.failed)
 			return false;
-//		for (int i=0; i<this.getHeapSize(); i++) {
-//			if (heap[i] != s.heap[i]) return false;
-//		}
 		if (!Arrays.equals(heap, s.heap)) return false;
-//		for (int i=0; i<this.getRegisterSize(); i++) {
-//			if (registers[i] != s.registers[i]) return false;
-//		}
 		if (!Arrays.equals(registers, s.registers)) return false;
 		Iterator<CallStackFrame>  it = this.calls.iterator(),
 				sit = s.calls.iterator();
 		while(it.hasNext()) {
-			CallStackFrame me = it.next();
-			CallStackFrame them = sit.next();
-			if (!me.equals(them)) return false;
+			CallStackFrame mine = it.next();
+			CallStackFrame theirs = sit.next();
+			if (!mine.equals(theirs)) return false;
 		}
 		return true;
 	}

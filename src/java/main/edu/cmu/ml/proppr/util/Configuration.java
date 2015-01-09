@@ -123,6 +123,9 @@ public class Configuration {
 		int[] flags = {inputFiles, outputFiles, constants, modules};
 		
 		Options options = new Options();
+		options.addOption(OptionBuilder.withLongOpt("profile")
+				.withDescription("Holds all computation & loading until the return key is pressed.")
+				.create());
 		addOptions(options, flags);
 
 		try {
@@ -137,6 +140,10 @@ public class Configuration {
 			if (parser.hasUnrecognizedOptions()) {
 				System.err.println("WARNING: unrecognized options detected:");
 				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
+			}
+			if (line.hasOption("profile")) {
+				System.out.println("Holding for profiler setup; press any key to proceed.");
+				System.in.read();
 			}
 			retrieveSettings(line,flags,options);
 
