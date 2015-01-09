@@ -282,7 +282,9 @@ public class ModuleConfiguration extends Configuration {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(super.toString()).append(":\n");
+		String superString = super.toString();
+		if (superString==null) superString = "unknownConfigClass";
+		StringBuilder sb = new StringBuilder(superString).append(":\n");
 		if (prover != null)   sb.append("   Prover: ").append(prover.getClass().getCanonicalName()).append("\n");
 //		if (grounder != null) sb.append(" Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
 		if (srw != null)      sb.append("   Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
