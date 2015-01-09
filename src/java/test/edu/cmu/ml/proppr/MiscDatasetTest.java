@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.PathDprProver;
@@ -23,6 +24,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPluginTest;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 
+@Ignore
 public class MiscDatasetTest {
 	static final File DIR = new File("examples/20newsgroups");
 	static final File RULES = new File(DIR,"20news.wam");
