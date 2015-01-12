@@ -27,25 +27,23 @@ public class GradientFinder {
 
 	public static void main(String[] args) {
 		try {
-			int inputFiles = 0;
-			int outputFiles = Configuration.USE_QUERIES | Configuration.USE_GROUNDED | Configuration.USE_PARAMS | Configuration.USE_GRADIENT;
-			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
-			int constants = Configuration.USE_EPOCHS | Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_WAM;
+			int inputFiles = Configuration.USE_GROUNDED;
+			int outputFiles = Configuration.USE_GRADIENT;
+			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
+			int constants = Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_WAM;
 			ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
 				@Override
 				protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
 					super.retrieveSettings(line, allFlags, options);
-					if (epochs < 0 && (paramsFile==null || !paramsFile.exists())) usageOptions(options, allFlags, "You specified no training (epochs<0) but params file does not exist! @"+paramsFile.getAbsolutePath());
-					if (!( (queryFile != null && queryFile.exists()) || (groundedFile != null && groundedFile.exists()))) 
-						usageOptions(options, allFlags, "Must specify queries somehow using --"+Configuration.QUERIES_FILE_OPTION+" or --"+Configuration.GROUNDED_FILE_OPTION);
+					if (groundedFile==null || !groundedFile.exists())
+						usageOptions(options, allFlags, "Must specify grounded file using --"+Configuration.GROUNDED_FILE_OPTION);
+					if (gradientFile==null) 
+						usageOptions(options, allFlags, "Must specify gradient using --"+Configuration.GRADIENT_FILE_OPTION);
+					epochs = 1;
 				}
-			};
+      };
 			System.out.println(c.toString());
-
-			if (!c.groundedFile.exists()) {
-				log.info("Grounding examples from "+c.queryFile.getName()+"...");
-				c.grounder.groundExamples(c.queryFile, c.groundedFile);
-			}
+			System.out.println("gradientFile: " + c.gradientFile);
 
 			ParamVector params = null;
 			if (c.epochs > 0) {
