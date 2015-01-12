@@ -51,9 +51,9 @@ public class InferenceExampleStreamer {
 //			posSet[i].variabilize(varTab);
 		}
 		
-		Query[] negSet = new Query[posList.size()];
-		for (int i=0; i<posList.size(); i++) { 
-			negSet[i]=Query.parse(posList.get(i));
+		Query[] negSet = new Query[negList.size()];
+		for (int i=0; i<negList.size(); i++) { 
+			negSet[i]=Query.parse(negList.get(i));
 //			negSet[i].variabilize(varTab);
 		}
 		return new InferenceExample(query,posSet,negSet);

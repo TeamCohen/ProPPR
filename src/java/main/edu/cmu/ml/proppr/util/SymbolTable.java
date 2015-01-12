@@ -24,9 +24,11 @@ public class SymbolTable<T> {
 	 */
 	public void insert(T symbol) {
 		if (!this.idDict.containsKey(symbol)) {
-			this.nextId += 1;
-			this.idDict.put(symbol,this.nextId);
-			this.symbolList.add(symbol);
+			synchronized(this) {
+				this.nextId += 1;
+				this.idDict.put(symbol,this.nextId);
+				this.symbolList.add(symbol);
+			}
 		}
 	}
 	/**

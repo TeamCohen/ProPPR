@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -23,6 +24,7 @@ import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
+import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -41,16 +43,6 @@ public class GrounderTest {
 	}
 	@Test
 	public void testGroundExample() throws IOException, LogicProgramException {
-		// python newexamplecooker.py 
-		// --programFiles testcases/classify.crules:testcases/toy.cfacts 
-		// --data testcases/toyTrain.data 
-		// --output testcases/toy.cooked
-		
-		// python examplecooker.py 
-		// --programFiles demo/textcat/textcat.rules:demo/textcat/toylabels.facts:demo/textcat/toywords.graph 
-//		--data demo/textcat/toytrain.data 
-//		--prover 'prv.dprProver(epsilon=0.00001,maxDepth=5)' 
-//		--output demo/textcat/toy.cooked
 		doGroundExampleTest("dpr: ",new DprProver(),
 				10, //nodes
 				23, //edges
@@ -79,6 +71,29 @@ public class GrounderTest {
 
 		makeAssertions(ex,msg,nodes,edges,value,1,npos,1,nneg);
 		// predict(howard,Y)	+predict(howard,bird)	-predict(howard,mammal)
+	}
+	@Test
+	public void noNegativeExamplesTest() throws IOException, LogicProgramException {
+		APROptions apr = new APROptions();
+		WamProgram program = WamBaseProgram.load(new File(RULES));
+		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, new File(FACTS), false)};
+		Prover p = new DprProver(apr);
+		Grounder grounder = new Grounder(apr, p, program, plugins);
+		
+		InferenceExample ix = new InferenceExample(Query.parse("predict(howard,Y)"), 
+				new Query[] {Query.parse("predict(howard,bird)")}, 
+				new Query[] {});
+		GroundedExample ex = grounder.groundExample(p, ix);
+
+		makeAssertions(ex,"dpr+",10,23,1.0,1,"7",0,"");
+		
+		ix = new InferenceExample(Query.parse("predict(howard,Y)"), 
+				new Query[] {Query.parse("predict(howard,bird)")}, 
+				new Query[] {});
+		ProofGraph pg = new ProofGraph(ix,apr,program,plugins);
+		State pos=null;
+		Map<State,Double> sols = p.prove(pg);
+		System.out.println(pg.serialize(ex));
 	}
 
 	

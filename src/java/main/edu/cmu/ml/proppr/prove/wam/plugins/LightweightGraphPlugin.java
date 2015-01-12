@@ -73,7 +73,7 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 		ParsedFile parsed = new ParsedFile(f);
 		for (String line : parsed) {
 			String[] parts = line.split("\t");
-			if (parts.length != 3) parsed.parseError("expected 3 tab-delimited fields; got "+parts.length);
+			if (parts.length < 3) parsed.parseError("expected 3 tab-delimited fields; got "+parts.length);
 			p.addEdge(parts[0].trim(),parts[1].trim(),parts[2].trim());
 		}
 		return p;

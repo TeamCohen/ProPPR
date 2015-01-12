@@ -42,10 +42,8 @@ import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
 
 /**
- * Exports a graph-based example for each raw example in a data file.
+ * Exports a grounded example for each inference example in a data file.
  * 
- * The conversion process is as follows:
- *     (read)-> raw example ->(thaw)-> thawed example ->(ground)-> grounded example
  * @author wcohen,krivard
  *
  */
