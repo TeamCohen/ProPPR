@@ -41,6 +41,7 @@ public class Configuration {
     public static final int USE_NOTEST = 0x1000;
     public static final int USE_SOLUTIONS = 0x2000;
     public static final int USE_DEFERREDPROGRAM = 0x4000;
+    public static final int USE_MAXT = 0x8000;
     // combo flags:
     /** programFiles, prover, threads **/
     public static final int USE_DEFAULTS = 0x19;
@@ -62,6 +63,7 @@ public class Configuration {
     public String paramsFile = null;
     public WeightingScheme weightingScheme = null;
     public boolean force = false;
+	public Boolean ternaryIndex = null;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -106,12 +108,16 @@ public class Configuration {
 		}
 	}
 	protected File getExistingFileOption(CommandLine line, String name) {
-		File value = new File(line.getOptionValue(name));
+		return getExistingFileDirect(line,line.getOptionValue(name));
+	}
+	protected File getExistingFileDirect(CommandLine line, String filename) {
+		File value = new File(filename);
 		if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
 		return value;
 	}
 	protected void retrieveSettings(CommandLine line, int flags, Options options) {
 		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("programFiles"))  this.programFiles = line.getOptionValues("programFiles");
+		if (isOn(flags,USE_PROGRAMFILES) && line.hasOption("ternaryIndex"))  this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue("ternaryIndex"));
 		if (isOn(flags,USE_DATA) && line.hasOption("data"))                  this.dataFile = getExistingFileOption(line,"data");
 		if (isOn(flags,USE_QUERIES) && line.hasOption("queries"))            this.queryFile = getExistingFileOption(line,"queries");
 		if ((isOn(flags,USE_OUTPUT) || isOn(flags,USE_TRAIN)) 
@@ -183,14 +189,23 @@ public class Configuration {
      * and adds Option objects to the Options object.
      */
     protected void addOptions(Options options, int flags) {
-        options.addOption(
-                OptionBuilder
-                        .withLongOpt("programFiles")
-                        .withArgName("file:...:file")
-                        .hasArgs()
-                        .withValueSeparator(':')
-                        .withDescription("Description of the logic program. Formats:\n\t\tcrules:goal,, & ... & goal,, # feature,, # variable,,\n\t\tcfacts:f\\ta\\ta")
-                        .create());
+    	if (isOn(flags, USE_PROGRAMFILES)) {
+	        options.addOption(
+	                OptionBuilder
+	                        .withLongOpt("programFiles")
+	                        .withArgName("file:...:file")
+	                        .hasArgs()
+	                        .withValueSeparator(':')
+	                        .withDescription("Description of the logic program. Formats:\n\t\tcrules:goal,, & ... & goal,, # feature,, # variable,,\n\t\tcfacts:f\\ta\\ta")
+	                        .create());
+	        options.addOption(
+	        		OptionBuilder
+	        				.withLongOpt("ternaryIndex")
+	        				.withArgName("true|false")
+	        				.hasArg()
+	        				.withDescription("Turn A1A2 index on/off in GoalComponent (default off/false)")
+	        				.create());
+    	}
         if (!isOn(flags, USE_TRAINTEST))
             options.addOption(
                     OptionBuilder
@@ -214,7 +229,7 @@ public class Configuration {
 	                        .withLongOpt("queries")
 	                        .withArgName("file")
 	                        .hasArg()
-	                        .withDescription("Queries. Format f a a")
+	                        .withDescription("Queries. Same format as training files, but +/- examples are optional.")
 	                        .create());
         if(isOn(flags, USE_PROVER))
 	        options.addOption(

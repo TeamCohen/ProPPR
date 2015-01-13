@@ -47,7 +47,7 @@ public class TestComponentPerformance {
 		System.out.println("Loading component(s)...");
 		String[] cstring = components.split(":");
 		long gstart = System.currentTimeMillis();
-		Component[] cs = Component.loadComponents(cstring, Component.ALPHA_DEFAULT);
+		Component[] cs = Component.loadComponents(cstring, Component.ALPHA_DEFAULT,null);
 		long gend = System.currentTimeMillis();
 		System.out.println(new StringBuilder("dat ms load ")
 		.append(name).append(" ")

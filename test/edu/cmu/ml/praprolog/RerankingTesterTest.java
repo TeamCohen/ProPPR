@@ -26,7 +26,8 @@ public class RerankingTesterTest {
 		LogicProgram program = new LogicProgram(
 				Component.loadComponents(
 						"testcases/textcattoy/textcat.crules:testcases/textcattoy/toylabels.cfacts:testcases/textcattoy/toywords.graph".split(":"), 
-						Component.ALPHA_DEFAULT));
+						Component.ALPHA_DEFAULT,
+						null));
 		Prover prover = new DprProver();
 		
 		ParamVector params = new SimpleParamVector(Dictionary.load("testcases/textcattoy/params.wts.gold"));

@@ -19,4 +19,9 @@ public class LinearWeightingScheme extends WeightingScheme {
 
 	@Override
 	public String toString() { return "linear"; }
+
+	@Override
+	public double projection(double rw, double alpha, int nonRestartNodeNum) {
+		throw new UnsupportedOperationException(this.getClass().getName()+" not support for minAlpha projection");
+	}
 }

@@ -1,5 +1,12 @@
 package edu.cmu.ml.praprolog.learn;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -15,8 +22,11 @@ import edu.cmu.ml.praprolog.learn.tools.LossData;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.learn.tools.RWExample;
 import edu.cmu.ml.praprolog.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
+import edu.cmu.ml.praprolog.prove.DprProver;
+import edu.cmu.ml.praprolog.prove.MinAlphaException;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 
@@ -33,30 +43,56 @@ public class SRW<E extends RWExample> {
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
-	protected static final int NUM_EPOCHS = 5;
-	public static final int DEFAULT_MAX_T=10;
-	public static final double DEFAULT_MU=.001;
-	public static final double DEFAULT_ETA=1.0;
-	public static final double DEFAULT_DELTA=0.5;
+	public static final int NUM_EPOCHS = 5;
 	public static final int DEFAULT_RATE_LENGTH = 1;
-	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
-	protected double mu;
-	protected int maxT;
-	protected double eta;
-	protected double delta;
-	protected int epoch;
+	public static final double PERTURB_EPSILON=1e-10;
+	protected SRWParameters c;
 	protected Set<String> untrainedFeatures;
-	protected WeightingScheme weightingScheme;
-	public SRW() { this(DEFAULT_MAX_T); }
-	public SRW(int maxT) { this(maxT, DEFAULT_MU, DEFAULT_ETA, DEFAULT_WEIGHTING_SCHEME(), DEFAULT_DELTA); }
-	public SRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
-		this.maxT = maxT;
-		this.mu = mu;
-		this.eta = eta;
+	protected int epoch;
+	public SRW() { this(new SRWParameters()); }
+	public SRW(int maxT) { this(new SRWParameters(maxT)); }
+	public SRW(SRWParameters params) {
+		this.c = params;
 		this.epoch = 1;
-		this.delta = delta;
 		this.untrainedFeatures = new TreeSet<String>();
-		this.weightingScheme = wScheme;
+	}
+
+	public static HashMap<String,List<String>> constructAffinity(File affgraph){	
+		if (affgraph == null) throw new IllegalArgumentException("Missing affgraph file!");
+		//Construct the affinity matrix from the input
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(new FileReader(affgraph));
+			HashMap<String,List<String>> affinity = new HashMap<String,List<String>>();
+		    String line = null;
+			while ((line = reader.readLine()) != null) {
+			    String[] items = line.split("\\t");
+			    if(!affinity.containsKey(items[0])){
+			    	List<String> pairs = new ArrayList<String>();
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			    else{
+			    	List<String> pairs = affinity.get(items[0]);
+			    	pairs.add(items[1]);
+			    	affinity.put(items[0], pairs);
+			    }
+			}
+			return affinity;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static HashMap<String,Integer> constructDegree(Map<String,List<String>> affinity){
+		HashMap<String,Integer> diagonalDegree = new HashMap<String,Integer>();
+		for (String key : affinity.keySet()) {
+			diagonalDegree.put(key, affinity.get(key).size());
+		}
+		log.debug("d size:" + diagonalDegree.size());
+		return diagonalDegree;
 	}
 
 
@@ -64,12 +100,12 @@ public class SRW<E extends RWExample> {
 	 * For each feature in the graph which is not already in the parameter vector,
 	 * initialize the parameter value to a weight near 1.0, slightly randomized to avoid symmetry.
 	 * @param graph
-	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
+	 * @param c Edge parameter vector mapping edge feature names to nonnegative values.
 	 */
-	public <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> p) {
+	public <T> void addDefaultWeights(AnnotatedGraph<T> graph,  Map<String,Double> params) {
 		for (String f : graph.getFeatureSet()) {
-			if (!p.containsKey(f)) {
-				p.put(f,weightingScheme.defaultWeight()+0.01*random.nextDouble());
+			if (!params.containsKey(f)) {
+				params.put(f,c.weightingScheme.defaultWeight()+0.01*random.nextDouble());
 			}
 		}
 	}
@@ -78,11 +114,11 @@ public class SRW<E extends RWExample> {
 	 * @param g
 	 * @param u Start node
 	 * @param v End node
-	 * @param p Edge parameter vector mapping edge feature names to nonnegative values.
+	 * @param params Edge parameter vector mapping edge feature names to nonnegative values.
 	 * @return
 	 */
-	public <T> double edgeWeight(AnnotatedGraph<T> g, T u, T v,  Map<String,Double> p) {
-		double wt = this.weightingScheme.edgeWeight(p,g.phi(u, v));
+	public <T> double edgeWeight(AnnotatedGraph<T> g, T u, T v,  Map<String,Double> params) {
+		double wt = c.weightingScheme.edgeWeight(params,g.phi(u, v));
 
 		if (Double.isInfinite(wt)) return Double.MAX_VALUE;
 		return wt;
@@ -113,7 +149,7 @@ public class SRW<E extends RWExample> {
 	 */
 	public <T> Map<T,Double> rwrUsingFeatures(AnnotatedGraph<T> g, Map<T,Double> startVec, ParamVector paramVec) {
 		Map<T,Double> vec = startVec;
-		for(int i=0; i<maxT; i++) {
+		for(int i=0; i<c.maxT; i++) {
 			vec = walkOnceUsingFeatures(g,vec,paramVec);
 		}
 		return vec;
@@ -164,16 +200,16 @@ public class SRW<E extends RWExample> {
 	 * @return Mapping from each outgoing node from the random walk of the query and each feature relevant to the outgoing edge, to the derivative value. 
 	 */
 	public <T> Map<T, Map<String, Double>> derivRWRbyParams(AnnotatedGraph<T> graph, Map<T, Double> queryVec, ParamVector paramVec) {
-		Map<T,Double> p = queryVec;
+		Map<T,Double> q = queryVec;
 		Map<T,Map<String,Double>> d = new TreeMap<T,Map<String,Double>>();
-		for (int i=0; i<maxT; i++) {
-			Map<T,Double> pNext = walkOnceUsingFeatures(graph, p, paramVec);
+		for (int i=0; i<c.maxT; i++) {
+			Map<T,Double> qNext = walkOnceUsingFeatures(graph, q, paramVec);
 			// dNext[u] is the vector deriv of the weight vector at u
 			Map<T,Map<String,Double>> dNext = new TreeMap<T,Map<String,Double>>();
-			for (T j : pNext.keySet()) {
+			for (T j : qNext.keySet()) {
 				double z = totalEdgeWeight(graph,j,paramVec);
 				if (z == 0) continue;
-				double pj = Dictionary.safeGet(p, j);
+				double qj = Dictionary.safeGet(q, j);
 				for (T u : graph.nearNative(j).keySet()) {
 					Map<String,Double> dWP_ju = derivWalkProbByParams(graph,j,u,paramVec);
 					Set<String> features = new TreeSet<String>();
@@ -181,11 +217,15 @@ public class SRW<E extends RWExample> {
 					features.addAll(dWP_ju.keySet());
 					for (String f : trainableFeatures(features)) {
 						Dictionary.increment(dNext, u, f, 
-								edgeWeight(graph,j,u,paramVec)/z * Dictionary.safeGetGet(d, j, f) + pj * Dictionary.safeGet(dWP_ju, f));
+								edgeWeight(graph,j,u,paramVec)
+								/ z 
+								* Dictionary.safeGetGet(d, j, f) 
+								+ qj 
+								* Dictionary.safeGet(dWP_ju, f));
 					}
 				}
 			}
-			p = pNext;
+			q = qNext;
 			d = dNext;
 		}
 		return d;
@@ -219,7 +259,8 @@ public class SRW<E extends RWExample> {
         Map<String,Double> derEdgeUV = this.derivEdgeWeightByParams(graph,u,v,paramVec);
         for (String f : trainableFeatures(totDerFeature.keySet())) {
             // above revised to avoid overflow with very large edge weights, 15 jan 2014 by kmm:
-            double term2 = (edgeUV / totEdgeWeightU) * Dictionary.safeGet(totDerFeature, f);
+            double term2 = (edgeUV / totEdgeWeightU) 
+            		* Dictionary.safeGet(totDerFeature, f);
             double val = Dictionary.safeGet(derEdgeUV, f) - term2;
             Dictionary.increment(derWalk, f, val / totEdgeWeightU);
         }
@@ -239,7 +280,10 @@ public class SRW<E extends RWExample> {
 			T v, ParamVector paramVec) {
 		Map<String,Double> result = new TreeMap<String,Double>();
 		for (Feature f : graph.phi(u, v)) {
-			result.put(f.featureName, this.weightingScheme.derivEdgeWeight(Dictionary.safeGet(paramVec, f.featureName, this.weightingScheme.defaultWeight())));
+			result.put(f.featureName, 
+					c.weightingScheme.derivEdgeWeight(
+							Dictionary.safeGet(paramVec, f.featureName, 
+									c.weightingScheme.defaultWeight())));
 		}
 		return result;
 	}
@@ -319,6 +363,7 @@ public class SRW<E extends RWExample> {
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
 			log.debug(f.getKey()+"->"+paramVec.get(f.getKey()));
 		}
+		project2feasible(example.getGraph(), paramVec, example.getQueryVec());
 	}
 	
 	/**
@@ -326,21 +371,71 @@ public class SRW<E extends RWExample> {
 	 */
 	protected void checkGradient(Map<String,Double> grad, ParamVector paramVec, E example) {
 		ParamVector perturbedParamVec = paramVec.copy();
-        double epsilon = 1.0e-10;
         double loss = empiricalLoss(paramVec, example);
         double perturbedLoss;
         for (Map.Entry<String, Double> f : grad.entrySet()) {
 			if (untrainedFeatures.contains(f.getKey())) continue;
-            Dictionary.increment(perturbedParamVec, f.getKey(), epsilon);
+            Dictionary.increment(perturbedParamVec, f.getKey(), PERTURB_EPSILON);
             perturbedLoss = empiricalLoss(perturbedParamVec, example);
-            log.debug(f.getKey() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (epsilon*f.getValue()));
+            log.debug(f.getKey() + "\ttrue: " + (perturbedLoss-loss) + "\tapproximation: " + (PERTURB_EPSILON*f.getValue()));
             loss = perturbedLoss;
         }
 	}	
 
 	protected double learningRate() {
-		return Math.pow(this.epoch,-2) * this.eta;
+		return Math.pow(this.epoch,-2) * c.eta;
 	}
+
+	protected <T> void project2feasible (AnnotatedGraph<T> g,
+            ParamVector paramVec, Map<T,Double> query) {
+        for (T u : g.getNodes()) {
+        	for (T q : query.keySet()) {
+	            // if the node can restart
+	        	List<Feature> restart = g.phi(u, q);
+	        	if (restart.isEmpty()) continue;
+	            Feature f = restart.get(0);
+	            if(f.featureName.equals("id(defaultRestart)") || f.featureName.equals("id(alphaBooster)")){
+	            
+					// check & project for each node
+	            	double z = totalEdgeWeight(g, u, paramVec);
+	            	double rw = edgeWeight(g,u,q,paramVec);
+	            	if (rw / z < c.alpha) {
+	                	projectOneNode(g, u, paramVec, z, rw, q);
+						if (log.isDebugEnabled()) {
+	                		z = totalEdgeWeight(g, u, paramVec);
+	                		rw = edgeWeight(g,u,q,paramVec);
+		            		log.debug("Local alpha = " + rw / z);
+						}
+					}
+	            }
+        	}
+        }
+    }
+
+	protected <T> void projectOneNode(AnnotatedGraph<T> g, T u, ParamVector paramVec,
+            double z, double rw, T queryNode) {
+        Set<String> nonRestartFeatureSet = new TreeSet<String>();
+        int nonRestartNodeNum = 0;
+        for (Map.Entry<T, Double> e : g.nearNative(u).entrySet()) {
+            T v = e.getKey();
+            if (!v.equals(queryNode)) {
+                nonRestartNodeNum ++;
+                for (Feature f : g.phi(u, v)) {
+                    nonRestartFeatureSet.add(f.featureName);
+                }
+            }
+        }
+        double newValue = c.weightingScheme.projection(rw,c.alpha,nonRestartNodeNum);
+        for (String f : nonRestartFeatureSet) {
+            if (!f.startsWith("db(")) {
+				throw new MinAlphaException("Minalpha assumption violated: not a fact/db feature (" + f + ")");
+            } else {
+                paramVec.put(f, newValue);
+            }
+        }
+    }
+
+
 
 	/**
 	 * Increase the epoch count
@@ -418,33 +513,33 @@ public class SRW<E extends RWExample> {
 		return totLoss / numTest;
 	}
 	public double getMu() {
-		return mu;
+		return c.mu;
 	}
 	public void setMu(double mu) {
-		this.mu = mu;
+		c.mu = mu;
 	}
 	public int getMaxT() {
-		return maxT;
+		return c.maxT;
 	}
 	public void setMaxT(int maxT) {
-		this.maxT = maxT;
+		c.maxT = maxT;
 	}
 	public double getEta() {
-		return eta;
+		return c.eta;
 	}
 	public void setEta(double eta) {
-		this.eta = eta;
+		c.eta = eta;
 	}
 	public double getDelta() {
-		return delta;
+		return c.delta;
 	}
 	public void setDelta(double delta) {
-		this.delta = delta;
+		c.delta = delta;
 	}
 	public WeightingScheme getWeightingScheme() {
-		return weightingScheme;
+		return c.weightingScheme;
 	}
 	public void setWeightingScheme(WeightingScheme weightingScheme) {
-		this.weightingScheme = weightingScheme;
+		c.weightingScheme = weightingScheme;
 	}
 }

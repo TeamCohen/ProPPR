@@ -1,0 +1,17 @@
+ProPPR evaluation tasks
+
+Basic usage:
+
+$ ./configure.sh --proppr path/to/ProPPR [see configure.sh for other available parameters]
+$ make
+
+Single-project usage:
+
+$ ./configure.sh --proppr path/to/ProPPR [...]
+$ make cora.results
+
+Works for any dataset directory herein.
+
+See Makefile for other running details.
+
+See tune*.sh scripts for example hyperparameter tuning usage.

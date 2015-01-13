@@ -1,0 +1,265 @@
+digraph {
+fontsize=12;
+rankdir=LR;
+
+
+
+node [shape=circle,fixedsize=true,width=1.3,style=filled,fillcolor=gray];
+{rank=max;
+Zfashion [label = "Z=fashion"];
+}{rank=max;
+Zsport [label = "Z=sport"];
+}
+
+node [shape=rectangle,fixedsize=false,width=""];
+{rank=min;
+Q [label = "Query: about(a,Z)"];
+}
+
+node [fillcolor=white];
+sim_aY1 [label = "sim(a,Y1),about(Y1,Z)"];
+about_cZ [label = "about(c,Z)"];
+sim_cY2 [label = "sim(c,Y2),about(Y2,Z)"];
+link_cY2 [label = "link(c,Y2),about(Y2,Z)"];
+link_aY1 [label = "link(a,Y1),about(Y1,Z)"];
+about_bZ [label = "about(b,Z)"];
+hL_bZ [label = "handLabeled(b,Z)"];
+hw_aY1 [label = "hasWord(a,W),hasWord(Y1,W),\nlinkedBy(a,Y1,W),about(Y1,Z)"];
+about_dZ [label = "about(d,Z)"];
+hL_dZ [label = "handLabeled(d,Z)"];
+lB_ac [label = "linkedBy(a,c,sprinter),about(c,Z)"];
+hw_Y1sprinter [label = "hasWord(Y1,sprinter),\nlinkedBy(a,Y1,sprinter),about(Y1,Z)"];
+hw_csprinter [label = "hasWord(c,sprinter),\nlinkedBy(a,c,sprinter),about(c,Z)"];
+
+node [color=gray,fontcolor=gray];
+hL_aZ [label = "handLabeled(a,Z)"];
+hL_cZ [label = "handLabeled(c,Z)"];
+sim_dY3 [label = "sim(d,Y3),about(Y3,Z)"];
+sim_bY4 [label = "sim(b,Y4),about(Y4,Z)"];
+hw_cY2 [label = "hasWord(c,W2),hasWord(Y2,W2),\nlinkedBy(c,Y2,W2),about(Y2,Z)"];
+hw_asprinter [label = "hasWord(a,sprinter),linkedBy(a,..."];
+hw_bsprinter [label = "hasWord(b,sprinter),linkedBy(a,..."];
+hw_dsprinter [label = "hasWord(d,sprinter),linkedBy(a,..."];
+hw_esprinter [label = "hasWord(e,sprinter),linkedBy(a,..."];
+hw_fsprinter [label = "hasWord(f,sprinter),linkedBy(a,..."];
+lB_aasprinter [label = "linkedBy(a,a,sprinter),about(a,Z)"];
+hw_Y1olympic [label = "hasWord(Y1,olympic),linkedBy(a,..."];
+hw_aolympic [label = "hasWord(a,olympic),linkedBy(a,..."];
+hw_bolympic [label = "hasWord(b,olympic),linkedBy(a,..."];
+hw_colympic [label = "hasWord(c,olympic),linkedBy(a,..."];
+hw_dolympic [label = "hasWord(d,olympic),linkedBy(a,..."];
+hw_eolympic [label = "hasWord(e,olympic),linkedBy(a,..."];
+hw_folympic [label = "hasWord(f,olympic),linkedBy(a,..."];
+lB_aaolympic [label = "linkedBy(a,a,olympic),about(a,Z)"];
+hw_Y2champion [label = "hasWord(Y2,champion),linkedBy(c,..."];
+hw_achampion [label = "hasWord(a,champion),linkedBy(c,..."];
+hw_bchampion [label = "hasWord(b,champion),linkedBy(c,..."];
+hw_cchampion [label = "hasWord(c,champion),linkedBy(c,..."];
+hw_dchampion [label = "hasWord(d,champion),linkedBy(c,..."];
+hw_echampion [label = "hasWord(e,champion),linkedBy(c,..."];
+hw_fchampion [label = "hasWord(f,champion),linkedBy(c,..."];
+lB_ccchampion [label = "linkedBy(c,c,champion),about(c,Z)"];
+hw_Y2sprinter [label = "hasWord(Y2,sprinter),linkedBy(c,..."];
+hw_casprinter [label = "hasWord(a,sprinter),linkedBy(c,..."];
+hw_cbsprinter [label = "hasWord(b,sprinter),linkedBy(c,..."];
+hw_ccsprinter [label = "hasWord(c,sprinter),linkedBy(c,..."];
+hw_cdsprinter [label = "hasWord(d,sprinter),linkedBy(c,..."];
+hw_cesprinter [label = "hasWord(e,sprinter),linkedBy(c,..."];
+hw_cfsprinter [label = "hasWord(f,sprinter),linkedBy(c,..."];
+lB_ccsprinter [label = "linkedBy(c,c,sprinter),about(c,Z)"];
+
+node [color=white,label="(reset)"];
+x_lB_aaolympic;
+x_lB_aasprinter;
+node [style=dotted,label="about(c,Z)"];
+x_lB_ccsprinter;
+x_lB_ccchampion;
+
+node [shape="point",fillcolor=gray,label=""];
+x_hL_cZ;
+x_hL_aZ;
+x_hw_bsprinter;
+x_hw_dsprinter;
+x_hw_esprinter;
+x_hw_fsprinter;
+x_hw_bolympic;
+x_hw_colympic;
+x_hw_dolympic;
+x_hw_eolympic;
+x_hw_folympic;
+
+
+//rules
+edge [];
+Q->sim_aY1 [label="prop"];
+sim_aY1->link_aY1 [label="sim,link"];
+sim_aY1->hw_aY1 [label="sim,word"];
+lB_ac->about_cZ [label="by(sprinter)"];
+about_cZ->sim_cY2 [label="prop"];
+sim_cY2->link_cY2 [label="sim,link"];
+about_dZ->hL_dZ [label="base"];
+about_bZ->hL_bZ [label="base"];
+
+//facts
+edge [arrowhead="empty",label="kb.facts"];
+hw_aY1->hw_Y1sprinter;
+hw_Y1sprinter->hw_csprinter [sametail=true];
+link_aY1->about_cZ;
+link_aY1->about_bZ;
+link_cY2->about_dZ;
+hL_bZ->Zfashion;
+hL_dZ->Zsport;
+hw_csprinter->lB_ac;
+
+
+
+//unused rules
+edge [color=gray,fontcolor=gray,arrowhead=normal,label=""];
+Q->hL_aZ [label="base"];
+about_cZ->hL_cZ [label="base"];
+sim_cY2->hw_cY2 [label="sim,word"];
+about_bZ->sim_bY4 [label="prop"];
+about_dZ->sim_dY3 [label="prop"];
+//edge [constraint=false];
+lB_aasprinter->x_lB_aasprinter [label="by(sprinter)"];
+//lB_aasprinter->Q [label="by(sprinter)"];
+lB_aaolympic->x_lB_aaolympic [label="by(olympic)"];
+//lB_aaolympic->Q [label="by(olympic)"];
+lB_ccchampion->x_lB_ccchampion [label="by(champion)"];
+//lB_ccchampion->about_cZ [label="by(champion)"];
+lB_ccsprinter->x_lB_ccsprinter [label="by(sprinter)"];
+//lB_ccsprinter->about_cZ [label="by(sprinter)"];
+edge [constraint=true];
+
+
+edge [arrowhead="empty",label="kb.facts",sametail=true];
+hw_aY1->hw_Y1olympic;
+hw_Y1olympic->hw_aolympic;
+hw_Y1olympic->hw_bolympic;
+hw_Y1olympic->hw_colympic;
+hw_Y1olympic->hw_dolympic;
+hw_Y1olympic->hw_eolympic;
+hw_Y1olympic->hw_folympic;
+hw_bolympic->x_hw_bolympic;
+hw_colympic->x_hw_colympic;
+hw_dolympic->x_hw_dolympic;
+hw_eolympic->x_hw_eolympic;
+hw_folympic->x_hw_folympic;
+hw_Y1sprinter->hw_asprinter;
+hw_Y1sprinter->hw_bsprinter;
+hw_Y1sprinter->hw_dsprinter;
+hw_Y1sprinter->hw_esprinter;
+hw_Y1sprinter->hw_fsprinter;
+hw_bsprinter->x_hw_bsprinter;
+hw_dsprinter->x_hw_dsprinter;
+hw_esprinter->x_hw_esprinter;
+hw_fsprinter->x_hw_fsprinter;
+hw_Y2champion->hw_achampion;
+hw_Y2champion->hw_bchampion;
+hw_Y2champion->hw_cchampion;
+hw_Y2champion->hw_dchampion;
+hw_Y2champion->hw_echampion;
+hw_Y2champion->hw_fchampion;
+hw_Y2sprinter->hw_casprinter;
+hw_Y2sprinter->hw_cbsprinter;
+hw_Y2sprinter->hw_ccsprinter;
+hw_Y2sprinter->hw_cdsprinter;
+hw_Y2sprinter->hw_cesprinter;
+hw_Y2sprinter->hw_cfsprinter;
+edge[sametail="",tailport="",headport=""];
+hw_cchampion->lB_ccchampion;
+hw_ccsprinter->lB_ccsprinter;
+hL_cZ->x_hL_cZ;
+hL_aZ->x_hL_aZ;
+hw_asprinter->lB_aasprinter;
+hw_aolympic->lB_aaolympic;
+hw_cY2->hw_Y2champion;
+hw_cY2->hw_Y2sprinter;
+
+
+
+// continuations
+edge[style=dotted,label=""];
+sim_dY3->contd_sim_dY3;
+sim_bY4->contd_sim_bY4;
+
+
+
+
+//layout
+/*
+edge[style=solid,color=green,constraint=false,tailport=s,headport=n,weight=100];
+node [group=asprinter];
+hw_asprinter; hw_bsprinter; hw_csprinter; hw_dsprinter; hw_esprinter; hw_fsprinter;
+hw_asprinter->hw_bsprinter->hw_csprinter->hw_dsprinter->hw_esprinter->hw_fsprinter;
+node [group=aolympic];
+hw_aolympic; hw_bolympic; hw_colympic; hw_dolympic; hw_eolympic; hw_folympic;
+hw_aolympic->hw_bolympic->hw_colympic->hw_dolympic->hw_eolympic->hw_folympic;
+node [group=""];
+edge [color="",constraint="",tailport="",headport="",weight=""];
+*/
+
+
+
+{rank=same;
+hw_Y1olympic;
+hw_Y1sprinter;
+}
+
+{rank=same;
+hw_Y2champion;
+hw_Y2sprinter;
+}
+
+{rank=same;
+x_hL_aZ; hw_aY1;
+}
+
+{rank=same;
+hw_casprinter;
+hw_cbsprinter;
+hw_ccsprinter;
+hw_cdsprinter;
+hw_cesprinter;
+hw_cfsprinter;
+hw_achampion;
+hw_bchampion;
+hw_cchampion;
+hw_dchampion;
+hw_echampion;
+hw_fchampion;
+}
+
+{rank=same;
+x_lB_aaolympic;
+x_lB_aasprinter;
+about_cZ;
+}
+
+
+{rank=same;
+//x_hw_asprinter;
+x_hw_bsprinter;
+x_hw_dsprinter;
+x_hw_esprinter;
+x_hw_fsprinter;
+//x_hw_aolympic;
+x_hw_bolympic;
+x_hw_colympic;
+x_hw_dolympic;
+x_hw_eolympic;
+x_hw_folympic;
+
+
+
+lB_aaolympic;
+lB_aasprinter;
+}
+
+
+
+{rank=same;
+x_hL_cZ; hw_cY2;
+}
+
+}

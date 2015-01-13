@@ -132,7 +132,7 @@ public class QueryAnswerer {
         QueryAnswererConfiguration c = new QueryAnswererConfiguration(
                 args,
                 Configuration.USE_DEFAULTS | Configuration.USE_QUERIES | Configuration.USE_OUTPUT |
-                Configuration.USE_PARAMS | Configuration.USE_COMPLEX_FEATURES);
+                Configuration.USE_PARAMS | Configuration.USE_COMPLEX_FEATURES | Configuration.USE_MAXT);
 
         QueryAnswerer qa = c.rerank ?
                            new RerankingQueryAnswerer((SRW<PosNegRWExample<String>>) c.srw) :

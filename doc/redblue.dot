@@ -1,0 +1,18 @@
+digraph redblue {
+edge [concentrate=true];
+{rank=same; r0; b0}
+b0->r0 [label="fromb tor "]
+r0->b0 [label="fromr tob "]
+r0->r1 [label="fromr tor "]
+r0->r2 [label="fromr tor "]
+r1->r0 [label="fromr tor "]
+r1->r2 [label="fromr tor "]
+r2->r0 [label="fromr tor "]
+r2->r1 [label="fromr tor "]
+b0->b1 [label="fromb tob "]
+b0->b2 [label="fromb tob "]
+b1->b0 [label="fromb tob "]
+b1->b2 [label="fromb tob "]
+b2->b0 [label="fromb tob "]
+b2->b1 [label="fromb tob "]
+}

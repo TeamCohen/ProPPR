@@ -20,6 +20,12 @@ import edu.cmu.ml.praprolog.util.multithreading.Cleanup;
 import edu.cmu.ml.praprolog.util.multithreading.Multithreading;
 import edu.cmu.ml.praprolog.util.multithreading.Transformer;
 
+/**
+ * Example multithreaded trainer class showing a use case for the Multithreading 
+ * utility/scaffolding.
+ * 
+ * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+ */
 public class Trainer2<T> extends Trainer<T> {
 	private static final Logger log = Logger.getLogger(Trainer2.class);
 	public static final int DEFAULT_CAPACITY = 16;

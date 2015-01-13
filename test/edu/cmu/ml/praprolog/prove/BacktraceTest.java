@@ -13,7 +13,7 @@ public class BacktraceTest {
 	public void testDpr() throws IOException {
 		try {
 			LogicProgram program = new LogicProgram(
-					Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),Component.ALPHA_DEFAULT));
+					Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),Component.ALPHA_DEFAULT,null));
 			Prover p = new DprProver();
 
 			Map<LogicProgramState,Double> ans = p.proveState(program, new ProPPRLogicProgramState(Goal.decompile("grandmother,-1,-2")));
@@ -33,7 +33,7 @@ public class BacktraceTest {
 	public void testTracingDfs() throws IOException {
 		try {
 			LogicProgram program = new LogicProgram(
-					Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),Component.ALPHA_DEFAULT));
+					Component.loadComponents("testcases/grand/grand.crules:testcases/grand/grand.cfacts".split(":"),Component.ALPHA_DEFAULT,null));
 			Prover p = new TracingDfsProver(7);
 
 			Map<LogicProgramState,Double> ans = p.proveState(program, new ProPPRLogicProgramState(Goal.decompile("grandmother,-1,-2")));

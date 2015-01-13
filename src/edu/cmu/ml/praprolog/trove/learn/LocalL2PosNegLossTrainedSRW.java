@@ -1,9 +1,12 @@
 package edu.cmu.ml.praprolog.trove.learn;
 
+import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import edu.cmu.ml.praprolog.trove.learn.tools.PosNegRWExample;
+import edu.cmu.ml.praprolog.learn.tools.SRWParameters;
 import edu.cmu.ml.praprolog.learn.tools.WeightingScheme;
 import edu.cmu.ml.praprolog.learn.tools.LossData.LOSS;
 import edu.cmu.ml.praprolog.util.Dictionary;
@@ -12,8 +15,8 @@ import edu.cmu.ml.praprolog.util.ParamVector;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
-	public LocalL2PosNegLossTrainedSRW(int maxT, double mu, double eta, WeightingScheme wScheme, double delta) {
-		super(maxT,mu,eta,wScheme,delta);
+	public LocalL2PosNegLossTrainedSRW(SRWParameters params) {
+		super(params);
 	}
 	public LocalL2PosNegLossTrainedSRW() { super(); }
 
@@ -61,11 +64,12 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 		// during the gradient() call
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;
-		double value = Dictionary.safeGet(paramVec,f);
-		double powerTerm = Math.pow(1 - 2 * this.mu * this.learningRate(), gap);
+		double value = Dictionary.safeGet(paramVec,f);		                            
+
+              //L2
+		double powerTerm = Math.pow(1 - 2 * c.mu * this.learningRate(), gap);
 		double weightDecay = value * (powerTerm - 1);
 		Dictionary.increment(paramVec, f, weightDecay);
-		this.cumloss.add(LOSS.REGULARIZATION, gap * this.mu * Math.pow(value, 2));
-		
+		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.pow(value, 2));              
 	}
 }

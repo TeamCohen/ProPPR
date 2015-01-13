@@ -31,7 +31,7 @@ public class DprMinAlphaTuner {
 	protected LogicProgram program;
 
 	public DprMinAlphaTuner(String[] programFiles, double alpha, Map<String,Double> params, WeightingScheme wScheme) {
-		this.program = new LogicProgram(Component.loadComponents(programFiles, alpha));
+		this.program = new LogicProgram(Component.loadComponents(programFiles, alpha, null));
 		if (params != null) {
 			this.program.setFeatureDictWeighter(
 					InnerProductWeighter.fromParamVec(

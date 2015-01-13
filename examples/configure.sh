@@ -97,7 +97,7 @@ ifeq (\$(strip \$(ETA)),)
 ETA=1.0
 endif
 ifeq (\$(strip \$(SRW)),)
-SRW=l2plocal:\$(MU):\$(ETA)
+SRW=l2plocal:mu=\$(MU):eta=\$(ETA):alpha=\$(ALPHA)
 endif
 ifeq (\$(strip \$(THREADS)),)
 THREADS=3

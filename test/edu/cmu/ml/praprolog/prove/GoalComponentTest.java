@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import edu.cmu.ml.praprolog.prove.GoalComponent.FunctorArityArg1Arg2Key;
+
 public class GoalComponentTest {
 
     @Test
@@ -51,5 +53,24 @@ public class GoalComponentTest {
     	String label = "testcases/textcattoy/toylabels.cfacts";
 		GoalComponent c = new GoalComponent(label);
 		assertEquals("'"+label+"'",c.label);
+    }
+    
+    @Test
+    public void testTernaryIndex() {
+    	GoalComponent g = new GoalComponent("test",true);
+    	for (String city : new String[] {"Pittsburgh","Chicago","New York","Philadelphia","New Orleans"}) {
+    		for (String context : new String[] {"_ played _","_ is greener than _","flights from _ to _", "cities like _ and _"}) {
+    			g.addFact(new Goal("context",city, context, "San Francisco"));
+    		}
+    	}
+    	assertEquals("functors",1, g.indexF.size());
+    	assertEquals("functor+arg1",5,g.indexFA1.size());
+    	assertEquals("functor+arg2",4,g.indexFA2.size());
+    	
+    	for (FunctorArityArg1Arg2Key key : g.indexFA1A2.keySet()) {
+    		System.err.println(key.functor+":"+key.arg+":"+key.arg2);
+    	}
+    	
+    	assertEquals("functor+arg1+arg2",20,g.indexFA1A2.size());
     }
 }
