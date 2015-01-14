@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr.prove.wam.plugins;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -78,6 +79,7 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 		}
 		this.featureDict = new HashMap<Goal,Double>();
 		this.featureDict.put(WamPlugin.pluginFeature(this, matrixDir.getName()),1.0);
+		this.featureDict = Collections.unmodifiableMap(this.featureDict);
 		
 		long del = System.currentTimeMillis() - start;
 		if (del > LOGUPDATE_MS)

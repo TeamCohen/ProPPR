@@ -121,6 +121,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 					}
 				});
 			} catch (IllegalStateException e) {
+				// awkward c.f. above
 				if (e.getCause() instanceof LogicProgramException)
 					throw (LogicProgramException) e.getCause();
 			}
@@ -131,7 +132,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 		if (wt == 1.0) return fd;
 		Map<Goal,Double> ret = new HashMap<Goal,Double>();
 		ret.putAll(fd);
-		for (Map.Entry<Goal, Double> val : fd.entrySet()) {
+		for (Map.Entry<Goal, Double> val : ret.entrySet()) {
 			val.setValue(val.getValue() * wt);
 		}
 		return ret;
