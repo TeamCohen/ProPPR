@@ -138,10 +138,14 @@ public class QueryAnswerer {
 		StringBuilder sb = new StringBuilder("# proved ").append(String.valueOf(id)).append("\t").append(query.toString())
 				.append("\t").append((end - start) + " msec\n");
 		int rank = 0;
+		double lastScore = 0;
+		int displayrank = 0;
 		for (Map.Entry<Query, Double> soln : solutionDist) {
 			++rank;
+			if (soln.getValue() != lastScore) displayrank = rank;
 			if (numSolutions > 0 && rank > numSolutions) break;
-			sb.append(rank + "\t").append(soln.getValue().toString()).append("\t").append(soln.getKey().toString()).append("\n");
+			sb.append(displayrank + "\t").append(soln.getValue().toString()).append("\t").append(soln.getKey().toString()).append("\n");
+			lastScore = soln.getValue();
 		}
 		return sb.toString();
 	}

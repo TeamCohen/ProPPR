@@ -222,12 +222,30 @@ class Recall(Metric):
         n = len(posSet)
         if n: return r/n
         else: return 1.0
+        
+class MeanAvgPrecision(Metric):
+    
+    def explanation(self):
+        return '(MAP): The average precision after each relevant solution is retrieved'
+    
+    def computeFromList(self,answerList,solutionSet,posSet):
+        n = len(posSet)
+        if n is 0: return 1.0
+        numPosRetrieved = 0
+        numRetrieved = 0
+        ap = 0
+        for a in answerList:
+            numRetrieved += 1
+            if a.isPos:
+                numPosRetrieved += 1
+                ap += (numPosRetrieved / numRetrieved)
+        return ap/n
 
 ####################  main
 
 if __name__ == "__main__":
 
-    metrics = {'mrr':MeanRecipRank(), 'recall':Recall()}
+    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision()}
 
     argspec = ["data=", "answers=", "metric=", "help"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
