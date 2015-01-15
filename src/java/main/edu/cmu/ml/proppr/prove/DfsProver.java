@@ -73,13 +73,24 @@ public class DfsProver extends Prover {
 			backtrace.push(s);
 			List<Outlink> outlinks = pg.pgOutlinks(s, trueLoop, restart);
 			if (outlinks.size() == 0) 
-				log.debug("exit dfs: no outlinks for "+s);
+				if (log.isDebugEnabled()) log.debug("exit dfs: no outlinks for "+s);
+			double z = 0;
+			Outlink reset = null;
 			for (Outlink o : outlinks) {
-				double w = this.weighter.w(o.fd);
-				dfs(pg, o.child, depth+1, w, tail);
+				o.wt = this.weighter.w(o.fd);
+				z += o.wt;
+				if (o.child.equals(pg.getStartState())) reset = o;
+			}
+			// scale alphaBooster feature using current weighting scheme
+			if (reset.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
+				rescaleResetLink(reset, z);
+			}
+			for (Outlink o : outlinks) {
+				dfs(pg, o.child, depth+1, o.wt, tail);
 			}
 			backtrace.pop(s);
-		} else log.debug("exit dfs: "+ (s.isCompleted() ? "state completed" : ("depth "+depth+">"+this.apr.maxDepth)));
+		} else if (log.isDebugEnabled()) 
+			log.debug("exit dfs: "+ (s.isCompleted() ? "state completed" : ("depth "+depth+">"+this.apr.maxDepth)));
 	}
 
 	/** 

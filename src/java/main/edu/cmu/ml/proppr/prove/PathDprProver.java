@@ -158,6 +158,7 @@ public class PathDprProver extends DprProver {
 	@Override
 	public Map<State, Double> prove(ProofGraph pg) {
 		Map<State,Double> ret = super.prove(pg);
+		
 		//after proving, print top paths for each solution
 		System.out.println("Q "+pg.getExample().getQuery().toString());
 		for (Map.Entry<State,Double> e : Dictionary.sort(ret)) {

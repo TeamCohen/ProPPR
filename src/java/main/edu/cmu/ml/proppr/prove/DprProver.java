@@ -25,8 +25,6 @@ import edu.cmu.ml.proppr.util.Dictionary;
  */
 public class DprProver extends Prover {
 	private static final Logger log = Logger.getLogger(DprProver.class);
-	// necessary to avoid rounding errors when rescaling reset weight
-	private static final double ALPHA_BUFFER = 1e-16;
 	public static final double STAYPROB_DEFAULT = 0.0;
 	public static final double STAYPROB_LAZY = 0.5;
 	private static final boolean TRUELOOP_ON = true;
@@ -103,32 +101,7 @@ public class DprProver extends Prover {
 		return p;
 	}
 	
-	/**
-	 * z = sum[edges] f( sum[features] theta_feature * weight_feature )
-	 * rw = f( sum[resetfeatures] theta_feature * weight_feature )
-	 *    = f( theta_alphaBooster * weight_alphaBooster + sum[otherfeatures] theta_feature * weight_feature )
-	 * nonBoosterReset = sum[otherfeatures] theta_feature * weight_feature = f_inv( rw ) - theta_alphaBooster * weight_alphaBooster
-	 * 
-	 * assert rw_new / z = alpha
-	 * then:
-	 * 
-	 * f( theta_alphaBooster * newweight_alphaBooster + sum[otherfeatures] theta_feature * weight_feature ) = alpha * z
-	 * theta_alphaBooster * newweight_alphaBooster + f_inv( rw ) - theta_alphaBooster * oldweight_alphaBooster = f_inv( alpha * z )
-	 * newweight_alphaBooster = (1/theta_alphaBooster) * (f_inv( alpha * z) - (f_inv( rw ) - theta_alphaBooster))
-	 * 
-	 * NB f_inv( alpha*z ) - nonBoosterReset < 0 when default reset weight is high relative to z;
-	 * when this is true, no reset boosting is necessary and we can set newweight_alphaBooster = 0.
-	 * @param currentAB
-	 * @param z
-	 * @param rw
-	 * @return
-	 */
-	protected double rescaleAlphaBooster(double currentAB, double z, double rw) {
-		double thetaAB = Dictionary.safeGet(this.weighter.weights,ProofGraph.ALPHABOOSTER,this.weighter.weightingScheme.defaultWeight());
-		double nonBoosterReset = this.weighter.weightingScheme.inverseEdgeWeightFunction(rw) - thetaAB * currentAB;
-		double numerator = (this.weighter.weightingScheme.inverseEdgeWeightFunction( (this.apr.alpha + ALPHA_BUFFER) * z ) - nonBoosterReset); 
-		return Math.max(0,numerator / thetaAB);
-	}
+	
 	protected int dfsPushes(ProofGraph pg, Map<State,Double> p, Map<State, Double> r,
 			Map<State, Integer> deg, State u, int pushCounter) {
 		return dfsPushes(pg, p, r, deg, u, pushCounter, 1);
@@ -150,7 +123,6 @@ public class DprProver extends Prover {
 				List<Outlink> outs = pg.pgOutlinks(u, TRUELOOP_ON, RESTART_ON);
 				double unNormalizedAlpha = 0.0;
 				double z = 0.0;
-				double rawz = 0.0;
 				double m = 0.0;
 				for (Outlink o : outs) {
 					o.wt = this.weighter.w(o.fd);
@@ -168,11 +140,8 @@ public class DprProver extends Prover {
 
 				// scale alphaBooster feature using current weighting scheme
 				if (restart.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
-					double newAB = rescaleAlphaBooster(restart.fd.get(ProofGraph.ALPHABOOSTER), z, restart.wt);
-//					log.warn("Default  booster: "+restart.fd.get(ProofGraph.ALPHABOOSTER));
-//					log.warn("Rescaled booster: "+newAB);
-					restart.fd.put(ProofGraph.ALPHABOOSTER,newAB);
-					restart.wt = this.weighter.w(restart.fd);
+					// TODO do we need a z= here?
+					z = rescaleResetLink(restart, z);
 				}
 				
 				unNormalizedAlpha = restart.wt;

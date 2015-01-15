@@ -117,7 +117,7 @@ public class MinAlphaTest {
 			assertTrue(restart != null);
 			
 			if (restart.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
-				double newAB = prover.rescaleAlphaBooster(restart.fd.get(ProofGraph.ALPHABOOSTER), z, restart.wt);
+				double newAB = prover.computeAlphaBooster(restart.fd.get(ProofGraph.ALPHABOOSTER), z, restart.wt);
 				rescaleAssertions(restart.fd.get(ProofGraph.ALPHABOOSTER), newAB);
 				restart.fd.put(ProofGraph.ALPHABOOSTER,newAB);
 				restart.wt = prover.weighter.w(restart.fd);
