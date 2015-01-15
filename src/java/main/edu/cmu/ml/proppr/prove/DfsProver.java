@@ -82,7 +82,7 @@ public class DfsProver extends Prover {
 				if (o.child.equals(pg.getStartState())) reset = o;
 			}
 			// scale alphaBooster feature using current weighting scheme
-			if (reset.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
+			if (restart && reset.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
 				rescaleResetLink(reset, z);
 			}
 			for (Outlink o : outlinks) {

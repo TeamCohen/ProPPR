@@ -29,7 +29,6 @@ public class DprProver extends Prover {
 	public static final double STAYPROB_LAZY = 0.5;
 	private static final boolean TRUELOOP_ON = true;
 	private static final boolean RESTART_ON = true;
-	protected APROptions apr;
 	protected final double stayProbability;
 	protected final double moveProbability;
 	// for timing traces
@@ -56,7 +55,7 @@ public class DprProver extends Prover {
 		this( (lazyWalk?STAYPROB_LAZY:STAYPROB_DEFAULT),apr);
 	}
 	protected DprProver(double stayP, APROptions apr) {
-		this.apr = apr;
+		super(apr);
 		this.stayProbability = stayP;
 		this.moveProbability = 1.0-stayProbability;
 	}
@@ -148,6 +147,8 @@ public class DprProver extends Prover {
 				double localAlpha = unNormalizedAlpha / z;
 
 				if (localAlpha < apr.alpha) {
+
+					z = rescaleResetLink(restart, z);
 					
 					TreeMap<Goal,Integer> featureDist = new TreeMap<Goal,Integer>();
 					for (Outlink o : outs) {
