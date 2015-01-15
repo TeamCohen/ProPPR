@@ -1,6 +1,3 @@
-results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
-	echo phase subset uR mR uMRR mMRR > $@
-	cat $^ >> $@
 
 %.results.txt: %.solutions.txt
 	python ${PROPPR}/scripts/answermetrics.py --data $(subst $(word 1,$(subst ., ,$*)).,,$*).examples --answers $< --metric recall --metric mrr |\
@@ -13,6 +10,10 @@ pre.%.solutions.txt: %.examples $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
 
 ifeq (1,$(words $(TRAIN)))
+results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
+	echo phase subset uR mR uMRR mMRR > $@
+	cat $^ >> $@
+
 post.%.solutions.txt: %.examples params.wts $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR}
 

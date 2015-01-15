@@ -1,12 +1,8 @@
 package edu.cmu.ml.proppr.prove;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.PriorityQueue;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
@@ -35,20 +31,20 @@ public class PathDprProver extends DprProver {
 		super(apr);
 	}
 	
-	/*
-	 * Desired data structure:
+	/**
+	 * Model each path as an array of ints.
 	 * 
-	 * qualify:boolean (wt:double, path:int[])
-	 *         true if the set is not full 
-	 *         or if path is in the set 
-	 *         or if wt is > least weight in the set
-	 * add:void (wt:double, path:int[]) 
-	 *         if !qualify(wt,path) return;
-	 *         if path in set: add wt to path
-	 *         else: add path,wt to set
+	 * Track a new path only when <k are being tracked, or the weight of the new path is above the lowest weight in the set.
+	 * 
+	 * Accumulate weight if a path comes up more than once.
+	 * 
+	 * At end of computation, return a list of the top paths ordered by their weight.
+	 * 
+	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+	 *
 	 */
-	
 	protected class TopPaths {
+		// Use hashcode from Arrays instead of Object
 		TObjectDoubleMap<int[]> top = new TObjectDoubleCustomHashMap<int[]>(new HashingStrategy<int[]>() {
 			@Override
 			public int computeHashCode(int[] arg0) {
@@ -61,6 +57,7 @@ public class PathDprProver extends DprProver {
 		}, NUMPATHS);
 		double leastWt;
 		int[] leastPath;
+		/** Should we add this path? */
 		public boolean qualify(double wt, int[] path) {
 			return top.size() < NUMPATHS || 
 					top.containsKey(path) ||
@@ -72,6 +69,7 @@ public class PathDprProver extends DprProver {
 			if (top.size() > NUMPATHS) top.remove(leastPath);
 			rebalance();
 		}
+		/** Find and record lowest-weighted path */
 		private void rebalance() {
 			leastWt=Double.MAX_VALUE;
 			for(TObjectDoubleIterator<int[]> it = top.iterator(); it.hasNext();) {
@@ -191,6 +189,7 @@ public class PathDprProver extends DprProver {
 						.isRequired()
 						.withDescription("specify query to print top paths for")
 						.create());
+				//TODO: add prompt option (for large datasets)
 			}
 			@Override
 			protected void retrieveCustomSettings(CommandLine line,

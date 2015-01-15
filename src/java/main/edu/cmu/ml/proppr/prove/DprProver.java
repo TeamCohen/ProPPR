@@ -154,6 +154,8 @@ public class DprProver extends Prover {
 				double m = 0.0;
 				for (Outlink o : outs) {
 					o.wt = this.weighter.w(o.fd);
+					if (Double.isInfinite(o.wt)) log.warn("Infinite weight at outlink "+o.child+";"
+							+Dictionary.buildString(o.fd,new StringBuilder(),"\n\t").toString());
 					z += o.wt;
 					m = Math.max(m,o.wt);
 					if (o.child.equals(pg.getStartState())) {
@@ -219,7 +221,12 @@ public class DprProver extends Prover {
 				restart.wt = ( z * (localAlpha - apr.alpha) );
 				if (log.isDebugEnabled()) log.debug("PUSHPATH deg "+outs.size()+"@"+depth);
 				for (Outlink o : outs) {
-					if (log.isDebugEnabled()) log.debug("PUSHPATH add "+moveProbability * (o.wt / z) * ru+"@"+depth+" "+ o.child);
+					if (log.isDebugEnabled()) {
+						double prob = moveProbability * (o.wt / z) * ru;
+						log.debug("PUSHPATH add "+prob+"@"+depth+" "+ o.child);
+						if (Double.isNaN(prob)) log.debug("o.wt: "+o.wt+"; z: "+z+"; ru: "+ru);
+					}
+					
 //					if (log.isDebugEnabled()) log.debug("PUSHPATH candidate "+(pushCounter+1)+" "+u+" -> "+o.child);
 					includeState(o,r,deg,z,ru,pg);
 				}

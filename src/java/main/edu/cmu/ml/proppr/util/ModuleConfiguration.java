@@ -284,10 +284,12 @@ public class ModuleConfiguration extends Configuration {
 	public String toString() {
 		String superString = super.toString();
 		if (superString==null) superString = "unknownConfigClass";
-		StringBuilder sb = new StringBuilder(superString).append(":\n");
-		if (prover != null)   sb.append("   Prover: ").append(prover.getClass().getCanonicalName()).append("\n");
+		StringBuilder sb = new StringBuilder(superString).append("\n");
+		if (prover != null)
+			sb.append(String.format(FORMAT_STRING, "Prover")).append(": ").append(prover.getClass().getCanonicalName()).append("\n");
 //		if (grounder != null) sb.append(" Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
-		if (srw != null)      sb.append("   Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
+		if (srw != null)
+			sb.append(String.format(FORMAT_STRING, "Walker")).append(": ").append(srw.getClass().getCanonicalName()).append("\n");
 //		if (trainer != null)  sb.append("  Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");
 		//sb.append("  Tester: ");
 		//		if (tester != null) 
@@ -298,13 +300,14 @@ public class ModuleConfiguration extends Configuration {
 		//			sb.append("QueryAnswerer: ").append(queryAnswerer.getClass().getCanonicalName());
 		//			sb.append(" (").append(this.normalize ? "normalized" : "unnormalized").append(")\n");
 		//		}
-		if (weightingScheme != null) sb.append("Weighting Scheme: ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
+		if (weightingScheme != null)
+			sb.append(String.format(FORMAT_STRING, "Weighting Scheme")).append(": ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
 		//		sb.append("Pretest? ").append(this.pretest ? "yes" : "no").append("\n");
 		//		sb.append("Strict? ").append(this.strict ? "yes" : "no").append("\n");
-		sb.append("    Alpha: ").append(apr.alpha).append("\n");
-		sb.append("  Epsilon: ").append(apr.epsilon).append("\n");
-		sb.append("Max depth: ").append(apr.maxDepth).append("\n");
-		sb.append(" Strategy: ").append(apr.alphaErrorStrategy.name()).append("\n");
+		sb.append(String.format(FORMAT_STRING, "Alpha")).append(": ").append(apr.alpha).append("\n");
+		sb.append(String.format(FORMAT_STRING, "Epsilon")).append(": ").append(apr.epsilon).append("\n");
+		sb.append(String.format(FORMAT_STRING, "Max depth")).append(": ").append(apr.maxDepth).append("\n");
+		sb.append(String.format(FORMAT_STRING, "Strategy")).append(": ").append(apr.alphaErrorStrategy.name()).append("\n");
 		return sb.toString();
 	}
 }
