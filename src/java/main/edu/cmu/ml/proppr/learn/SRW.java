@@ -68,6 +68,9 @@ public class SRW<E extends RWExample> {
 		this.c = params;
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
+		if (log.isDebugEnabled()) {
+			log.warn("SRW loss tracking not threadsafe with debug logging enabled! Any reported losses will be totally bogus!");
+		}
 	}
 
 	public static HashMap<String,List<String>> constructAffinity(File affgraph){	
@@ -586,7 +589,8 @@ public class SRW<E extends RWExample> {
 		throw new UnsupportedOperationException("Bad programmer! Must override in subclass."); }
 
 	/**
-	 * Determine the loss over the specified example using the specified parameters. Clears loss tracking before and after, so this is really not threadsafe at all...
+	 * NOT THREADSAFE: For debugging purposes, determine the loss over the specified example using the specified parameters. 
+	 * Clears loss tracking before and after, so this should never be used in training!
 	 * @param paramVec
 	 * @param example
 	 * @return
@@ -600,7 +604,7 @@ public class SRW<E extends RWExample> {
 		return loss;
 	}
 	/**
-	 * Really super not threadsafe at all!!!
+	 * NOT THREADSAFE: For debugging purposes, determine the average loss over a set of examples.
 	 * @param paramVec
 	 * @param exampleIt
 	 */

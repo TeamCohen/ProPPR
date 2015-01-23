@@ -143,7 +143,7 @@ public class Trainer {
 		Map<String,Double> sumGradient = new TreeMap<String,Double>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0);
+			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
 		int k=0;
 
