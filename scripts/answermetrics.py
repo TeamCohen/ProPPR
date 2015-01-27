@@ -4,11 +4,24 @@ import getopt
 import re
 import copy
 
-# todo: sort down the incorrect answers....
-
 #################### parsing input files 
 
+def answerWithIntVars(query):    
+    """Convert from format p(foo,Y-1,Z-2) to p(foo,-1,-2)."""        
+    return re.sub(r"[_A-Z]\w*\-","-",query)
+
+def queryWithIntVars(query):
+    """Convert from format p(foo,Y,Z) to p(foo,-1,-2)."""
+    result = query[:]
+    matches = list(re.finditer(r"[_A-Z]\w*", query))
+    k = -len(matches)
+    for m in reversed(matches):
+        result = result[:m.start()] + str(k) + result[m.end():]
+        k += 1
+    return result
+
 class Labels(object):
+
     """Encodes labels associated with a training or test data file,
     ie the input files for ProPPR trainers, where lines are
 
@@ -26,6 +39,7 @@ class Labels(object):
 """
 
     def __init__(self,dataFile):
+        """Load labels from the datafile."""
         self.dataFile = dataFile
         self.pos = collections.defaultdict(set)
         self.neg = collections.defaultdict(set)
@@ -33,7 +47,7 @@ class Labels(object):
         for line in open(self.dataFile):
             parts = line.strip().split("\t")
             query = parts[0]
-            intVarQuery = self.withIntVars(query)
+            intVarQuery = queryWithIntVars(query)
             self.queries.add(intVarQuery)
             for p in parts[1:]:
                 if p.startswith('+'):
@@ -43,16 +57,6 @@ class Labels(object):
                 else:
                     assert 'somethings wrong at line ' + line
         
-    def withIntVars(self,query):
-        """Convert from format p(foo,Y,Z) to p(foo,-1,-2)."""
-        result = query[:]
-        matches = list(re.finditer(r"[_A-Z]\w*", query))
-        k = -len(matches)
-        for m in reversed(matches):
-            result = result[:m.start()] + str(k) + result[m.end():]
-            k += 1
-        return result
-
     def __str__(self):
         return 'Labels(%s,%s)' % (str(self.pos),str(self.neg))
 
@@ -66,7 +70,7 @@ class Labels(object):
                 print '\t'.join(map(lambda s: ('+%s'%s), list(self.pos[q]))),
             if self.neg[q]:
                 print '\t'.join(map(lambda s: ('-%s'%s), list(self.neg[q]))),
-            print
+            print "\t",len(self.pos[q]),"pos",len(self.neg[q]),"neg label"
 
 class Answer(object):
     """Encodes a single answer proposed by ProPPR for a query."""
@@ -107,7 +111,7 @@ class Answers(object):
         for line in open(self.answerFile):        
             if line.startswith('#'):
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
-                intVarQuery = intVarQuery[:(intVarQuery.index("#")-2)]
+                intVarQuery = answerWithIntVars(intVarQuery[:(intVarQuery.index("#")-2)])
                 self.queryTime[intVarQuery] = int(timeStr.split(" ")[0])
             else:
                 (rankStr,scoreStr,solution) = line.strip().split("\t")
@@ -120,6 +124,7 @@ class Answers(object):
                 if labels:
                     a.isPos = solution in labels.pos[intVarQuery]
                     a.isNeg = solution in labels.neg[intVarQuery]
+                    #print 'solution',solution,'intVarQuery',intVarQuery,'pos',labels.pos[intVarQuery],'neg',labels.pos[intVarQuery]
                 self.answers[intVarQuery].append(a)
                 self.solutions[intVarQuery].add(solution)
         for q in self.answers:
@@ -244,7 +249,7 @@ if __name__ == "__main__":
 #    print 'labels:'
 #    labels.show()
 #    print 'answers:'
-#    answers.show(summary=True)
+#    answers.show(summary=False)
 
     for (key,val) in optlist:
         if key=='--metric':
