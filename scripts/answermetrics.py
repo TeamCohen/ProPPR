@@ -7,8 +7,8 @@ import copy
 #################### parsing input files 
 
 def answerWithIntVars(query):    
-    """Convert from format p(foo,Y-1,Z-2) to p(foo,-1,-2)."""        
-    return re.sub(r"[_A-Z]\w*\-","-",query)
+    """Convert from format p(foo,X1,X2) to p(foo,-1,-2)."""        
+    return re.sub(r"[_A-Z]\w*([0-9]+)",r"-\1",query)
 
 def queryWithIntVars(query):
     """Convert from format p(foo,Y,Z) to p(foo,-1,-2)."""
