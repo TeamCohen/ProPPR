@@ -45,9 +45,13 @@ import java.util.concurrent.Callable;
  * ProPPR and saves the results in an output file. Each query should
  * be a single ProPPR goal, but may include other content after a
  * <TAB> character (as in a training file).  The format of the output
- * file is one line for each query, in the format '# proved Q# <TAB>
- * QUERY <TAB> TIME-IN-MILLISEC msec', followed by one line for each
- * solution, in the format 'RANK <TAB> SCORE <TAB> VARIABLE-BINDINGS'.
+ * file is one line for each query, in the following format:
+ * 
+ * # proved Q# <TAB> QUERY <TAB> TIME-IN-MILLISEC msec
+ * 
+ * followed by one line for each solution, in the format:
+ * 
+ * RANK <TAB> SCORE <TAB> VARIABLE-BINDINGS
  */
 
 public class QueryAnswerer {
