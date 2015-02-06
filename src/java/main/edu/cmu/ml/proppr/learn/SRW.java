@@ -12,7 +12,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
 
 import edu.cmu.ml.proppr.examples.RWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
@@ -47,16 +49,16 @@ import gnu.trove.procedure.TObjectProcedure;
  *
  */
 public class SRW<E extends RWExample> {
-	private static final String FEATURE_RESTART = "id(restart)";
-	private static final String FEATURE_ALPHA_BOOSTER = "id(alphaBooster)";
 	private static final Logger log = Logger.getLogger(SRW.class);
-	private static Random random = new Random();
-	public static void seed(long seed) { random.setSeed(seed); }
-	public static final int NUM_EPOCHS = 5;
+	protected static final String FEATURE_RESTART = "id(restart)";
+	protected static final String FEATURE_ALPHA_BOOSTER = "id(alphaBooster)";
+	protected static final int MAX_VIOLATION_MESSAGES = 5;
+	protected static final Priority ALPHA_PROJECTION_LOGLEVEL = Level.WARN;
+	protected static final TObjectDoubleMap EMPTY = new TObjectDoubleHashMap();
 	public static final int DEFAULT_RATE_LENGTH = 1;
 	public static final double PERTURB_EPSILON=1e-10;
-	protected static final TObjectDoubleMap EMPTY = new TObjectDoubleHashMap();
-	private static final int MAX_VIOLATION_MESSAGES = 5;
+	private static Random random = new Random();
+	public static void seed(long seed) { random.setSeed(seed); }
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected SRWOptions c;
 	protected Set<String> untrainedFeatures;
@@ -91,6 +93,7 @@ public class SRW<E extends RWExample> {
 					affinity.put(items[0], pairs);
 				}
 			}
+			reader.close();
 			return affinity;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -476,7 +479,9 @@ public class SRW<E extends RWExample> {
 				}
 			});
 		}
-		StringBuilder sb = new StringBuilder("Minalpha projection: local alpha ").append(rw/z).append("<").append(c.apr.alpha).append(";");
+		StringBuilder sb = null;
+		if (log.isEnabledFor(ALPHA_PROJECTION_LOGLEVEL))
+			sb = new StringBuilder("Minalpha projection: local alpha ").append(rw/z).append("<").append(c.apr.alpha).append(";");
 		int nonFacts = 0;
 		for (String f : nonRestartFeatureSet) 
 			if (!f.startsWith(WamPlugin.FACTS_FUNCTOR)) 
@@ -484,7 +489,8 @@ public class SRW<E extends RWExample> {
 		if (nonFacts <= 1) {
 			// then we use Chao-Yuan's simplification
 			double newValue = c.weightingScheme.projection(rw,c.apr.alpha,nonRestartNodeNum);
-			sb.append(" using single-feature simplification: ").append(newValue).append("@").append(nonRestartNodeNum);
+			if (log.isEnabledFor(ALPHA_PROJECTION_LOGLEVEL))
+				sb.append(" using single-feature simplification: ").append(newValue).append("@").append(nonRestartNodeNum);
 			for (String f : this.trainableFeatures(nonRestartFeatureSet)) {
 				paramVec.put(f, newValue);
 			}
@@ -503,13 +509,14 @@ public class SRW<E extends RWExample> {
 					newAlphaBooster -= it.value() * Dictionary.safeGet(paramVec, it.key(), c.weightingScheme.defaultWeight());
 				}
 				newAlphaBooster/= phiAB;
-				sb.append(" using alpha boost: ").append(newAlphaBooster).append("@").append(FEATURE_ALPHA_BOOSTER);
+				if (log.isEnabledFor(ALPHA_PROJECTION_LOGLEVEL)) 
+					sb.append(" using alpha boost: ").append(newAlphaBooster).append("@").append(FEATURE_ALPHA_BOOSTER);
 				paramVec.put(FEATURE_ALPHA_BOOSTER, newAlphaBooster);
 				break;
 			case suppress:
 			default:
 				// then we use Katie's equal-ratios approximation
-				sb.append(" using feature supression: ");
+				if (log.isEnabledFor(ALPHA_PROJECTION_LOGLEVEL)) sb.append(" using feature supression: ");
 				for (String f : trainableFeatures(nonRestartFeatureSet)) {
 					if (!trainable(f)) continue;
 					double ratio = c.weightingScheme.edgeWeightFunction(paramVec.get(f)) / (z - rw);
@@ -523,16 +530,16 @@ public class SRW<E extends RWExample> {
 //					}
 					double newValue = c.weightingScheme.inverseEdgeWeightFunction(
 							ratio * (1-c.apr.alpha) * rw / c.apr.alpha );
-					sb.append(newValue).append("@").append(f).append(" ");
+					if (log.isEnabledFor(ALPHA_PROJECTION_LOGLEVEL)) sb.append(newValue).append("@").append(f).append(" ");
 					paramVec.put(f, newValue);
 				}
 				break;
 			}
-//			if (numAlphaViolations < MAX_VIOLATION_MESSAGES) {
+			if ( (log.isEnabledFor(ALPHA_PROJECTION_LOGLEVEL)) && numAlphaViolations < MAX_VIOLATION_MESSAGES) {
 				numAlphaViolations++;
-//				sb.append(";").append(numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last msg)" : "");
-				log.warn(sb.toString());
-//			}
+				sb.append(";").append(numAlphaViolations == MAX_VIOLATION_MESSAGES ? " (last msg this epoch)" : "");
+				log.log(ALPHA_PROJECTION_LOGLEVEL, sb.toString());
+			}
 				
 		}
 	}
