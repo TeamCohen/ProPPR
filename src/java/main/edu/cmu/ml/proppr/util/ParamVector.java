@@ -7,10 +7,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ParamVector<F,T> implements Map<F,Double> {
 	
-	protected abstract Map<F,T> getBackingStore();
+	protected abstract ConcurrentHashMap<F,T> getBackingStore();
 	protected abstract Double getWeight(T value);
 	protected abstract T newValue(Double value);
 	
@@ -78,4 +79,13 @@ public abstract class ParamVector<F,T> implements Map<F,Double> {
         copy.putAll(this);
         return copy;
     }
+	public void adjustValue(F key, double value) {
+		T oldvalue = getBackingStore().get(key);
+		while( !getBackingStore().replace(key, oldvalue, newValue(getWeight(oldvalue)+value))) {
+			oldvalue = getBackingStore().get(key);
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {}
+		}
+	}
 }

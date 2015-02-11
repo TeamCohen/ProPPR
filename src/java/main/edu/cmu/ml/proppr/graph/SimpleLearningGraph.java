@@ -28,6 +28,19 @@ public class SimpleLearningGraph extends LearningGraph {
 		public LearningGraph create() {
 			return new SimpleLearningGraph();
 		}
+
+		@Override
+		public void addOutlink(LearningGraph g, int u, RWOutlink rwOutlink) {
+			((SimpleLearningGraph) g).addOutlink(u, rwOutlink);
+		}
+
+		@Override
+		public void freeze(LearningGraph g) {
+			((SimpleLearningGraph) g).freeze();
+		}
+
+		@Override
+		public void setGraphSize(LearningGraph g, int nodeSize, int edgeSize) {}
 	}
 	
 	private void ensureNode(int n) {
@@ -37,7 +50,6 @@ public class SimpleLearningGraph extends LearningGraph {
 		}
 	}
 
-	@Override
 	public void addOutlink(int u, RWOutlink outlink) {
 		ensureNode(u);
 		ensureNode(outlink.nodeid);
@@ -54,14 +66,14 @@ public class SimpleLearningGraph extends LearningGraph {
 	}
 
 
-	@Override
+	
 	public TIntArrayList near(int u) {
 		if (near.containsKey(u)) return near.get(u);
 		return EMPTY_LIST;
 	}
 
 
-	@Override
+	
 	public TObjectDoubleMap<String> getFeatures(int u, int v) {
 		if (phi.containsKey(u)) {
 			TIntObjectMap<TObjectDoubleMap<String>> phiU = phi.get(u);
@@ -71,7 +83,7 @@ public class SimpleLearningGraph extends LearningGraph {
 	}
 
 
-	@Override
+	
 	public Set<String> getFeatureSet() {
 		return this.features;
 	}
@@ -94,7 +106,6 @@ public class SimpleLearningGraph extends LearningGraph {
 		return edgeSize;
 	}
 
-	@Override
 	public void freeze() {
 		this.near.forEachValue(new TObjectProcedure<TIntArrayList>() {
 			@Override
