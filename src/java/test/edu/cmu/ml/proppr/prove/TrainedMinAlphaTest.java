@@ -14,7 +14,7 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.GrounderTest;
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
-import edu.cmu.ml.proppr.graph.SimpleLearningGraph.SLGBuilder;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
 import edu.cmu.ml.proppr.learn.tools.GroundedExampleStreamer;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
@@ -64,7 +64,7 @@ public class TrainedMinAlphaTest extends MinAlphaTest {
 		}
 		writer.close();
 
-		ParamVector params = c.trainer.train(new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new SLGBuilder()), 
+		ParamVector params = c.trainer.train(new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
 				c.epochs, 
 				c.traceLosses);
 

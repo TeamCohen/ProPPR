@@ -27,7 +27,7 @@ public class MuParamVector<F> extends ParamVector<F,TimestampedWeight> {
 	}
 	
 	@Override
-	protected Map<F, TimestampedWeight> getBackingStore() {
+	protected ConcurrentHashMap<F, TimestampedWeight> getBackingStore() {
 		return this.backingStore;
 	}
 

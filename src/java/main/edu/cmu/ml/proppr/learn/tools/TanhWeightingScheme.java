@@ -21,10 +21,10 @@ public class TanhWeightingScheme extends WeightingScheme {
 	@Override
 	public String toString() { return "tanh"; }
 
-	@Override
-	public double projection(double rw, double alpha, int nonRestartNodeNum) {
-		return arcTanh(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
-	}
+//	@Override
+//	public double projection(double rw, double alpha, int nonRestartNodeNum) {
+//		return arcTanh(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
+//	}
 	private double arcTanh (double z) {
 		return 0.5 * (Math.log(1.0 + z) - Math.log(1.0 - z));
 	}

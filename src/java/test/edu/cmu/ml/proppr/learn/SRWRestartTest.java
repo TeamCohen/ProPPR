@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr.learn;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,9 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraph.ArrayLearningGraphBuilder;
+import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.RWOutlink;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.LossData;
@@ -32,18 +36,34 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
  */
 public class SRWRestartTest extends SRWTest {
 	public void initSrw() {
-		srw = new L2PosNegLossTrainedSRW();
+		srw = new L2SRW();
 		srw.setAlpha(0.01);
 	}
-	public void setup(){
-		super.setup();
-
+	
+	
+	@Override
+	public void moreSetup(LearningGraphBuilder lgb) {
+		super.moreSetup(lgb);
 		// add restart links to r0
 		for (int u : brGraph.getNodes()) {
 			TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
-			ff.putAll(brGraph.getFeatures(u, nodes.getId("r0")));
-			ff.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());
-			brGraph.addOutlink(u, new RWOutlink(ff, nodes.getId("r0")));
+			ArrayLearningGraph.ArrayLearningGraphBuilder b = ((ArrayLearningGraph.ArrayLearningGraphBuilder) lgb);
+			int r0 = nodes.getId("r0");
+			RWOutlink outlinkR0 = null;
+			if (b.outlinks[u] != null) {
+				for (RWOutlink o : b.outlinks[u]) {
+					if (o.nodeid == r0) {
+						outlinkR0 = o;
+						break;
+					}
+				}
+			}
+			if (outlinkR0 == null) {
+				outlinkR0 = new RWOutlink(new TObjectDoubleHashMap<String>(), r0);
+				lgb.addOutlink(brGraph, u, outlinkR0);
+			}
+			outlinkR0.fd.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());
+			lgb.addOutlink(brGraph, u, null); // cheat the label count
 		}
 		uniformParams.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());
 	}
@@ -84,10 +104,10 @@ public class SRWRestartTest extends SRWTest {
 //		startVec.put("r0",1.0);
 //		SRW<PairwiseRWExample> mysrw = new SRW<PairwiseRWExample>(maxT);
 //		mysrw.setAlpha(0.01);
-		TIntDoubleMap baseLineRwr = srw.rwrUsingFeatures(brGraph, startVec, new SimpleParamVector<String>());
+		TIntDoubleMap baseLineRwr = myRWR(startVec, brGraph, maxT, new SimpleParamVector<String>(), srw.getWeightingScheme());
 		ParamVector biasedParams = makeBiasedVec();
 		
-		TIntDoubleMap newRwr = srw.rwrUsingFeatures(brGraph, startVec, biasedParams);
+		TIntDoubleMap newRwr = myRWR(startVec, brGraph, maxT, biasedParams, srw.getWeightingScheme());
 		
 		System.err.println("baseline:");
 		for (int node : baseLineRwr.keys()) System.err.println(node+"/"+nodes.getSymbol(node)+":"+baseLineRwr.get(node));
@@ -124,9 +144,9 @@ public class SRWRestartTest extends SRWTest {
 //		weightVec.put("id(restart)",1.02);
 		
 		ParamVector trainedParams = uniformParams.copy();
-		double preLoss = srw.empiricalLoss(trainedParams, example);
-		srw.trainOnExample(trainedParams,example,false);
-		double postLoss = srw.empiricalLoss(trainedParams, example);
+		double preLoss = makeLoss(trainedParams, example);
+		srw.trainOnExample(trainedParams,example);
+		double postLoss = makeLoss(trainedParams, example);
 		assertTrue(String.format("preloss %f >=? postloss %f",preLoss,postLoss), 
 				preLoss == 0 || preLoss > postLoss);
 	}

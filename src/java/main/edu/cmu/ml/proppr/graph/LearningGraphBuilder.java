@@ -15,6 +15,7 @@ public abstract class LearningGraphBuilder {
 	public abstract void setGraphSize(LearningGraph g, int nodeSize, int edgeSize);
 	public abstract void addOutlink(LearningGraph g, int u, RWOutlink rwOutlink);
 	public abstract void freeze(LearningGraph g);
+	public abstract void index(int i0);
 	public LearningGraph deserialize(String string) throws GraphFormatException {
 		String[] parts = string.split("\t",4);
 		if (parts.length != 4) {

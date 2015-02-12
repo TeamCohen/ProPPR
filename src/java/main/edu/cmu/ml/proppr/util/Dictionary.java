@@ -54,18 +54,6 @@ public class Dictionary {
 		}
 	}
 
-	/**
-	 * Reset the key's value, or set it if the key is new.
-	 * @param map
-	 * @param key
-	 * @param value
-	 */
-	public static void reset(TIntDoubleMap map, int key, double value) {
-		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
-		else {
-			map.put(key,sanitize(value, String.valueOf(key)));
-		}
-	}
 
 	/**
 	 * Increment the key's value, or set it if the key is new.
@@ -82,23 +70,32 @@ public class Dictionary {
 	}
 
 	/**
-	 * Reset the key's value, or set it if the key is new.
+	 * Set the key's value using standard sanitizer.
 	 * @param map
 	 * @param key
 	 * @param value
 	 */
-	public static void reset(TObjectDoubleMap<String> map, String key, double value) {
-		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
-		else {
-			map.put(key,sanitize(value, String.valueOf(key)));
-		}
+	public static void set(TIntDoubleMap map, int key, double value) {
+		map.put(key,sanitize(value, String.valueOf(key)));
+	}
+	/**
+	 * Set the key's value using standard sanitizer.
+	 * @param map
+	 * @param key
+	 * @param value
+	 */
+	public static <K> void set(TObjectDoubleMap<K> map, K key, double value) {
+		map.put(key,sanitize(value, String.valueOf(key)));
 	}
 
-	public static void reset(ParamVector map, String key, double value) {
-		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
-		else {
-			map.put(key,sanitize(value, String.valueOf(key)));
-		}
+	/**
+	 * Set the key's value using standard sanitizer.
+	 * @param map
+	 * @param key
+	 * @param value
+	 */
+	public static void set(ParamVector map, String key, double value) {
+		map.put(key,sanitize(value, String.valueOf(key)));
 	}
 
 	/**
@@ -494,7 +491,9 @@ public class Dictionary {
 		return load(new ParsedFile(filename));
 	}
 	public static Map<String,Double> load(ParsedFile file) {
-		Map<String,Double> map = new HashMap<String,Double>();
+		return load(file, new HashMap<String,Double>());
+	}
+	public static Map<String,Double> load(ParsedFile file, Map<String,Double> map) {
 		for (String line : file) {
 			String[] parts = line.split("\t");
 			if (parts.length != 2) file.parseError();

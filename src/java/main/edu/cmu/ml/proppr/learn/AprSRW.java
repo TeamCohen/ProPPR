@@ -2,16 +2,22 @@ package edu.cmu.ml.proppr.learn;
 
 
 
+import java.util.Arrays;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
+import edu.cmu.ml.proppr.learn.SRW.SgdExample;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
@@ -21,7 +27,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class AprSRW extends PosNegLossTrainedSRW {
+public class AprSRW extends SRW {
 	private static final Logger log = Logger.getLogger(AprSRW.class);
 	public static final double DEFAULT_STAYPROB=DprProver.STAYPROB_DEFAULT;
 	
@@ -53,24 +59,31 @@ public class AprSRW extends PosNegLossTrainedSRW {
 		this.cumloss = new LossData();
 	}
 	
-	private double dotP(TObjectDoubleMap<String> phi, ParamVector<String,?> paramVec) {
+	private double dotP(ArrayLearningGraph g, int eid, ParamVector paramVec) {
 		double dotP = 0;
-		for (TObjectDoubleIterator<String> f = phi.iterator(); f.hasNext();) {
-			f.advance();
-			dotP += paramVec.get(f.key()) * f.value();
+		for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
+			dotP += paramVec.get(g.featureLibrary.getSymbol(g.label_feature_id[fid])) 
+					* g.label_feature_weight[fid];
 		}
 		return dotP;
 	}
 	
-	public double totalEdgeProbWeight(LearningGraph g, int u,  ParamVector<String, ?> p) {
+	public double totalEdgeProbWeight(ArrayLearningGraph g, int uid,  ParamVector p) {
 		double sum = 0.0;
-		for (TIntIterator it = g.near(u).iterator(); it.hasNext();) {
-			int v = it.next();
-			double ew = Math.max(0,edgeWeight(g,u,v,p)); 
+		for(int eid = g.node_near_lo[uid]; eid < g.node_near_hi[uid]; eid++) {
+			double ew = c.weightingScheme.edgeWeight(g,eid,p); 
 			sum+=ew;
 		}
 		if (Double.isInfinite(sum)) return Double.MAX_VALUE;
 		return sum;
+	}
+	
+	// linear in # features on the edge :(
+	private boolean hasFeature(ArrayLearningGraph g, int eid, int flid) {
+		for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
+			if (g.label_feature_id[fid] == flid) return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -78,142 +91,169 @@ public class AprSRW extends PosNegLossTrainedSRW {
 	 * @param u the vertex to be 'pushed'
 	 * @param p
 	 * @param r
-	 * @param graph
+	 * @param g
 	 * @param paramVec
 	 * @param dp
 	 * @param dr
 	 */
-	public void push(int u, TIntDoubleMap p, TIntDoubleMap r, LearningGraph graph, ParamVector<String,?> paramVec,
-			TIntObjectMap<TObjectDoubleMap<String>> dp, TIntObjectMap<TObjectDoubleMap<String>> dr) {
+	public void push(int u, ParamVector paramVec, AprSgdExample ex) {
 		log.debug("Pushing "+u);
 		
 		// update p for the pushed node:
-		Dictionary.increment(p, u, c.apr.alpha * r.get(u));
-		TObjectDoubleMap<String> dru = dr.get(u);
+		ex.p[u] += c.apr.alpha * ex.r[u];
+		if (ex.dr[u] == null) ex.dr[u] = new TIntDoubleHashMap();
+		TIntDoubleMap dru = ex.dr[u];
 		
 		TIntDoubleMap unwrappedDotP = new TIntDoubleHashMap();
-		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
-			int v = it.next();
-			unwrappedDotP.put(v, dotP(graph.getFeatures(u,v),paramVec));
+		for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
+			int v = ex.g.edge_dest[eid];
+			unwrappedDotP.put(v, dotP(ex.g,eid,paramVec));
 		}
 		
 		// calculate the sum of the weights (raised to exp) of the edges adjacent to the input node:
-		double rowSum = this.totalEdgeProbWeight(graph, u, paramVec);
+		double rowSum = this.totalEdgeProbWeight(ex.g, u, paramVec);
 		
 		// calculate the gradients of the rowSums (needed for the calculation of the gradient of r):
-		TObjectDoubleMap<String> drowSums = new TObjectDoubleHashMap<String>();
-		TObjectDoubleMap<String> prevdr = new TObjectDoubleHashMap<String>();
-		for(String feature : (graph.getFeatureSet())) {
+		TIntDoubleMap drowSums = new TIntDoubleHashMap();
+		TIntDoubleMap prevdr = new TIntDoubleHashMap();
+		
+		Set<String> exampleFeatures = ex.g.getFeatureSet();
+		
+		for(String feature : exampleFeatures) {
+			int flid = ex.g.featureLibrary.getId(feature);
 //			log.debug("dru["+feature+"] = "+dru.get(feature));
 			// simultaneously update the dp for the pushed node:
-			if (trainable(feature)) Dictionary.increment(dp,u,feature,c.apr.alpha * dru.get(feature));
+			if (trainable(feature)) {
+				if (ex.dp[u] == null) ex.dp[u] = new TIntDoubleHashMap();
+				Dictionary.increment(ex.dp[u], flid, c.apr.alpha * dru.get(flid));
+			}
 			double drowSum = 0;
-			for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
-				int v = it.next();
-				if(graph.getFeatures(u, v).containsKey(feature)) {
+			for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
+				int v = ex.g.edge_dest[eid];
+				if(hasFeature(ex.g,eid,flid)) { //g.getFeatures(u, v).containsKey(feature)) {
 					drowSum += c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 				}
 			}
-			drowSums.put(feature, drowSum);
+			drowSums.put(flid, drowSum);
 			
 			// update dr for the pushed vertex, storing dr temporarily for the calculation of dr for the other vertices:
-			prevdr.put(feature, dru.get(feature));
-			dru.put(feature, dru.get(feature) * (1 - c.apr.alpha) * stayProb);
+			prevdr.put(flid, dru.get(flid));
+			dru.put(flid, dru.get(flid) * (1 - c.apr.alpha) * stayProb);
 		}
 		
 		// update dr for other vertices:
-		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
-			int v = it.next();
+		for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
+			int v = ex.g.edge_dest[eid];
 			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
 			double ddotP = c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
-			for(String feature : (graph.getFeatureSet())) {
-				int contained = graph.getFeatures(u, v).containsKey(feature) ? 1 : 0;
-				double vdr = dr.get(v).get(feature);
+			for(String feature : exampleFeatures) {
+				int flid = ex.g.featureLibrary.getId(feature);
+				int contained = hasFeature(ex.g,eid,flid) ? 1 : 0;
+				if (ex.dr[v] == null) ex.dr[v] = new TIntDoubleHashMap();
+				double vdr = Dictionary.safeGet(ex.dr[v],flid,0.0);
 				
 				// whoa this is pretty gross.
-				vdr += (1-stayProb)*(1-c.apr.alpha)*((prevdr.get(feature)*dotP/rowSum)+(r.get(u)*((contained*ddotP*rowSum)-(dotP*drowSums.get(feature)))/(rowSum*rowSum)));
-				dr.get(v).put(feature, vdr);
+				vdr += (1-stayProb)*(1-c.apr.alpha)*((prevdr.get(flid)*dotP/rowSum)+(ex.r[u]*((contained*ddotP*rowSum)-(dotP*drowSums.get(flid)))/(rowSum*rowSum)));
+
+				ex.dr[v].put(flid, vdr);
 			}
 		}
 		
 		// update r for all affected vertices:
-		double ru = r.get(u);
-		r.put(u, ru * stayProb * (1 - c.apr.alpha));
-		for (TIntIterator it = graph.near(u).iterator(); it.hasNext();) {
-			int v = it.next();
+		double ru = ex.r[u];
+		ex.r[u]= ru * stayProb * (1 - c.apr.alpha);
+		for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
+			int v = ex.g.edge_dest[eid];
 			// calculate edge weight on v:
 			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
-			Dictionary.increment(r, v, (1 - stayProb) * (1 - c.apr.alpha) * (dotP / rowSum) * ru);
+			ex.r[v]+= (1 - stayProb) * (1 - c.apr.alpha) * (dotP / rowSum) * ru;
 		}
 	}
 
-	@Override
-	protected double derivRegularization(String f,
-			ParamVector<String, ?> paramVec) {
-		double value = Dictionary.safeGet(paramVec, f);
-		double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
-		this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
-		return ret;
+	@Override	
+	protected void regularization(ParamVector params, SgdExample ex, TIntDoubleMap gradient) {
+		for (String f : localFeatures(params, ex.g)) {
+			double value = Dictionary.safeGet(params, f);
+			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
+			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
+			gradient.adjustOrPutValue(ex.getFeatureId(f), ret, ret);
+		}
 	}
-
+	
+	class AprSgdExample extends SgdExample {
+		public double[] r;
+		public TIntDoubleMap[] dr;
+		public AprSgdExample(PosNegRWExample example) {
+			super(example);
+		}
+	}
+	
 	@Override
-	protected GradientComponents makeGradientComponents(
-			ParamVector<String, ?> paramVec, PosNegRWExample example) {
+	protected SgdExample wrapExample(PosNegRWExample example) {
+		return new AprSgdExample(example);
+	}
+	
+	@Override
+	protected void inference(ParamVector params, SgdExample example) {
+		AprSgdExample ex = (AprSgdExample) example;
+		
 		// startNode maps node->weight
-		TIntDoubleMap query = example.getQueryVec();
+		TIntDoubleMap query = ex.ex.getQueryVec();
 		if (query.size() > 1) throw new UnsupportedOperationException("Can't do multi-node queries");
 		
 		// maps storing the probability and remainder weights of the nodes:
-		TIntDoubleMap p = new TIntDoubleHashMap();
-		TIntDoubleMap r = new TIntDoubleHashMap();
+		ex.p = new double[ex.g.node_hi];
+		ex.r = new double[ex.g.node_hi];
 		
 		// initializing the above maps:
-		for(int node : example.getGraph().getNodes()) {
-			p.put(node, 0.0);
-			r.put(node, 0.0);
-		}
+		Arrays.fill(ex.p, 0.0);
+		Arrays.fill(ex.r, 0.0);
 		
-		r.putAll(query);
+		for (TIntDoubleIterator it = query.iterator(); it.hasNext(); ) {
+			it.advance();
+			ex.r[it.key()] = it.value();
+		}
 		
 		// maps storing the gradients of p and r for each node:
-		TIntObjectMap<TObjectDoubleMap<String>> dp = new TIntObjectHashMap<TObjectDoubleMap<String>>();
-		TIntObjectMap<TObjectDoubleMap<String>> dr = new TIntObjectHashMap<TObjectDoubleMap<String>>();
+		ex.dp = new TIntDoubleMap[ex.g.node_hi];
+		ex.dr = new TIntDoubleMap[ex.g.node_hi];
 		
 		// initializing the above maps:
-		for(int node : example.getGraph().getNodes()) {
-			dp.put(node, new TObjectDoubleHashMap<String>());
-			dr.put(node, new TObjectDoubleHashMap<String>());
-			for(String feature : (example.getGraph().getFeatureSet()))
-			{
-				dp.get(node).put(feature, 0.0);
-				dr.get(node).put(feature, 0.0);
-			}
-		}
+//		for(int node : example.getGraph().getNodes()) {
+//			dp.put(node, new TObjectDoubleHashMap<String>());
+//			dr.put(node, new TObjectDoubleHashMap<String>());
+//			for(String feature : (example.getGraph().getFeatureSet()))
+//			{
+//				dp.get(node).put(feature, 0.0);
+//				dr.get(node).put(feature, 0.0);
+//			}
+//		}
 		
 		// APR Algorithm:
 		int completeCount = 0;
-		while(completeCount < example.getGraph().nodeSize()) {
+		while(completeCount < ex.g.node_hi) {
 			if (log.isDebugEnabled()) log.debug("Starting pass");
 			completeCount = 0;
-			for(int u : example.getGraph().getNodes()) {
-				double ru = r.get(u);
-				if(ru / (double) example.getGraph().near(u).size() > c.apr.epsilon)
-					while(ru / example.getGraph().near(u).size() > c.apr.epsilon) {
-						this.push(u, p, r, example.getGraph(), paramVec, dp, dr);
-						if (r.get(u) > ru) throw new IllegalStateException("r increasing! :(");
-						ru = r.get(u);
+			for(int u = 0; u < ex.g.node_hi; u++) {
+				double ru = ex.r[u];
+				int udeg = ex.g.node_near_hi[u] - ex.g.node_near_lo[u];
+				if(ru / (double) udeg > c.apr.epsilon)
+					while(ru / udeg > c.apr.epsilon) {
+						this.push(u, params, ex);
+						if (ex.r[u] > ru) throw new IllegalStateException("r increasing! :(");
+						ru = ex.r[u];
 					}
 				else {
 					completeCount++;
 					if (log.isDebugEnabled()) log.debug("Counting "+u);
 				}
 			}
-			if (log.isDebugEnabled()) log.debug(completeCount +" of " + example.getGraph().nodeSize() + " completed this pass");
+			if (log.isDebugEnabled()) log.debug(completeCount +" of " + ex.g.node_hi + " completed this pass");
 		}
 		
-		GradientComponents g = new GradientComponents();
-		g.p = p;
-		g.d = dp;
-		return g;
+//		GradientComponents g = new GradientComponents();
+//		g.p = p;
+//		g.d = dp;
+//		return g;
 	}
 }

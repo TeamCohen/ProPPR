@@ -22,10 +22,10 @@ public class ReLUWeightingScheme<G> extends WeightingScheme<G> {
 	@Override
 	public String toString() { return "ReLU"; }
 
-	@Override
-	public double projection(double rw, double alpha, int nonRestartNodeNum) {
-		return rw * (1 - alpha) / (alpha * nonRestartNodeNum);
-	}
+//	@Override
+//	public double projection(double rw, double alpha, int nonRestartNodeNum) {
+//		return rw * (1 - alpha) / (alpha * nonRestartNodeNum);
+//	}
 
 	@Override
 	public double inverseEdgeWeightFunction(double x) {

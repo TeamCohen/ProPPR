@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW;
+import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -18,7 +18,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class TrainerTest extends RedBlueGraph {
 	public Trainer trainer;
-	public SRW<PosNegRWExample> srw;
+	public SRW srw;
 	public TIntDoubleMap query;
 	public ArrayList<PosNegRWExample> examples;
 	
@@ -33,7 +33,7 @@ public class TrainerTest extends RedBlueGraph {
 	@Before
 	public void setup() {
 		super.setup();
-		this.srw = new L2PosNegLossTrainedSRW();
+		this.srw = new L2SRW();
 		this.srw.setWeightingScheme(new ReLUWeightingScheme<String>());
 		this.initTrainer();
 		

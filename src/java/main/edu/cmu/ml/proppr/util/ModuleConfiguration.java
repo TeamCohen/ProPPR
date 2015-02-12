@@ -259,24 +259,24 @@ public class ModuleConfiguration extends Configuration {
 			}
 
 			if (values[0].equals("l2p")) {
-				this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
 			} else if (values[0].equals("l1p")) {
-				this.srw = new edu.cmu.ml.proppr.learn.L1PosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.L1SRW(sp);
 			} else if (values[0].equals("l1plocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1PosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1SRW(sp);
 			} else if (values[0].equals("l1plaplacianlocal")) {
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);
 			} else if (values[0].equals("l1plocalgrouplasso")) {
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp);
 			} else if (values[0].equals("l2plocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL2PosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp);
 			} else if (values[0].equals("apr")) {
 				this.srw = new edu.cmu.ml.proppr.learn.AprSRW(sp, AprSRW.DEFAULT_STAYPROB);
 			} else {
 				usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
-			this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW(sp);
+			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
 		}
 	}
 

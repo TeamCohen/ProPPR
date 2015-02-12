@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -231,7 +232,7 @@ public class QueryAnswerer {
 			if(log.isInfoEnabled()) log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
-				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file)), c.weightingScheme);
+				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.weightingScheme);
 				file.check(c);
 			}
 			qa.findSolutions(c.queryFile, c.solutionsFile);

@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.SimpleLearningGraph.SLGBuilder;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.GroundedExampleStreamer;
 import edu.cmu.ml.proppr.learn.tools.LossData;
@@ -27,6 +27,8 @@ import edu.cmu.ml.proppr.util.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class Trainer {
 	private static final Logger log = Logger.getLogger(Trainer.class);
@@ -35,11 +37,11 @@ public class Trainer {
 	protected int nthreads = 1;
 	protected int throttle;
 
-	protected SRW<PosNegRWExample> learner;
+	protected SRW learner;
 	protected int epoch;
 	LossData lossLastEpoch;
 
-	public Trainer(SRW<PosNegRWExample> learner, int nthreads, int throttle) {
+	public Trainer(SRW learner, int nthreads, int throttle) {
 		this.learner = learner;
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
@@ -51,7 +53,7 @@ public class Trainer {
 		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 
-	public Trainer(SRW<PosNegRWExample> srw) {
+	public Trainer(SRW srw) {
 		this(srw, 1, Multithreading.DEFAULT_THROTTLE);
 	}
 
@@ -136,11 +138,10 @@ public class Trainer {
 		return paramVec;
 	}
 
-	public Map<String, Double> findGradient(
-			GroundedExampleStreamer examples, ParamVector paramVec) {
+	public TObjectDoubleMap<String> findGradient(GroundedExampleStreamer examples, ParamVector paramVec) {
 
 		log.info("Computing gradient on cooked examples...");
-		Map<String,Double> sumGradient = new TreeMap<String,Double>();
+		TObjectDoubleMap<String> sumGradient = new TObjectDoubleHashMap<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
@@ -149,8 +150,8 @@ public class Trainer {
 
 		//WW: accumulate example-size normalized gradient
 		for (PosNegRWExample x : examples) {
-			this.learner.addDefaultWeights(x.getGraph(),paramVec);
-			this.learner.accumulateGradient(this.learner.gradient(paramVec, x),x.length(),sumGradient);
+			this.learner.initializeFeatures(paramVec,x.getGraph());
+			this.learner.accumulateGradient(paramVec, x, sumGradient);
 			k++;
 		}
 
@@ -286,7 +287,7 @@ public class Trainer {
 			log.info("Training model parameters on "+groundedFile+"...");
 			long start = System.currentTimeMillis();
 			ParamVector params = c.trainer.train(
-					new GroundedExampleStreamer(groundedFile, new SLGBuilder()), 
+					new GroundedExampleStreamer(groundedFile, new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
 					c.epochs, 
 					c.traceLosses);
 			log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");

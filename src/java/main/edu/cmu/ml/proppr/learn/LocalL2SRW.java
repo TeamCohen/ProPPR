@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.graph.LearningGraph;
+import edu.cmu.ml.proppr.learn.SRW.SgdExample;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -13,30 +15,22 @@ import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.map.TObjectDoubleMap;
 
-public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
-	public LocalL2PosNegLossTrainedSRW(SRWOptions params) {
+public class LocalL2SRW extends L2SRW {
+	public LocalL2SRW(SRWOptions params) {
 		super(params);
 	}
-	public LocalL2PosNegLossTrainedSRW() { super(); }
+	public LocalL2SRW() { super(); }
 
 	@Override
-	public Set<String> localFeatures(ParamVector<String,?> paramVec, PosNegRWExample example) {
-		return example.getGraph().getFeatureSet();
+	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
+		return graph.getFeatureSet();
 	}
 	
 	@Override
-	protected double derivRegularization(String f, ParamVector<String,?> paramVec) {
-		// NB superclass records regularization loss for this clock cycle
-		Double ret = super.derivRegularization(f, paramVec);
-		return ret;
-	}
-	
-	@Override
-	public TObjectDoubleMap<String> gradient(ParamVector<String,?> paramVec, PosNegRWExample example) {
-		TObjectDoubleMap<String> ret = super.gradient(paramVec, example);
-		((MuParamVector)paramVec).count();
-		((MuParamVector)paramVec).setLast(localFeatures(paramVec,example));
-		return ret;
+	protected void sgd(ParamVector params, SgdExample ex) {
+		((MuParamVector)params).count();
+		((MuParamVector)params).setLast(localFeatures(params,ex.g));
+		super.sgd(params, ex);
 	}
 	
 	@Override
@@ -53,22 +47,22 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 	}
 	
 	@Override
-	public void prepareGradient(ParamVector<String,?> paramVec, PosNegRWExample example) {
-		for (String f : localFeatures(paramVec,example)) {
-			prepareFeature(paramVec,f);
+	public void initializeFeatures(ParamVector params, LearningGraph graph) {
+		super.initializeFeatures(params, graph);
+		for (String f : localFeatures(params,graph)) {
+			prepareFeature(params,f);
 		}
 	}
 	
 	private void prepareFeature(ParamVector<String,?> paramVec, String f) {
 		if (!trainable(f)) return;
-		// use last-1 here because superclass will apply regularization for this clock cycle
-		// during the gradient() call
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;
 		double value = Dictionary.safeGet(paramVec,f);
 		double powerTerm = Math.pow(1 - 2 * c.mu * this.learningRate(), gap);
 		double weightDecay = value * (powerTerm - 1);
-	    Dictionary.increment(paramVec, f, weightDecay);
+		//FIXME: opportunity for out-of-date `value`; probably out to convert to a try loop
+		paramVec.adjustValue(f, weightDecay);
 		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.pow(value, 2));
 	}
 }

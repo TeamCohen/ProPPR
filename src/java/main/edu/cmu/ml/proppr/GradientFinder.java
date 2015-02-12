@@ -7,7 +7,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.proppr.graph.SimpleLearningGraph;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
 import edu.cmu.ml.proppr.learn.tools.GroundedExampleStreamer;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -16,6 +16,7 @@ import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
+import gnu.trove.map.TObjectDoubleMap;
 
 /**
  * A routine to ground a set of queries, optionally train the model, then output the gradient of each parameter.
@@ -48,15 +49,15 @@ public class GradientFinder {
 			ParamVector params = null;
 			if (c.epochs > 0) {
 				params = c.trainer.train(
-						new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new SimpleLearningGraph.SLGBuilder()), 
+						new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
 						c.epochs, 
 						c.traceLosses);
 			} else {
 				params = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(c.paramsFile)));
 			}
 
-			Map<String,Double> batchGradient = c.trainer.findGradient(
-					new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new SimpleLearningGraph.SLGBuilder()), 
+			TObjectDoubleMap<String> batchGradient = c.trainer.findGradient(
+					new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
 					params);
 
 			ParamsFile.save(batchGradient, c.gradientFile, c);
