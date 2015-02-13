@@ -33,6 +33,24 @@ import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
+/**
+ * Random walk learning
+ * 
+ * Flow of information:
+ * 
+ * 	 Train on example =
+ *     load (initialize example parameters and compute M/dM)
+ *     inference (compute p/dp)
+ *     sgd (compute empirical loss gradient and apply to parameters)
+ * 
+ *   Accumulate gradient = 
+ *     load  (initialize example parameters and compute M/dM)
+ *     inference (compute p/dp)
+ *     gradient (compute empirical loss gradient)
+ * 
+ * @author krivard
+ *
+ */
 public class SRW {	
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
@@ -50,15 +68,12 @@ public class SRW {
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
 		this.cumloss = new LossData();
-		if (log.isDebugEnabled()) {
-			log.warn("SRW loss tracking not threadsafe with debug logging enabled! Any reported losses will be totally bogus!");
-		}
 	}
 
 	/**
-	 * Modify the parameter vector paramVec by taking a gradient step along the dir suggested by this example.
-	 * @param weightVec
-	 * @param posNegRWExample
+	 * Modify the parameter vector by taking a gradient step along the dir suggested by this example.
+	 * @param params
+	 * @param example
 	 */
 	public void trainOnExample(ParamVector params, PosNegRWExample example) {
 		SgdExample sgdex = wrapExample(example);
@@ -104,8 +119,8 @@ public class SRW {
 				int vid = ex.g.edge_dest[eid];
 				// i. s_{uv} = w * phi_{uv}, a scalar:
 				suv[xvi] = 0;
-				for (int fid = ex.g.edge_labels_lo[eid]; fid < ex.g.edge_labels_hi[eid]; fid++) {
-					suv[xvi] += ex.g.label_feature_weight[fid] * params.get(ex.g.featureLibrary.getSymbol(ex.g.label_feature_id[fid]));
+				for (int lid = ex.g.edge_labels_lo[eid]; lid < ex.g.edge_labels_hi[eid]; lid++) {
+					suv[xvi] += params.get(ex.g.featureLibrary.getSymbol(ex.g.label_feature_id[lid])) * ex.g.label_feature_weight[lid];
 				}
 				// ii. t_u += f(s_{uv}), a scalar:
 				tu += c.weightingScheme.edgeWeight(suv[xvi]);
@@ -115,8 +130,8 @@ public class SRW {
 				double cee = c.weightingScheme.derivEdgeWeight(suv[xvi]);
 				for (int lid = ex.g.edge_labels_lo[eid], dfuvi = 0; lid < ex.g.edge_labels_hi[eid]; lid++, dfuvi++) {
 					// iii. again
-					dfuv[dfuvi] = cee * params.get(ex.g.featureLibrary.getSymbol(ex.g.label_feature_id[lid]));
-					// iv. dt_u += df_{uv}, a vector, a sparse as sum_{v'} phi_{uv'}
+					dfuv[dfuvi] = cee * ex.g.label_feature_weight[lid];
+					// iv. dt_u += df_{uv}, a vector, as sparse as sum_{v'} phi_{uv'}
 					// by looping over features i in df_{uv} 
 					// (identical to features i in phi_{uv}, so we use the same loop)
 					dtu.adjustOrPutValue(lid, dfuv[dfuvi], dfuv[dfuvi]); // remember to dereference lid with g.label_feature_id before using!
@@ -129,7 +144,9 @@ public class SRW {
 			ex.dM_lo[uid] = new int[udeg];
 			ex.dM_hi[uid] = new int[udeg];
 			ex.M[uid] = new double[udeg];
-			double scale = 1 / (tu*tu);
+			// tu can be zero if all features from this node have negative weight in params (edgeWeight() truncates to zero)
+			double scale = (1 / (tu*tu));
+//			if (tu == 0) scale = 0;
 			for(int eid = ex.g.node_near_lo[uid], xvi = 0; eid < ex.g.node_near_hi[uid]; eid++, xvi++) {
 				int vid = ex.g.edge_dest[eid];
 				ex.dM_lo[uid][xvi] = dM_features.size();
@@ -142,7 +159,9 @@ public class SRW {
 				}
 				ex.dM_hi[uid][xvi] = dM_features.size();
 				// also create the scalar M_{uv} = f(s_{uv}) / t_u
-				ex.M[uid][xvi] = c.weightingScheme.edgeWeight(suv[xvi]) / tu;
+				// truncate to zero as above
+				ex.M[uid][xvi] = (c.weightingScheme.edgeWeight(suv[xvi]) / tu);
+//				if (tu == 0) ex.M[uid][xvi] = 0;
 			}
 		}
 		// discard extendible version in favor of primitive array
@@ -204,7 +223,7 @@ public class SRW {
 		for (TIntDoubleIterator grad = gradient.iterator(); grad.hasNext(); ) {
 			grad.advance();
 			String feature = ex.g.featureLibrary.getSymbol(grad.key());
-			if (trainable(feature)) params.adjustValue(feature, learningRate() * grad.value());
+			if (trainable(feature)) params.adjustValue(feature, - learningRate() * grad.value());
 		}
 	}
 
@@ -213,7 +232,9 @@ public class SRW {
 		TIntDoubleMap gradient = new TIntDoubleHashMap(features.size());
 		// add regularization term
 		regularization(params, ex, gradient);
+		
 		// add empirical loss gradient term
+		// positive examples
 		double pmax = 0;
 		for (int a : ex.ex.getPosList()) {
 			double pa = clip(ex.p[a]);
@@ -224,7 +245,6 @@ public class SRW {
 				gradient.adjustOrPutValue(da.key(), aterm, aterm);
 			}
 			this.cumloss.add(LOSS.LOG, -Math.log(pa));
-
 		}
 
 		//negative instance booster
@@ -232,6 +252,7 @@ public class SRW {
 		double beta = 1;
 		if(c.delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 
+		// negative examples
 		for (int b : ex.ex.getNegList()) {
 			double pb = clip(ex.p[b]);
 			for (TIntDoubleIterator db = ex.dp[b].iterator(); db.hasNext(); ) {
@@ -244,6 +265,7 @@ public class SRW {
 
 		return gradient;
 	}
+	
 	/** template: update gradient with regularization term */
 	protected void regularization(ParamVector params, SgdExample ex, TIntDoubleMap gradient) {}
 
@@ -357,7 +379,7 @@ public class SRW {
 		this.cumloss.clear();
 	}
 	public LossData cumulativeLoss() {
-		return this.cumloss;
+		return this.cumloss.copy();
 	}
 	public void setWeightingScheme(WeightingScheme newWeightingScheme) {
 		c.weightingScheme = newWeightingScheme;

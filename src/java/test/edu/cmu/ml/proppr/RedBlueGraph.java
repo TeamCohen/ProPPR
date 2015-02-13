@@ -62,7 +62,7 @@ public class RedBlueGraph {
 		LearningGraphBuilder lgb = new ArrayLearningGraph.ArrayLearningGraphBuilder();
 		brGraph = (ArrayLearningGraph) lgb.create();
 		lgb.index(1);
-		lgb.setGraphSize(brGraph, 6, -1);
+		lgb.setGraphSize(brGraph, magicNumber*2, -1);
 
 		//		brSRWs = new ArrayList<SRW>();
 		//		Collections.addAll(brSRWs, new L2SqLossSRW(), new L2SqLossSRW(), new L2SqLossSRW());

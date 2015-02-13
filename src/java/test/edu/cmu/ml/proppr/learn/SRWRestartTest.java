@@ -123,18 +123,12 @@ public class SRWRestartTest extends SRWTest {
 	 */
 	@Test
 	public void testLearn1() {
-		List<HiLo> trainingPairs = new ArrayList<HiLo>();
-		for (String b : blues) {
-			for (String r : reds) {
-				trainingPairs.add(new HiLo(nodes.getId(b),nodes.getId(r)));
-			}
-		}
 		
-		TIntDoubleMap xxFeatures = new TIntDoubleHashMap();
-		xxFeatures.put(nodes.getId("r0"), 1.0);
+		TIntDoubleMap query = new TIntDoubleHashMap();
+		query.put(nodes.getId("r0"), 1.0);
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
-		PosNegRWExample example = new PosNegRWExample(brGraph, xxFeatures, pos, neg);
+		PosNegRWExample example = new PosNegRWExample(brGraph, query, pos, neg);
 		
 //		ParamVector weightVec = new SimpleParamVector();
 //		weightVec.put("fromb",1.01);
@@ -145,6 +139,7 @@ public class SRWRestartTest extends SRWTest {
 		
 		ParamVector trainedParams = uniformParams.copy();
 		double preLoss = makeLoss(trainedParams, example);
+		srw.clearLoss();
 		srw.trainOnExample(trainedParams,example);
 		double postLoss = makeLoss(trainedParams, example);
 		assertTrue(String.format("preloss %f >=? postloss %f",preLoss,postLoss), 

@@ -126,7 +126,7 @@ public class Trainer {
 							+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
 					if (diff.total() < 0.0) {
 						System.out.println("WARNING: loss INCREASED by " + 
-								(diff.total()) + " - what's THAT about?");
+								(-diff.total()) + " - what's THAT about?");
 					}
 				} else 
 					System.out.println();

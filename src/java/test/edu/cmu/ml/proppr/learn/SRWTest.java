@@ -97,7 +97,7 @@ public class SRWTest extends RedBlueGraph {
 					int v = g.edge_dest[eid];
 					double suv = 0.0;
 					for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
-						suv += params.get(g.featureLibrary.getSymbol(g.label_feature_id[fid])) * g.label_feature_weight[fid];
+						suv += Dictionary.safeGet(params, (g.featureLibrary.getSymbol(g.label_feature_id[fid])), scheme.defaultWeight()) * g.label_feature_weight[fid];
 					}
 					double ew = scheme.edgeWeight(suv);
 					z+=ew;
@@ -107,7 +107,7 @@ public class SRWTest extends RedBlueGraph {
 					int v = g.edge_dest[eid];
 					double suv = 0.0;
 					for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
-						suv += params.get(g.featureLibrary.getSymbol(g.label_feature_id[fid])) * g.label_feature_weight[fid];
+						suv += Dictionary.safeGet(params, (g.featureLibrary.getSymbol(g.label_feature_id[fid])), scheme.defaultWeight()) * g.label_feature_weight[fid];
 					}
 					double ew = scheme.edgeWeight(suv);
 					double inc = vec.get(u) * ew / z;
