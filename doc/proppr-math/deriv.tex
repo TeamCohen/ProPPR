@@ -1,0 +1,437 @@
+\documentclass[12pt]{article}
+
+\usepackage{graphicx}
+\usepackage{latexsym,algorithm,algorithmic}
+\usepackage{times}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{mathptmx}      % use Times fonts if available on your TeX system
+
+\setlength{\textwidth}{7in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{-0.5in}
+\setlength{\evensidemargin}{-0.5in}
+\setlength{\topmargin}{-0.5in}
+
+
+\newcommand{\weightvec}{\textbf{w}}
+\newcommand{\edge}[2]{{u\rightarrow{}v}}
+\newcommand{\edgeuv}{{\edge{u}{v}}}
+
+\newcommand{\vek}[1]{\textbf{#1}}
+\newcommand{\ddw}{\frac{\partial}{\partial\vek{w}}}
+\newcommand{\M}{\textrm{M}}
+\newcommand{\dM}{\textrm{dM}}
+\newcommand{\df}{\textbf{df}}
+\newcommand{\dt}{\textbf{dt}}
+\newcommand{\vphi}{\vec{\phi}}
+
+\begin{document}
+
+\section{Derivation: PPR and its derivative}
+
+Notation: $\vek{s}$ is seeds, $\M$ is transition matrix, $\vek{w}$ are
+parameters, and $\vek{p}^\infty$ is the PPR stationary distribution,
+$\vek{p}^t$ is a point in the power-rule iteration for computating
+PPR, and $\vek{d}^t$ is the partial derivative of $\vek{p}^t$ wrt the
+parameters $\vek{w}$.
+
+\begin{eqnarray}
+\vek{p}^{t+1} & \equiv & \alpha \vek{s} + (1-\alpha) \M \vek{p}^t \\
+\vek{d}^t & \equiv &  \ddw \vek{p}^t
+\end{eqnarray}
+
+Note $\vek{p}^t$ and $\vek{d}^t$ have different dimensions: while
+$\vek{p}^t_u$ is a scalar score for $u$ under PPR, $\vek{d}^t_u$ is a
+vector, giving the sensitivity of that score to each parameter in
+$\vek{w}$.
+
+$\M$ is defined as follows.  There is a weight vector $\vek{w}$, and
+for an edge $\edgeuv$, there is a feature vector $\vphi_{uv}$, which is
+used to define a basic score $s_{uv}$ for the edge, which is passed
+thru a squashing function $f$, e.g., $f(x)\equiv e^x$, and then
+normalized to form $\M$.
+
+\begin{eqnarray}
+ s_{uv}   & \equiv & \vphi_{uv} \cdot \vek{w}  \\
+ t_u      & \equiv & \sum_{v'} f(s_{uv'}) \\
+ \M_{u,v} & \equiv & \frac{ f(s_{uv}) }{ t_u }
+\end{eqnarray}
+
+We can define $\vek{d}^t$ recursively:
+
+
+\begin{eqnarray}
+\vek{d}^{t+1}  & =  &  \ddw \vek{p}^{t+1} \\
+               & =  &  \ddw \left( \alpha \vek{s} + (1-\alpha) \M \vek{p}^t \right) \\
+               & =  &  (1-\alpha) \ddw \M \vek{p}^t \\
+               & =  &  (1-\alpha) \left( (\ddw \M) \vek{p}^t  + \M \ddw\vek{p}^t \right) \\
+               & =  &  (1-\alpha) \left( (\ddw \M) \vek{p}^t  + \M \vek{d}^t \right)
+\end{eqnarray}
+
+Now let's look at $\ddw\M$, which I'll denote $\dM$ below.  Note that
+each $\dM_{uv}$ is a vector, again giving the sensitivity of the
+weight $\M_{uv}$ to each parameter in $\vek{w}$.
+
+\begin{eqnarray}
+\dM_{uv}   & = & \ddw \frac{ f(s_{uv}) }{ t_u } \\
+           & = & \frac{1}{t_u ^2} \left( t_u \ddw f(s_{uv}) - f(s_{uv}) \ddw t_u \right)
+\end{eqnarray}
+
+To continue this, define $\df$ and $\dt$ as the vectors
+
+\begin{eqnarray}
+ \df_{uv} & \equiv & \ddw f(s_{uv}) = f'(s_{uv}) \vphi_{uv} \label{eqn:fprime} \\
+ \dt_{u}  & \equiv & \ddw t_u = \sum_{v'} \df_{uv'}
+\end{eqnarray}
+
+Note that $\df_{uv}$ has no more non-zero components than
+$\vphi_{uv}$, so it is sparse, and $\dt_{u}$ is also sparse, but
+somewhat less so.
+
+We can continue the derivation as
+
+\begin{eqnarray}
+\dM_{uv}   & = & \frac{1}{t_u ^2} \left( t_u \ddw f(s_{uv}) - f(s_{uv}) \ddw t_u \right) \\
+           & = & \frac{1}{t_u ^2} \left( t_u \df_{uv} - f(s_{uv}) \dt_u \right)
+\end{eqnarray}
+
+This is a little different from the old algorithm: there is always an
+(implicit) reset with probability $\alpha$, and that reset probability
+can be increased by learning by weighting the features for the
+(explicit) reset links that are present already in the graph.  No min
+$\alpha$!
+
+\section{Computation}
+
+\begin{table}
+\hrule
+\begin{enumerate}
+\item For each node/row $u$
+  \begin{enumerate}
+  \item  $t_u = 0$
+  \item  $\dt_u = \vek{0}$, an all-zeros vector
+  \item For each neighbor $v$ of $u$
+    \begin{enumerate}    
+    \item $s_{uv} = \vek{w} \cdot \vphi_{uv}$,  a scalar.
+
+      In detail: For $i\in \vphi_{uv}$: increment $s_{uv}$ by $\vek{w}_i\vphi_i$
+
+    \item $t_u  +\!\!= f(s_{uv})$, a scalar
+    \item $\df_{uv} = f'(s_{uv}) \vphi_{uv}$, a vector, as sparse as $\vphi_{uv}$
+
+      In detail: For $i\in \vphi_{uv}$: set $\df_{uv,i} = \vphi_f * c$, where $c=f'(s_{uv})$
+
+    \item  $\dt_u +\!\!= \df_{uv}$, a vector, as sparse as $\sum_{v'} \vphi_{uv'}$
+
+      In detail: For $i\in \df_{uv}$: increment $\dt_{u,i}$ by $\df_{uv,i}$
+
+    \end{enumerate}
+  Now $t_u = \sum_{v'} f(s_{uv'})$ and $\dt_{u} = \sum_{v'} \df_{uv'}$
+  \item For each neighbor $v$ of $u$ create the vector
+
+\[ \dM_{uv}  = \frac{1}{t_u ^2} \left( t_u \df_{uv} - f(s_{uv}) \dt_u \right)  
+\]
+
+Or in detail: For $i\in\dt_u$: $\dM_{uv,i} = \frac{1}{t_u ^2} \left( t_u \df_{uv,i} - f(s_{uv}) \dt_u,i \right)$.  
+
+There aren't any dimensions $i$ that are present in $\df_{uv}$ but not
+$\dt_u$, since $\dt_u$ is a summation.  Also create the scalar
+
+\[ \M_{uv}  = \frac{f(s_{uv})}{t_u} 
+\]
+
+  You can now discard the intermediate values like $t_u$, $\dt_u$, $\df_{uv}$.
+
+  \end{enumerate}
+\end{enumerate}
+\caption{Computing $\M$ and $\dM$} \label{alg:mat}
+\hrule
+\end{table}
+
+Since $\dM$ and $M$ are reused many times, we should compute and store
+$M$ and $\dM$ first.  This will expand the size of the graph somewhat:
+in particular, we will need to store, not only the active edges $u,v$
+and their features $\vphi_{uv}$, but also $\dM_{uv}$, which includes
+weights for all features of vertexes $v'$ that are siblings of $v$
+(i.e., there is an edge $u,v'$).  I'm not sure how bad this will be in
+practice: perhaps we should estimate it for some of our test cases.
+After this, operations should run in time linear in the size of the
+new, less sparse graph encoded in $\dM$.  I believe that this scheme
+also makes operations like the APR learning more modular.
+
+Computing $M$ and $\dM$ is one pass over the graph, shown in Table
+\ref{alg:mat}.
+
+
+Then you can start with $\vek{p}^0 = \vek{d}^0 = \vek{0}$ and iterate
+
+\begin{eqnarray}
+\vek{p}^{t+1}  & =  & \alpha \vek{s} + (1-\alpha) \M \vek{p}^t \\
+\vek{d}^{t+1}  & =  & (1-\alpha) \left( \dM \vek{p}^t  + \M \vek{d}^t \right)
+\end{eqnarray}
+
+In more detail, the iteration for the updates on $\vek{p}$ are shown
+in Table~\ref{alg:updates}.
+
+\begin{table}
+\hrule
+
+Updating $\vek{p}$:
+\begin{enumerate}
+\item $\vek{p}^{t+1} = \vek{0}$
+\item For each node $u$ 
+  \begin{enumerate}
+  \item $\vek{p}^{t+1}_u +\!\!= \alpha \vek{s}_u$
+  \item For each neighbor $v$ of $u$
+    \begin{enumerate}
+    \item $\vek{p}^{t+1}_u +\!\!= (1-\alpha) \M_{uv} \vek{p}^t_v$
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
+
+Updating $\vek{d}$:
+\begin{enumerate}
+\item $\vek{d}^{t+1} = \langle \vek{0}, \ldots, \vek{0} \rangle$ --- i.e., for each node $u$ there is an all-zeros
+  vector of weights.
+\item For each node $u$ 
+  \begin{enumerate}
+  \item For each neighbor $v$ of $u$
+    \begin{enumerate}
+      \item For each $i$ in $\dM_{uv}$
+
+      \[ \vek{d}^{t+1}_{u,i} +\!\!= (1-\alpha) \dM_{uv,i} \vek{p}^t_v \]
+      \item For each $i$ in $\vek{d}^t_{v}$
+
+      \[ \vek{d}^{t+1}_{u,i} +\!\!= (1-\alpha) \M_{uv} \vek{d}^t_{v,i} \]
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
+\caption{Updates for $\vek{d}$ and $\vek{p}$} \label{alg:updates}
+\hrule
+\end{table}
+
+\section{Loss functions and lazy regularization}
+
+For SRW each example is a triple $(\vek{s},P,N)$ where $\vek{s}$ is
+the seed distribution, $P=\{a^1,\ldots,a^I\}$ are the positive (a-ok?)
+examples, and $N=\{b^1,\ldots,b^J\}$ are the negative (bad?) examples.
+I use $\vek{p}$ for the PPR distribution starting at $\vek{s}$, and
+write $\vek{p}[u]$ for $\vek{p}_u$ if I run out of space for
+subscripts.
+
+The loss function is
+\begin{equation}
+L(\vek{w}) \equiv - \Bigg (\sum_{k=1}^I \log \vek{p}[a^k] + \sum_{k=1}^J \log (1 - \vek{p}[b^k]) \Bigg) + \mu R(\vek{w})
+\end{equation}
+where $R(\vek{w})$ is the regularization, eg
+$R(\vek{w})\equiv||\vek{w}||^2_2$. This means loss increases as the objective function decreases, where the objective function is proportional to the probability of either hitting a positive solution or not-hitting a negative solution.  Once we have $\vek{d}$ it's easy
+to compute the gradient of this as
+
+\begin{eqnarray}
+\ddw L(\vek{w}) & \equiv & - \Bigg (\sum_{k=1}^I \frac{1}{\vek{p}[a^k]}\vek{d}[a^k] 
+                                  - \sum_{k=1}^J \frac{1}{1 - \vek{p}[b^k]}\vek{d}[b^k] \Bigg) + \mu \ddw R(\vek{w})
+\end{eqnarray}
+
+We can split this into two parts: the empirical loss gradient, which is
+
+\[
+-\Bigg (\sum_{k=1}^I \frac{1}{\vek{p}[a^k]}\vek{d}[a^k] 
+     - \sum_{k=1}^J \frac{1}{1 - \vek{p}[b^k]}\vek{d}[b^k] \Bigg)
+\]
+and the regularization gradient, 
+\[
+ \mu \ddw R(\vek{w})
+\]
+If an example doesn't contain all features then the empirical gradient
+will be a sparse vector, but the regularization gradient will be
+dense.  So the following code might be more efficient for SGD than
+just computation of the full gradient and taking a step in that
+direction.
+
+\begin{enumerate}
+\item Maintain a ``clock'' counter $m$ which is incremented when each
+  example is processed. Also maintain a history $\vek{h}_i$ which
+  says, for each feature $i$, the last time $t$ an example containing
+  $i$ was processed.
+\item When a new example $(\vek{s},P,N)$ arrives at time $t$
+  \begin{enumerate}
+    \item For each feature active in the example, initialize it, if
+      necessary, and them perform the regularization-loss gradient
+      update $t-\vek{h}_i$ times.
+    \item Peform the empirical-loss update, using 
+      the new weights.
+  \end{enumerate}
+\item When you finish learning at final time $T$, consider every
+  feature $i$, and perform the regularization-loss gradient update
+  $T-\vek{h}_i$ times.  Then write out the final parameters.
+\end{enumerate}
+
+\section{Inference: PPR and APR}
+
+Inference using requires only $\M$, which at theorem-proving time, is
+computed on-the-fly.  The power-iteration version of PPR, which in the
+codebase is called the \texttt{PPRProver}, simply iterates this step
+until convergence (or for a fixed number of iterations), starting with
+$\vek{p}^0=\vek{0}$.
+
+\begin{eqnarray}
+\vek{p}^{t+1} & \equiv & \alpha \vek{s} + (1-\alpha) \M \vek{p}^t \\
+\end{eqnarray}
+
+Breaking this down, the one-step update is the following.
+
+\begin{enumerate}
+\item $\vek{p}^{t+1} = \vek{0}$
+\item For each key $u$ with non-zero weight in $\vek{s}$:
+  \begin{enumerate}
+  \item $\vek{p}^{t+1}[u]$ += $\alpha \vek{s}[u]$
+  \end{enumerate}
+\item For each key $u$ with non-zero weight in $\vek{p}^t$:
+  \begin{enumerate}
+  \item For each node $v$ near $u$ in $\M$:
+\(
+       \vek{p}^{t+1}[v] \mbox{~+=~} (1-\alpha) \M[u,v] \vek{p}^t[u]
+\)
+  \end{enumerate}
+\end{enumerate}
+
+
+
+\section{Architectural Comments}
+
+\emph{ [Katie's comments inline and signed with -k]}
+
+\noindent
+The routines that are suggested are:
+\begin{itemize}
+\item Loading: Compute $\M$ and $\dM$ from a graph and $\vek{w}$.  It
+  seems necessary, altho a little non-modular, to initialize and
+  create new features while the graph is read in. \emph{ [Do this here, or in SGD? -k]} We should be able
+  to estimate performance pretty well after this step.
+
+Inputs: graph and current values of parameters $\vek{w}$.
+
+Outputs: $\M$ and $\dM$, and a list of all active features $i$.
+
+Parameters: $f$, $f'$; method to init new features $i$ for $f$, clock
+time and lazy-regularization function.
+ 
+\item Extended inference: compute $\vek{p}$ and $\vek{d}$.
+ 
+Inputs: $\vek{s}$, $\vek{w}$, $\M$ and $\dM$.
+
+Outputs: $\vek{p}$ and $\vek{d}$.
+
+\item SGD: Initialize new features $i$, use clock time and
+  lazy-regularization function to update their weights, and update
+  $\vek{w}$ using the empirical (non-gradient) loss.
+
+Inputs: $\vek{p}$, $\vek{d}$, and $P$, $N$.
+
+Outputs: Modified $\vek{w}$.
+
+\end{itemize}
+
+\begin{table}
+\hrule
+\begin{verbatim}
+class Graph {
+
+  // names of features
+
+  String[] featName;
+
+  // space for labels for feature weights on edges, each is a
+  // feature index and a weight
+
+  int[] label_featIndex;
+  double[] label_featWeight;
+
+  // space for edges, each is a destination node and a
+  // list of labels, which point into the label space
+
+  int[] edge_dst;
+  int[] edge_labels_lo;
+  int[] edge_labels_hi;
+
+  // space for list of neighbors of nodes, each 
+  // points into the edge space
+
+  int [] node_near_lo;
+  int [] node_near_hi;
+
+  // list of nodes in graph
+  int node_lo, node_hi;
+
+  // space for weight derivatives, which are structurally 
+  // just like labels.  these maybe should be vectors since 
+  // we don't know the size of this space in advance...?
+
+  int[] deriv_featIndex;
+  double[] deriv_featDeriv;
+
+  // list of derivative features for M[u][euv]
+  int[][] dM_lo;
+  int[][] dM_hi;
+}
+\end{verbatim}
+\caption{Proposed data structure for graph} \label{alg:data}
+\hrule
+\end{table}
+
+\begin{table}
+\hrule
+\begin{verbatim}
+for (int u = g.node_lo; u < g.node_hi; u++) {
+  // euv is edge from u to v
+  for (euv = g.node_near_lo[u]; euv < g.node_near_hi[u]; euv++) {
+    int v = g.edge_dst[euv];
+    // luvk is k-th label on edge euv
+    for (luvk = g.edge_labels_lo[euv]; luvk = g.edge_labels_hi[euv]; luvk++) {
+      int i = g.label_featIndex[luvk];
+      double w = g.label_featWeight[luvk];
+      ...
+    }
+  }
+}
+for (int d = g.dM_lo[u][euv]; d < g.dM_hi[u][euv]; d++) {
+  i = g.deriv_featIndex[d];
+  double v = g.deriv_featDeriv[d];
+  // v is partial/(partial feature i) if M[u][v]
+  ...
+}
+\end{verbatim}
+\caption{Accessing the proposed data structure for graph} \label{alg:access}
+\hrule
+\end{table}
+
+A proposed data structure which would be very efficient is shown in
+Table~\ref{alg:data} and \ref{alg:access}.  Some things that aren't
+clear now are:
+\begin{itemize}
+\item Where does the feature-index $\leftrightarrow$ feature-name
+  symbol table go?  Probably not in the graph as shown here.
+\item Is $\M$ and $\dM$ part of the graph or a different structure?
+\end{itemize}
+Also a clarification: \texttt{M} and \texttt{dM\_lo,dM\_hi}, are not
+dense 2-matrixes, of size quadratic in the number of nodes, $n$.
+Instead \texttt{M} is a length-$n$ array of variable-size arrays, and
+\texttt{M[u]}, for node index \texttt{u}, is an array of size $m_u$,
+where $m_u$ is the number of neighbors (edges away from) \texttt{u}.
+And \texttt{dM\_lo,dM\_hi} are parallel structures.
+
+A final note: the squashing function $f$ and its derivative $f'$ are
+only used in computing $\df$ in Equation~\ref{eqn:fprime}.  One future
+extension to ProPPR might be to have facts with weights defined by
+parameters: e.g., facts like \texttt{sim(a,b)} which when used would
+lead to an edge with a computed weight $s_{uv}$ based on an internal
+set of parameters $\vec{\lambda}$ (think of a learned similarity
+subroutine).  A modular way of dealing with this might be worth
+thinking through.  Conceptually, $\vec{\lambda}$ is a part of
+$\vek{w}$: one could have an interface which given an edge $u,v$ with
+weight $s_{uv}$ returns $f'(s_{uv})\ddw s_{uv}$ in terms of components
+of $\vec{\lambda}$.  For training you would also need to pass in an
+update of the $\vec{\lambda}$ features to the learning subroutine....
+
+\end{document}
+
