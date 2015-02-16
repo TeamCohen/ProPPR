@@ -200,9 +200,9 @@ Updating $\vek{d}$:
       \item For each $i$ in $\dM_{uv}$
 
       \[ \vek{d}^{t+1}_{u,i} +\!\!= (1-\alpha) \dM_{uv,i} \vek{p}^t_v \]
-      \item For each $i$ in $\vek{d}^t_{v}$
+      \item For each $i$ in $\vek{d}^t_{u}$
 
-      \[ \vek{d}^{t+1}_{u,i} +\!\!= (1-\alpha) \M_{uv} \vek{d}^t_{v,i} \]
+      \[ \vek{d}^{t+1}_{u,i} +\!\!= (1-\alpha) \M_{uv} \vek{d}^t_{u,i} \]
     \end{enumerate}
   \end{enumerate}
 \end{enumerate}
@@ -268,10 +268,14 @@ direction.
 
 \section{Inference: PPR and APR}
 
-Inference using requires only $\M$, which at theorem-proving time, is
-computed on-the-fly.  The power-iteration version of PPR, which in the
-codebase is called the \texttt{PPRProver}, simply iterates this step
-until convergence (or for a fixed number of iterations), starting with
+Inference using requires only $\M$, which at theorem-proving time is
+computed on-the-fly.  That is, whenever you need a row of $\M$ (the
+set of values $\M[u,v]$ for all $v$ near $u$) you simply compute the
+normalized outlinks of $u$.
+
+The power-iteration version of PPR, which in the codebase is called
+the \texttt{PPRProver}, simply iterates this step until convergence
+(or for a fixed number of iterations), starting with
 $\vek{p}^0=\vek{0}$.
 
 \begin{eqnarray}
@@ -295,6 +299,61 @@ Breaking this down, the one-step update is the following.
   \end{enumerate}
 \end{enumerate}
 
+The approximate PageRank is based on a more primitive \texttt{push}
+operation.  The full approximate PageRank algorithm also uses
+$\vek{d}$, a vector of node degrees.
+
+\begin{enumerate}
+\item Let $\vek{p}= \vek{0}$ and $\vek{r}= \vek{s}$
+\item While there is some vertex $u$ such that $r(u)\geq{}\epsilon
+  \vek{d}(u)$:
+  \begin{enumerate}
+  \item Perform the \texttt{push}($u$) operation:
+    \begin{enumerate}
+      \item Save the current value of $u$ in $\vek{r}$: $ru = \vek{r}[u]$
+      \item $\vek{p}[u]$ += $\alpha \vek{r}[u]$
+      \item $\vek{r}[u]$ *= $(1-\alpha)$
+      \item For each node $v$ near $u$ in $\M$:
+\(
+       \vek{r}[v] \mbox{~+=~} (1-\alpha) \M[u,v] ru
+\)
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
+
+In the old implementation, $\vek{d}[u]$ was computed and cached each
+time a new key $u$ was added to $\vek{r}$.  In the new implementation
+of the prover, this caching is done by the proof graph, so there's no
+need to do it in the prover.  
+
+The old DPR prover implementation computed this approximation by
+finding $u$'s with large $\vek{r}[u]$ using a variation of the
+standard depth-first prover: essentially, you traversed the tree
+depth-first, and whenever you hit a node with $\vek{r}[u]$ below
+threshold, you stopped.  Factoring this in the algorithm used the same
+initial values of $\vek{p}$ and $\vek{r}$ but then called a recursive
+routine \texttt{proveState}$(u_0)$, where $u_0$ is the initial query
+node (aka the initial state of the proof graph).
+
+William's got a new version which calls this iteratively with smaller
+and smaller $\epsilon$'s, which seems to work faster.  That suggests
+that it's helpful to do pushes on the nodes with larger $\vek{r}$
+values first.  With that in mind, another thing we could consider
+would be storing $u$'s in a heap/priority queue, ordered by $\vek{r}$
+values.  I know this idea has been used in the past but I don't know
+how much it helps.  Obviously there's an overhead for the heap but my
+guess is that's not going to dominate.
+
+\bigskip
+
+\noindent Function \texttt{proveState}$(u)$:
+\begin{enumerate}
+\item If $r(u)\geq{}\epsilon \vek{d}(u)$:
+  \begin{enumerate}
+  \item Perform the \texttt{push}$(u)$ operation
+  \item For each $v$ near $u$ (i.e., each subgoal of $u$): \texttt{proveState}$(v)$
+  \end{enumerate}
+\end{enumerate}
 
 
 \section{Architectural Comments}
