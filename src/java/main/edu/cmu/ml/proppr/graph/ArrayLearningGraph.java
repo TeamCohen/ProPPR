@@ -25,6 +25,8 @@ public class ArrayLearningGraph extends LearningGraph {
 	// node_lo = 0;
 	public int node_hi;
 	
+	private int index=0;
+	
 	public ArrayLearningGraph(SymbolTable<String> fL) {
 		this.featureLibrary = fL;
 	}
@@ -48,12 +50,16 @@ public class ArrayLearningGraph extends LearningGraph {
 
 	@Override
 	public int nodeSize() {
-		return node_hi;
+		return node_hi-index;
 	}
 
 	@Override
 	public int edgeSize() {
 		return edge_dest.length;
+	}
+	
+	public void setIndex(int i) {
+		this.index = i;
 	}
 	
 	public static class ArrayLearningGraphBuilder extends LearningGraphBuilder {
@@ -64,16 +70,19 @@ public class ArrayLearningGraph extends LearningGraph {
 		int index=0;
 		
 		@Override
-		public void index(int i0) {
-			this.index = i0;
-		}
-		@Override
 		public LearningGraph create() {
 			if (current != null) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
 			current =  new ArrayLearningGraph(featureLibrary);
 			return current;
 		}
 
+		@Override
+		public void index(int i0) {
+			if (outlinks != null) throw new IllegalStateException("Bad Programmer: Can't call index() after setGraphSize().");
+			this.index = i0;
+			current.setIndex(i0);
+		}
+		
 		@Override
 		public void setGraphSize(LearningGraph g, int nodeSize, int edgeSize) {
 			if (!current.equals(g)) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
@@ -85,7 +94,7 @@ public class ArrayLearningGraph extends LearningGraph {
 			if (edgeSize < 0) return;
 			initEdges(edgeSize);
 		}
-		
+
 		private void initEdges(int edgeSize) {
 			current.edge_dest = new int[edgeSize];
 			current.edge_labels_hi = new int[edgeSize];
