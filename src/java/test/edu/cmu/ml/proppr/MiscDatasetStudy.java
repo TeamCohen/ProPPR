@@ -75,17 +75,22 @@ public class MiscDatasetStudy {
 		ProofGraph pg = new ProofGraph(query,apr,program,plugins);
 
 		
-		for (Outlink o : pg.pgOutlinks(pg.getStartState(), false, false)) {
+		for (Outlink o : pg.pgOutlinks(pg.getStartState(), false)) {
+			if (o.child.equals(pg.getStartState())) continue;
 			System.out.println(o.toString()); // seed; nonseed
 			if (o.child.getJumpTo().equals("hasWord/2")) {
-				for (Outlink oo : pg.pgOutlinks(o.child, false, false)) {
+				for (Outlink oo : pg.pgOutlinks(o.child, false)) {
+					if (o.child.equals(pg.getStartState())) continue;
 					// hasWord
-					for (Outlink ooo : pg.pgOutlinks(oo.child, false, false)) {
+					for (Outlink ooo : pg.pgOutlinks(oo.child, false)) {
+						if (o.child.equals(pg.getStartState())) continue;
 						//wordIn
-						for (Outlink m : pg.pgOutlinks(ooo.child, false, false)) {
+						for (Outlink m : pg.pgOutlinks(ooo.child, false)) {
+							if (o.child.equals(pg.getStartState())) continue;
 							// predict again: seed; nonseed
 							if (m.child.getJumpTo().equals("seed/2")) {
-								for (Outlink mm : pg.pgOutlinks(m.child, false, false)) {
+								for (Outlink mm : pg.pgOutlinks(m.child, false)) {
+									if (o.child.equals(pg.getStartState())) continue;
 									System.out.println("    "+oo.toString().replaceAll("\n","\n    "));
 									System.out.println("        "+ooo.toString().replaceAll("\n","\n        "));
 									System.out.println("            "+m.toString().replaceAll("\n","\n            "));

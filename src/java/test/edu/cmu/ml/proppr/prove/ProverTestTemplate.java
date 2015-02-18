@@ -51,14 +51,8 @@ public abstract class ProverTestTemplate {
 		fMilk = FactsPlugin.load(apr,new File(MILK_FACTS), false);
 		lpMem = WamBaseProgram.load(new File(MEM_PROGRAM));
 		fMem = FactsPlugin.load(apr,new File(MEM_FACTS), false);
-		setProveStateAnswers();
 	}
 	
-	public void setProveStateAnswers() {
-		proveStateAnswers[0] = 0.14286; // milk
-		proveStateAnswers[1] = 0.07143; // most
-		proveStateAnswers[2] = 0.07143; // start
-	}
 
 	@Test
 	public void testProveState() throws LogicProgramException {

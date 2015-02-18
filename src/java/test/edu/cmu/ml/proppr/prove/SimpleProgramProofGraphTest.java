@@ -44,33 +44,37 @@ public class SimpleProgramProofGraphTest {
 		// step 1: coworker -> employee,boss
 		System.out.println("Step 1");
 		for (State s : vec.keySet()) System.out.println(s);
-		List<Outlink> outlinks = pg.pgOutlinks(pg.getStartState(),false,false);
-		assertEquals("1. coworker :- employee,boss",1,outlinks.size());
+		List<Outlink> outlinks = pg.pgOutlinks(pg.getStartState(),false);
+		assertEquals("1. coworker :- employee,boss",2,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
+		vec.remove(pg.getStartState());
 		assertEquals("1. statecount",1,vec.size());
 
 		// step 2: 
 		System.out.println("Step 2");
 		for (State s : vec.keySet()) System.out.println(s);
-		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
-		assertEquals("2. employee :- management,boss",1,outlinks.size());
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false);
+		assertEquals("2. employee :- management,boss",2,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
+		vec.remove(pg.getStartState());
 		assertEquals("2. statecount",1,vec.size());
 
 		// step 3: 
 		System.out.println("Step 3");
 		for (State s : vec.keySet()) System.out.println(s);
-		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
-		assertEquals("3. management :- sookie",1,outlinks.size());
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false);
+		assertEquals("3. management :- sookie",2,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
+		vec.remove(pg.getStartState());
 		assertEquals("3. statecount",1,vec.size());
 
 		// step 4: 
 		System.out.println("Step 4");
 		for (State s : vec.keySet()) System.out.println(s);
-		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
-		assertEquals("4. boss(sookie,X) :- _steve_ + sven",1,outlinks.size());
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false);
+		assertEquals("4. boss(sookie,X) :- _steve_ + sven",2,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
+		vec.remove(pg.getStartState());
 		assertEquals("4. statecount",1,vec.size());
 
 		// step 5: 
@@ -79,9 +83,10 @@ public class SimpleProgramProofGraphTest {
 			System.out.println(s);
 			System.out.println(Dictionary.buildString(pg.asDict(s), new StringBuilder(), "\n\t").substring(1));
 		}
-		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false,false);
-		assertEquals("5. boss(sookie,X) :- steve + sven",2,outlinks.size());
+		outlinks = pg.pgOutlinks(vec.keySet().iterator().next(),false);
+		assertEquals("5. boss(sookie,X) :- steve + sven",3,outlinks.size());
 		vec = nextVec(vec,normalized(outlinks));
+		vec.remove(pg.getStartState());
 		assertEquals("5. statecount",2,vec.size());
 		
 		// step 6: 

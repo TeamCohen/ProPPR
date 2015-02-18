@@ -38,15 +38,18 @@ public class SparseGraphPluginTest {
 	public void testDegree() throws LogicProgramException {
 		Query q = Query.parse("child(pam,X)");
 		ProofGraph pg = new ProofGraph(q,apr,program,plugin);
-		assertEquals(3,pg.pgDegree(pg.getStartState()));
+		// minus 1 for reset
+		assertEquals(3,pg.pgDegree(pg.getStartState())-1);
 	}
 	
 	@Test
 	public void testRowEnd() throws LogicProgramException {
 		ProofGraph pg = new ProofGraph(Query.parse("sister(yvette,X)"),apr,program,plugin);
-		assertEquals("Yvette should have no sisters\n",0,pg.pgDegree(pg.getStartState()));
+		// minus 1 for reset
+		assertEquals("Yvette should have no sisters\n",0,pg.pgDegree(pg.getStartState())-1);
 		pg = new ProofGraph(Query.parse("sister(theresa,X)"),apr,program,plugin);
-		assertEquals("Theresa should have 1 sister\n",1,pg.pgDegree(pg.getStartState()));
+		// minus 1 for reset
+		assertEquals("Theresa should have 1 sister\n",1,pg.pgDegree(pg.getStartState())-1);
 	}
 
 }

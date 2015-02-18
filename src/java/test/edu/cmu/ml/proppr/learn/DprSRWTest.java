@@ -9,7 +9,7 @@ import java.util.TreeMap;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.AprSRW;
+import edu.cmu.ml.proppr.learn.DprSRW;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.SigmoidWeightingScheme;
@@ -19,10 +19,10 @@ import edu.cmu.ml.proppr.util.MuParamVector;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
 
-public class AprSRWTest extends L2PosNegLossSRWTest {
+public class DprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
-		srw = new AprSRW();
+		srw = new DprSRW();
 	}
 	
 	@Override

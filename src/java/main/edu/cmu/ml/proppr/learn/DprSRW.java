@@ -27,28 +27,28 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class AprSRW extends SRW {
-	private static final Logger log = Logger.getLogger(AprSRW.class);
+public class DprSRW extends SRW {
+	private static final Logger log = Logger.getLogger(DprSRW.class);
 	public static final double DEFAULT_STAYPROB=DprProver.STAYPROB_DEFAULT;
 	
 	private double stayProb;
 	protected LossData cumloss;
 
-	public AprSRW() {
+	public DprSRW() {
 		super();
 		init(DEFAULT_STAYPROB);
 	}
 	
-	public AprSRW(SRWOptions params) {
+	public DprSRW(SRWOptions params) {
 		super(params);
 		init(DEFAULT_STAYPROB);
 	}
 	
-	public AprSRW(double istayProb) {
+	public DprSRW(double istayProb) {
 		super();
 		this.init(istayProb);
 	}
-	public AprSRW(SRWOptions params, double istayProb) {
+	public DprSRW(SRWOptions params, double istayProb) {
 		super(params);
 		this.init(istayProb);
 	}
