@@ -90,21 +90,13 @@ public abstract class Prover {
 			return z;
 	}
 	protected Map<State,Double> normalizedOutlinks(ProofGraph pg, State s) throws LogicProgramException {
-		List<Outlink> outlinks = pg.pgOutlinks(s,NORMLX_RESTART,NORMLX_TRUELOOP);
+		List<Outlink> outlinks = pg.pgOutlinks(s,NORMLX_TRUELOOP);
 		Map<State,Double> weightedOutlinks = new HashMap<State,Double>();
-		Outlink reset = null;
 		double z = 0;
 		for (Outlink o : outlinks) {
 			o.wt = this.weighter.w(o.fd);
 			weightedOutlinks.put(o.child, o.wt);
 			z += o.wt;
-			if (o.child.equals(pg.getStartState())) reset = o;
-		}
-		
-		// scale alphaBooster feature using current weighting scheme
-		if (reset.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
-			z = rescaleResetLink(reset, z);
-			weightedOutlinks.put(reset.child, reset.wt);
 		}
 		
 		for (Map.Entry<State,Double>e : weightedOutlinks.entrySet()) {

@@ -96,47 +96,44 @@ public class ProofGraph {
 	}
 	
 	/* **************** proving ****************** */
-	public List<Outlink> pgOutlinks(State state, boolean trueLoop, boolean restart) throws LogicProgramException {
+	
+	/**
+	 * Return the list of outlinks from the provided state, including a reset outlink back to the query.
+	 * @param state
+	 * @param trueLoop
+	 * @return
+	 * @throws LogicProgramException
+	 */
+	public List<Outlink> pgOutlinks(State state, boolean trueLoop) throws LogicProgramException {
 		if (!this.graph.outlinksDefined(state)) {
-			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop,restart);
-			if (restart) this.graph.setOutlinks(state,outlinks);
+			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop);
+			Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
+			restartFD.put(this.restartFeature,1.0);
+			outlinks.add(new Outlink(restartFD, this.startState));
+			this.graph.setOutlinks(state,outlinks);
 			return outlinks;
 		}
 		return this.graph.getOutlinks(state);
 	}
-	private List<Outlink> computeOutlinks(State state, boolean trueLoop, boolean restart) throws LogicProgramException {
+	private List<Outlink> computeOutlinks(State state, boolean trueLoop) throws LogicProgramException {
 		List<Outlink> result = new ArrayList<Outlink>();
 		if (state.isCompleted()) {
 			if (trueLoop) {
 				result.add(new Outlink(this.trueLoopFD, state));
 			}
-			if (restart) {
-				result.add(new Outlink(this.trueLoopRestartFD, this.startState));
-			}
-		} else if (state.isFailed()) {
-			Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
-			restartFD.put(this.restartFeature,1.0);
-			result.add(new Outlink(restartFD, this.startState));
-		} else {
+		} else if (!state.isFailed()) {
 			result = this.interpreter.wamOutlinks(state);
-			if (restart) {
-				Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
-				restartFD.put(this.restartFeature,1.0);
-				// We set a default value here, and adjust it in prover:
-				restartFD.put(this.restartBoosterFeature,0.0); // was: (double) n * this.apr.alpha / (1 - this.apr.alpha));
-				result.add(new Outlink(restartFD,this.startState));
-			}
 		}
 		return result;
 	}
-	/** The number of outlinks for a state. 
+	/** The number of outlinks for a state, including the reset outlink back to the query. 
 	 * @throws LogicProgramException */
 	public int pgDegree(State state) throws LogicProgramException {
-		return this.pgDegree(state, true, false);
+		return this.pgDegree(state, true);
 	}
 	
-	public int pgDegree(State state, boolean trueLoop, boolean restart) throws LogicProgramException {
-		return this.pgOutlinks(state, trueLoop, restart).size();
+	public int pgDegree(State state, boolean trueLoop) throws LogicProgramException {
+		return this.pgOutlinks(state, trueLoop).size();
 	}
 	
 	/* ***************************** grounding ******************* */

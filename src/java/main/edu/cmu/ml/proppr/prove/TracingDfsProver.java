@@ -17,8 +17,8 @@ public class TracingDfsProver extends DfsProver {
 	public TracingDfsProver(APROptions apr) {
 		super(apr);
 	}
-	public TracingDfsProver(FeatureDictWeighter w, APROptions apr, boolean trueLoop, boolean restart) {
-		super(w,apr,trueLoop,restart);
+	public TracingDfsProver(FeatureDictWeighter w, APROptions apr, boolean trueLoop) {
+		super(w,apr,trueLoop);
 	}
 	@Override
 	protected void beforeDfs(State state, ProofGraph pg, int depth) throws LogicProgramException {
@@ -33,6 +33,6 @@ public class TracingDfsProver extends DfsProver {
 	}
 	@Override
 	public Prover copy() {
-		return new TracingDfsProver(this.weighter, this.apr, this.trueLoop, this.restart);
+		return new TracingDfsProver(this.weighter, this.apr, this.trueLoop);
 	}
 }

@@ -18,6 +18,7 @@ import edu.cmu.ml.proppr.util.Dictionary;
  *
  */
 public class PprProver extends Prover {
+	private static final double SEED_WEIGHT = 1.0;
 	private static final Logger log = Logger.getLogger(PprProver.class);
 	private static final boolean DEFAULT_TRACE=false;
 	private static final boolean RESTART = true;
@@ -54,7 +55,7 @@ public class PprProver extends Prover {
 	@Override
 	public Map<State, Double> prove(ProofGraph pg) {
 		Map<State,Double> startVec = new HashMap<State,Double>();
-		startVec.put(pg.getStartState(),1.0);
+		startVec.put(pg.getStartState(),SEED_WEIGHT);
 		Map<State,Double> vec = startVec;
 		
 		for (int i=0; i<this.apr.maxDepth; i++) {
@@ -69,12 +70,15 @@ public class PprProver extends Prover {
 	protected Map<State, Double> walkOnce(ProofGraph pg, Map<State, Double> vec) {
 		Map<State, Double> nextVec = new HashMap<State, Double>();
 		int i=1,n=vec.size();
-		for (Map.Entry<State, Double> s : vec.entrySet()) {
-			log.info("state "+(i++)+" of "+n);
+		// p[u in s] += alpha * s[u]
+		Dictionary.increment(nextVec, pg.getStartState(), apr.alpha * SEED_WEIGHT);
+		for (Map.Entry<State, Double> p : vec.entrySet()) {
+			if (log.isInfoEnabled()) log.info("state "+(i++)+" of "+n);
 			try {
-				for (Map.Entry<State,Double> e : this.normalizedOutlinks(pg, s.getKey()).entrySet()) {
-					if (log.isTraceEnabled()) log.trace("walkonce normalizedOutlinks "+s.getKey()+" "+e.getValue()+" "+e.getKey());
-					Dictionary.increment(nextVec, e.getKey(), e.getValue() * s.getValue(),"(elided)");
+				for (Map.Entry<State,Double> e : this.normalizedOutlinks(pg, p.getKey()).entrySet()) {
+					if (log.isTraceEnabled()) log.trace("walkonce normalizedOutlinks "+p.getKey()+" "+e.getValue()+" "+e.getKey());
+					// p[v] += (1-alpha) * Muv * p[u]
+					Dictionary.increment(nextVec, e.getKey(), e.getValue() * (1 - apr.alpha) * p.getValue(),"(elided)");
 				}
 			} catch (LogicProgramException e) {
 				throw new IllegalStateException(e);
