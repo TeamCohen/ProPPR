@@ -103,7 +103,7 @@ $\alpha$!
 
 \section{Computation}
 
-\begin{table}
+\begin{table} % Computing M and dM
 \hrule
 \begin{enumerate}
 \item For each node/row $u$
@@ -173,7 +173,7 @@ Then you can start with $\vek{p}^0 = \vek{d}^0 = \vek{0}$ and iterate
 In more detail, the iteration for the updates on $\vek{p}$ are shown
 in Table~\ref{alg:updates}.
 
-\begin{table}
+\begin{table} % updating p and d
 \hrule
 
 Updating $\vek{p}$:
@@ -184,7 +184,7 @@ Updating $\vek{p}$:
   \item $\vek{p}^{t+1}_u +\!\!= \alpha \vek{s}_u$
   \item For each neighbor $v$ of $u$
     \begin{enumerate}
-    \item $\vek{p}^{t+1}_u +\!\!= (1-\alpha) \M_{uv} \vek{p}^t_v$
+    \item $\vek{p}^{t+1}_v +\!\!= (1-\alpha) \vek{p}^t_u \M_{uv} $
     \end{enumerate}
   \end{enumerate}
 \end{enumerate}
@@ -199,10 +199,10 @@ Updating $\vek{d}$:
     \begin{enumerate}
       \item For each $i$ in $\dM_{uv}$
 
-      \[ \vek{d}^{t+1}_{u,i} +\!\!= (1-\alpha) \dM_{uv,i} \vek{p}^t_v \]
-      \item For each $i$ in $\vek{d}^t_{u}$
+      \[ \vek{d}^{t+1}_{v,i} +\!\!= (1-\alpha) \vek{p}^t_u \dM_{uv,i} \]
+      \item For each $i$ in $\vek{d}^t_{v}$
 
-      \[ \vek{d}^{t+1}_{u,i} +\!\!= (1-\alpha) \M_{uv} \vek{d}^t_{u,i} \]
+      \[ \vek{d}^{t+1}_{v,i} +\!\!= (1-\alpha) \vek{d}^t_{u,i} \M_{uv} \]
     \end{enumerate}
   \end{enumerate}
 \end{enumerate}
@@ -491,6 +491,67 @@ $\vek{w}$: one could have an interface which given an edge $u,v$ with
 weight $s_{uv}$ returns $f'(s_{uv})\ddw s_{uv}$ in terms of components
 of $\vec{\lambda}$.  For training you would also need to pass in an
 update of the $\vec{\lambda}$ features to the learning subroutine....
+
+\clearpage
+\begin{appendix}
+\section{Linear Algebra proof of imperative procedure for p and d updates}
+
+\subsection{Computing the p update}
+\begin{align*}
+\vek{p}^{t+1} =& \alpha \vek{s} + (1-\alpha)\vek{p}^t \M\\
+\vek{p}^t \M =& \left[ \begin{array}{ccccc} 
+p_0 & p_1 & p_2 & \ldots & p_n 
+\end{array} \right] \left[ \begin{array}{cccc}
+\\M_{00} & \M_{01} & \M_{02} & \ldots \\
+\\M_{10} & \M_{11} & \M_{12} & \ldots \\
+\M_{20} & \M_{21} & \M_{22} & \ldots \\
+\vdots & \vdots & \vdots
+\end{array} \right]\\
+=& \left[ \begin{array}{cccc} p^{t+1}_0 & p^{t+1}_1 & p^{t+1}_2 & \ldots \end{array} \right]\\
+p^{t+1}_0 =& p_0 \M_{00} + p_1 \M_{10} + p_2 \M_{20} + \ldots\\
+p^{t+1}_1 =& p_0 \M_{01} + p_1 \M_{11} + p_2 \M_{21} + \ldots\\
+\end{align*}
+
+If we set $p^{t+1}_u$, we must iterate across, over all terms of the first element, then all terms of the second element, etc:
+
+$$p^{t+1}_u += (1-\alpha) p_v \M_{vu}$$
+
+Given our data structure for $\M$ however, constructing $\M_{vu}$ is difficult. To use $\M_{uv}$ instead, we can set $p^{t+1}_v$ and iterate down, computing the first term of all elements, then the second term of all elements, etc:
+
+$$p^{t+1}_{v} += (1-\alpha) p_u \M_{uv}$$
+
+\subsection{Computing the d update}
+
+Computing $d$ proceeds in much the same way:
+
+\begin{align*}
+\vek{d}^{t+1}_i =& (1-\alpha)(\vek{p}^t \dM_i + \vek{d}^t_i \M)
+\end{align*}
+
+We'll start by deconstructing the first term only:
+
+\begin{align*}
+\vek{p}^t \dM_i =& \left[ \begin{array}{cccc} p_0 & p_1 & p_2 & \ldots \end{array} \right] \
+\left[ \begin{array}{cccc}
+\dM_{00,i} & \dM_{01,i} & \dM_{02,i} & \ldots \\
+\dM_{10,i} & \dM_{11,i} & \dM_{12,i} & \ldots \\
+\dM_{20,i} & \dM_{21,i} & \dM_{22,i} & \ldots \\
+\vdots & \vdots & \vdots
+\end{array} \right]\\
+=& \left[ \begin{array}{cccc} d^{t+1}_{0,i} & d^{t+1}_{1,i} & d^{t+1}_{2,i} & \ldots \end{array} \right]\\
+d^{t+1}_{0,i} =& p_0 \dM_{00,i} + p_1 \dM_{10,i} + p_2 \dM_{20,i} + \ldots\\
+p^{t+1}_{1,i} =& p_0 \dM_{01,i} + p_1 \dM_{11,i} + p_2 \dM_{21,i} + \ldots\\
+\end{align*}
+
+We have the same choice of setting $d^{t+1}_{u,i}$ or $d^{t+1}_{v,i}$, with the same dependence on using $\dM_{vu,i}$ or $\dM_{uv,i}$. Since we must use $\dM_{uv,i}$ due to the way our data structure is constructed, we must update $d^{t+1}_{v,i}$:
+
+$$ d^{t+1}_{v,i} += (1-\alpha) \vek{p}^t_u \dM_{uv,i} $$
+
+The same principles hold for the second term:
+
+$$ d^{t+1}_{v,i} += (1-\alpha) \vek{d}^t_{u,i} \M_{uv} $$
+
+\end{appendix}
 
 \end{document}
 

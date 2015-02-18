@@ -9,9 +9,14 @@ public class SimpleParamVector<F> extends ParamVector<F,Double> {
 	public SimpleParamVector() {
 		this.backingStore = new ConcurrentHashMap<F,Double>();
 	}
-	public SimpleParamVector(Map<String, Double> map) {
-		if (! (map instanceof ConcurrentHashMap)) throw new IllegalArgumentException("Need a concurrent hash map!");
-		this.backingStore = (ConcurrentHashMap) map;
+	public SimpleParamVector(Map<F, Double> map) {
+		
+		if (map instanceof ConcurrentHashMap)
+			this.backingStore = (ConcurrentHashMap) map;
+		else {
+			this.backingStore = new ConcurrentHashMap<F,Double>();
+			this.backingStore.putAll(map);
+		}
 	}
 	
 	@Override

@@ -139,7 +139,6 @@ public class DprProver extends Prover {
 
 				// scale alphaBooster feature using current weighting scheme
 				if (restart.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
-					// TODO do we need a z= here?
 					z = rescaleResetLink(restart, z);
 				}
 				

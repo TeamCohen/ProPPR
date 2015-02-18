@@ -56,13 +56,15 @@ public abstract class Prover {
 	 * nonBoosterReset = sum[otherfeatures] theta_feature * weight_feature = f_inv( rw ) - theta_alphaBooster * weight_alphaBooster
 	 * 
 	 * assert rw_new / z_new = alpha
-	 * z_new = z_old - rw_old + rw_new
+	 * z_new = z_old - rw_old + rw_new = z_old - rw_old + alpha * z_new
+	 * (1 - alpha) * z_new = z_old - rw_old
+	 * z_new = [1 / (1 - alpha)] * (z_old - rw_old)
 	 * then:
 	 * 
 	 * f( theta_alphaBooster * newweight_alphaBooster + sum[otherfeatures] theta_feature * weight_feature ) = alpha * z_new
 	 *  = [alpha / (1 - alpha)] * (z_old - rw_old)
-	 * theta_alphaBooster * newweight_alphaBooster + f_inv( rw ) - theta_alphaBooster * oldweight_alphaBooster = f_inv( [alpha / (1 - alpha)] * (z_old - rw_old) )
-	 * newweight_alphaBooster = (1/theta_alphaBooster) * (f_inv( [alpha / (1 - alpha)] * (z_old - rw_old)) - (f_inv( rw ) - theta_alphaBooster))
+	 * theta_alphaBooster * newweight_alphaBooster + f_inv( rw_old ) - theta_alphaBooster * oldweight_alphaBooster = f_inv( [alpha / (1 - alpha)] * (z_old - rw_old) )
+	 * newweight_alphaBooster = (1/theta_alphaBooster) * (f_inv( [alpha / (1 - alpha)] * (z_old - rw_old)) - (f_inv( rw_old ) - theta_alphaBooster))
 	 * 
 	 * NB f_inv( [alpha / (1 - alpha)] * (z_old - rw_old) ) - nonBoosterReset < 0 when default reset weight is high relative to z;
 	 * when this is true, no reset boosting is necessary and we can set newweight_alphaBooster = 0.
@@ -73,6 +75,7 @@ public abstract class Prover {
 	 */
 	protected double computeAlphaBooster(double currentAB, double z, double rw) {
 		double thetaAB = Dictionary.safeGet(this.weighter.weights,ProofGraph.ALPHABOOSTER,this.weighter.weightingScheme.defaultWeight());
+		if (thetaAB == 0) return 0; // then nothing we can do to currentAB matters
 		double nonBoosterReset = this.weighter.weightingScheme.inverseEdgeWeightFunction(rw) - thetaAB * currentAB;
 		double alpha_fraction = (this.apr.alpha + ALPHA_BUFFER) / (1 - (this.apr.alpha + ALPHA_BUFFER));
 		double numerator = (this.weighter.weightingScheme.inverseEdgeWeightFunction( alpha_fraction * (z - rw) ) - nonBoosterReset); 

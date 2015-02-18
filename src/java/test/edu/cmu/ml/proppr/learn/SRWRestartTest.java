@@ -40,7 +40,6 @@ public class SRWRestartTest extends SRWTest {
 		srw.setAlpha(0.01);
 	}
 	
-	
 	@Override
 	public void moreSetup(LearningGraphBuilder lgb) {
 		super.moreSetup(lgb);
@@ -118,31 +117,5 @@ public class SRWRestartTest extends SRWTest {
 		lowerScores(redPart(newRwr),redPart(baseLineRwr));
 	}
 	
-	/**
-	 * check that learning on red/blue graph works
-	 */
-	@Test
-	public void testLearn1() {
-		
-		TIntDoubleMap query = new TIntDoubleHashMap();
-		query.put(nodes.getId("r0"), 1.0);
-		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
-		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
-		PosNegRWExample example = new PosNegRWExample(brGraph, query, pos, neg);
-		
-//		ParamVector weightVec = new SimpleParamVector();
-//		weightVec.put("fromb",1.01);
-//		weightVec.put("tob",1.0);
-//		weightVec.put("fromr",1.03);
-//		weightVec.put("tor",1.0);
-//		weightVec.put("id(restart)",1.02);
-		
-		ParamVector trainedParams = uniformParams.copy();
-		double preLoss = makeLoss(trainedParams, example);
-		srw.clearLoss();
-		srw.trainOnExample(trainedParams,example);
-		double postLoss = makeLoss(trainedParams, example);
-		assertTrue(String.format("preloss %f >=? postloss %f",preLoss,postLoss), 
-				preLoss == 0 || preLoss > postLoss);
-	}
+
 }

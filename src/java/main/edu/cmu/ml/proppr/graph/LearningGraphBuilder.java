@@ -25,6 +25,7 @@ public abstract class LearningGraphBuilder {
 		int nodeSize = Integer.parseInt(parts[0]);
 		int edgeSize = Integer.parseInt(parts[1]);
 		LearningGraph graph = create();
+		index(1);
 		setGraphSize(graph, nodeSize, edgeSize);
 
 		String[] featureList;

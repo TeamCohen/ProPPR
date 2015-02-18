@@ -27,6 +27,7 @@ public class ExpWeightingScheme extends WeightingScheme {
 	
 	@Override
 	public double inverseEdgeWeightFunction(double x) {
+		if (x <= 0) return -Double.MAX_VALUE;
 		return Math.log(x);
 	}
 }

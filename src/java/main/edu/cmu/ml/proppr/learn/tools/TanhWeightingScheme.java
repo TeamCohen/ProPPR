@@ -26,6 +26,7 @@ public class TanhWeightingScheme extends WeightingScheme {
 //		return arcTanh(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
 //	}
 	private double arcTanh (double z) {
+		if (z>1 || z<-1) return -Double.MAX_VALUE;
 		return 0.5 * (Math.log(1.0 + z) - Math.log(1.0 - z));
 	}
 

@@ -3,31 +3,22 @@ package edu.cmu.ml.proppr.learn;
 import static org.junit.Assert.*;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.RedBlueGraph;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.examples.RWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
-import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
@@ -43,6 +34,7 @@ public class SRWTest extends RedBlueGraph {
 	protected ParamVector uniformParams;
 	protected TIntDoubleMap startVec;
 	
+	
 	@Override
 	public void moreSetup(LearningGraphBuilder lgb) {
 		initSrw();
@@ -57,6 +49,7 @@ public class SRWTest extends RedBlueGraph {
 		srw.setMu(0);
 		srw.getOptions().set("apr","alpha","0.1");
 //		srw.setWeightingScheme(new LinearWeightingScheme());
+//		srw.setWeightingScheme(new ReLUWeightingScheme());
 		srw.setWeightingScheme(new ExpWeightingScheme());
 	}
 	
@@ -153,7 +146,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	@Test
 	public void testGradient() {
-		if (this.getClass().equals(SRWTest.class)) return;
+//		if (this.getClass().equals(SRWTest.class)) return;
 		
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
@@ -217,7 +210,7 @@ public class SRWTest extends RedBlueGraph {
 		assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 				baselineLoss > biasedLoss);
 
-		double perturb_epsilon = 1e-5;
+		double perturb_epsilon = 1e-10;
 		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
 			
 			ParamVector pert = uniformParams.copy();
@@ -254,4 +247,34 @@ public class SRWTest extends RedBlueGraph {
 		System.err.println("\nbaselineLoss-improvedBaselineLoss="+(baselineLoss-improvedBaselineLoss));
 		assertTrue("baselineLoss "+baselineLoss+" should be > improvedBaselineLoss "+improvedBaselineLoss, baselineLoss > improvedBaselineLoss);
 	}
+	
+	
+	/**
+	 * check that learning on red/blue graph works
+	 */
+	@Test
+	public void testLearn1() {
+		
+		TIntDoubleMap query = new TIntDoubleHashMap();
+		query.put(nodes.getId("r0"), 1.0);
+		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
+		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
+		PosNegRWExample example = new PosNegRWExample(brGraph, query, pos, neg);
+		
+//		ParamVector weightVec = new SimpleParamVector();
+//		weightVec.put("fromb",1.01);
+//		weightVec.put("tob",1.0);
+//		weightVec.put("fromr",1.03);
+//		weightVec.put("tor",1.0);
+//		weightVec.put("id(restart)",1.02);
+		
+		ParamVector trainedParams = uniformParams.copy();
+		double preLoss = makeLoss(trainedParams, example);
+		srw.clearLoss();
+		srw.trainOnExample(trainedParams,example);
+		double postLoss = makeLoss(trainedParams, example);
+		assertTrue(String.format("preloss %f >=? postloss %f",preLoss,postLoss), 
+				preLoss == 0 || preLoss > postLoss);
+	}
+	
 }

@@ -55,9 +55,9 @@ public class RedBlueGraph {
 
 	@Before
 	public void setup() {
-		if (!Logger.getRootLogger().getAllAppenders().hasMoreElements()) {
-			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
-		}
+//		if (!Logger.getRootLogger().getAllAppenders().hasMoreElements()) {
+//			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+//		}
 
 		LearningGraphBuilder lgb = new ArrayLearningGraph.ArrayLearningGraphBuilder();
 		brGraph = (ArrayLearningGraph) lgb.create();
@@ -85,7 +85,7 @@ public class RedBlueGraph {
 		// save sets of red and blue nodes
 		reds = new TreeSet<String>();
 		blues = new TreeSet<String>();
-		for (int ui=1; ui<7; ui++) {
+		for (int ui=1; ui<(2*magicNumber+1); ui++) {
 			String u = nodes.getSymbol(ui);
 			if (u.startsWith("b")) blues.add(u);
 			else reds.add(u);
@@ -103,14 +103,14 @@ public class RedBlueGraph {
 	public void addColor(LearningGraphBuilder lgb, LearningGraph graph, int num, String label) {
 		for (int x=0; x<num; x++) {
 			for (int y=0; y<num; y++) {
-				if (x!=y) {
+//				if (x!=y) {
 					String u = label+x;
 					String v = label+y;
 					TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
 					ff.put("from"+label, 1.0);
 					ff.put("to"+label,1.0);
 					lgb.addOutlink(graph, nodes.getId(u),new RWOutlink(ff,nodes.getId(v)));
-				}
+//				}
 			}
 		}
 	}

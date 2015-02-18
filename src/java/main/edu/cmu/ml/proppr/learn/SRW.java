@@ -76,6 +76,7 @@ public class SRW {
 	 * @param example
 	 */
 	public void trainOnExample(ParamVector params, PosNegRWExample example) {
+		log.info("Training on "+example);
 		SgdExample sgdex = wrapExample(example);
 		load(params, sgdex);
 		inference(params, sgdex);
@@ -83,6 +84,7 @@ public class SRW {
 	}
 
 	public void accumulateGradient(ParamVector params, PosNegRWExample example, TObjectDoubleMap<String> accumulator) {
+		log.info("Gradient calculating on "+example);
 		SgdExample sgdex = wrapExample(example);
 		load(params, sgdex);
 		inference(params, sgdex);
@@ -144,9 +146,7 @@ public class SRW {
 			ex.dM_lo[uid] = new int[udeg];
 			ex.dM_hi[uid] = new int[udeg];
 			ex.M[uid] = new double[udeg];
-			// tu can be zero if all features from this node have negative weight in params (edgeWeight() truncates to zero)
 			double scale = (1 / (tu*tu));
-//			if (tu == 0) scale = 0;
 			for(int eid = ex.g.node_near_lo[uid], xvi = 0; eid < ex.g.node_near_hi[uid]; eid++, xvi++) {
 				int vid = ex.g.edge_dest[eid];
 				ex.dM_lo[uid][xvi] = dM_features.size();
@@ -159,9 +159,7 @@ public class SRW {
 				}
 				ex.dM_hi[uid][xvi] = dM_features.size();
 				// also create the scalar M_{uv} = f(s_{uv}) / t_u
-				// truncate to zero as above
 				ex.M[uid][xvi] = (c.weightingScheme.edgeWeight(suv[xvi]) / tu);
-//				if (tu == 0) ex.M[uid][xvi] = 0;
 			}
 		}
 		// discard extendible version in favor of primitive array
@@ -184,6 +182,11 @@ public class SRW {
 		ex.p = new double[ex.g.node_hi];
 		ex.dp = new TIntDoubleMap[ex.g.node_hi];
 		Arrays.fill(ex.p,0.0);
+		// copy query into p
+		for (TIntDoubleIterator it = ex.ex.getQueryVec().iterator(); it.hasNext(); ) {
+			it.advance();
+			ex.p[it.key()] = it.value();
+		}
 		for (int i=0; i<c.maxT; i++) {
 			inferenceUpdate(ex);
 		}
@@ -191,26 +194,39 @@ public class SRW {
 	protected void inferenceUpdate(SgdExample ex) {
 		double[] pNext = new double[ex.g.node_hi];
 		TIntDoubleMap[] dNext = new TIntDoubleMap[ex.g.node_hi];
+		// p: 2. for each node u
 		for (int uid = 0; uid < ex.g.node_hi; uid++) {
-			// p: 2(a)
+			// p: 2(a) p_u^{t+1} += alpha * s_u
 			pNext[uid] += c.apr.alpha * Dictionary.safeGet(ex.ex.getQueryVec(), uid, 0.0);
+			// p: 2(b) for each neighbor v of u:
 			for(int eid = ex.g.node_near_lo[uid], xvi = 0; eid < ex.g.node_near_hi[uid]; eid++, xvi++) {
-				// p: 2(b)
-				pNext[uid] += (1-c.apr.alpha) * ex.M[uid][xvi] * ex.p[xvi];
-				// d: i.
-				dNext[uid] = new TIntDoubleHashMap(ex.dM_hi[uid][xvi] - ex.dM_lo[uid][xvi]);
+				int vid = ex.g.edge_dest[eid];
+				// p: 2(b)i. p_v^{t+1} += (1-alpha) * p_u^t * M_uv
+				pNext[vid] += (1-c.apr.alpha) * ex.p[uid] * ex.M[uid][xvi];
+				// d: i. for each feature i in dM_uv:
+				dNext[vid] = new TIntDoubleHashMap(ex.dM_hi[uid][xvi] - ex.dM_lo[uid][xvi]);
 				for (int dmi = ex.dM_lo[uid][xvi]; dmi < ex.dM_hi[uid][xvi]; dmi++) {
-					double inc = (1-c.apr.alpha) * ex.dM_value[dmi] * ex.p[xvi];
-					dNext[uid].adjustOrPutValue(ex.dM_feature_id[dmi], inc, inc);
+					// d_vi^{t+1} += (1-alpha) * p_u^{t} * dM_uvi
+					double inc = (1-c.apr.alpha) * ex.p[uid] * ex.dM_value[dmi];
+					dNext[vid].adjustOrPutValue(ex.dM_feature_id[dmi], inc, inc);
 				}
-				// d: ii.
-				if (ex.dp[ex.g.edge_dest[eid]] == null) continue; // skip when d is empty
-				for (TIntDoubleIterator it = ex.dp[ex.g.edge_dest[eid]].iterator(); it.hasNext();) {
+				// d: ii. for each feature i in d_u^t
+				if (ex.dp[uid] == null) continue; // skip when d is empty
+				for (TIntDoubleIterator it = ex.dp[uid].iterator(); it.hasNext();) {
 					it.advance();
-					double inc = (1-c.apr.alpha) * ex.M[uid][xvi] * it.value();
-					dNext[uid].adjustOrPutValue(it.key(),inc,inc);
+					// d_vi^{t+1} += (1-alpha) * d_ui^t * M_uv
+					double inc = (1-c.apr.alpha) * it.value() * ex.M[uid][xvi];
+					dNext[vid].adjustOrPutValue(it.key(),inc,inc);
 				}
 			}
+		}
+		
+		// sanity check on p
+		if (log.isDebugEnabled()) {
+			double sum = 0;
+			for (double d : pNext) sum += d;
+			if (sum != 1.0)
+				log.error("invalid p computed");
 		}
 		ex.p = pNext;
 		ex.dp = dNext;

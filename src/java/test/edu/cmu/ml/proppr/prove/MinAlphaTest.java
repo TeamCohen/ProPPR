@@ -117,14 +117,18 @@ public class MinAlphaTest {
 			assertTrue(restart != null);
 			
 			if (restart.fd.containsKey(ProofGraph.ALPHABOOSTER)) {
-				double newAB = prover.computeAlphaBooster(restart.fd.get(ProofGraph.ALPHABOOSTER), z, restart.wt);
-				rescaleAssertions(restart.fd.get(ProofGraph.ALPHABOOSTER), newAB);
-				restart.fd.put(ProofGraph.ALPHABOOSTER,newAB);
-				restart.wt = prover.weighter.w(restart.fd);
+//				double newAB = prover.computeAlphaBooster(restart.fd.get(ProofGraph.ALPHABOOSTER), z, restart.wt);
+//				rescaleAssertions(restart.fd.get(ProofGraph.ALPHABOOSTER), newAB);
+//				restart.fd.put(ProofGraph.ALPHABOOSTER,newAB);
+//				restart.wt = prover.weighter.w(restart.fd);
+				z = prover.rescaleResetLink(restart, z);
 			}
 			
 			double localAlpha = restart.wt / z;
 			
+			if (localAlpha < prover.apr.alpha) {
+				z = prover.rescaleResetLink(restart,z);
+			}
 			assertFalse("minAlpha exception: "+localAlpha,localAlpha < prover.apr.alpha);
 			
 			Dictionary.increment(p,u,prover.apr.alpha * ru,"(elided)");
