@@ -152,6 +152,8 @@ public class ArrayLearningGraph extends LearningGraph {
 		private void init() {
 			current = null;
 			outlinks = null;
+			labelSize = 0;
+			index = 0;
 		}
 		
 	}
