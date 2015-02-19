@@ -28,7 +28,6 @@ public class DprProver extends Prover {
 	public static final double STAYPROB_DEFAULT = 0.0;
 	public static final double STAYPROB_LAZY = 0.5;
 	private static final boolean TRUELOOP_ON = true;
-	private static final boolean RESTART_ON = true;
 	protected final double stayProbability;
 	protected final double moveProbability;
 	// for timing traces
@@ -102,11 +101,9 @@ public class DprProver extends Prover {
 	}
 	protected int proveState(ProofGraph pg, Map<State,Double> p, Map<State, Double> r,
 			State u, int pushCounter, int depth, double iterEpsilon) {
-		double ru = r.get(u);
 		try {
 			int deg = pg.pgDegree(u);
-			if (ru / deg > iterEpsilon) {
-				log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, u));
+			if (r.get(u) / deg > iterEpsilon) {
 				backtrace.push(u);
 				pushCounter += 1;
 				try {
@@ -120,31 +117,41 @@ public class DprProver extends Prover {
 						z += o.wt;
 					}
 					
-					// p[u] += alpha * ru
-					addToP(p,u,ru);
-					// r[u] *= (1-alpha) * stay?
-					r.put(u, (1.0-apr.alpha) * stayProbability * ru);
-					
-					// for each v near u:
-					for (Outlink o : outs) {
-						// r[v] += (1-alpha) * move? * Muv * ru
-						Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
+					// push this state as far as you can
+					while( r.get(u) / deg > iterEpsilon ) {
+						double ru = r.get(u);
+						log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, u));
+						
+						// p[u] += alpha * ru
+						addToP(p,u,ru);
+						// r[u] *= (1-alpha) * stay?
+						r.put(u, (1.0-apr.alpha) * stayProbability * ru);
+						
+						// for each v near u:
+						for (Outlink o : outs) {
+							// r[v] += (1-alpha) * move? * Muv * ru
+							Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
+						}
+						
+						if (log.isDebugEnabled()) {
+							// sanity-check r:
+							double sumr = 0;
+							for (Double d : r.values()) { sumr += d; }
+							double sump = 0;
+							for (Double d : p.values()) { sump += d; }
+							if (Math.abs(sump + sumr - 1.0) > apr.epsilon) {
+								log.debug("Should be 1.0 but isn't: after push sum p + r = "+sump+" + "+sumr+" = "+(sump+sumr));
+							}
+						}
 					}
 
-					if (log.isDebugEnabled()) {
-						// sanity-check r:
-						double sumr = 0;
-						for (Double d : r.values()) { sumr += d; }
-						double sump = 0;
-						for (Double d : p.values()) { sump += d; }
-						log.debug("after push sum p + r = "+sump+" + "+sumr+" = "+(sump+sumr));
-					}
 					
 					// for each v near u:
 					for (Outlink o : outs) {
 						// proveState(v):
 						// current pushcounter is passed down, gets incremented and returned, and 
 						// on the next for loop iter is passed down again...
+						if (o.child.equals(pg.getStartState())) continue;
 						pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
 					}
 				} catch (LogicProgramException e) {
