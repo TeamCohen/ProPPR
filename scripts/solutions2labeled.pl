@@ -25,14 +25,19 @@ while(<$sf>) {
 	last unless $queryLine;
 	chomp($queryLine);
 	
-	($query,$pos) = split("\t",$queryLine);
+	($query,$pos,$junk) = split("\t",$queryLine);
 	$ex = $pos;
-	my $ci = rindex($pos,",")+1;
-	$pos = substr($pos,$ci,length($pos)-1-$ci);
-	$neg = substr($query,0,rindex($query,",")+1);
+	$pos = substr($pos,1,length($pos));
+	#my $ci = rindex($pos,",")+1;
+	#$pos = substr($pos,$ci,length($pos)-1-$ci);
+	#$neg = substr($query,0,rindex($query,",")+1);
 
 	my ($junk,$provedq,$junk) = split "\t";
-	if ( substr($query,0,rindex($query,"E")) ne substr($provedq,0,rindex($provedq,"-"))) {
+	$query =~ /,[A-Z]/;
+	my $query_firstVariableStart = $-[0];
+	$provedq =~ /,[A-Z]/;
+	my $provedq_firstVariableStart = $-[0];
+	if ( substr($query,0,$query_firstVariableStart) ne substr($provedq,0,$provedq_firstVariableStart)) {
 	    print "No match at line $L:\n$query\n$provedq\n";
 	    last;
 	}
@@ -40,7 +45,7 @@ while(<$sf>) {
 	next;
     }
     my ($rank,$score,$sol) = split "\t";
-    $sol = substr($sol,5,length($sol)-6);
+    $sol = substr($sol,0,length($sol)-1);
     if ($pos eq $sol) {
 	print $tf "\t+\n";
     } else {
