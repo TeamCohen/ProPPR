@@ -225,8 +225,8 @@ public class SRW {
 		if (log.isDebugEnabled()) {
 			double sum = 0;
 			for (double d : pNext) sum += d;
-			if (sum != 1.0)
-				log.error("invalid p computed");
+			if (Math.abs(sum - 1.0) > c.apr.epsilon)
+				log.error("invalid p computed: "+sum);
 		}
 		ex.p = pNext;
 		ex.dp = dNext;
@@ -260,6 +260,7 @@ public class SRW {
 				double aterm = -da.value() / pa;
 				gradient.adjustOrPutValue(da.key(), aterm, aterm);
 			}
+			log.debug("+p="+pa);
 			this.cumloss.add(LOSS.LOG, -Math.log(pa));
 		}
 
@@ -276,6 +277,7 @@ public class SRW {
 				double bterm = beta * db.value() / (1 - pb);
 				gradient.adjustOrPutValue(db.key(), bterm, bterm);
 			}
+			log.debug("-p="+pb);
 			this.cumloss.add(LOSS.LOG, -Math.log(1.0-pb));
 		}
 

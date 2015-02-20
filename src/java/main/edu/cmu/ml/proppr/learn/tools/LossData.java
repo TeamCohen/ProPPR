@@ -19,6 +19,7 @@ public class LossData {
 		if (loss<0) {
 			log.warn("SUSPICIOUS: decreasing "+type+" loss? "+loss);
 		}
+		if (log.isDebugEnabled()) log.debug("Adding "+loss+" to "+type);
 		Dictionary.increment(this.loss, type, loss);
 	}
 	public void clear() {

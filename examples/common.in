@@ -27,4 +27,10 @@ endif
 %.wam: %.ppr
 	python ${PROPPR}/src/scripts/compiler.py serialize $< > $@
 
+pre.%.solutions.labeled.txt: %.examples pre.%.solutions.txt
+	${PROPPR}/scripts/solutions2labeled.pl $^ $@
+
+post.%.solutions.labeled.txt: %.examples post.%.solutions.txt
+	${PROPPR}/scripts/solutions2labeled.pl $^ $@
+
 .SECONDARY:
