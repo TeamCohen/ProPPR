@@ -31,6 +31,8 @@ public class WamInterpreter {
 	private Map<Goal,Double> reportedFeatures;
 	private WamProgram program;
 	private WamPlugin[] plugins;
+	
+	private WamInterpreter() {}
 	public WamInterpreter(WamProgram program, WamPlugin[] plugins) {
 		this(new SymbolTable<String>(), program, plugins);
 	}
@@ -41,6 +43,19 @@ public class WamInterpreter {
 		this.state = new MutableState();
 		this.plugins = plugins;
 	}
+
+	public WamInterpreter copy() {
+		WamInterpreter copy = new WamInterpreter();
+		copy.constantTable = constantTable.copy();
+		copy.featureStack = new ArrayList<Feature>();
+		copy.featureStack.addAll(this.featureStack);
+		copy.program = this.program;
+		copy.state = new MutableState();
+		copy.plugins = this.plugins;
+		
+		return copy;
+	}
+	
 	public void addPlugins(WamPlugin ... plugins) {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}

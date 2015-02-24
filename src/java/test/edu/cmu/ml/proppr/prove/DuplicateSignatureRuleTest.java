@@ -23,7 +23,7 @@ import edu.cmu.ml.proppr.util.APROptions;
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  */
 public class DuplicateSignatureRuleTest {
-	private static final String PROGRAM="src/testcases/duplicateSignatureTest.wam";
+	public static final String PROGRAM="src/testcases/duplicateSignatureTest.wam";
 
 	@Test
 	public void test2() throws LogicProgramException, IOException {

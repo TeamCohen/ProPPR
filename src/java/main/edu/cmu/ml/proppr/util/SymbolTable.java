@@ -18,6 +18,16 @@ public class SymbolTable<T> {
 	protected List<T> symbolList = new ArrayList<T>();
 	protected int nextId = 0;
 	protected TObjectIntHashMap<T> idDict = new TObjectIntHashMap<T>();
+	
+
+	public SymbolTable<T> copy() {
+		SymbolTable<T> copy = new SymbolTable<T>();
+		copy.symbolList.addAll(this.symbolList);
+		copy.nextId = this.nextId;
+		copy.idDict.putAll(this.idDict);
+		return copy;
+	}
+	
 	/**
 	 * Insert a symbol.
 	 * @param s

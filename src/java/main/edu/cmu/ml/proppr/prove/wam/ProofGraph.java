@@ -41,6 +41,24 @@ public class ProofGraph {
 	private Goal restartFeature;
 	private Goal restartBoosterFeature;
 	private APROptions apr;
+	
+	public ProofGraph subGraph(){
+		return new ProofGraph(this.example, this.startState, this.apr, this.program, this.interpreter.copy());
+	}
+	private ProofGraph(InferenceExample ex, ImmutableState restart, APROptions apr, WamProgram program, WamInterpreter interp) {
+//		this(new InferenceExample(query,null,null),apr,program,plugins);
+		this.example = ex; 
+		this.apr = apr;
+		this.program = program;
+		this.interpreter = interp;
+		this.startState = restart;
+		
+		this.trueLoopFD = new HashMap<Goal,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
+		this.trueLoopRestartFD = new HashMap<Goal,Double>(); this.trueLoopRestartFD.put(TRUELOOP_RESTART,1.0);
+		this.restartFeature = RESTART;
+		this.restartBoosterFeature = ALPHABOOSTER;
+		this.graph = new LightweightStateGraph();
+	}
 	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this(new InferenceExample(query,null,null),apr,program,plugins);
 	}
