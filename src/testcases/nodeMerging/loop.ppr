@@ -1,0 +1,3 @@
+p(X,Y) :- q(X,Y),r(X,Y).
+r(X,Y) :- z(X,Y).
+z(X,Y) :- r(X,Y).

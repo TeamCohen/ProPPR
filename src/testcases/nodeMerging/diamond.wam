@@ -1,0 +1,71 @@
+0		comment	q(-1,-2,-3) :- r(-1,-2,-3)  #v:['X', 'Z', 'Y'].
+1	q/3	allocate	3	['Y', 'Z', 'X']
+2		initfreevar	-1	-3
+3		initfreevar	-2	-2
+4		initfreevar	-3	-1
+5		fclear
+6		fpushstart	id	3
+7		fpushconst	q
+8		fpushconst	3
+9		fpushconst	5
+10		freport
+11		pushboundvar	-1
+12		pushboundvar	-2
+13		pushboundvar	-3
+14		callp	r/3
+15		returnp
+16		comment	u(-1) :- t(-1)  #v:['X'].
+17	u/1	allocate	1	['X']
+18		initfreevar	-1	-1
+19		fclear
+20		fpushstart	id	3
+21		fpushconst	u
+22		fpushconst	1
+23		fpushconst	19
+24		freport
+25		pushboundvar	-1
+26		callp	t/1
+27		returnp
+28		comment	t(d) :- .
+29	t/1	unifyconst	d	-1
+30		fclear
+31		fpushstart	id	3
+32		fpushconst	t
+33		fpushconst	1
+34		fpushconst	30
+35		freport
+36		returnp
+37		comment	p(-1,-2) :- v(-1,-2), t(-2)  #v:['X', 'Y'].
+38	p/2	allocate	2	['Y', 'X']
+39		initfreevar	-1	-2
+40		initfreevar	-2	-1
+41		fclear
+42		fpushstart	id	3
+43		fpushconst	p
+44		fpushconst	2
+45		fpushconst	41
+46		freport
+47		pushboundvar	-1
+48		pushboundvar	-2
+49		callp	v/2
+50		pushboundvar	-2
+51		callp	t/1
+52		returnp
+53		comment	v(-1,-2) :- q(-1,-3,-2), s(-3,-2)  #v:['X', 'Y', 'Z'].
+54	v/2	allocate	3	['Z', 'Y', 'X']
+55		initfreevar	-1	-2
+56		initfreevar	-2	-1
+57		fclear
+58		fpushstart	id	3
+59		fpushconst	v
+60		fpushconst	2
+61		fpushconst	57
+62		freport
+63		pushboundvar	-1
+64		pushfreevar	-3
+65		pushboundvar	-2
+66		callp	q/3
+67		pushboundvar	-3
+68		pushboundvar	-2
+69		callp	s/2
+70		returnp

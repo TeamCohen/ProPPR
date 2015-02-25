@@ -1,0 +1,45 @@
+0		comment	r(-1,-2) :- z(-1,-2)  #v:['X', 'Y'].
+1	r/2	allocate	2	['Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	r
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushboundvar	-2
+12		callp	z/2
+13		returnp
+14		comment	p(-1,-2) :- q(-1,-2), r(-1,-2)  #v:['X', 'Y'].
+15	p/2	allocate	2	['Y', 'X']
+16		initfreevar	-1	-2
+17		initfreevar	-2	-1
+18		fclear
+19		fpushstart	id	3
+20		fpushconst	p
+21		fpushconst	2
+22		fpushconst	18
+23		freport
+24		pushboundvar	-1
+25		pushboundvar	-2
+26		callp	q/2
+27		pushboundvar	-1
+28		pushboundvar	-2
+29		callp	r/2
+30		returnp
+31		comment	z(-1,-2) :- r(-1,-2)  #v:['X', 'Y'].
+32	z/2	allocate	2	['Y', 'X']
+33		initfreevar	-1	-2
+34		initfreevar	-2	-1
+35		fclear
+36		fpushstart	id	3
+37		fpushconst	z
+38		fpushconst	2
+39		fpushconst	35
+40		freport
+41		pushboundvar	-1
+42		pushboundvar	-2
+43		callp	r/2
+44		returnp

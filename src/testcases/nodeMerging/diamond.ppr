@@ -1,0 +1,5 @@
+p(X,Y) :- v(X,Y),t(Y).
+v(X,Y) :- q(X,Z,Y),s(Z,Y).
+q(X,Z,Y) :- r(X,Z,Y).
+u(X) :- t(X).
+t(d) :- .
