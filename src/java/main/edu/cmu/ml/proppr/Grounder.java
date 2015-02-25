@@ -152,7 +152,7 @@ public class Grounder {
 		for (int i=0; i<ex.getGraph().nodeSize(); i++) {
 			key.append(s)
 			.append("\t")
-			.append(i)
+			.append(i+1)
 			.append("\t")
 			.append((State) ex.getGraph().getState(i+1))
 			.append("\n");
