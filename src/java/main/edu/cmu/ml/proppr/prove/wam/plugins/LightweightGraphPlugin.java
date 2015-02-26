@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import com.skjegstad.utils.BloomFilter;
+
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
@@ -30,6 +34,8 @@ import gnu.trove.map.TObjectDoubleMap;
  *
  */
 public class LightweightGraphPlugin extends GraphlikePlugin {
+	private static final int ESTIMATED_SIZE = 10000;
+	private static final Logger log = Logger.getLogger(LightweightGraphPlugin.class);
 	protected Map<String,Map<String,TObjectDoubleMap<String>>> graph = new HashMap<String,Map<String,TObjectDoubleMap<String>>>();
 	protected Map<Goal,Double> fd=new HashMap<Goal,Double>();
 	protected String name;
@@ -71,9 +77,20 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 	public static GraphlikePlugin load(APROptions apr, File f) {
 		GraphlikePlugin p = new LightweightGraphPlugin(apr, f.getName());
 		ParsedFile parsed = new ParsedFile(f);
+		BloomFilter<String> lines = new BloomFilter<String>(1e-5,ESTIMATED_SIZE);
+		boolean exceeds=false;
 		for (String line : parsed) {
 			String[] parts = line.split("\t");
 			if (parts.length < 3) parsed.parseError("expected 3 tab-delimited fields; got "+parts.length);
+			if (lines.contains(line)) {
+				log.warn("Skipping duplicate fact at "+f.getName()+":"+parsed.getAbsoluteLineNumber()+": "+line);
+				continue;
+			} else lines.add(line);
+
+			if (!exceeds & parsed.getLineNumber() > ESTIMATED_SIZE) {
+				exceeds=true;
+				log.warn("Number of graph edges exceeds "+ESTIMATED_SIZE+"; duplicate detection may encounter false positives. We should add a command line option to fix this.");
+			}
 			p.addEdge(parts[0].trim(),parts[1].trim(),parts[2].trim());
 		}
 		return p;

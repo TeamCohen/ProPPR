@@ -22,9 +22,9 @@ import edu.cmu.ml.proppr.util.Dictionary;
  */
 public class DfsProver extends Prover {
 	private static final Logger log = Logger.getLogger(DfsProver.class);
+	private static final double SEED_WEIGHT = 1.0;
 	private Backtrace<State> backtrace = new Backtrace<State>(log);
 	protected boolean trueLoop;
-	protected boolean restart;
 
 	public DfsProver() {
 		init();
@@ -37,19 +37,18 @@ public class DfsProver extends Prover {
 		super(w,apr);
 		init();
 	}
-	public DfsProver(FeatureDictWeighter w, APROptions apr, boolean trueLoop, boolean restart) {
+	public DfsProver(FeatureDictWeighter w, APROptions apr, boolean trueLoop) {
 		super(w,apr);
-		init(trueLoop, restart);
+		init(trueLoop);
 	}
 	private void init() {
-		init(ProofGraph.DEFAULT_TRUELOOP,ProofGraph.DEFAULT_RESTART);
+		init(ProofGraph.DEFAULT_TRUELOOP);
 	}
-	private void init(boolean trueLoop, boolean restart) {
+	private void init(boolean trueLoop) {
 		this.trueLoop = trueLoop;
-		this.restart = restart;
 	}
 	public Prover copy() {
-		return new DfsProver(this.weighter, this.apr, this.trueLoop, this.restart);
+		return new DfsProver(this.weighter, this.apr, this.trueLoop);
 	}
 
 	protected class Entry {
@@ -59,7 +58,7 @@ public class DfsProver extends Prover {
 	}
 	protected List<Entry> dfs(ProofGraph pg, State s, int depth) throws LogicProgramException {
 		List<Entry> result = new LinkedList<DfsProver.Entry>();
-		dfs(pg,s,depth,1.0,result);
+		dfs(pg,s,depth,SEED_WEIGHT,result);
 		return result;
 	}
 	/**
@@ -71,15 +70,23 @@ public class DfsProver extends Prover {
 		tail.add(new Entry(s,incomingEdgeWeight));
 		if (!s.isCompleted() && depth < this.apr.maxDepth) {
 			backtrace.push(s);
-			List<Outlink> outlinks = pg.pgOutlinks(s, trueLoop, restart);
+			List<Outlink> outlinks = pg.pgOutlinks(s, trueLoop);
 			if (outlinks.size() == 0) 
-				log.debug("exit dfs: no outlinks for "+s);
+				if (log.isDebugEnabled()) log.debug("exit dfs: no outlinks for "+s);
+			double z = 0;
 			for (Outlink o : outlinks) {
-				double w = this.weighter.w(o.fd);
-				dfs(pg, o.child, depth+1, w, tail);
+				o.wt = this.weighter.w(o.fd);
+				z += o.wt;
+			}
+			for (Outlink o : outlinks) {
+				//skip resets
+				if (o.child.equals(pg.getStartState())) continue;
+				//recurse into non-resets
+				dfs(pg, o.child, depth+1, o.wt / z, tail);
 			}
 			backtrace.pop(s);
-		} else log.debug("exit dfs: "+ (s.isCompleted() ? "state completed" : ("depth "+depth+">"+this.apr.maxDepth)));
+		} else if (log.isDebugEnabled()) 
+			log.debug("exit dfs: "+ (s.isCompleted() ? "state completed" : ("depth "+depth+">"+this.apr.maxDepth)));
 	}
 
 	/** 
@@ -101,7 +108,7 @@ public class DfsProver extends Prover {
 				i++;
 			}
 		} catch (LogicProgramException e) {
-			backtrace.print(e);
+			backtrace.rethrow(e);
 		}
 		return vec;
 	}

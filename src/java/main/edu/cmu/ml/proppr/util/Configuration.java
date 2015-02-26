@@ -10,15 +10,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PermissiveParser;
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.SigmoidWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
-import edu.cmu.ml.proppr.prove.DprProver;
-import edu.cmu.ml.proppr.prove.Prover;
-import edu.cmu.ml.proppr.prove.TracingDfsProver;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -40,6 +31,8 @@ import java.io.*;
  */
 public class Configuration {
 	private static final Logger log = Logger.getLogger(Configuration.class);
+	public static final int FORMAT_WIDTH=16;
+	public static final String FORMAT_STRING="%"+FORMAT_WIDTH+"s";
 	/* set files */
 	/** file. */
 	public static final int USE_QUERIES = 0x1;
@@ -66,6 +59,7 @@ public class Configuration {
 	public static final int USE_EPOCHS = 0x4;
 	public static final int USE_TRACELOSSES = 0x8;
 	public static final int USE_FORCE = 0x10;
+	public static final int USE_ORDER = 0x20;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
 	private static final String APR_CONST_OPTION = "apr";
@@ -73,6 +67,7 @@ public class Configuration {
 	private static final String EPOCHS_CONST_OPTION = "epochs";
 	private static final String TRACELOSSES_CONST_OPTION = "traceLosses";
 	private static final String FORCE_CONST_OPTION = "force";
+	private static final String ORDER_CONST_OPTION = "order";
 
 	/* set class for module */
 	/** module. */
@@ -89,7 +84,6 @@ public class Configuration {
 
 	public File queryFile = null;
 	public File testFile = null;
-	//	public File complexFeatureConfigFile = null;
 	public File groundedFile = null;
 	public File paramsFile = null;
 	public File solutionsFile = null;
@@ -104,6 +98,7 @@ public class Configuration {
 	public boolean traceLosses = false;
 	public boolean force = false;
 	public boolean ternaryIndex = false;
+	public boolean maintainOrder = true;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -180,11 +175,6 @@ public class Configuration {
 		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))       this.queryFile = new File(line.getOptionValue(TRAIN_FILE_OPTION));
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))     this.paramsFile = new File(line.getOptionValue(PARAMS_FILE_OPTION));
 		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION)) this.gradientFile = new File(line.getOptionValue(GRADIENT_FILE_OPTION));
-		
-		System.out.println("flags = "+flags);
-		System.out.println("gradient flag = " + isOn(flags,USE_GRADIENT));
-		System.out.println("has gradient = " + line.hasOption(GRADIENT_FILE_OPTION));
-		System.out.println("gradientFile = " + this.gradientFile);
 
 		// constants
 		flags = constants(allFlags);
@@ -198,8 +188,12 @@ public class Configuration {
 		if (isOn(flags,USE_EPOCHS) && line.hasOption(EPOCHS_CONST_OPTION))     this.epochs = Integer.parseInt(line.getOptionValue(EPOCHS_CONST_OPTION));
 		if (isOn(flags,USE_TRACELOSSES) && line.hasOption(TRACELOSSES_CONST_OPTION)) this.traceLosses = true;
 		if (isOn(flags,USE_FORCE) && line.hasOption(FORCE_CONST_OPTION))             this.force = true;
-
-
+		if (isOn(flags,USE_ORDER) && line.hasOption(ORDER_CONST_OPTION)) {
+			String order = line.getOptionValue(ORDER_CONST_OPTION);
+			if (order.equals("same") || order.equals("maintain")) this.maintainOrder = true;
+			else this.maintainOrder = false;
+		}
+		
 		if (this.programFiles != null) this.loadProgramFiles();
 	}
 
@@ -429,6 +423,17 @@ public class Configuration {
 							+ "Available parameters:\n"
 							+ "eps, alph, depth")
 					.create());
+		if (isOn(flags, USE_ORDER))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(ORDER_CONST_OPTION)
+					.withArgName("o")
+					.hasArg()
+					.withDescription("Set ordering of outputs wrt inputs. Valid options:\n"
+							+"same, maintain (keep input ordering)\n"
+							+"anything else (reorder outputs to save time/memory)")
+					.create()
+					);
 
 
 //		if (isOn(flags, USE_COMPLEX_FEATURES)) {
@@ -471,6 +476,7 @@ public class Configuration {
 		if (isOn(flags, USE_EPOCHS)) syntax.append(" [--").append(EPOCHS_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_TRACELOSSES)) syntax.append(" [--").append(TRACELOSSES_CONST_OPTION).append("]");
 		if (isOn(flags, USE_FORCE)) syntax.append(" [--").append(FORCE_CONST_OPTION).append("]");
+		if (isOn(flags, USE_ORDER)) syntax.append(" [--").append(ORDER_CONST_OPTION).append(" same|reorder]");
 		
 	}
 	
@@ -519,7 +525,21 @@ public class Configuration {
 
 	@Override
 	public String toString() {
-		return this.getClass().getCanonicalName();
+		StringBuilder sb = new StringBuilder("\n").append( this.getClass().getCanonicalName() );
+		displayFile(sb, QUERIES_FILE_OPTION, queryFile);
+		displayFile(sb, TEST_FILE_OPTION, testFile);
+		displayFile(sb, GROUNDED_FILE_OPTION, groundedFile);
+		displayFile(sb, PARAMS_FILE_OPTION, paramsFile);
+		displayFile(sb, SOLUTIONS_FILE_OPTION, solutionsFile);
+		displayFile(sb, GRADIENT_FILE_OPTION, gradientFile);
+		if (!maintainOrder) sb.append("\n     Output order: reordered");
+		return sb.toString();
+	}
+	private void displayFile(StringBuilder sb, String name, File f) {
+		if (f != null) sb.append("\n")
+		.append(String.format("%"+(FORMAT_WIDTH-5)+"s", name))
+		.append(" file: ")
+		.append(f.getPath());
 	}
 
 	protected String[] combinedArgs(String[] origArgs) {

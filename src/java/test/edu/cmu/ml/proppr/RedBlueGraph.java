@@ -16,9 +16,10 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 
+import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
+import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.RWOutlink;
-import edu.cmu.ml.proppr.graph.SimpleLearningGraph;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
@@ -37,7 +38,7 @@ import gnu.trove.procedure.TIntDoubleProcedure;
  *
  */
 public class RedBlueGraph {
-	protected LearningGraph brGraph;
+	protected ArrayLearningGraph brGraph;
 	protected Set<String> reds;
 	protected Set<String> blues;
 	protected SymbolTable<String> nodes = new SymbolTable<String>();
@@ -54,53 +55,62 @@ public class RedBlueGraph {
 
 	@Before
 	public void setup() {
-		if (!Logger.getRootLogger().getAllAppenders().hasMoreElements()) {
-			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
-		}
+//		if (!Logger.getRootLogger().getAllAppenders().hasMoreElements()) {
+//			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
+//		}
 
-		brGraph = new SimpleLearningGraph();
+		LearningGraphBuilder lgb = new ArrayLearningGraph.ArrayLearningGraphBuilder();
+		brGraph = (ArrayLearningGraph) lgb.create();
+		lgb.index(1);
+		lgb.setGraphSize(brGraph, magicNumber*2, -1);
 
 		//		brSRWs = new ArrayList<SRW>();
 		//		Collections.addAll(brSRWs, new L2SqLossSRW(), new L2SqLossSRW(), new L2SqLossSRW());
 
-		addColor(brGraph, magicNumber,"r");
-		addColor(brGraph, magicNumber,"b");
+		addColor(lgb, brGraph, magicNumber,"r");
+		addColor(lgb, brGraph, magicNumber,"b");
 		{
 			int u = nodes.getId("b0"), v=nodes.getId("r0");
 			TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
 			ff.put("fromb", 1.0);
 			ff.put("tor",1.0);
-			brGraph.addOutlink(u, new RWOutlink(ff,v));
+			lgb.addOutlink(brGraph, u, new RWOutlink(ff,v));
 
 			ff = new TObjectDoubleHashMap<String>();
 			ff.put("fromr", 1.0);
 			ff.put("tob",1.0);
-			brGraph.addOutlink(v, new RWOutlink(ff,u));
+			lgb.addOutlink(brGraph, v, new RWOutlink(ff,u));
 		}		
 
 		// save sets of red and blue nodes
 		reds = new TreeSet<String>();
 		blues = new TreeSet<String>();
-		for (int ui : brGraph.getNodes()) {
+		for (int ui=1; ui<(2*magicNumber+1); ui++) {
 			String u = nodes.getSymbol(ui);
 			if (u.startsWith("b")) blues.add(u);
 			else reds.add(u);
 		}
+		
+		
+		moreSetup(lgb);
+		lgb.freeze(brGraph);
 
 		//			System.err.println("\n"+brGraphs.get(0).dump("r0"));
 	}
+	//template
+	public void moreSetup(LearningGraphBuilder lgb) {}
 
-	public void addColor(LearningGraph graph, int num, String label) {
+	public void addColor(LearningGraphBuilder lgb, LearningGraph graph, int num, String label) {
 		for (int x=0; x<num; x++) {
 			for (int y=0; y<num; y++) {
-				if (x!=y) {
+//				if (x!=y) {
 					String u = label+x;
 					String v = label+y;
 					TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
 					ff.put("from"+label, 1.0);
 					ff.put("to"+label,1.0);
-					graph.addOutlink(nodes.getId(u),new RWOutlink(ff,nodes.getId(v)));
-				}
+					lgb.addOutlink(graph, nodes.getId(u),new RWOutlink(ff,nodes.getId(v)));
+//				}
 			}
 		}
 	}

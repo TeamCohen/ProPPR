@@ -61,7 +61,7 @@ public class PosNegRWExample extends RWExample {
 				return true;
 			}
 		});
-		sb.deleteCharAt(sb.length());
+		if (sb.length() > 0) sb.deleteCharAt(sb.length()-1);
 		sb.append("] -> +[");
 		if (posList.length > 0) { sb.append("'"); Dictionary.buildString(posList, sb, "','"); sb.append("'"); };
 		sb.append("]; -[");

@@ -25,7 +25,7 @@ public class Backtrace<T> {
 //		if(log.isDebugEnabled()) log.debug("pop "+state);
 		if (!p.equals(state)) log.error("popped unexpected state\nexpected "+state+"\ngot"+p);
 	}
-	public void print(LogicProgramException e) {
+	public void rethrow(LogicProgramException e) {
 		StringBuilder sb = new StringBuilder(e.getMessage()+"\nLogic program backtrace:\n");
 		Dictionary.buildString(this.backtrace, sb, "\n");
 		throw new IllegalStateException(sb.toString(),e);

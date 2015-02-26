@@ -2,8 +2,8 @@
 <project basedir="." default="build" name="ProPPR">
     <property environment="env"/>
     <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.6"/>
-    <property name="source" value="1.6"/>
+    <property name="target" value="1.7"/>
+    <property name="source" value="1.7"/>
     <property name="build" value="bin"/>
     <property name="junit.results" value="test-results"/>
     <property name="ant.junit.failureCollector" value="${junit.results}/FailedTests"/>
@@ -16,14 +16,6 @@
         <pathelement location="lib/la4j-0.4.5.jar"/>
         <pathelement location="lib/log4j-1.2.16.jar"/>
         <pathelement location="lib/lucene-core-3.6.2.jar"/>
-        <pathelement location="lib/neo4j-cypher-1.9.4.jar"/>
-        <pathelement location="lib/neo4j-graph-algo-1.9.4.jar"/>
-        <pathelement location="lib/neo4j-graph-matching-1.9.4.jar"/>
-        <pathelement location="lib/neo4j-jmx-1.9.4.jar"/>
-        <pathelement location="lib/neo4j-kernel-1.9.4.jar"/>
-        <pathelement location="lib/neo4j-lucene-index-1.9.4.jar"/>
-        <pathelement location="lib/neo4j-shell-1.9.4.jar"/>
-        <pathelement location="lib/neo4j-udc-1.9.4.jar"/>
         <pathelement location="lib/org.apache.servicemix.bundles.jline-0.9.94_1.jar"/>
         <pathelement location="lib/scala-library-2.10.0.jar"/>
         <pathelement location="lib/trove-3.0.3.jar"/>

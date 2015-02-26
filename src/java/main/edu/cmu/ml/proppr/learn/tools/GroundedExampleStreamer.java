@@ -9,7 +9,6 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph.GraphFormatException;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
-import edu.cmu.ml.proppr.graph.SimpleLearningGraph;
 import edu.cmu.ml.proppr.util.FileBackedIterable;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import gnu.trove.map.TIntDoubleMap;

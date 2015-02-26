@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -45,9 +46,13 @@ import java.util.concurrent.Callable;
  * ProPPR and saves the results in an output file. Each query should
  * be a single ProPPR goal, but may include other content after a
  * <TAB> character (as in a training file).  The format of the output
- * file is one line for each query, in the format '# proved Q# <TAB>
- * QUERY <TAB> TIME-IN-MILLISEC msec', followed by one line for each
- * solution, in the format 'RANK <TAB> SCORE <TAB> VARIABLE-BINDINGS'.
+ * file is one line for each query, in the following format:
+ * 
+ * # proved Q# <TAB> QUERY <TAB> TIME-IN-MILLISEC msec
+ * 
+ * followed by one line for each solution, in the format:
+ * 
+ * RANK <TAB> SCORE <TAB> VARIABLE-BINDINGS
  */
 
 public class QueryAnswerer {
@@ -150,8 +155,8 @@ public class QueryAnswerer {
 		return sb.toString();
 	}
 
-	public void findSolutions(File queryFile, File outputFile) throws IOException {
-		Multithreading<Query,String> m = new Multithreading<Query,String>(log);
+	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException {
+		Multithreading<Query,String> m = new Multithreading<Query,String>(log, maintainOrder);
 		m.executeJob(
 				this.nthreads, 
 				new QueryStreamer(queryFile), 
@@ -222,7 +227,7 @@ public class QueryAnswerer {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_ANSWERS;
 			int modules = Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
-			int constants = Configuration.USE_WAM | Configuration.USE_THREADS;
+			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
 			QueryAnswererConfiguration c = new QueryAnswererConfiguration(
 					args,
 					inputFiles, outputFiles, constants, modules);
@@ -231,10 +236,10 @@ public class QueryAnswerer {
 			if(log.isInfoEnabled()) log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
-				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file)), c.weightingScheme);
+				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.weightingScheme);
 				file.check(c);
 			}
-			qa.findSolutions(c.queryFile, c.solutionsFile);
+			qa.findSolutions(c.queryFile, c.solutionsFile, c.maintainOrder);
 
 		} catch (Throwable t) {
 			t.printStackTrace();

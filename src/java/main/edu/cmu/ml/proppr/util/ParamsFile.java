@@ -1,7 +1,9 @@
 package edu.cmu.ml.proppr.util;
 
 import gnu.trove.iterator.TIntDoubleIterator;
+import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
+import gnu.trove.map.TObjectDoubleMap;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -118,6 +120,24 @@ public class ParamsFile extends ParsedFile {
 		}
 	}
 
+	public static void save(TObjectDoubleMap<String> params,
+			File paramsFile, ModuleConfiguration config) {
+		BufferedWriter writer;
+		try {
+			writer = new BufferedWriter(new FileWriter(paramsFile));
+			// write header
+			if (config != null) saveHeader(writer,config);
+			// write params
+			for (TObjectDoubleIterator<String> e = params.iterator(); e.hasNext(); ) {
+				e.advance();
+				saveParameter(writer,e.key(),e.value());
+			}
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	/** Check supported configuraton settings to see that the specified configuration
 	 * matches the settings stored in this params file.
 	 * @param c
@@ -149,4 +169,5 @@ public class ParamsFile extends ParsedFile {
 		}
 		throw new MisconfigurationException(line);
 	}
+
 }

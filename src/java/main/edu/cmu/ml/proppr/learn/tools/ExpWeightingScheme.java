@@ -20,13 +20,14 @@ public class ExpWeightingScheme extends WeightingScheme {
 	@Override
 	public String toString() { return "exponential"; }
 
-	@Override
-	public double projection(double rw, double alpha, int nonRestartNodeNum) {
-		return Math.log(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
-	}
+//	@Override
+//	public double projection(double rw, double alpha, int nonRestartNodeNum) {
+//		return Math.log(rw * (1 - alpha) / (alpha * nonRestartNodeNum));
+//	}
 	
 	@Override
 	public double inverseEdgeWeightFunction(double x) {
+		if (x <= 0) return -Double.MAX_VALUE;
 		return Math.log(x);
 	}
 }

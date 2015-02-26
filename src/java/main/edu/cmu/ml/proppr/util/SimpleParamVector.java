@@ -5,16 +5,22 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SimpleParamVector<F> extends ParamVector<F,Double> {
-	private Map<F,Double> backingStore;
+	private ConcurrentHashMap<F,Double> backingStore;
 	public SimpleParamVector() {
 		this.backingStore = new ConcurrentHashMap<F,Double>();
 	}
-	public SimpleParamVector(Map<F,Double> store) {
-		this.backingStore = store;
+	public SimpleParamVector(Map<F, Double> map) {
+		
+		if (map instanceof ConcurrentHashMap)
+			this.backingStore = (ConcurrentHashMap) map;
+		else {
+			this.backingStore = new ConcurrentHashMap<F,Double>();
+			this.backingStore.putAll(map);
+		}
 	}
 	
 	@Override
-	protected Map<F, Double> getBackingStore() {
+	protected ConcurrentHashMap<F, Double> getBackingStore() {
 		return backingStore;
 	}
 

@@ -1,6 +1,5 @@
 package edu.cmu.ml.proppr.learn.tools;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,8 +17,9 @@ public class LossData {
 	}
 	public synchronized void add(LOSS type, double loss) {
 		if (loss<0) {
-			log.warn("decreasing "+type+" loss? "+loss);
+			log.warn("SUSPICIOUS: decreasing "+type+" loss? "+loss);
 		}
+		if (log.isDebugEnabled()) log.debug("Adding "+loss+" to "+type);
 		Dictionary.increment(this.loss, type, loss);
 	}
 	public void clear() {

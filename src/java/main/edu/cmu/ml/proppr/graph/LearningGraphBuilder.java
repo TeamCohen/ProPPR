@@ -12,17 +12,26 @@ public abstract class LearningGraphBuilder {
 	public static final String FEATURE_WEIGHT_DELIM = "@";
 	
 	public abstract LearningGraph create();
+	public abstract void setGraphSize(LearningGraph g, int nodeSize, int edgeSize);
+	public abstract void addOutlink(LearningGraph g, int u, RWOutlink rwOutlink);
+	public abstract void freeze(LearningGraph g);
+	public abstract void index(int i0);
 	public LearningGraph deserialize(String string) throws GraphFormatException {
 		String[] parts = string.split("\t",4);
 		if (parts.length != 4) {
 			throw new GraphFormatException("Only "+parts.length+" tsv fields in graph; need 4 distinct parts:"+string);
 		}
 
+		int nodeSize = Integer.parseInt(parts[0]);
+		int edgeSize = Integer.parseInt(parts[1]);
+		LearningGraph graph = create();
+		index(1);
+		setGraphSize(graph, nodeSize, edgeSize);
+
 		String[] featureList;
 		if(parts[2].equals("-")) featureList = new String[0];
 		else featureList = parts[2].split(FEATURE_INDEX_DELIM);
 
-		LearningGraph graph = create();
 		for (String p : parts[3].split("\t")) {
 			String[] pair = p.split(EDGE_FEATURE_DELIM);
 			String edgeStr = pair[0], featStr = pair[1];
@@ -43,9 +52,9 @@ public abstract class LearningGraphBuilder {
 			if (fd.isEmpty()) {
 				throw new GraphFormatException("Can't have no features on an edge for ("+nodes[0]+", "+nodes[1]+")");
 			}
-			graph.addOutlink(nodes[0], new RWOutlink(fd, nodes[1]));
+			addOutlink(graph, nodes[0], new RWOutlink(fd, nodes[1]));
 		}
-		graph.freeze(); // might be slow? but saves memory
+		freeze(graph); // might be slow? but saves memory
 		return graph;
 	}
 }

@@ -11,56 +11,14 @@ import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.map.TObjectDoubleMap;
 
-public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSRW {
+public class LocalL1GroupLassoPosNegLossTrainedSRW extends LocalL1SRW {
 	public LocalL1GroupLassoPosNegLossTrainedSRW(SRWOptions params) {
 		super(params);
 	}
 	public LocalL1GroupLassoPosNegLossTrainedSRW() { super(); }
 
-
-	@Override
-	public Set<String> localFeatures(ParamVector<String,?> paramVec, PosNegRWExample example) {
-		return example.getGraph().getFeatureSet();
-	}
-
-	@Override
-	protected double derivRegularization(String f, ParamVector<String,?> paramVec) {
-		// NB superclass records regularization loss for this clock cycle
-		double ret = super.derivRegularization(f, paramVec);
-		return ret;
-	}
-
-	@Override
-	public TObjectDoubleMap<String> gradient(ParamVector<String,?> paramVec, PosNegRWExample example) {
-		TObjectDoubleMap<String> ret = super.gradient(paramVec, example);
-		((MuParamVector)paramVec).count();
-		((MuParamVector)paramVec).setLast(localFeatures(paramVec,example));
-		return ret;
-	}
-
-	@Override
-	public ParamVector setupParams(ParamVector paramVec) { return new MuParamVector(paramVec); }
-
-	@Override
-	public void cleanupParams(ParamVector paramVec) { 
-		for(String f : (Set<String>) paramVec.keySet()) {
-			// finish catching up the regularization:
-			// Bj = Bj - lambda * (Rj)
-			prepareFeature(paramVec,f);
-		}
-		((MuParamVector)paramVec).setLast(paramVec.keySet());
-	}
-
-	@Override
-	public void prepareGradient(ParamVector<String,?> paramVec, PosNegRWExample example) {
-		for (String f : localFeatures(paramVec,example)) {
-			prepareFeature(paramVec,f);
-		}
-	}
-
 	private void prepareFeature(ParamVector<String,?> paramVec, String f) {
-		// use last-1 here because superclass will apply regularization for this clock cycle
-		// during the gradient() call
+		if (!trainable(f)) return;
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;
 		double value = Dictionary.safeGet(paramVec,f);
@@ -86,7 +44,8 @@ public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSR
 			if(!Double.isInfinite(grouplasso)){
 				//System.out.println("f: " + f +" group lasso:" + grouplasso);
 				weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - (gap * this.learningRate() * c.zeta * grouplasso));
-				Dictionary.reset(paramVec, f, weightDecay);
+				Dictionary.set(paramVec, f, weightDecay);
+				
 				this.cumloss.add(LOSS.REGULARIZATION, gap * this.learningRate() * c.zeta * grouplasso);             		
 			}
 		}     
@@ -98,7 +57,9 @@ public class LocalL1GroupLassoPosNegLossTrainedSRW extends L1PosNegLossTrainedSR
 		double shrinkageVal = gap * this.learningRate() * c.mu;
 		if((c.mu != 0) && (!Double.isInfinite(shrinkageVal))){
 			weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - shrinkageVal);
-			Dictionary.reset(paramVec, f, weightDecay);
+			Dictionary.set(paramVec, f, weightDecay);
+			//FIXME: why is this being set instead of incremented?
+			//FIXME: opportunity for out-of-date `value`; probably out to convert to a try loop
 		}
 		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu);             		
 	}

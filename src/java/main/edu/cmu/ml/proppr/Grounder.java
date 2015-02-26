@@ -112,13 +112,13 @@ public class Grounder {
 		}
 	}
 
-	public void groundExamples(File dataFile, File groundedFile) {
+	public void groundExamples(File dataFile, File groundedFile, boolean maintainOrder) {
 		try {
 			if (this.graphKeyFile != null) this.graphKeyWriter = new BufferedWriter(new FileWriter(this.graphKeyFile));
 			this.statistics = new GroundingStatistics();
 			this.empty = 0;
 
-			Multithreading<InferenceExample,String> m = new Multithreading<InferenceExample,String>(log);
+			Multithreading<InferenceExample,String> m = new Multithreading<InferenceExample,String>(log, maintainOrder);
 
 			m.executeJob(
 					this.nthreads, 
@@ -152,7 +152,7 @@ public class Grounder {
 		for (int i=0; i<ex.getGraph().nodeSize(); i++) {
 			key.append(s)
 			.append("\t")
-			.append(i)
+			.append(i+1)
 			.append("\t")
 			.append((State) ex.getGraph().getState(i+1))
 			.append("\n");
@@ -288,7 +288,7 @@ public class Grounder {
 		try {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GROUNDED;
-			int constants = Configuration.USE_WAM | Configuration.USE_THREADS;
+			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
 			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
 
 			ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);
@@ -301,7 +301,7 @@ public class Grounder {
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();
-			c.grounder.groundExamples(c.queryFile, c.groundedFile);
+			c.grounder.groundExamples(c.queryFile, c.groundedFile, c.maintainOrder);
 			System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
 			System.out.println("Done.");
 

@@ -33,7 +33,6 @@ public class InferenceExampleStreamer {
 		String[] parts = line.trim().split("\t");
 
 		Query query = Query.parse(parts[0]);
-//		SymbolTable<Argument> varTab = query.variabilize();
 
 		List<String> posList = new ArrayList<String>();
 		List<String> negList = new ArrayList<String>();
@@ -48,13 +47,11 @@ public class InferenceExampleStreamer {
 		Query[] posSet = new Query[posList.size()];
 		for (int i=0; i<posList.size(); i++) {
 			posSet[i]=Query.parse(posList.get(i));
-//			posSet[i].variabilize(varTab);
 		}
 		
 		Query[] negSet = new Query[negList.size()];
 		for (int i=0; i<negList.size(); i++) { 
 			negSet[i]=Query.parse(negList.get(i));
-//			negSet[i].variabilize(varTab);
 		}
 		return new InferenceExample(query,posSet,negSet);
 	}

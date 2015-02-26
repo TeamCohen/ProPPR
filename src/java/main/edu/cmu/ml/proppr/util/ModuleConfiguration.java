@@ -8,7 +8,7 @@ import org.apache.commons.cli.Options;
 
 import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
-import edu.cmu.ml.proppr.learn.AprSRW;
+import edu.cmu.ml.proppr.learn.DprSRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
@@ -73,7 +73,7 @@ public class ModuleConfiguration extends Configuration {
 					.withDescription("Default: dpr\n"
 							+ "Available options:\n"
 							+ "ppr\n"
-							+ "dpr[:strat] (default strategy=boost(exception,adjust))\n"
+							+ "dpr\n"
 							+ "df"
 							+ "tr")
 							.create());
@@ -108,10 +108,10 @@ public class ModuleConfiguration extends Configuration {
 					.withValueSeparator(':')
 					.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
 							 + "Syntax: srw:param=value:param=value...\n"
-							 + "Available srw options:\n"
+							 + "Available srws:\n"
 							 + "l1p, l1plocal, l1laplacianplocal, l1pgrouplassoplocal\n"
 							 + "l2p, l2plocal\n"
-							 + "apr\n"
+							 + "dpr\n"
 							 + "Available parameters:\n"
 							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
@@ -150,15 +150,7 @@ public class ModuleConfiguration extends Configuration {
 				case ppr:
 					this.prover = new PprProver(apr);
 				case dpr:
-					if (values.length==1)
 						this.prover = new DprProver(apr);
-					else {
-						APROptions.ALPHA_STRATEGY strategy = APROptions.ALPHA_STRATEGY_DEFAULT;
-						if ("throw".equals(values[1])) strategy = APROptions.ALPHA_STRATEGY.exception;
-						else strategy = APROptions.ALPHA_STRATEGY.valueOf(values[1]);
-						apr.alphaErrorStrategy = strategy;
-						this.prover = new DprProver(apr);
-					}
 					break;
 				case pdpr:
 					this.prover = new PathDprProver(apr);
@@ -259,24 +251,24 @@ public class ModuleConfiguration extends Configuration {
 			}
 
 			if (values[0].equals("l2p")) {
-				this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
 			} else if (values[0].equals("l1p")) {
-				this.srw = new edu.cmu.ml.proppr.learn.L1PosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.L1SRW(sp);
 			} else if (values[0].equals("l1plocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1PosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1SRW(sp);
 			} else if (values[0].equals("l1plaplacianlocal")) {
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);
 			} else if (values[0].equals("l1plocalgrouplasso")) {
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp);
 			} else if (values[0].equals("l2plocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL2PosNegLossTrainedSRW(sp);
-			} else if (values[0].equals("apr")) {
-				this.srw = new edu.cmu.ml.proppr.learn.AprSRW(sp, AprSRW.DEFAULT_STAYPROB);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp);
+			} else if (values[0].equals("dpr")) {
+				this.srw = new edu.cmu.ml.proppr.learn.DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
 			} else {
 				usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
-			this.srw = new edu.cmu.ml.proppr.learn.L2PosNegLossTrainedSRW(sp);
+			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
 		}
 	}
 
@@ -284,10 +276,12 @@ public class ModuleConfiguration extends Configuration {
 	public String toString() {
 		String superString = super.toString();
 		if (superString==null) superString = "unknownConfigClass";
-		StringBuilder sb = new StringBuilder(superString).append(":\n");
-		if (prover != null)   sb.append("   Prover: ").append(prover.getClass().getCanonicalName()).append("\n");
+		StringBuilder sb = new StringBuilder(superString).append("\n");
+		if (prover != null)
+			sb.append(String.format(FORMAT_STRING, "Prover")).append(": ").append(prover.getClass().getCanonicalName()).append("\n");
 //		if (grounder != null) sb.append(" Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
-		if (srw != null)      sb.append("   Walker: ").append(srw.getClass().getCanonicalName()).append("\n");
+		if (srw != null)
+			sb.append(String.format(FORMAT_STRING, "Walker")).append(": ").append(srw.getClass().getCanonicalName()).append("\n");
 //		if (trainer != null)  sb.append("  Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");
 		//sb.append("  Tester: ");
 		//		if (tester != null) 
@@ -298,13 +292,13 @@ public class ModuleConfiguration extends Configuration {
 		//			sb.append("QueryAnswerer: ").append(queryAnswerer.getClass().getCanonicalName());
 		//			sb.append(" (").append(this.normalize ? "normalized" : "unnormalized").append(")\n");
 		//		}
-		if (weightingScheme != null) sb.append("Weighting Scheme: ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
+		if (weightingScheme != null)
+			sb.append(String.format(FORMAT_STRING, "Weighting Scheme")).append(": ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
 		//		sb.append("Pretest? ").append(this.pretest ? "yes" : "no").append("\n");
 		//		sb.append("Strict? ").append(this.strict ? "yes" : "no").append("\n");
-		sb.append("    Alpha: ").append(apr.alpha).append("\n");
-		sb.append("  Epsilon: ").append(apr.epsilon).append("\n");
-		sb.append("Max depth: ").append(apr.maxDepth).append("\n");
-		sb.append(" Strategy: ").append(apr.alphaErrorStrategy.name()).append("\n");
+		sb.append(String.format(FORMAT_STRING, "Alpha")).append(": ").append(apr.alpha).append("\n");
+		sb.append(String.format(FORMAT_STRING, "Epsilon")).append(": ").append(apr.epsilon).append("\n");
+		sb.append(String.format(FORMAT_STRING, "Max depth")).append(": ").append(apr.maxDepth).append("\n");
 		return sb.toString();
 	}
 }

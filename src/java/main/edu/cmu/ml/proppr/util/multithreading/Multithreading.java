@@ -19,9 +19,18 @@ import org.apache.log4j.Logger;
 public class Multithreading<In,Out> {
 	public static final int NO_THROTTLE=-1;
 	public static final int DEFAULT_THROTTLE=NO_THROTTLE;
+	public static final boolean ORDER_MAINTAIN=true;
+	public static final boolean DEFAULT_ORDER=ORDER_MAINTAIN;
 	public Logger log;
+	private boolean maintainOrder;
 	
-	public Multithreading(Logger l) { this.log = l; }
+	public Multithreading(Logger l) {
+		this(l, DEFAULT_ORDER);
+	}
+	public Multithreading(Logger l, boolean ordered) {
+		this.log = l;
+		this.maintainOrder = ordered;
+	}
 
 	/** Runs the specified transformer on each item in the streamer and blocks until complete (no throttling).
 	 * Output is written to the specified file; make sure transformer transforms to String.
@@ -80,7 +89,7 @@ public class Multithreading<In,Out> {
 			tidyQueue(cleanupQueue);
 			if (throttle > 0 && cleanupQueue.size() > throttle) {
 				int wait = 100;
-				log.debug("Throttling @"+id+"...");
+				if (log.isDebugEnabled()) log.debug("Throttling @"+id+"...");
 				while(cleanupQueue.size() > throttle) {
 					try {
 						Thread.sleep(wait);
@@ -90,16 +99,28 @@ public class Multithreading<In,Out> {
 					tidyQueue(cleanupQueue);
 					wait *= 1.5;
 				}
-				log.debug("Throttling complete "+wait);
+				if (log.isDebugEnabled()) log.debug("Throttling complete "+wait);
 			}
 			
-			log.debug("Adding "+id);
+			if (log.isDebugEnabled()) log.debug("Adding "+id);
 			Future<Out> transformerFuture = transformerPool.submit(transformer.transformer(item, id));
-			Future<?> cleanupFuture = cleanupPool.submit(cleanup.cleanup(transformerFuture, id));
+			Future<?> cleanupFuture = null;
+			if (maintainOrder) {
+				cleanupFuture = cleanupPool.submit(cleanup.cleanup(transformerFuture, id));
+			} else {
+				if (log.isDebugEnabled()) log.debug("Permitting rescheduling of #"+id);
+				cleanupFuture = cleanupPool.submit(cleanup.cleanup(transformerFuture, cleanupPool, id));
+			}
 			cleanupQueue.add(cleanupFuture);
 		}
 		transformerPool.shutdown();
+		try {
+			transformerPool.awaitTermination(7, TimeUnit.DAYS);
+		} catch (InterruptedException e) {
+			log.error("Interrupted?",e);
+		}
 		cleanupPool.shutdown();
+//		cleanupPool.awaitTermination(7, TimeUnit)shutdown();
 		try {
 			log.debug("Finishing cleanup...");
 			cleanupPool.awaitTermination(7, TimeUnit.DAYS);

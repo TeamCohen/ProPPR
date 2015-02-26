@@ -21,11 +21,4 @@ public class PprProverTest extends ProverTestTemplate {
 		((PprProver)prover).setMaxDepth(1);
 		super.testProveState();
 	}
-	
-	@Override
-	public void setProveStateAnswers() {
-		proveStateAnswers[0] = 0.13333; // milk
-		proveStateAnswers[1] = 0.06666; // most
-		proveStateAnswers[2] = 0.13333; // start
-	}
 }

@@ -1,0 +1,27 @@
+0		comment	p(-1,-2) :- q(-1,-3), p(-3,-2)  #v:['X', 'Y', 'Z'].
+1	p/2	allocate	3	['Z', 'Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	p
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushfreevar	-3
+12		callp	q/2
+13		pushboundvar	-3
+14		pushboundvar	-2
+15		callp	p/2
+16		returnp
+17		comment	p(c,d) :- .
+18	p/2	unifyconst	c	-2
+19		unifyconst	d	-1
+20		fclear
+21		fpushstart	id	3
+22		fpushconst	p
+23		fpushconst	2
+24		fpushconst	20
+25		freport
+26		returnp

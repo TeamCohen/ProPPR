@@ -4,27 +4,21 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.prove.DprProver;
-import edu.cmu.ml.proppr.prove.PathDprProver;
-import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
-import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPlugin;
-import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPluginTest;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 
@@ -75,17 +69,22 @@ public class MiscDatasetStudy {
 		ProofGraph pg = new ProofGraph(query,apr,program,plugins);
 
 		
-		for (Outlink o : pg.pgOutlinks(pg.getStartState(), false, false)) {
+		for (Outlink o : pg.pgOutlinks(pg.getStartState(), false)) {
+			if (o.child.equals(pg.getStartState())) continue;
 			System.out.println(o.toString()); // seed; nonseed
 			if (o.child.getJumpTo().equals("hasWord/2")) {
-				for (Outlink oo : pg.pgOutlinks(o.child, false, false)) {
+				for (Outlink oo : pg.pgOutlinks(o.child, false)) {
+					if (o.child.equals(pg.getStartState())) continue;
 					// hasWord
-					for (Outlink ooo : pg.pgOutlinks(oo.child, false, false)) {
+					for (Outlink ooo : pg.pgOutlinks(oo.child, false)) {
+						if (o.child.equals(pg.getStartState())) continue;
 						//wordIn
-						for (Outlink m : pg.pgOutlinks(ooo.child, false, false)) {
+						for (Outlink m : pg.pgOutlinks(ooo.child, false)) {
+							if (o.child.equals(pg.getStartState())) continue;
 							// predict again: seed; nonseed
 							if (m.child.getJumpTo().equals("seed/2")) {
-								for (Outlink mm : pg.pgOutlinks(m.child, false, false)) {
+								for (Outlink mm : pg.pgOutlinks(m.child, false)) {
+									if (o.child.equals(pg.getStartState())) continue;
 									System.out.println("    "+oo.toString().replaceAll("\n","\n    "));
 									System.out.println("        "+ooo.toString().replaceAll("\n","\n        "));
 									System.out.println("            "+m.toString().replaceAll("\n","\n            "));
