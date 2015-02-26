@@ -20,6 +20,7 @@ import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ParsedFile;
 
 public class FactsPlugin extends WamPlugin {
+	private static final int ESTIMATED_SIZE = 10000;
 	private static final Logger log = Logger.getLogger(FactsPlugin.class);
 	public static final String FILE_EXTENSION="facts";
 	public static final boolean DEFAULT_INDICES=false;
@@ -168,7 +169,8 @@ public class FactsPlugin extends WamPlugin {
 
 	public void load(File f) {
 		ParsedFile parsed = new ParsedFile(f);
-		BloomFilter<String> lines = new BloomFilter(1e-5,10000);
+		BloomFilter<String> lines = new BloomFilter(1e-5,ESTIMATED_SIZE);
+		boolean exceeds=false;
 		for (String line : parsed) {
 			String[] parts =line.split("\t",2);
 			if (parts.length != 2) parsed.parseError("expected at least 2 tab-delimited fields");
@@ -177,6 +179,10 @@ public class FactsPlugin extends WamPlugin {
 				continue;
 			}
 			else lines.add(line);
+			if (!exceeds & parsed.getLineNumber() > ESTIMATED_SIZE) {
+				exceeds=true;
+				log.warn("Number of facts exceeds "+ESTIMATED_SIZE+"; duplicate detection may encounter false positives. We should add a command line option to fix this.");
+			}
 			addFact(parts[0], parts[1].split("\t"));
 		}
 	}
