@@ -151,8 +151,8 @@ public class QueryAnswerer {
 		return sb.toString();
 	}
 
-	public void findSolutions(File queryFile, File outputFile) throws IOException {
-		Multithreading<Query,String> m = new Multithreading<Query,String>(log);
+	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException {
+		Multithreading<Query,String> m = new Multithreading<Query,String>(log, maintainOrder);
 		m.executeJob(
 				this.nthreads, 
 				new QueryStreamer(queryFile), 
@@ -223,7 +223,7 @@ public class QueryAnswerer {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_ANSWERS;
 			int modules = Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
-			int constants = Configuration.USE_WAM | Configuration.USE_THREADS;
+			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
 			QueryAnswererConfiguration c = new QueryAnswererConfiguration(
 					args,
 					inputFiles, outputFiles, constants, modules);
@@ -235,7 +235,7 @@ public class QueryAnswerer {
 				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.weightingScheme);
 				file.check(c);
 			}
-			qa.findSolutions(c.queryFile, c.solutionsFile);
+			qa.findSolutions(c.queryFile, c.solutionsFile, c.maintainOrder);
 
 		} catch (Throwable t) {
 			t.printStackTrace();

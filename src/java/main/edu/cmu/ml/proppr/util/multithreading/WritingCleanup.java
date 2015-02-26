@@ -19,6 +19,8 @@ public class WritingCleanup extends Cleanup<String> {
 	public Runnable cleanup(Future<String> in, int id) {
 		return new RunWritingCleanup(in,id,writer);
 	}
+	@Override
+	public Logger getLog() { return this.log; }
 	public class RunWritingCleanup implements Runnable {
 		protected Writer writer;
 		protected int id;
