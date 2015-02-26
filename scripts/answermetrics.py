@@ -236,13 +236,13 @@ class MeanAvgPrecision(Metric):
     def computeFromList(self,answerList,solutionSet,posSet):
         n = len(posSet)
         if n is 0: return 1.0
-        numPosRetrieved = 0
-        numRetrieved = 0
-        ap = 0
+        numPosRetrieved = 0.0
+        numRetrieved = 0.0
+        ap = 0.0
         for a in answerList:
-            numRetrieved += 1
+            numRetrieved += 1.0
             if a.isPos:
-                numPosRetrieved += 1
+                numPosRetrieved += 1.0
                 ap += (numPosRetrieved / numRetrieved)
         return ap/n
 

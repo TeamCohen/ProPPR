@@ -1,6 +1,20 @@
 
+ifeq (1,$(words $(TRAIN)))
+
+results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
+	echo phase subset uR mR uMRR mMRR uMAP mMAP > $@
+	cat $^ >> $@
+
+post.%.solutions.txt: %.examples params.wts $(PROGRAM_DEPS)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR}
+
+params.wts: ${TRAIN}.examples.grounded
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${SRW} --epochs ${EPOCHS} --apr ${APR}
+
+endif
+
 %.results.txt: %.solutions.txt
-	python ${PROPPR}/scripts/answermetrics.py --data $(subst $(word 1,$(subst ., ,$*)).,,$*).examples --answers $< --metric recall --metric mrr |\
+	python ${PROPPR}/scripts/answermetrics.py --data $(subst $(word 1,$(subst ., ,$*)).,,$*).examples --answers $< --metric recall --metric mrr --metric map |\
 	grep -e "micro:" -e "macro:" |\
 	awk '{print $$3}' |\
 	tr "\n" " " |\
@@ -9,17 +23,6 @@
 pre.%.solutions.txt: %.examples $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
 
-ifeq (1,$(words $(TRAIN)))
-results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
-	echo phase subset uR mR uMRR mMRR > $@
-	cat $^ >> $@
-
-post.%.solutions.txt: %.examples params.wts $(PROGRAM_DEPS)
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR}
-
-params.wts: ${TRAIN}.examples.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${SRW} --epochs ${EPOCHS} --apr ${APR}
-endif
 
 %.examples.grounded: %.examples $(PROGRAM_DEPS)
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
