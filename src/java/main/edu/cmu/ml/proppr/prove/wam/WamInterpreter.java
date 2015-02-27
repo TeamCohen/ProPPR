@@ -386,6 +386,43 @@ public class WamInterpreter {
 		return rj;
 	}
 	
+	public String canonicalForm(State root, State from) throws LogicProgramException {
+		// buffer to hold canonical version of the state
+		StringBuilder sb = new StringBuilder();
+		// first get binding information for vars in the root state
+		List<String> constants = this.getConstantTable().getSymbolList();
+		for (int k : root.getRegisters()) {
+			int j = from.dereference(k);
+			if (sb.length()>0) sb.append(",");
+			sb.append("X").append(k).append("=");
+			if (from.hasConstantAt(j)) 
+				sb.append(constants.get(from.getIdOfConstantAt(j)-1));
+			else sb.append("X").append(j);
+		}
+		// next get pending goal information
+		// back up the current state
+		State saved = this.saveState();
+		this.restoreState(from);
+		// simulate executing the remainder of the program, till completion, but
+		// when there is a 'callp', just emit the current goal and return
+		while(!this.state.completed) {
+			this.executeWithoutBranching(false);
+			if (sb.length()>0) sb.append(",");
+			if (this.state.getJumpTo() != null) {
+				// call information
+				sb.append(this.state.getJumpTo()).append(" ");
+				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
+				for (int i=0; i<arity; i++) {
+					if (i>0) sb.append(" ");
+					sb.append(this.getArg(arity, i+1));
+				}
+				this.returnp();
+			}
+		}
+		this.restoreState(saved);
+		return sb.toString();
+	}
+	
 	/** Convert to a list of pending goals to be proved 
 	 * @throws LogicProgramException */
 	public List<Goal> pendingGoals(State from) throws LogicProgramException {

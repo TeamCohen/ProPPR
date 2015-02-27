@@ -109,7 +109,7 @@ public class NodeMergingTest {
 				apr,program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
-		assertEquals("improper node duplication",9,ex.getGraph().nodeSize());
+		assertEquals("improper node duplication",7,ex.getGraph().nodeSize());
 	}
 	
 	@Test
