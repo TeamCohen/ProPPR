@@ -246,13 +246,27 @@ class MeanAvgPrecision(Metric):
                 ap += (numPosRetrieved / numRetrieved)
         return ap/n
 
+class AreaUnderROC(Metric):
+    def explanation(self):
+        return '(AUC): The probability of a positive example scoring higher than a negative example; or the area under the ROC curve'
+    def computeFromList(self,answerList,solutionSet,posSet):
+        npos = len(posSet)
+        nneg = len(answerList) - npos
+        npairs = npos * nneg
+        optimumRankSum = (npos/2.0) * (npos+1.0) #=sum from 1 to npos
+        rankSum = 0.0
+        for a in answerList:
+            if a.isPos:
+                rankSum += a.rank
+        return 1.0 - (rankSum - optimumRankSum)/npairs
+        
 ####################  main
 
 if __name__ == "__main__":
 
-    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision()}
+    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 'auc':AreaUnderROC()}
 
-    argspec = ["data=", "answers=", "metric=", "help"]
+    argspec = ["data=", "answers=", "metric=", "help", "debug"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
     option = dict(optlist)
     if ('--data' not in option) or ('--answers' not in option):
@@ -264,10 +278,11 @@ if __name__ == "__main__":
     labels = Labels(option['--data'])
     answers = Answers(option['--answers'],labels)
 
-#    print 'labels:'
-#    labels.show()
-#    print 'answers:'
-#    answers.show(summary=False)
+    if '--debug' in option:
+        print 'labels:'
+        labels.show()
+        print 'answers:'
+        answers.show(summary=False)
 
     for (key,val) in optlist:
         if key=='--metric':

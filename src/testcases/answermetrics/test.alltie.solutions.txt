@@ -1,0 +1,11 @@
+# proved 1	foo(X1)  #v:[?].	0 msec
+1	.1	foo(a).
+1	.1	foo(b).
+1	.1	foo(c).
+1	.1	foo(d).
+1	.1	foo(e).
+1	.1	foo(v).
+1	.1	foo(w).
+1	.1	foo(x).
+1	.1	foo(y).
+1	.1	foo(z).
