@@ -26,6 +26,7 @@ import edu.cmu.ml.praprolog.learn.tools.RWExample;
 import edu.cmu.ml.praprolog.util.Dictionary;
 import edu.cmu.ml.praprolog.util.ParamVector;
 import edu.cmu.ml.praprolog.util.SimpleParamVector;
+import gnu.trove.map.TObjectDoubleMap;
 /**
  * These tests are on a graph without reset links in it.
  * @author krivard
@@ -155,6 +156,7 @@ public class SRWTest extends RedBlueGraph {
 		Set<String> neg = redPart(baseLineVec).keySet();
 
 		double baselineLoss = makeLoss(this.srw, uniformParams, startVec, pos, neg);
+		Map<String,Double> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg);
 
 //		ParamVector biasedWeightVec = makeParams(); biasedWeightVec.putAll(uniformWeightVec);
 //		if (biasedWeightVec.get("tob").equals(1.0)) {
@@ -174,15 +176,24 @@ public class SRWTest extends RedBlueGraph {
 
 		double origLoss = makeLoss(srw, uniformParams, startVec, pos, neg);
 		
+		double perturb_epsilon = 1e-12;
 		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
+			
 			ParamVector pert = uniformParams.copy();
-			pert.put("fromb", pert.get(feature)+1e-10);
+			pert.put(feature, pert.get(feature)+perturb_epsilon);
+			
 			srw.clearLoss();
 			Map<String,Double> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
 			double newLoss = srw.cumulativeLoss().total();
-			//System.err.println("\n1st-order on "+feature+":"+Dictionary.buildString(epsGrad, new StringBuilder(), "\n").toString());
 			
-			assertEquals("first order approximation on "+feature,0,newLoss-origLoss,1e-15);
+			// 1st-order on tob: -3.1515590137587424E-10 approximation: -2.859861060554246E-10
+			System.err.println("\n1st-order on "+feature+": "+(newLoss-baselineLoss)+" approximation: "+perturb_epsilon*baselineGrad.get(feature));
+			System.err.println("(%difference: "+ (((newLoss-baselineLoss) / (perturb_epsilon*baselineGrad.get(feature)))));
+			
+			assertEquals("first order approximation on "+feature,
+					perturb_epsilon*baselineGrad.get(feature),
+					newLoss-baselineLoss,
+					1e-15);
 		}
 		
 		double eps = .0001;

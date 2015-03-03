@@ -112,7 +112,7 @@ public class Configuration {
 	}
 	protected File getExistingFileDirect(CommandLine line, String filename) {
 		File value = new File(filename);
-		if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
+		if (!value.exists()) throw new IllegalArgumentException("File '"+value.getAbsolutePath()+"' must exist");
 		return value;
 	}
 	protected void retrieveSettings(CommandLine line, int flags, Options options) {
