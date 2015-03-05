@@ -418,7 +418,7 @@ public class Configuration {
 					.withArgName("options")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: eps=1e-4:alph=0.1:depth=5\n"
+					.withDescription("Pagerank options. Default: eps=1e-4:alph=0.1:depth=5\n"
 							+ "Syntax: param=value:param=value...\n"
 							+ "Available parameters:\n"
 							+ "eps, alph, depth")

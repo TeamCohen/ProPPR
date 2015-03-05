@@ -74,7 +74,8 @@ public class ModuleConfiguration extends Configuration {
 							+ "Available options:\n"
 							+ "ppr\n"
 							+ "dpr\n"
-							+ "df"
+							+ "pdpr\n"
+							+ "dfs\n"
 							+ "tr")
 							.create());
 		if (isOn(flags, USE_GROUNDER))
@@ -95,9 +96,9 @@ public class ModuleConfiguration extends Configuration {
 					.withArgName("class[:arg]")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: t:3\n"
+					.withDescription("Default: t:-1\n"
 							+ "Available options:\n"
-							+ "t[:threads[:throttle]] (default threads=3,throttle=-1)")
+							+ "t[:throttle] (default throttle=-1)")
 							.create());
 		if (isOn(flags, USE_SRW))
 			options.addOption(
@@ -197,7 +198,12 @@ public class ModuleConfiguration extends Configuration {
 		if (isOn(flags,USE_TRAIN)) {
 			this.setupSRW(line, flags, options);
 			seed(line);
-			this.trainer = new Trainer(this.srw, this.nthreads, Multithreading.DEFAULT_THROTTLE);
+			int throttle = Multithreading.DEFAULT_THROTTLE;
+			if (line.hasOption(TRAINER_MODULE_OPTION)) {
+			    String[] values = line.getOptionValues(TRAINER_MODULE_OPTION);
+			    if (values.length > 1) throttle = Integer.parseInt(values[1]);
+			}
+			this.trainer = new Trainer(this.srw, this.nthreads, throttle);
 		}
 
 		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
@@ -210,7 +216,7 @@ public class ModuleConfiguration extends Configuration {
 
 		//modules
 		flags = modules(allFlags);
-		if (isOn(flags, USE_PROVER)) syntax.append(" [--").append(PROVER_MODULE_OPTION).append(" ppr[:depth] | dpr[:eps[:alph[:strat]]] | tr[:depth] ]");
+		if (isOn(flags, USE_PROVER)) syntax.append(" [--").append(PROVER_MODULE_OPTION).append(" ppr | dpr | pdpr | dfs | tr ]");
 		if (isOn(flags, USE_WEIGHTINGSCHEME)) 
 			syntax.append(" [--").append(WEIGHTINGSCHEME_MODULE_OPTION).append(" linear | sigmoid | tanh | ReLU | exp]");
 	}
