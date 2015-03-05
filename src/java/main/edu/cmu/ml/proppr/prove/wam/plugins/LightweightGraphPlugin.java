@@ -34,7 +34,7 @@ import gnu.trove.map.TObjectDoubleMap;
  *
  */
 public class LightweightGraphPlugin extends GraphlikePlugin {
-	private static final int ESTIMATED_SIZE = 100000;
+	private static final int ESTIMATED_SIZE = 1000000;
 	private static final Logger log = Logger.getLogger(LightweightGraphPlugin.class);
 	protected Map<String,Map<String,TObjectDoubleMap<String>>> graph = new HashMap<String,Map<String,TObjectDoubleMap<String>>>();
 	protected Map<Goal,Double> fd=new HashMap<Goal,Double>();

@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import edu.cmu.ml.proppr.prove.wam.Argument;
+import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.custom_hash.TObjectIntCustomHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.strategy.HashingStrategy;
 
 /**
  * A symbol table mapping strings to/from integers in the range
@@ -17,7 +20,14 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 public class SymbolTable<T> {
 	protected List<T> symbolList = new ArrayList<T>();
 	protected int nextId = 0;
-	protected TObjectIntHashMap<T> idDict = new TObjectIntHashMap<T>();
+	protected TObjectIntMap<T> idDict;
+	
+	public SymbolTable() {
+		this.idDict = new TObjectIntHashMap<T>();
+	}
+	public SymbolTable(HashingStrategy<T> strat) {
+		this.idDict = new TObjectIntCustomHashMap<T>(strat);
+	}
 	/**
 	 * Insert a symbol.
 	 * @param s

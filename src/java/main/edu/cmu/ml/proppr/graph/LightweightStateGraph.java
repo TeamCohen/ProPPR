@@ -18,16 +18,25 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TIntDoubleProcedure;
 import gnu.trove.procedure.TIntObjectProcedure;
 import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.strategy.HashingStrategy;
 
 public class LightweightStateGraph extends InferenceGraph {
 	private static final Logger log = Logger.getLogger(LightweightStateGraph.class);
 	private static final Map<Goal,Double> DEFAULT_FD = Collections.emptyMap();
 	private final List<State> DEFAULT_NEAR = Collections.emptyList();
-	private SymbolTable<State> nodeTab = new SymbolTable<State>();
+	private SymbolTable<State> nodeTab;
 	private SymbolTable<Goal> featureTab = new SymbolTable<Goal>();
 	private TIntObjectHashMap<TIntArrayList> near = new TIntObjectHashMap<TIntArrayList>();
 	private TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>> edgeFeatureDict = new TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>>();
 	private int edgeCount = 0;
+	
+	public LightweightStateGraph() {
+		this.nodeTab = new SymbolTable<State>();
+	}
+	
+	public LightweightStateGraph(HashingStrategy<State> nodeHash) {
+		this.nodeTab = new SymbolTable<State>(nodeHash);
+	}
 
 	@Override
 	public State getState(int u) {

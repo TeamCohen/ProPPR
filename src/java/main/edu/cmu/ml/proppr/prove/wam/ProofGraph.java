@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.FilterPluginCollection;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.PluginFunction;
 import edu.cmu.ml.proppr.util.APROptions;
+import gnu.trove.strategy.HashingStrategy;
 
 /**
  * # Creates the graph defined by a query, a wam program, and a list of
@@ -31,9 +32,9 @@ public class ProofGraph {
 	
 	private InferenceExample example;
 	private WamProgram program;
-	private WamInterpreter interpreter;
+	private final WamInterpreter interpreter;
 	private int queryStartAddress;
-	private ImmutableState startState;
+	private final ImmutableState startState;
 	private int[] variableIds;
 	private LightweightStateGraph graph;
 	private Map<Goal,Double> trueLoopFD;
@@ -56,7 +57,27 @@ public class ProofGraph {
 		this.trueLoopRestartFD = new HashMap<Goal,Double>(); this.trueLoopRestartFD.put(TRUELOOP_RESTART,1.0);
 		this.restartFeature = RESTART;
 		this.restartBoosterFeature = ALPHABOOSTER;
-		this.graph = new LightweightStateGraph();
+		this.graph = new LightweightStateGraph(new HashingStrategy<State>() {
+
+			@Override
+			public int computeHashCode(State s) {
+				try {
+					return interpreter.canonicalForm(startState, s).hashCode();
+				} catch (LogicProgramException e) {
+					e.printStackTrace();
+				}
+				return 0;
+			}
+
+			@Override
+			public boolean equals(State s1, State s2) {
+				try {
+					return interpreter.canonicalForm(startState, s1).equals(interpreter.canonicalForm(startState, s2));
+				} catch (LogicProgramException e) {
+					e.printStackTrace();
+				}
+				return false;
+			}});
 	}
 	private ImmutableState createStartState() throws LogicProgramException {
 		// execute to the first call
