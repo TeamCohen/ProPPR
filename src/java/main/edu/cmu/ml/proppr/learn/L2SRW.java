@@ -38,13 +38,4 @@ public class L2SRW extends SRW {
 			gradient.adjustOrPutValue(ex.getFeatureId(f), ret, ret);
 		}
 	}
-
-//	@Override
-//	protected GradientComponents makeGradientComponents(
-//			ParamVector<String, ?> paramVec, PosNegRWExample example) {
-//		GradientComponents g = new GradientComponents();
-//		g.p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-//		g.d = derivRWRbyParams(example.getGraph(), example.getQueryVec(), paramVec);
-//		return g;
-//	}
 }

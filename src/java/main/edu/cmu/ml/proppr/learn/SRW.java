@@ -83,7 +83,7 @@ public class SRW {
 		sgd(params, sgdex);
 	}
 
-	public void accumulateGradient(ParamVector params, PosNegRWExample example, TObjectDoubleMap<String> accumulator) {
+	public void accumulateGradient(ParamVector params, PosNegRWExample example, ParamVector accumulator) {
 		log.info("Gradient calculating on "+example);
 		SgdExample sgdex = wrapExample(example);
 		load(params, sgdex);
@@ -91,7 +91,8 @@ public class SRW {
 		TIntDoubleMap gradient = gradient(params,sgdex);
 		for (TIntDoubleIterator it = gradient.iterator(); it.hasNext(); ) {
 			it.advance();
-			Dictionary.increment(accumulator, sgdex.g.featureLibrary.getSymbol(it.key()), it.value() / example.length());
+			String feature = sgdex.g.featureLibrary.getSymbol(it.key());
+			if (trainable(feature)) accumulator.adjustValue(sgdex.g.featureLibrary.getSymbol(it.key()), it.value() / example.length());
 		}
 	}
 
@@ -103,6 +104,7 @@ public class SRW {
 	/** fills M, dM in ex **/
 	protected void load(ParamVector params, SgdExample ex) {
 		initializeFeatures(params, ex.g);
+		prepareForExample(params, ex.g);
 		ex.M = new double[ex.g.node_hi][];
 		ex.dM_lo = new int[ex.g.node_hi][];
 		ex.dM_hi = new int[ex.g.node_hi][];
@@ -382,7 +384,11 @@ public class SRW {
 	/** Allow subclasses to swap in an alternate parameter implementation **/
 	public ParamVector<String,?> setupParams(ParamVector<String,?> params) { return params; }
 
-	/** Allow subclasses to do additional parameter processing **/
+
+	/** Allow subclasses to do pre-example calculations (e.g. lazy regularization) **/
+	public void prepareForExample(ParamVector params, LearningGraph graph) {}
+	
+	/** Allow subclasses to do additional parameter processing at the end of an epoch **/
 	public void cleanupParams(ParamVector<String,?> params) {}
 
 

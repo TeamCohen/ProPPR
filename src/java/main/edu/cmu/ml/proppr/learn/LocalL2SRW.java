@@ -49,6 +49,10 @@ public class LocalL2SRW extends L2SRW {
 	@Override
 	public void initializeFeatures(ParamVector params, LearningGraph graph) {
 		super.initializeFeatures(params, graph);
+	}
+	
+	@Override
+	public void prepareForExample(ParamVector params, LearningGraph graph) {
 		for (String f : localFeatures(params,graph)) {
 			prepareFeature(params,f);
 		}
@@ -61,7 +65,7 @@ public class LocalL2SRW extends L2SRW {
 		double value = Dictionary.safeGet(paramVec,f);
 		double powerTerm = Math.pow(1 - 2 * c.mu * this.learningRate(), gap);
 		double weightDecay = value * (powerTerm - 1);
-		//FIXME: opportunity for out-of-date `value`; probably out to convert to a try loop
+		//FIXME: opportunity for out-of-date `value`; probably ought to convert to a try loop
 		paramVec.adjustValue(f, weightDecay);
 		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.pow(value, 2));
 	}

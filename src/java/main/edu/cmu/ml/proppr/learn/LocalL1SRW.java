@@ -46,6 +46,10 @@ public class LocalL1SRW extends L1SRW {
 	@Override
 	public void initializeFeatures(ParamVector params, LearningGraph graph) {
 		super.initializeFeatures(params, graph);
+	}
+	
+	@Override
+	public void prepareForExample(ParamVector params, LearningGraph graph) {
 		for (String f : localFeatures(params, graph)) {
 			prepareFeature(params,f);
 		}

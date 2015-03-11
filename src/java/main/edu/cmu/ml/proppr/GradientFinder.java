@@ -28,10 +28,10 @@ public class GradientFinder {
 
 	public static void main(String[] args) {
 		try {
-			int inputFiles = Configuration.USE_GROUNDED;
+			int inputFiles = Configuration.USE_GROUNDED | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GRADIENT;
-			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
-			int constants = Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_WAM;
+			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
+			int constants = Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_EPOCHS | Configuration.USE_FORCE;
 			ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
 				@Override
 				protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
@@ -40,11 +40,15 @@ public class GradientFinder {
 						usageOptions(options, allFlags, "Must specify grounded file using --"+Configuration.GROUNDED_FILE_OPTION);
 					if (gradientFile==null) 
 						usageOptions(options, allFlags, "Must specify gradient using --"+Configuration.GRADIENT_FILE_OPTION);
-					epochs = 1;
+//					epochs = 1;
+				}
+				@Override
+				protected void addOptions(Options options, int[] allFlags) {
+					super.addOptions(options, allFlags);
+					options.getOption(PARAMS_FILE_OPTION).setRequired(false);
 				}
       };
 			System.out.println(c.toString());
-			System.out.println("gradientFile: " + c.gradientFile);
 
 			ParamVector params = null;
 			if (c.epochs > 0) {
@@ -52,11 +56,13 @@ public class GradientFinder {
 						new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
 						c.epochs, 
 						c.traceLosses);
-			} else {
+			} else if (c.paramsFile != null) {
 				params = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(c.paramsFile)));
+			} else {
+				params = new SimpleParamVector<String>();
 			}
 
-			TObjectDoubleMap<String> batchGradient = c.trainer.findGradient(
+			ParamVector batchGradient = c.trainer.findGradient(
 					new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
 					params);
 

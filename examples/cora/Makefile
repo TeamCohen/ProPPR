@@ -35,8 +35,7 @@ results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.resu
 ### DATASET BUILDING
 
 cora.graph: train.raw test.raw
-	scripts/getGraph.sh train.raw > $@
-	scripts/getGraph.sh test.raw >> $@
+	scripts/getGraph.sh $^ | sort | uniq > $@
 
 train.examples: train.raw
 	scripts/getData.pl $^ > $@

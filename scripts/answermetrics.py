@@ -187,6 +187,7 @@ class Metric(object):
         for q in answers.answers.keys():
             n += 1
             tot += self.computeFromList(answers.answers[q],answers.solutions[q],labels.pos[q])
+        if n==0: return n
         return tot/n
 
     def detailedReportAsDict(self,answers,labels):
