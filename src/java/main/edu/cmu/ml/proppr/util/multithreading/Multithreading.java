@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -77,26 +78,40 @@ public class Multithreading<In,Out> {
 	 * @param throttle
 	 */
 	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,Cleanup<Out> cleanup,int throttle) {
-		ExecutorService transformerPool = Executors.newFixedThreadPool(nThreads);
-		ExecutorService cleanupPool = Executors.newFixedThreadPool(1);
+		ExecutorService transformerPool = Executors.newFixedThreadPool(nThreads, new ThreadFactory() {
+			int next=1;
+			@Override
+			public Thread newThread(Runnable r) {
+				return new Thread(r, "transformer-"+next++);
+			}
+			
+		});
+		ExecutorService cleanupPool = Executors.newFixedThreadPool(1, new ThreadFactory() {
+			int next=1;
+			@Override
+			public Thread newThread(Runnable r) {
+				return new Thread(r, "cleanup-"+next++);
+			}
+			
+		});
 
-		ArrayDeque<Future<?>> cleanupQueue = new ArrayDeque<Future<?>>();
+		ArrayDeque<Future<?>> transformerQueue = new ArrayDeque<Future<?>>();
 		
 		int id=0;
 		for (In item : streamer) {
 			id++;
 
-			tidyQueue(cleanupQueue);
-			if (throttle > 0 && cleanupQueue.size() > throttle) {
+			tidyQueue(transformerQueue);
+			if (throttle > 0 && transformerQueue.size() > throttle) {
 				int wait = 100;
 				if (log.isDebugEnabled()) log.debug("Throttling @"+id+"...");
-				while(cleanupQueue.size() > throttle) {
+				while(transformerQueue.size() > throttle) {
 					try {
 						Thread.sleep(wait);
 					} catch (InterruptedException e) {
 						log.error("Interrupted while throttling tasks");
 					}
-					tidyQueue(cleanupQueue);
+					tidyQueue(transformerQueue);
 					wait *= 1.5;
 				}
 				if (log.isDebugEnabled()) log.debug("Throttling complete "+wait);
@@ -104,27 +119,28 @@ public class Multithreading<In,Out> {
 			
 			if (log.isDebugEnabled()) log.debug("Adding "+id);
 			Future<Out> transformerFuture = transformerPool.submit(transformer.transformer(item, id));
-			Future<?> cleanupFuture = null;
 			if (maintainOrder) {
-				cleanupFuture = cleanupPool.submit(cleanup.cleanup(transformerFuture, id));
+				cleanupPool.submit(cleanup.cleanup(transformerFuture, id));
 			} else {
 				if (log.isDebugEnabled()) log.debug("Permitting rescheduling of #"+id);
-				cleanupFuture = cleanupPool.submit(cleanup.cleanup(transformerFuture, cleanupPool, id));
+				cleanupPool.submit(cleanup.cleanup(transformerFuture, cleanupPool, id));
 			}
-			cleanupQueue.add(cleanupFuture);
+			transformerQueue.add(transformerFuture);
 		}
+		
+		// first we wait for all transformers to finish
 		transformerPool.shutdown();
 		try {
 			transformerPool.awaitTermination(7, TimeUnit.DAYS);
 		} catch (InterruptedException e) {
 			log.error("Interrupted?",e);
 		}
+		// at this point all transformers are complete, so no task in the cleanup pool will need to be rescheduled
 		cleanupPool.shutdown();
-//		cleanupPool.awaitTermination(7, TimeUnit)shutdown();
 		try {
-			log.debug("Finishing cleanup...");
+			if (log.isDebugEnabled()) log.debug("Finishing cleanup...");
 			cleanupPool.awaitTermination(7, TimeUnit.DAYS);
-			log.debug("Cleanup finished.");
+			if (log.isDebugEnabled()) log.debug("Cleanup finished.");
 		} catch (InterruptedException e) {
 			log.error("Interrupted?",e);
 		}
