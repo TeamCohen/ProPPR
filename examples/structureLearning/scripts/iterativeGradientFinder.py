@@ -47,6 +47,11 @@ def iterativeGradientFinder(stem,iters=MAX_ITERS):
 
     # end of FOR loop iteration
 
+    # create a final iterated-gradient ruleset
+    final = ithFileName(stem+"_delta",iters+1,RULES_EXT)
+    gradient2Rules(final,gradientFiles)
+    catfile(final,'final iterated gradient')
+
     #create some 'final' iterated gradient (fig) rule files
     #gradient2Rules(stem+'.fig-'+RULES_EXT,gradientFiles,addSecondOrderRules=False)
     #catfile(stem+'.fig-'+RULES_EXT,'final iterated gradient with out 2nd-order rules')

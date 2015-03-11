@@ -29,7 +29,10 @@ clean:
 
 .PRECIOUS: %.examples params.wts %.solutions.txt
 
-## Below adapted from /remote/curtis/yww/data/forKatie/uml/Makefile
+## Below adapted from 
+## /remote/curtis/yww/data/forKatie/uml/Makefile
+## and
+## /remote/curtis/yww/data/forKatie/uml/bin/iterativeGradientFinder.py
 ## March 2015
 
 # This project iteratively refines a program based on h22.ppr. At each
@@ -43,9 +46,9 @@ clean:
 # in ${NAME}_delta_$t.ppr, and we proceed until no new rules are added.
 #
 # We measure the performance after each iteration by evaluating
-# ${NAME}_delta_$t.ppr -- which does not include the h22 rules -- on the
-# test queries.
-
+# ${NAME}_alone_$t.ppr -- which is formed only from
+# ${NAME}_delta_$t.ppr and interp.ppr, and does not include the h22
+# rules -- on the test queries.
 
 # Iteration 0 is the baseline, without any additional rules.
 #
@@ -53,7 +56,8 @@ clean:
 # calculation to compute rules.
 #
 # All other iterations form the ISG method, which iterates on the
-# gradient until no new rules are added.
+# gradient until no new rules are added. The performance of ISG is the
+# performance of the final iteration.
 
 structureLearning: $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.solutions.txt,$(subst _delta,-test.alone,$(it))),pre. post.))
 
@@ -61,6 +65,9 @@ results.txt: $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .p
 	echo phase.subset.iteration uR mR uMRR mMRR uMAP mMAP > $@
 	cat $^ >> $@
 
+# make  e.g. pre.uml_1-test.alone_01.results.txt
+# from  e.g. pre.uml_1-test.alone_01.solutions.txt
+# using e.g.     uml_1-test.examples
 %.results.txt: %.solutions.txt
 	ROOT=$*;\
 	ROOT=$${ROOT#*.};\
@@ -72,28 +79,43 @@ results.txt: $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .p
 	awk '{name="$*"; gsub("\."," ",name); print name,$$0}' > $@
 	cat $@
 
-# The common target definitions are insufficient for our needs,
-# since the program will differ for each iteration. Thus we define our
-# own solutions targets, including the program dependency for that
-# iteration.
+## The common.in target definitions are insufficient for our needs,
+## since the program will differ for each iteration. Thus we define
+## our own solutions targets, which include the .wam program
+## dependency for that iteration.
 
+# make e.g. pre.uml_1-test.h22_01.solutions.txt
+# from e.g.     uml_1-test.examples
+#               uml_1_h22_01.wam
 pre.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-test.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
 
+
+# make e.g. post.uml_1-test.h22_01.solutions.txt
+# from e.g.      uml_1-test.examples
+#                uml_1_h22_01.wam
+#               params.h22_01.wts
 post.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam params.%.wts
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-test.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
 
+# make e.g.      params.alone_01.wts
+# from e.g. uml_1-train.alone_01.examples.grounded
 params.%.wts: ${TRAIN}.%.examples.grounded
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${SRW} --epochs ${EPOCHS} --apr ${APR}
 
+# make e.g. uml_1-train.h22_01.examples.grounded
+# from e.g. uml_1-train.examples
+#           uml_1_h22_01.wam
 ${NAME}-train.%.examples.grounded: ${NAME}-train.examples ${NAME}_%.wam
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${NAME}-train.cfacts:$(word 2,$^) --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
 
-# Additional targets for building an executable program from gradient-generated rules:
+## Additional targets for building an executable program from gradient-generated rules:
 
+# uml_1_delta_01.ppr + h22.ppr = uml_1_h22_01.ppr
 ${NAME}_h22_%.ppr: ${NAME}_delta_%.ppr h22.ppr
 	cat $^ > $@
 
+# uml_1_delta_01.ppr + interp.ppr = uml_1_alone_01.ppr
 ${NAME}_alone_%.ppr: ${NAME}_delta_%.ppr interp.ppr
 	cat $^ > $@
 
@@ -102,5 +124,8 @@ ${NAME}_alone_%.ppr: ${NAME}_delta_%.ppr interp.ppr
 isg:
 	python scripts/iterativeGradientFinder.py ${NAME} ${ITERS}
 
+# make e.g.           uml_1_01.gradient
+# from e.g. uml_1-train.h22_01.examples.grounded
+# first training for e.g.   01 epochs
 ${NAME}_%.gradient: ${NAME}-train.h22_%.examples.grounded
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $< --threads ${THREADS} --apr ${APR} --epochs $* --srw ${SRW} --gradient $@
