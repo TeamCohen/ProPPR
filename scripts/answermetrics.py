@@ -98,6 +98,8 @@ class Answers(object):
     - answers.solutions[q] is a set of all the solutions returned for
       q
 
+    Any answers that are not either isPos or isNeg - ie, unknown truth
+    values - are discarded.
 """
     
     def __init__(self,answerFile,labels=None):
@@ -108,6 +110,9 @@ class Answers(object):
         self.solutions = collections.defaultdict(set)
         self.queryTime = {}
         intVarQuery = None
+        totQueries = 0
+        totAnswers = 0
+        totLabeledAnswers = 0
         for line in open(self.answerFile):        
             if line.startswith('#'):
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
@@ -125,10 +130,13 @@ class Answers(object):
                     a.isPos = solution in labels.pos[intVarQuery]
                     a.isNeg = solution in labels.neg[intVarQuery]
                     #print 'solution',solution,'intVarQuery',intVarQuery,'pos',labels.pos[intVarQuery],'neg',labels.pos[intVarQuery]
-                self.answers[intVarQuery].append(a)
-                self.solutions[intVarQuery].add(solution)
+                if a.isPos or a.isNeg:
+                    totLabeledAnswers += 1
+                    self.answers[intVarQuery].append(a)
+                    self.solutions[intVarQuery].add(solution)
         for q in self.answers:
             self.answers[q] = self.adversariallyOrdered(self.answers[q])
+        print 'queries',totQueries,'answers',totAnswers,'labeled answers',totLabeledAnswers
 
     def adversariallyOrdered(self,answerList):
         def adverseKey(a): return (1.0-a.score,a.isPos,a.rank)
@@ -260,19 +268,90 @@ class AreaUnderROC(Metric):
                 rankSum += a.rank
         return 1.0 - (rankSum - optimumRankSum)/npairs
         
+class Accuracy(Metric):
+    
+    def microAverage(self,answers,labels):
+        # not defined
+        return -1
+
+    def computeFromList(self,answerList,solutionSet,posSet):
+        # answers are rank, score, solution, isPos, isNeg
+        instanceScores = collections.defaultdict(list)
+        for a in answerList:
+            instanceId,predictedLabel = self.parseSolution(a.solution)
+            #save a bunch of stuff for testing mostly
+            instanceScores[instanceId].append( (a.score,predictedLabel,a.isPos) )
+        numCorrect = 0
+        for instanceId in instanceScores:
+            instanceScores[instanceId].sort(reverse=True)
+            #print instanceId,instanceScores[instanceId]
+            (score,label,isPos) = instanceScores[instanceId][0]
+            if isPos: numCorrect += 1
+        totExamples = len(instanceScores)
+        for solution in posSet:
+            instanceId,predictedLabel = self.parseSolution(solution)
+            if not instanceId in instanceScores:
+                totExamples += 1
+        print '. accuracy notes:',numCorrect,'/',totExamples,'examples correct: typical instances',instanceScores.keys()[0:3]
+        return numCorrect/float(totExamples)
+
+    def dissectSolution(self,solution):
+        functor,args = solution[:-1].split("(")
+        arg1,arg2 = args.split(",")
+        return functor,arg1,arg2
+
+class AccuracyL1(Accuracy):            
+
+    def explanation(self):
+        return '(Accuracy L1): accuracy where goals are of the form predict(Y,X), ie label is first argument.'
+
+    def parseSolution(self,solution):
+        (f1,y,x) = self.dissectSolution(solution)
+        return x,y
+
+class AccuracyL2(Accuracy):            
+
+    def explanation(self):
+        return '(Accuracy L2): accuracy where goals are of the form predict(X,Y), ie label is second argument.'
+
+    def parseSolution(self,solution):
+        (f1,x,y) = self.dissectSolution(solution)
+        return x,y
+
+class MeanRecipRank(Metric):
+    
+    def explanation(self):
+        return '(Mean Reciprocal Rank): averages 1/rank for all positive answers'
+
+    def computeFromList(self,answerList,solutionSet,posSet):
+        tot = n = 0
+        for a in answerList:
+            if a.isPos:
+                tot += 1.0/a.rank
+                n += 1
+        for a in posSet:
+            if not a in solutionSet:
+                n += 1
+        if n: return tot/n
+        else: return 1.0
+        
+
 ####################  main
 
 if __name__ == "__main__":
 
-    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 'auc':AreaUnderROC()}
+    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 
+               'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
 
-    argspec = ["data=", "answers=", "metric=", "help", "debug"]
+    argspec = ["data=", "answers=", "metric=", "help", "debug", "echo"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
     option = dict(optlist)
-    if ('--data' not in option) or ('--answers' not in option):
+    if ('--data' not in option) or ('--answers' not in option) or ('--help' in option):
         print 'usage:',sys.argv[0],'--data TRAIN-OR-TEST-FILE --answers ANSWER-FILE --metric M'
-        for key in metrics:
+        for key in sorted(metrics.keys()):
             print '  --metric',key,metrics[key].explanation()
+        print
+        print '  --echo will print a representation of the raw information from which metrics are computed'
         sys.exit(-1)
 
     labels = Labels(option['--data'])
@@ -282,6 +361,10 @@ if __name__ == "__main__":
         print 'labels:'
         labels.show()
         print 'answers:'
+        answers.show(summary=False)
+
+    if ('--echo' in option):
+        print 'labeled answers: rank score solution isPos isNeg'
         answers.show(summary=False)
 
     for (key,val) in optlist:
