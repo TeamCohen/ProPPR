@@ -24,7 +24,7 @@ import edu.cmu.ml.proppr.util.SymbolTable;
  */
 public class WamInterpreter {
 	private static final Logger log = Logger.getLogger(WamInterpreter.class);
-	private static final int MAXDEPTH = 0;
+	private static final int MAXDEPTH = 3;
 	private MutableState state;
 	private SymbolTable<String> constantTable;
 	private List<Feature> featureStack;
