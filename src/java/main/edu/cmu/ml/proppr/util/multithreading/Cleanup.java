@@ -37,7 +37,7 @@ public abstract class Cleanup<Result> {
 				if (getLog() != null && getLog().isDebugEnabled()) getLog().debug("Rescheduling #"+id);
 				cleanupPool.submit(this);
 				return;
-			} catch (InterruptedException | ExecutionException e) {} // eat it
+			} catch (InterruptedException | ExecutionException e) { return; }
 			// otherwise pass to the wrapped runnable:
 			wrapped.run();
 		}

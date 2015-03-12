@@ -20,7 +20,7 @@ import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ParsedFile;
 
 public class FactsPlugin extends WamPlugin {
-	private static final int ESTIMATED_SIZE = 10000;
+	private static final int ESTIMATED_SIZE = 1000000;
 	private static final Logger log = Logger.getLogger(FactsPlugin.class);
 	public static final String FILE_EXTENSION="facts";
 	public static final boolean DEFAULT_INDICES=false;
