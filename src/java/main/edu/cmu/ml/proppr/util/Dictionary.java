@@ -31,7 +31,7 @@ import org.apache.log4j.Logger;
  */
 public class Dictionary {
 	private static final Logger log = Logger.getLogger(Dictionary.class);
-	private static double sanitize(Double d, String msg) {
+	private static <K> double sanitize(Double d, K ... msg) {
 		if (d.isInfinite()) {
 			log.warn(d+" at "+msg+"; truncating");
 			return (d>0) ? Double.MAX_VALUE : -Double.MAX_VALUE; // does this even work?
@@ -47,10 +47,10 @@ public class Dictionary {
 	 * @param value
 	 */
 	public static void increment(TIntDoubleMap map, int key, double value) {
-		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
+		if (!map.containsKey(key)) map.put(key, sanitize(value, key));
 		else {
 			double newvalue = map.get(key)+value;
-			map.put(key,sanitize(newvalue, String.valueOf(key)));
+			map.put(key,sanitize(newvalue, key));
 		}
 	}
 
@@ -62,10 +62,10 @@ public class Dictionary {
 	 * @param value
 	 */
 	public static <K> void increment(TObjectDoubleMap<K> map, K key, double value) {
-		if (!map.containsKey(key)) map.put(key, sanitize(value, String.valueOf(key)));
+		if (!map.containsKey(key)) map.put(key, sanitize(value, key));
 		else {
 			double newvalue = map.get(key)+value;
-			map.put(key,sanitize(newvalue, String.valueOf(key)));
+			map.put(key,sanitize(newvalue, key));
 		}
 	}
 
@@ -76,7 +76,7 @@ public class Dictionary {
 	 * @param value
 	 */
 	public static void set(TIntDoubleMap map, int key, double value) {
-		map.put(key,sanitize(value, String.valueOf(key)));
+		map.put(key,sanitize(value, key));
 	}
 	/**
 	 * Set the key's value using standard sanitizer.
@@ -85,7 +85,7 @@ public class Dictionary {
 	 * @param value
 	 */
 	public static <K> void set(TObjectDoubleMap<K> map, K key, double value) {
-		map.put(key,sanitize(value, String.valueOf(key)));
+		map.put(key,sanitize(value, key));
 	}
 
 	/**
@@ -95,7 +95,7 @@ public class Dictionary {
 	 * @param value
 	 */
 	public static void set(ParamVector map, String key, double value) {
-		map.put(key,sanitize(value, String.valueOf(key)));
+		map.put(key,sanitize(value, key));
 	}
 
 	/**
@@ -109,10 +109,10 @@ public class Dictionary {
 	public static void increment(TIntObjectMap<TIntDoubleHashMap> map, int key1, int key2, Double value) {
 		if (!map.containsKey(key1)) { map.put(key1,new TIntDoubleHashMap()); }
 		TIntDoubleHashMap inner = map.get(key1); 
-		if (!inner.containsKey(key2)) { inner.put(key2, sanitize(value, key1+":"+key2)); }
+		if (!inner.containsKey(key2)) { inner.put(key2, sanitize(value, key1, key2)); }
 		else {
 			double newvalue = inner.get(key2)+value;
-			inner.put(key2, sanitize(newvalue, key1+":"+key2));
+			inner.put(key2, sanitize(newvalue, key1, key2));
 		}
 	}
 
@@ -120,10 +120,10 @@ public class Dictionary {
 			K key2, double value) {
 		if (!map.containsKey(key1)) { map.put(key1,new TObjectDoubleHashMap<K>()); }
 		TObjectDoubleMap<K> inner = map.get(key1); 
-		if (!inner.containsKey(key2)) { inner.put(key2, sanitize(value, key1+":"+key2)); }
+		if (!inner.containsKey(key2)) { inner.put(key2, sanitize(value, key1, key2)); }
 		else {
 			double newvalue = inner.get(key2)+value;
-			inner.put(key2, sanitize(newvalue, key1+":"+key2));
+			inner.put(key2, sanitize(newvalue, key1, key2));
 		}
 	}
 
@@ -272,7 +272,7 @@ public class Dictionary {
 		if (!map.containsKey(key)) map.put(key, sanitize(value, msg));
 		else {
 			double newvalue = map.get(key)+value;
-			map.put(key,sanitize(newvalue, String.valueOf(key)));
+			map.put(key,sanitize(newvalue, key));
 		}
 	}
 
@@ -285,7 +285,7 @@ public class Dictionary {
 	public static <K> void reset(Map<K,Double> map, K key, Double value, String msg) {
 		if (!map.containsKey(key)) map.put(key, sanitize(value, msg));
 		else {
-			map.put(key,sanitize(value, String.valueOf(key)));
+			map.put(key,sanitize(value, key));
 		}
 	}
 
@@ -307,10 +307,10 @@ public class Dictionary {
 	public static <K,L> void increment(Map<K,Map<L,Double>> map, K key1, L key2, Double value) {
 		if (!map.containsKey(key1)) { map.put(key1,new TreeMap<L,Double>()); }
 		Map<L,Double> inner = map.get(key1); 
-		if (!inner.containsKey(key2)) { inner.put(key2, sanitize(value, key1+":"+key2)); }
+		if (!inner.containsKey(key2)) { inner.put(key2, sanitize(value, key1, key2)); }
 		else {
 			double newvalue = inner.get(key2)+value;
-			inner.put(key2, sanitize(newvalue, key1+":"+key2));
+			inner.put(key2, sanitize(newvalue, key1, key2));
 		}
 	}
 	/**
