@@ -11,6 +11,7 @@ import java.util.LinkedList;
  *
  */
 public class ImmutableState extends State {
+	private int hash;
 	public ImmutableState(MutableState state) {
 		this.heap = Arrays.copyOf(state.heap,state.getHeapSize());//new int[state.getHeapSize()];
 //		for (int i=0; i<state.getHeapSize(); i++) this.heap[i] = state.heap[i];
@@ -23,11 +24,13 @@ public class ImmutableState extends State {
 		this.jumpTo = state.getJumpTo();
 		this.completed = state.isCompleted();
 		this.failed = state.isFailed();
+		
+		this.hash = ((Arrays.hashCode(heap) ^ Arrays.hashCode(registers) ^ pc ^ (jumpTo!=null ? jumpTo.hashCode() : 0)) << 2) ^ (completed?1:0) ^ (failed?2:0);
 	}
 	
 	@Override
 	public int hashCode() {
-		return ((Arrays.hashCode(heap) ^ Arrays.hashCode(registers) ^ pc ^ (jumpTo!=null ? jumpTo.hashCode() : 0)) << 2) ^ (completed?1:0) ^ (failed?2:0);
+		return hash;
 	}
 
 	@Override
