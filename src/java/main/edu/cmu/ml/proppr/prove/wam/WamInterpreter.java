@@ -393,7 +393,8 @@ public class WamInterpreter {
 		for (int k : root.getRegisters()) {
 			int j = from.dereference(k);
 			if (hash>0) hash = hash << 1;
-			hash = hash ^ from.getIdOfConstantAt(j)-1;
+			if (from.hasConstantAt(j)) 
+				hash = hash ^ from.getIdOfConstantAt(j)-1;
 		}
 		// next get pending goal information
 		// back up the current state
