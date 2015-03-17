@@ -74,7 +74,7 @@ public class WamInterpreter {
 		state.setFailed(false);
 		state.setCompleted(false);
 		this.reportedFeatures = new HashMap<Goal,Double>();
-		
+
 		//execute opcodes until we fail, the program completes, or we hit a callp opcode (indicated by setting pc=-1)
 		// or we hit a freport opcode (indicated by setting reportedFeatures to a non-empty set)
 		while( !state.isFailed() && !state.isCompleted() && this.reportedFeatures.isEmpty() && state.getProgramCounter()>=0) {
@@ -84,7 +84,7 @@ public class WamInterpreter {
 		if(state.isCompleted() && log.isDebugEnabled()) log.debug(this.constantTable.toString());
 		return this.reportedFeatures;
 	}
-	
+
 	public void execute(Instruction inst, boolean computeFeatures) {
 		if (log.isDebugEnabled()) log.debug(inst);
 		if (!computeFeatures && inst.opcode.isFeature()) {
@@ -122,7 +122,7 @@ public class WamInterpreter {
 			}
 		}
 	}
-	
+
 	public List<Outlink> wamOutlinks(State s) throws LogicProgramException {
 		return wamOutlinks(s,true);
 	}
@@ -184,9 +184,9 @@ public class WamInterpreter {
 	public void reportFeature(Goal g) {
 		this.reportedFeatures.put(g,1.0);
 	}
-	
+
 	/********************* op codes ***************************/
-	
+
 	public void allocate(int n, String ... names) {
 		state.addRegisters(n);
 		state.incrementProgramCounter();
@@ -208,7 +208,7 @@ public class WamInterpreter {
 		//TODO: debugmode
 		state.truncateHeap(frame.getHeapPointer());
 		state.truncateRegisters(frame.getRegisterPointer());
-//		state.truncateVarNameList(frame.getRegisterPointer());
+		//		state.truncateVarNameList(frame.getRegisterPointer());
 		state.setProgramCounter(frame.getProgramCounter());
 		state.setJumpTo(frame.getJumpTo());
 	}
@@ -287,7 +287,7 @@ public class WamInterpreter {
 		state.collapsePointers(i,ri);
 		state.collapsePointers(j, rj);
 		state.incrementProgramCounter();
-		
+
 	}
 	public void fclear() {
 		this.featureStack.clear();
@@ -328,7 +328,7 @@ public class WamInterpreter {
 		restoreState(savedState);
 		this.state.incrementProgramCounter();
 	}
-	
+
 	/* ******************** Plugin access ********************* */
 
 	/** Special accessor to the current state: get the value associated
@@ -350,7 +350,7 @@ public class WamInterpreter {
 		int j = getHeapwiseIndex(k, i);
 		return state.dereference(j);
 	}
-//	public Argument getArg(int k, int i) { return null; }
+	//	public Argument getArg(int k, int i) { return null; }
 	private int getHeapwiseIndex(int k, int i) {
 		return state.getHeapSize() - k + i - 1;
 	}
@@ -385,7 +385,38 @@ public class WamInterpreter {
 		if (!this.state.hasFreeAt(rj)) throw new LogicProgramException("var "+rj+" is not free");
 		return rj;
 	}
-	
+
+	public int canonicalHash(State root, State from) throws LogicProgramException {
+		int hash = 0;
+		// first get binding information for vars in the root state
+		List<String> constants = this.getConstantTable().getSymbolList();
+		for (int k : root.getRegisters()) {
+			int j = from.dereference(k);
+			if (hash>0) hash = hash << 1;
+			if (from.hasConstantAt(j)) 
+				hash = hash ^ from.getIdOfConstantAt(j)-1;
+		}
+		// next get pending goal information
+		// back up the current state
+		State saved = this.saveState();
+		this.restoreState(from);
+		// simulate executing the remainder of the program, till completion, but
+		// when there is a 'callp', just emit the current goal and return
+		while(!this.state.completed) {
+			this.executeWithoutBranching(false);
+			if (this.state.getJumpTo() != null) {
+				// call information
+				hash = hash ^ this.state.getJumpTo().hashCode();
+				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
+				for (int i=0; i<arity; i++) {
+					hash = hash ^ this.getArg(arity, i+1).hashCode();
+				}
+				this.returnp();
+			}
+		}
+		this.restoreState(saved);
+		return hash;
+	}
 	public String canonicalForm(State root, State from) throws LogicProgramException {
 		// buffer to hold canonical version of the state
 		StringBuilder sb = new StringBuilder();
@@ -422,7 +453,7 @@ public class WamInterpreter {
 		this.restoreState(saved);
 		return sb.toString();
 	}
-	
+
 	/** Convert to a list of pending goals to be proved 
 	 * @throws LogicProgramException */
 	public List<Goal> pendingGoals(State from) throws LogicProgramException {

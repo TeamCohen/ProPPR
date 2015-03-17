@@ -166,7 +166,8 @@ public abstract class State {
 	}
 	public void setCanonicalHash(WamInterpreter interpreter, State startState) {
 		try {
-			this.canon = interpreter.canonicalForm(startState, this).hashCode();
+//			this.canon = interpreter.canonicalForm(startState, this).hashCode();
+			this.canon = interpreter.canonicalHash(startState, this);
 		} catch (LogicProgramException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

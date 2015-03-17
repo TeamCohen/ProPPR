@@ -120,7 +120,7 @@ public class DprProver extends Prover {
 					// push this state as far as you can
 					while( r.get(u) / deg > iterEpsilon ) {
 						double ru = r.get(u);
-						log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, u));
+						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, u));
 						
 						// p[u] += alpha * ru
 						addToP(p,u,ru);
