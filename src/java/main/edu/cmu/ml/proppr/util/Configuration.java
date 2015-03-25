@@ -465,7 +465,7 @@ public class Configuration {
 		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(SOLUTIONS_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_TRAIN)) syntax.append(" --").append(TRAIN_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" inputFile");
-		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" inputFile");
+		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" params.wts");
 		
 		//output files
 		flags = outputFiles(allFlags);
@@ -474,7 +474,8 @@ public class Configuration {
 		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(SOLUTIONS_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_TRAIN)) syntax.append(" --").append(TRAIN_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" outputFile");
-		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" outputFile");
+		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" params.wts");
+		if (isOn(flags, USE_GRADIENT)) syntax.append(" --").append(GRADIENT_FILE_OPTION).append(" gradient.dwts");
 		
 		//constants
 		flags = constants(allFlags);

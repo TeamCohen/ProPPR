@@ -23,6 +23,9 @@ public class L1SRW extends SRW {
 	}
 
 	/**
+	 * L1 loss is mu * abs( theta_f )
+	 * d/df L1 loss is then sign(theta_f) * max( abs(theta_f), mu ), where theta_f != 0
+	 * 
 	 * though non-continuous, the d/df of L1 can be approximated by mu.
 	 * the proximal operator implementation in localL1 is more stable.
 	 * @param f
@@ -32,19 +35,11 @@ public class L1SRW extends SRW {
 	@Override
 	protected void regularization(ParamVector params, SgdExample ex, TIntDoubleMap gradient) {
 		for (String f : localFeatures(params, ex.g)) {
-//			double value = Dictionary.safeGet(params, f);
-			double ret = untrainedFeatures.contains(f) ? 0.0 : c.mu;
-			this.cumloss.add(LOSS.REGULARIZATION, c.mu);
+			double value = Dictionary.safeGet(params, f);
+			// want to take theta toward zero, but not past it: gradient can't be bigger than theta
+			double ret = untrainedFeatures.contains(f) ? 0.0 : Math.signum(value) * Math.min( Math.abs(value), c.mu);
+			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.abs(value));
 			gradient.adjustOrPutValue(ex.getFeatureId(f), ret, ret);
 		}
 	}
-
-//	@Override
-//	protected GradientComponents makeGradientComponents(
-//			ParamVector<String, ?> paramVec, PosNegRWExample example) {
-//		GradientComponents g = new GradientComponents();
-//		g.p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-//		g.d = derivRWRbyParams(example.getGraph(), example.getQueryVec(), paramVec);
-//		return g;
-//	}
 }
