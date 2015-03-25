@@ -156,7 +156,7 @@ public class Configuration {
 	protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
 		int flags;
 		
-		if (line.hasOption("--help")) usageOptions(options, allFlags);
+		if (line.hasOption("help")) usageOptions(options, allFlags);
 
 		// input files: must exist already
 		flags = inputFiles(allFlags);
@@ -256,7 +256,7 @@ public class Configuration {
 
 		options.addOption(
 				OptionBuilder
-				.withLongOpt("--help")
+				.withLongOpt("help")
 				.withDescription("Print usage syntax.")
 				.create());
 		

@@ -216,12 +216,19 @@ public class Dictionary {
 		return sb;
 	}
 
+	// augh java primitives
 	public static StringBuilder buildString(int[] keys, StringBuilder sb, String delim) {
-		for (int i : keys) {
-			sb.append(delim).append(i);
+		return buildString(keys,sb,delim,true);
+	}
+	public static StringBuilder buildString(int[] keys, StringBuilder sb, String delim, boolean first) {
+		for (int t : keys) { 
+			if (first) first = false;
+			else sb.append(delim);
+			sb.append(t); 
 		}
 		return sb;
 	}
+	
 	public static <T> StringBuilder buildString(T[] keys, StringBuilder sb, String delim) {
 		return buildString(keys,sb,delim,true);
 	}

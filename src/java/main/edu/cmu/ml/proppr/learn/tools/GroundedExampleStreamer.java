@@ -43,7 +43,7 @@ public class GroundedExampleStreamer implements Iterable<PosNegRWExample>, Itera
 	@Override
 	public PosNegRWExample next() {
 		String line = this.file.next();
-		log.debug("Imporing example from line "+file.getLineNumber());
+		log.debug("Importing example from line "+file.getLineNumber());
 
 		String[] parts = line.trim().split(MAJOR_DELIM,5);
 
@@ -62,7 +62,7 @@ public class GroundedExampleStreamer implements Iterable<PosNegRWExample>, Itera
 		}
 		try {
 			LearningGraph g = builder.deserialize(parts[4]);
-			return new PosNegRWExample(g,queryVec,posList,negList);
+			return new PosNegRWExample(parts[0],g,queryVec,posList,negList);
 		} catch (GraphFormatException e) {
 			file.parseError("["+e.getMessage()+"]");
 			if (this.hasNext()) return next();

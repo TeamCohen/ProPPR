@@ -78,7 +78,7 @@ public class ArrayLearningGraph extends LearningGraph {
 
 		@Override
 		public void index(int i0) {
-			if (outlinks != null) throw new IllegalStateException("Bad Programmer: Can't call index() after setGraphSize().");
+			if (outlinks != null) throw new IllegalStateException("Bad Programmer: You must call index() BEFORE setGraphSize().");
 			this.index = i0;
 			current.setIndex(i0);
 		}
