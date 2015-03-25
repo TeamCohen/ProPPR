@@ -8,15 +8,16 @@ import copy
 
 def answerWithIntVars(query):    
     """Convert from format p(foo,X1,X2) to p(foo,-1,-2)."""        
-    return re.sub(r"[_A-Z]\w*([0-9]+)",r"-\1",query)
+    return re.sub(r"(\W)[_A-Z]\w*([0-9]+)",r"\1-\2",query)
 
 def queryWithIntVars(query):
     """Convert from format p(foo,Y,Z) to p(foo,-1,-2)."""
     result = query[:]
-    matches = list(re.finditer(r"[_A-Z]\w*", query))
+    # bugfix: variables must start with _A-Z, which means they must be preceded by a nonword character
+    matches = list(re.finditer(r"(\W)[_A-Z]\w*", query))
     k = -len(matches)
     for m in reversed(matches):
-        result = result[:m.start()] + str(k) + result[m.end():]
+        result = result[:m.start()] + m.groups()[0] + str(k) + result[m.end():]
         k += 1
     return result
 
@@ -176,23 +177,23 @@ class Metric(object):
 
     def macroAverage(self,answers,labels):
         """Compute over the full list of answers."""
-        fullAnswerList = reduce(lambda l1,l2:l1+l2, [answers.answers[q] for q in answers.answers.keys()])
-        fullSolutionSet = reduce(lambda s1,s2:s1.union(s2), [answers.solutions[q] for q in answers.answers.keys()])
+        fullAnswerList = reduce(lambda l1,l2:l1+l2, [answers.answers[q] for q in answers.answers.keys()],[])
+        fullSolutionSet = reduce(lambda s1,s2:s1.union(s2), [answers.solutions[q] for q in answers.answers.keys()],set())
         fullPosSolutionSet = reduce(lambda s1,s2:s1.union(s2), [labels.pos[q] for q in labels.queries])
         return self.computeFromList(fullAnswerList,fullSolutionSet,fullPosSolutionSet)
 
     def microAverage(self,answers,labels):
         """Compute over each query individually and average results."""
-        tot = n = 0
-        for q in answers.answers.keys():
-            n += 1
+        tot = n = 0.0
+        for q in labels.queries:#answers.answers.keys():
+            n += 1.0
             tot += self.computeFromList(answers.answers[q],answers.solutions[q],labels.pos[q])
         if n==0: return n
         return tot/n
 
     def detailedReportAsDict(self,answers,labels):
         result = {}
-        for q in answers.answers.keys():
+        for q in labels.queries:#answers.answers.keys():
             result[q] = self.computeFromList(answers.answers[q],answers.solutions[q],labels.pos[q])
         return result
 
@@ -204,7 +205,7 @@ class MeanRecipRank(Metric):
         return '(Mean Reciprocal Rank): averages 1/rank for all positive answers'
 
     def computeFromList(self,answerList,solutionSet,posSet):
-        tot = n = 0
+        tot = n = 0.0
         for a in answerList:
             if a.isPos:
                 tot += 1.0/a.rank
@@ -222,12 +223,13 @@ class Recall(Metric):
 
     def computeFromList(self,answerList,solutionSet,posSet):
         r = 0.0
+        n = len(posSet)
+        if n == 0: return 1.0
         for a in posSet:
             if a in solutionSet:
                 r += 1.0
-        n = len(posSet)
-        if n: return r/n
-        else: return 1.0
+        return r/n
+        
         
 class MeanAvgPrecision(Metric):
     
