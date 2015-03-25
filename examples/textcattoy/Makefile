@@ -9,8 +9,13 @@ PROGRAM=textcat.wam:toylabels.cfacts:toywords.graph
 include ../common.in
 
 all: results.txt
+	cat $^
 
 clean:
 	rm -f *results.txt params.wts *.grounded *.solutions.txt
 
 .PRECIOUS: %.examples params.wts %.solutions.txt
+
+results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
+	echo phase subset uR mR uMRR mMRR uMAP mMAP > $@
+	cat $^ >> $@
