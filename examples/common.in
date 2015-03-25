@@ -1,4 +1,6 @@
 
+default: all
+
 ifeq (1,$(words $(TRAIN)))
 
 #results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
