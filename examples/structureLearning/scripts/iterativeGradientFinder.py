@@ -114,6 +114,7 @@ def gradient2Rules(ruleFile,gradFiles):
         print '-- compiling gradient file',gfile,'to rules in',ruleFile
         fp.write('#### from gradient file %s ####\n' % gfile)
         for line in open(gfile):
+            if (line[0]=="#"): continue
             (feat,scoreStr) = line.strip().split("\t")
             score = float(scoreStr)
             if score<0:

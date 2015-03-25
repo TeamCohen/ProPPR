@@ -93,4 +93,14 @@ public abstract class ParamVector<F,T> implements Map<F,Double> {
 			} catch (InterruptedException e) {}
 		}
 	}
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("{");
+		for (Map.Entry<F,Double> e : entrySet()) {
+			if (sb.length()>1) sb.append(", ");
+			sb.append(e.getKey()).append(":").append(e.getValue());
+		}
+		sb.append("}");
+		return sb.toString();
+	}
 }

@@ -23,8 +23,8 @@ public class L2SRW extends SRW {
 	}
 
 	/**
-	 * Loss is mu * theta_f^2
-	 * d/df Loss is then 2 * mu * theta_f
+	 * L2 loss is mu * theta_f^2
+	 * d/df L2 loss is then 2 * mu * theta_f
 	 * @param f
 	 * @param paramVec
 	 * @return
@@ -35,6 +35,7 @@ public class L2SRW extends SRW {
 			double value = Dictionary.safeGet(params, f);
 			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
 			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
+			if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ret);
 			gradient.adjustOrPutValue(ex.getFeatureId(f), ret, ret);
 		}
 	}

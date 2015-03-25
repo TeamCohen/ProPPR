@@ -34,11 +34,11 @@ public class LocalL1SRW extends L1SRW {
 	public ParamVector setupParams(ParamVector paramVec) { return new MuParamVector(paramVec); }
 
 	@Override
-	public void cleanupParams(ParamVector paramVec) { 
+	public void cleanupParams(ParamVector paramVec, ParamVector apply) { 
 		for(String f : (Set<String>) paramVec.keySet()) {
 			// finish catching up the regularization:
 			// Bj = Bj - lambda * (Rj)
-			prepareFeature(paramVec,f);
+			prepareFeature(paramVec,f,apply);
 		}
 		((MuParamVector)paramVec).setLast(paramVec.keySet());
 	}
@@ -49,17 +49,33 @@ public class LocalL1SRW extends L1SRW {
 	}
 	
 	@Override
-	public void prepareForExample(ParamVector params, LearningGraph graph) {
+	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {
 		for (String f : localFeatures(params, graph)) {
-			prepareFeature(params,f);
+			prepareFeature(params,f,apply);
 		}
 	}
 
-	private void prepareFeature(ParamVector params, String f) {
+	/**
+	 * We want to do g regularization updates simultaneously, as if they had been applied in previous gradient updates.
+	 * 
+	 * A single full regularization update for L1 is:
+	 *   theta_f' = theta_f - learningRate * (sign(theta_f) * min(abs(theta_f), mu))
+	 * 
+	 * So we take at most learningRate * mu off the value of theta. In other words,
+	 *   theta_f' = theta_f - (sign(theta_f) * min(abs(theta_f), learningRate * mu))
+	 *   
+	 * This makes it easier to take g updates -- if we do that g times, we'll take at most g * learningRate * mu off the value of theta.
+	 *   theta_f' = theta_f - (sign(theta_f) * min(abs(theta_f), g * learningRate * mu))
+	 * 
+	 * 
+	 * @param params
+	 * @param f
+	 * @param apply
+	 */
+	private void prepareFeature(ParamVector params, String f,ParamVector apply) {
 		if (!trainable(f)) return;
 		int gap = ((MuParamVector)params).getLast(f);
 		if (gap==0) return;
-		double value = Dictionary.safeGet(params,f);
 
 		//L1 with a proximal operator
 		//
@@ -68,14 +84,12 @@ public class LocalL1SRW extends L1SRW {
 		double shrinkageVal = gap * this.learningRate() * c.mu;
 		double weightDecay;
 		if((c.mu != 0) && (!Double.isInfinite(shrinkageVal))){
-			weightDecay = Math.signum(value) * Math.max(0.0, Math.abs(value) - shrinkageVal);
-			Dictionary.set(params, f, weightDecay);
-			//FIXME: why is this being set instead of incremented?
-			//FIXME: opportunity for out-of-date `value`; probably out to convert to a try loop
+			double value = Dictionary.safeGet(params,f);
+			weightDecay = Math.signum(value) * Math.min(Math.abs(value), shrinkageVal);
+			apply.adjustValue(f, weightDecay);
+			//FIXME: opportunity for out-of-date `value`; may want to convert to a try loop
 
-			this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu);
+			this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.abs(value));
 		}
-
-
 	}
 }

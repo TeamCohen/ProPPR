@@ -25,6 +25,7 @@ import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.SimpleParamVector;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -78,6 +79,9 @@ public class SRW {
 	public void trainOnExample(ParamVector params, PosNegRWExample example) {
 		log.info("Training on "+example);
 		SgdExample sgdex = wrapExample(example);
+
+		initializeFeatures(params, sgdex.g);
+		prepareForExample(params, sgdex.g, params);
 		load(params, sgdex);
 		inference(params, sgdex);
 		sgd(params, sgdex);
@@ -86,9 +90,18 @@ public class SRW {
 	public void accumulateGradient(ParamVector params, PosNegRWExample example, ParamVector accumulator) {
 		log.info("Gradient calculating on "+example);
 		SgdExample sgdex = wrapExample(example);
+
+		initializeFeatures(params, sgdex.g);
+		ParamVector<String,Double> prepare = new SimpleParamVector<String>();
+		prepareForExample(params, sgdex.g, prepare);
 		load(params, sgdex);
 		inference(params, sgdex);
 		TIntDoubleMap gradient = gradient(params,sgdex);
+		
+		for (Map.Entry<String, Double> e : prepare.entrySet()) {
+			if (trainable(e.getKey())) 
+				accumulator.adjustValue(e.getKey(), -e.getValue() / example.length());
+		}
 		for (TIntDoubleIterator it = gradient.iterator(); it.hasNext(); ) {
 			it.advance();
 			String feature = sgdex.g.featureLibrary.getSymbol(it.key());
@@ -103,8 +116,6 @@ public class SRW {
 
 	/** fills M, dM in ex **/
 	protected void load(ParamVector params, SgdExample ex) {
-		initializeFeatures(params, ex.g);
-		prepareForExample(params, ex.g);
 		ex.M = new double[ex.g.node_hi][];
 		ex.dM_lo = new int[ex.g.node_hi][];
 		ex.dM_hi = new int[ex.g.node_hi][];
@@ -245,7 +256,7 @@ public class SRW {
 		}
 	}
 
-	private TIntDoubleMap gradient(ParamVector params, SgdExample ex) {
+	protected TIntDoubleMap gradient(ParamVector params, SgdExample ex) {
 		Set<String> features = this.localFeatures(params, ex.g);
 		TIntDoubleMap gradient = new TIntDoubleHashMap(features.size());
 		// add regularization term
@@ -262,7 +273,7 @@ public class SRW {
 				double aterm = -da.value() / pa;
 				gradient.adjustOrPutValue(da.key(), aterm, aterm);
 			}
-			log.debug("+p="+pa);
+			if (log.isDebugEnabled()) log.debug("+p="+pa);
 			this.cumloss.add(LOSS.LOG, -Math.log(pa));
 		}
 
@@ -279,7 +290,7 @@ public class SRW {
 				double bterm = beta * db.value() / (1 - pb);
 				gradient.adjustOrPutValue(db.key(), bterm, bterm);
 			}
-			log.debug("-p="+pb);
+			if (log.isDebugEnabled()) log.debug("-p="+pb);
 			this.cumloss.add(LOSS.LOG, -Math.log(1.0-pb));
 		}
 
@@ -386,10 +397,10 @@ public class SRW {
 
 
 	/** Allow subclasses to do pre-example calculations (e.g. lazy regularization) **/
-	public void prepareForExample(ParamVector params, LearningGraph graph) {}
+	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {}
 	
 	/** Allow subclasses to do additional parameter processing at the end of an epoch **/
-	public void cleanupParams(ParamVector<String,?> params) {}
+	public void cleanupParams(ParamVector<String,?> params, ParamVector apply) {}
 
 
 	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }

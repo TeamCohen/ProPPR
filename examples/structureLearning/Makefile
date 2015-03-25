@@ -5,7 +5,7 @@ NAME=uml_1
 TRAIN=${NAME}-train
 TEST=${NAME}-test
 
-SRW=l2p:mu=0.0001:eta=1.0
+SRW=l2p:mu=0.00001:eta=1.0
 EPOCHS=100
 PROVER=dpr
 APR=eps=0.0001:alph=0.001

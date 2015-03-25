@@ -112,7 +112,7 @@ public class Trainer {
 					this.throttle);
 
 			//
-			this.learner.cleanupParams(paramVec);
+			this.learner.cleanupParams(paramVec,paramVec);
 
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
@@ -149,8 +149,6 @@ public class Trainer {
 		}
 		paramVec = this.learner.setupParams(paramVec);
 		
-		// save a copy to compare against for computing regularization component after we're done
-		ParamVector paramsCopy = paramVec.copy();
 //		
 //		//WW: accumulate example-size normalized gradient
 //		for (PosNegRWExample x : examples) {
@@ -174,8 +172,8 @@ public class Trainer {
 								in.learner.accumulateGradient(in.paramVec, in.x, sumGradient);
 								
 								return 1; 
-								// this is the equivalent of k++ from before;
-								// the total sum (example count) will be stored in numExamplesThisEpoch
+								// ^^^^ this is the equivalent of k++ from before;
+								// the total sum (query count) will be stored in numExamplesThisEpoch
 								// by TraceLosses. It's a hack but it works
 							}};
 					}
@@ -188,18 +186,15 @@ public class Trainer {
 				}, 
 				this.throttle);
 
-		// include any lazy regularization updates which were applied directly to the param vector
-		for (Map.Entry<String, Double> e : (Set<Map.Entry<String,Double>>) paramsCopy.entrySet()) {
-			sumGradient.adjustValue(e.getKey(), paramVec.get(e.getKey()) - e.getValue());
-		}
+		this.learner.cleanupParams(paramVec, sumGradient);
 		
 		//WW: renormalize by the total number of queries
 		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
 			String feature = it.next();
 			double unnormf = sumGradient.get(feature);
+			// query count stored in numExamplesThisEpoch, as noted above
 			double norm = unnormf / this.numExamplesThisEpoch.intValue();
 			sumGradient.put(feature, norm);
-			//System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
 		}
 
 		return sumGradient;
