@@ -50,7 +50,7 @@ public class Trainer {
 		learner.untrainedFeatures().add("fixedWeight");
 		learner.untrainedFeatures().add("id(trueLoop)");
 		learner.untrainedFeatures().add("id(trueLoopRestart)");
-//		learner.untrainedFeatures().add("id(restart)");
+		learner.untrainedFeatures().add("id(restart)");
 //		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 

@@ -2,6 +2,8 @@ package edu.cmu.ml.proppr.learn;
 
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.proppr.learn.SRW.SgdExample;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
@@ -13,6 +15,7 @@ import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.map.TObjectDoubleMap;
 
 public class LocalL1SRW extends L1SRW {
+	private static final Logger log = Logger.getLogger(LocalL1SRW.class);
 	public LocalL1SRW(SRWOptions params) {
 		super(params);
 	}
@@ -89,6 +92,7 @@ public class LocalL1SRW extends L1SRW {
 			apply.adjustValue(f, weightDecay);
 			//FIXME: opportunity for out-of-date `value`; may want to convert to a try loop
 
+			if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ -weightDecay);
 			this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.abs(value));
 		}
 	}

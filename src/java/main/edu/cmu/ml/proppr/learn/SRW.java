@@ -149,7 +149,7 @@ public class SRW {
 					// iv. dt_u += df_{uv}, a vector, as sparse as sum_{v'} phi_{uv'}
 					// by looping over features i in df_{uv} 
 					// (identical to features i in phi_{uv}, so we use the same loop)
-					dtu.adjustOrPutValue(lid, dfuv[dfuvi], dfuv[dfuvi]); // remember to dereference lid with g.label_feature_id before using!
+					dtu.adjustOrPutValue(ex.g.label_feature_id[lid], dfuv[dfuvi], dfuv[dfuvi]);
 				}
 				dfu[xvi] = dfuv;
 			}
@@ -165,9 +165,26 @@ public class SRW {
 				ex.dM_lo[uid][xvi] = dM_features.size();
 				// create the vector dM_{uv} = (1/t^2_u) * (t_u * df_{uv} - f(s_{uv}) * dt_u)
 				// by looping over features i in dt_u
+				
+				// getting the df offset for features in dt_u is awkward, so we'll first iterate over features in df_uv,
+				// then fill in the rest
+				int[] seenFeatures = new int[ex.g.edge_labels_hi[eid] - ex.g.edge_labels_lo[eid]];
 				for (int lid = ex.g.edge_labels_lo[eid], dfuvi = 0; lid < ex.g.edge_labels_hi[eid]; lid++, dfuvi++) {
-					dM_features.add(ex.g.label_feature_id[lid]); // dereferencing according to note above
-					double dMuvi = scale * (tu * dfu[xvi][dfuvi] - c.weightingScheme.edgeWeight(suv[xvi]) * dtu.get(lid));
+					int fid = ex.g.label_feature_id[lid];
+					dM_features.add(fid);
+					double dMuvi = scale * (tu * dfu[xvi][dfuvi] - c.weightingScheme.edgeWeight(suv[xvi]) * dtu.get(fid));
+					dM_values.add(dMuvi);
+					seenFeatures[dfuvi] = fid; //save this feature so we can skip it later
+				}
+				Arrays.sort(seenFeatures);
+				// we've hit all the features in df_uv, now we do the remaining features in dt_u:
+				for (TIntDoubleIterator it = dtu.iterator(); it.hasNext(); ) {
+					it.advance();
+					// skip features we already added in the df_uv loop
+					if (Arrays.binarySearch(seenFeatures, it.key())>=0) continue;
+					dM_features.add(it.key());
+					// zero the first term, since df_uv doesn't cover this feature
+					double dMuvi = scale * ( - c.weightingScheme.edgeWeight(suv[xvi]) * it.value());
 					dM_values.add(dMuvi);
 				}
 				ex.dM_hi[uid][xvi] = dM_features.size();
@@ -203,6 +220,7 @@ public class SRW {
 		for (int i=0; i<c.maxT; i++) {
 			inferenceUpdate(ex);
 		}
+
 	}
 	protected void inferenceUpdate(SgdExample ex) {
 		double[] pNext = new double[ex.g.node_hi];
@@ -217,9 +235,11 @@ public class SRW {
 				// p: 2(b)i. p_v^{t+1} += (1-alpha) * p_u^t * M_uv
 				pNext[vid] += (1-c.apr.alpha) * ex.p[uid] * ex.M[uid][xvi];
 				// d: i. for each feature i in dM_uv:
-				dNext[vid] = new TIntDoubleHashMap(ex.dM_hi[uid][xvi] - ex.dM_lo[uid][xvi]);
+				if (dNext[vid] == null)
+					dNext[vid] = new TIntDoubleHashMap(ex.dM_hi[uid][xvi] - ex.dM_lo[uid][xvi]);
 				for (int dmi = ex.dM_lo[uid][xvi]; dmi < ex.dM_hi[uid][xvi]; dmi++) {
 					// d_vi^{t+1} += (1-alpha) * p_u^{t} * dM_uvi
+					if (ex.dM_value[dmi]==0) continue;
 					double inc = (1-c.apr.alpha) * ex.p[uid] * ex.dM_value[dmi];
 					dNext[vid].adjustOrPutValue(ex.dM_feature_id[dmi], inc, inc);
 				}
@@ -227,6 +247,7 @@ public class SRW {
 				if (ex.dp[uid] == null) continue; // skip when d is empty
 				for (TIntDoubleIterator it = ex.dp[uid].iterator(); it.hasNext();) {
 					it.advance();
+					if (it.value()==0) continue;
 					// d_vi^{t+1} += (1-alpha) * d_ui^t * M_uv
 					double inc = (1-c.apr.alpha) * it.value() * ex.M[uid][xvi];
 					dNext[vid].adjustOrPutValue(it.key(),inc,inc);
@@ -251,6 +272,7 @@ public class SRW {
 		// apply gradient to param vector
 		for (TIntDoubleIterator grad = gradient.iterator(); grad.hasNext(); ) {
 			grad.advance();
+			if (grad.value()==0) continue;
 			String feature = ex.g.featureLibrary.getSymbol(grad.key());
 			if (trainable(feature)) params.adjustValue(feature, - learningRate() * grad.value());
 		}
@@ -262,6 +284,9 @@ public class SRW {
 		// add regularization term
 		regularization(params, ex, gradient);
 		
+		int nonzero=0;
+		double mag = 0;
+		
 		// add empirical loss gradient term
 		// positive examples
 		double pmax = 0;
@@ -270,7 +295,10 @@ public class SRW {
 			if(pa > pmax) pmax = pa;
 			for (TIntDoubleIterator da = ex.dp[a].iterator(); da.hasNext(); ) {
 				da.advance();
+				if (da.value()==0) continue;
+				nonzero++;
 				double aterm = -da.value() / pa;
+				mag += aterm*aterm;
 				gradient.adjustOrPutValue(da.key(), aterm, aterm);
 			}
 			if (log.isDebugEnabled()) log.debug("+p="+pa);
@@ -287,13 +315,18 @@ public class SRW {
 			double pb = clip(ex.p[b]);
 			for (TIntDoubleIterator db = ex.dp[b].iterator(); db.hasNext(); ) {
 				db.advance();
+				if (db.value()==0) continue;
+				nonzero++;
 				double bterm = beta * db.value() / (1 - pb);
+				mag += bterm*bterm;
 				gradient.adjustOrPutValue(db.key(), bterm, bterm);
 			}
 			if (log.isDebugEnabled()) log.debug("-p="+pb);
 			this.cumloss.add(LOSS.LOG, -Math.log(1.0-pb));
 		}
 
+//		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
+		if (nonzero==0) log.warn("0 gradient. Try another weighting scheme? "+ex.ex.toString());
 		return gradient;
 	}
 	

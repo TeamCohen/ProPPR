@@ -56,7 +56,7 @@ public class LocalL1LaplacianPosNegLossTrainedSRW extends LocalL1SRW {
 			Dictionary.set(paramVec, f, weightDecay);
 			//FIXME: why is this being set instead of incremented?
 			//FIXME: opportunity for out-of-date `value`; probably out to convert to a try loop
-		}
-		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu);             		
+			this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu);   
+		}          		
 	}
 }
