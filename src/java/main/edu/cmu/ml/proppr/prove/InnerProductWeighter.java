@@ -21,7 +21,9 @@ import edu.cmu.ml.proppr.util.Dictionary;
  *
  */
 public class InnerProductWeighter extends FeatureDictWeighter {
-	private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
+	private static final int MAX_UNKNOWN_FEATURE_WARNINGS = 10;
+	private int numUnknownFeatures = 0;
+private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
 	protected static final BloomFilter<Goal> unknownFeatures = new BloomFilter<Goal>(.01,100);
 	private static WeightingScheme DEFAULT_WEIGHTING_SCHEME() {
 		return new LinearWeightingScheme();
@@ -39,10 +41,18 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	}
 	@Override
 	public double w(Map<Goal, Double> featureDict) {
+		// check for unknown features
 		for (Goal g : featureDict.keySet()) {
-			if (!this.weights.containsKey(g) && !unknownFeatures.contains(g)) {
-				log.warn("Using default weight 1.0 for unknown feature "+g+" (this message only prints once)");
-				unknownFeatures.add(g);
+			if (!this.weights.containsKey(g)) {
+				if (!unknownFeatures.contains(g)) {
+					if (numUnknownFeatures<MAX_UNKNOWN_FEATURE_WARNINGS) {
+						log.warn("Using default weight 1.0 for unknown feature "+g+" (this message only prints once per feature)");				
+					} else if (numUnknownFeatures==MAX_UNKNOWN_FEATURE_WARNINGS) {
+						log.warn("You won't get warnings about other unknown features");
+					}
+					unknownFeatures.add(g);
+					numUnknownFeatures++;
+				}
 			}
 		}
 		return this.weightingScheme.edgeWeight(this.weights, featureDict);
