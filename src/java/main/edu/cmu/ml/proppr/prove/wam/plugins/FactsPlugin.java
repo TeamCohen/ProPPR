@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 
 import com.skjegstad.utils.BloomFilter;
 
-import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
@@ -20,7 +19,6 @@ import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ParsedFile;
 
 public class FactsPlugin extends WamPlugin {
-	private static final int ESTIMATED_SIZE = 1000000;
 	private static final Logger log = Logger.getLogger(FactsPlugin.class);
 	public static final String FILE_EXTENSION="facts";
 	public static final boolean DEFAULT_INDICES=false;
@@ -167,28 +165,34 @@ public class FactsPlugin extends WamPlugin {
 		}
 	}
 
-	public void load(File f) {
+	public void load(File f, int duplicates) {
 		ParsedFile parsed = new ParsedFile(f);
-		BloomFilter<String> lines = new BloomFilter(1e-5,ESTIMATED_SIZE);
+		BloomFilter<String> lines = null;
+		if (duplicates>0) lines = new BloomFilter(1e-5,duplicates);
 		boolean exceeds=false;
 		for (String line : parsed) {
 			String[] parts =line.split("\t",2);
 			if (parts.length != 2) parsed.parseError("expected at least 2 tab-delimited fields");
-			if (lines.contains(line)) {
-				log.warn("Skipping duplicate fact at "+f.getName()+":"+parsed.getAbsoluteLineNumber()+": "+line);
-				continue;
-			}
-			else lines.add(line);
-			if (!exceeds & parsed.getLineNumber() > ESTIMATED_SIZE) {
-				exceeds=true;
-				log.warn("Number of facts exceeds "+ESTIMATED_SIZE+"; duplicate detection may encounter false positives. We should add a command line option to fix this.");
+			if (duplicates>0) {
+				if (lines.contains(line)) {
+					log.warn("Skipping duplicate fact at "+f.getName()+":"+parsed.getAbsoluteLineNumber()+": "+line);
+					continue;
+				}
+				else lines.add(line);
+				if (!exceeds & parsed.getLineNumber() > duplicates) {
+					exceeds=true;
+					log.warn("Number of facts exceeds "+duplicates+"; duplicate detection may encounter false positives. We should add a command line option to fix this.");
+				}
 			}
 			addFact(parts[0], parts[1].split("\t"));
 		}
 	}
 	public static FactsPlugin load(APROptions apr, File f, boolean ternary) {
+		return load(apr,f,ternary,-1);
+	}
+	public static FactsPlugin load(APROptions apr, File f, boolean ternary, int duplicates) {
 		FactsPlugin p = new FactsPlugin(apr, f.getName(), ternary);
-		p.load(f);
+		p.load(f,duplicates);
 		return p;
 		
 	}

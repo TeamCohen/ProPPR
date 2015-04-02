@@ -131,6 +131,8 @@ public class Grounder {
 						groundedFile, 
 						this.throttle);
 //			if (empty>0) log.info("Skipped "+empty+" of "+this.statistics.count+" examples due to empty graphs");
+
+			log.info("Grounded all "+statistics.count+" examples");
 			reportStatistics(empty);
 
 			if (this.graphKeyFile != null) this.graphKeyWriter.close();
