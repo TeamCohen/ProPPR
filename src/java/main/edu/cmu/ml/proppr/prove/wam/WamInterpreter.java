@@ -402,16 +402,16 @@ public class WamInterpreter {
 		this.restoreState(from);
 		// simulate executing the remainder of the program, till completion, but
 		// when there is a 'callp', just emit the current goal and return
-		while(!this.state.completed) {
+		for(int c=0; !this.state.completed; c++) {
 			this.executeWithoutBranching(false);
 			if (this.state.getJumpTo() != null) {
 				// call information
-				hash = hash << 1;
-				hash = hash ^ this.state.getJumpTo().hashCode();
+				int call = new StringBuilder(String.valueOf(c)).append(this.state.getJumpTo()).hashCode();
 				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
 				for (int i=0; i<arity; i++) {
-					hash = hash ^ this.getArg(arity, i+1).hashCode();
+					call = call ^ this.getArg(arity, i+1).hashCode();
 				}
+				hash = hash ^ call;
 				this.returnp();
 			}
 		}

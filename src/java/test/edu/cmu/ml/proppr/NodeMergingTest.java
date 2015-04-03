@@ -18,6 +18,7 @@ import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 
@@ -36,6 +37,8 @@ public class NodeMergingTest {
 	public static final File RECURSION_FACTS = new File(DIR,"recursion.facts");
 	public static final File LOOP_RULES = new File(DIR,"loop.wam");
 	public static final File LOOP_FACTS = new File(DIR,"loop.facts");
+	public static final File MULTIRANK_RULES = new File(DIR,"multirankwalk.wam");
+	public static final File MULTIRANK_GRAPH = new File(DIR,"multirankwalk.graph");
 
 	/**
 	 * Diamond case: Solution is reachable by two equal-length paths.
@@ -129,5 +132,26 @@ public class NodeMergingTest {
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		assertEquals("improper node duplication",4,ex.getGraph().nodeSize());
+	}
+	
+	@Test
+	public void testMultiRank() throws IOException, LogicProgramException {
+
+		APROptions apr = new APROptions();
+		Prover p = new DprProver(apr);
+		WamProgram program = WamBaseProgram.load(MULTIRANK_RULES);
+		WamPlugin plugins[] = new WamPlugin[] {LightweightGraphPlugin.load(apr, MULTIRANK_GRAPH, -1)};
+		Grounder grounder = new Grounder(apr, p, program, plugins);
+		// predict(pos,X)  +predict(pos,seed1)     +predict(pos,other)
+		Query query = Query.parse("predict(pos,X)");
+		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+				new Query[] {Query.parse("predict(pos,seed1)"),
+				Query.parse("predict(pos,f1)"),
+				Query.parse("predict(pos,other)")}, 
+				new Query[] {}),
+				apr,program, plugins);
+		GroundedExample ex = grounder.groundExample(p, pg);
+		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
+		assertEquals("improper # solutions found",3, ex.getPosList().size());
 	}
 }
