@@ -346,7 +346,7 @@ if __name__ == "__main__":
     metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 
                'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
 
-    argspec = ["data=", "answers=", "metric=", "help", "debug", "echo"]
+    argspec = ["data=", "answers=", "metric=", "help", "debug", "echo", "details"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
     option = dict(optlist)
     if ('--data' not in option) or ('--answers' not in option) or ('--help' in option):
@@ -377,9 +377,10 @@ if __name__ == "__main__":
                 print 'metric %s %s' % (val,metrics[val].explanation())
                 print '. micro:',metrics[val].microAverage(answers,labels)
                 print '. macro:',metrics[val].macroAverage(answers,labels)
-                print '. details:'
-                d = metrics[val].detailedReportAsDict(answers,labels)
-                for q in d:
-                    print '. . ',q,'\t',d[q]
+                if '--details' in option:
+                    print '. details:'
+                    d = metrics[val].detailedReportAsDict(answers,labels)
+                    for q in d:
+                        print '. . ',q,'\t',d[q]
             else:
                 print 'unknown metric',val,'use --help for help'
