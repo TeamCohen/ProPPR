@@ -406,6 +406,7 @@ public class WamInterpreter {
 			this.executeWithoutBranching(false);
 			if (this.state.getJumpTo() != null) {
 				// call information
+				hash = hash << 1;
 				hash = hash ^ this.state.getJumpTo().hashCode();
 				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
 				for (int i=0; i<arity; i++) {

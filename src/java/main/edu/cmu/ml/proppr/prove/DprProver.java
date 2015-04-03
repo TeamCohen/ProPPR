@@ -158,6 +158,8 @@ public class DprProver extends Prover {
 					backtrace.rethrow(e);
 				}
 				backtrace.pop(u);
+			} else { 
+			    if (log.isDebugEnabled()) log.debug(String.format("Rejecting eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, r.get(u), deg, u));
 			}
 		} catch (LogicProgramException e) {
 			this.backtrace.rethrow(e);
