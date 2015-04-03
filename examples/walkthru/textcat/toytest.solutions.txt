@@ -1,0 +1,20 @@
+# proved 1	predict(pb,X1)  #v:[?].	106 msec
+1	1.0	predict(pb,pos).
+# proved 2	predict(yc,X1)  #v:[?].	99 msec
+1	0.5512627771984473	predict(yc,pos).
+2	0.4487372228015527	predict(yc,neg).
+# proved 3	predict(rb2,X1)  #v:[?].	84 msec
+1	0.5727468543665304	predict(rb2,pos).
+2	0.42725314563346967	predict(rb2,neg).
+# proved 4	predict(rp,X1)  #v:[?].	66 msec
+1	0.5745897290488199	predict(rp,pos).
+2	0.4254102709511801	predict(rp,neg).
+# proved 5	predict(bp,X1)  #v:[?].	56 msec
+1	0.7612776140201296	predict(bp,neg).
+2	0.23872238597987044	predict(bp,pos).
+# proved 6	predict(he,X1)  #v:[?].	50 msec
+1	0.5391290087442194	predict(he,neg).
+2	0.46087099125578046	predict(he,pos).
+# proved 7	predict(wt,X1)  #v:[?].	44 msec
+1	0.5167827809910777	predict(wt,neg).
+2	0.48321721900892245	predict(wt,pos).

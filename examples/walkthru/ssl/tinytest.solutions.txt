@@ -1,0 +1,3 @@
+# proved 1	predict(pos,X1)  #v:[?].	30 msec
+1	0.5833333333333334	predict(pos,seed1).
+2	0.41666666666666663	predict(pos,f1).

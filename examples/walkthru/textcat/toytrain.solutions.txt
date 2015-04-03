@@ -1,0 +1,22 @@
+# proved 1	predict(sc,X1)  #v:[?].	104 msec
+1	1.0	predict(sc,pos).
+# proved 2	predict(rw,X1)  #v:[?].	80 msec
+1	1.0	predict(rw,pos).
+# proved 3	predict(ft,X1)  #v:[?].	73 msec
+1	1.0	predict(ft,pos).
+# proved 4	predict(jm,X1)  #v:[?].	57 msec
+1	1.0	predict(jm,neg).
+# proved 5	predict(bk,X1)  #v:[?].	45 msec
+1	1.0	predict(bk,pos).
+# proved 6	predict(rb,X1)  #v:[?].	39 msec
+1	1.0	predict(rb,pos).
+# proved 7	predict(tf,X1)  #v:[?].	39 msec
+1	1.0	predict(tf,neg).
+# proved 8	predict(ji,X1)  #v:[?].	31 msec
+1	1.0	predict(ji,neg).
+# proved 9	predict(hs,X1)  #v:[?].	29 msec
+1	1.0	predict(hs,neg).
+# proved 10	predict(mv,X1)  #v:[?].	28 msec
+1	1.0	predict(mv,neg).
+# proved 11	predict(dh,X1)  #v:[?].	24 msec
+1	1.0	predict(dh,pos).

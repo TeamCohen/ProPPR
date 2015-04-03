@@ -1,0 +1,31 @@
+0		comment	predict(-1,-2) :- seed(-1,-2)  #v:['Y', 'X'].
+1	predict/2	allocate	2	['X', 'Y']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	predict
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushboundvar	-2
+12		callp	seed/2
+13		returnp
+14		comment	predict(-1,-2) :- predict(-1,-3), edge(-3,-2)  #v:['Y', 'X', 'Z'].
+15	predict/2	allocate	3	['Z', 'X', 'Y']
+16		initfreevar	-1	-2
+17		initfreevar	-2	-1
+18		fclear
+19		fpushstart	id	3
+20		fpushconst	predict
+21		fpushconst	2
+22		fpushconst	18
+23		freport
+24		pushboundvar	-1
+25		pushfreevar	-3
+26		callp	predict/2
+27		pushboundvar	-3
+28		pushboundvar	-2
+29		callp	edge/2
+30		returnp
