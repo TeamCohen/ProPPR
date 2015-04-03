@@ -138,8 +138,8 @@ public class SRWTest extends RedBlueGraph {
 		return new SimpleParamVector();
 	}
 	
-	public TObjectDoubleMap<String> makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
-		TObjectDoubleMap<String> grad = new TObjectDoubleHashMap<String>();
+	public ParamVector makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
+		ParamVector grad = new SimpleParamVector<String>();
 		srw.accumulateGradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg), grad);
 		return grad;
 	}
@@ -151,7 +151,7 @@ public class SRWTest extends RedBlueGraph {
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
 
-		TObjectDoubleMap<String> gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
+		ParamVector gradient = makeGradient(srw, uniformParams, startVec, pos, neg);
 		System.err.println(Dictionary.buildString(gradient, new StringBuilder(), "\n").toString());
 
 		// to favor blue (positive label) nodes,
@@ -166,12 +166,12 @@ public class SRWTest extends RedBlueGraph {
 	
 	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		srw.clearLoss();
-		srw.accumulateGradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg), new TObjectDoubleHashMap<String>());
+		srw.accumulateGradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg), new SimpleParamVector<String>());
 		return srw.cumulativeLoss().total();
 	}
 	public double makeLoss(ParamVector paramVec, PosNegRWExample example) {
 		srw.clearLoss();
-		srw.accumulateGradient(paramVec, example, new TObjectDoubleHashMap<String>());
+		srw.accumulateGradient(paramVec, example, new SimpleParamVector<String>());
 		return srw.cumulativeLoss().total();
 	}
 	
@@ -202,7 +202,7 @@ public class SRWTest extends RedBlueGraph {
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
 
 		double baselineLoss = makeLoss(this.srw, uniformParams, startVec, pos, neg);
-		TObjectDoubleMap<String> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg);
+		ParamVector<String,?> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg);
 
 		ParamVector biasedWeightVec = makeBiasedVec();
 		double biasedLoss = makeLoss(srw, biasedWeightVec, startVec, pos, neg);
@@ -217,7 +217,7 @@ public class SRWTest extends RedBlueGraph {
 			pert.put(feature, pert.get(feature)+perturb_epsilon);
 			
 			srw.clearLoss();
-			TObjectDoubleMap<String> epsGrad = makeGradient(srw, pert, startVec, pos, neg);
+			ParamVector epsGrad = makeGradient(srw, pert, startVec, pos, neg);
 			double newLoss = srw.cumulativeLoss().total();
 			
 

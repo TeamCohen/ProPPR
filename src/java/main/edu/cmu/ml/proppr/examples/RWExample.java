@@ -15,9 +15,11 @@ import gnu.trove.map.TIntDoubleMap;
  *
  */
 public abstract class RWExample {
+	protected String name;
 	protected TIntDoubleMap queryVec;
 	protected LearningGraph graph;
-	public RWExample(LearningGraph graph, TIntDoubleMap queryVec) {
+	public RWExample(String name, LearningGraph graph, TIntDoubleMap queryVec) {
+		this.name = name;
 		this.queryVec = queryVec;
 		this.graph = graph;
 	}

@@ -1,0 +1,7 @@
+predict(pb,Y)	-predict(pb,neg)	+predict(pb,pos)
+predict(yc,Y)	-predict(yc,neg)	+predict(yc,pos)
+predict(rb2,Y)	-predict(rb2,neg)	+predict(rb2,pos)
+predict(rp,Y)	-predict(rp,neg)	+predict(rp,pos)
+predict(bp,Y)	+predict(bp,neg)	-predict(bp,pos)
+predict(he,Y)	+predict(he,neg)	-predict(he,pos)
+predict(wt,Y)	+predict(wt,neg)	-predict(wt,pos)

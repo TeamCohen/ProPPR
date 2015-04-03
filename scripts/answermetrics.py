@@ -8,15 +8,16 @@ import copy
 
 def answerWithIntVars(query):    
     """Convert from format p(foo,X1,X2) to p(foo,-1,-2)."""        
-    return re.sub(r"[_A-Z]\w*([0-9]+)",r"-\1",query)
+    return re.sub(r"(\W)[_A-Z]\w*([0-9]+)",r"\1-\2",query)
 
 def queryWithIntVars(query):
     """Convert from format p(foo,Y,Z) to p(foo,-1,-2)."""
     result = query[:]
-    matches = list(re.finditer(r"[_A-Z]\w*", query))
+    # bugfix: variables must start with _A-Z, which means they must be preceded by a nonword character
+    matches = list(re.finditer(r"(\W)[_A-Z]\w*", query))
     k = -len(matches)
     for m in reversed(matches):
-        result = result[:m.start()] + str(k) + result[m.end():]
+        result = result[:m.start()] + m.groups()[0] + str(k) + result[m.end():]
         k += 1
     return result
 
@@ -98,6 +99,8 @@ class Answers(object):
     - answers.solutions[q] is a set of all the solutions returned for
       q
 
+    Any answers that are not either isPos or isNeg - ie, unknown truth
+    values - are discarded.
 """
     
     def __init__(self,answerFile,labels=None):
@@ -108,6 +111,9 @@ class Answers(object):
         self.solutions = collections.defaultdict(set)
         self.queryTime = {}
         intVarQuery = None
+        totQueries = 0
+        totAnswers = 0
+        totLabeledAnswers = 0
         for line in open(self.answerFile):        
             if line.startswith('#'):
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
@@ -125,10 +131,13 @@ class Answers(object):
                     a.isPos = solution in labels.pos[intVarQuery]
                     a.isNeg = solution in labels.neg[intVarQuery]
                     #print 'solution',solution,'intVarQuery',intVarQuery,'pos',labels.pos[intVarQuery],'neg',labels.pos[intVarQuery]
-                self.answers[intVarQuery].append(a)
-                self.solutions[intVarQuery].add(solution)
+                if a.isPos or a.isNeg:
+                    totLabeledAnswers += 1
+                    self.answers[intVarQuery].append(a)
+                    self.solutions[intVarQuery].add(solution)
         for q in self.answers:
             self.answers[q] = self.adversariallyOrdered(self.answers[q])
+        print 'queries',totQueries,'answers',totAnswers,'labeled answers',totLabeledAnswers
 
     def adversariallyOrdered(self,answerList):
         def adverseKey(a): return (1.0-a.score,a.isPos,a.rank)
@@ -176,22 +185,23 @@ class Metric(object):
 
     def macroAverage(self,answers,labels):
         """Compute over the full list of answers."""
-        fullAnswerList = reduce(lambda l1,l2:l1+l2, [answers.answers[q] for q in answers.answers.keys()])
-        fullSolutionSet = reduce(lambda s1,s2:s1.union(s2), [answers.solutions[q] for q in answers.answers.keys()])
+        fullAnswerList = reduce(lambda l1,l2:l1+l2, [answers.answers[q] for q in answers.answers.keys()],[])
+        fullSolutionSet = reduce(lambda s1,s2:s1.union(s2), [answers.solutions[q] for q in answers.answers.keys()],set())
         fullPosSolutionSet = reduce(lambda s1,s2:s1.union(s2), [labels.pos[q] for q in labels.queries])
         return self.computeFromList(fullAnswerList,fullSolutionSet,fullPosSolutionSet)
 
     def microAverage(self,answers,labels):
         """Compute over each query individually and average results."""
-        tot = n = 0
-        for q in answers.answers.keys():
-            n += 1
+        tot = n = 0.0
+        for q in labels.queries:#answers.answers.keys():
+            n += 1.0
             tot += self.computeFromList(answers.answers[q],answers.solutions[q],labels.pos[q])
+        if n==0: return n
         return tot/n
 
     def detailedReportAsDict(self,answers,labels):
         result = {}
-        for q in answers.answers.keys():
+        for q in labels.queries:#answers.answers.keys():
             result[q] = self.computeFromList(answers.answers[q],answers.solutions[q],labels.pos[q])
         return result
 
@@ -203,7 +213,7 @@ class MeanRecipRank(Metric):
         return '(Mean Reciprocal Rank): averages 1/rank for all positive answers'
 
     def computeFromList(self,answerList,solutionSet,posSet):
-        tot = n = 0
+        tot = n = 0.0
         for a in answerList:
             if a.isPos:
                 tot += 1.0/a.rank
@@ -221,12 +231,13 @@ class Recall(Metric):
 
     def computeFromList(self,answerList,solutionSet,posSet):
         r = 0.0
+        n = len(posSet)
+        if n == 0: return 1.0
         for a in posSet:
             if a in solutionSet:
                 r += 1.0
-        n = len(posSet)
-        if n: return r/n
-        else: return 1.0
+        return r/n
+        
         
 class MeanAvgPrecision(Metric):
     
@@ -260,19 +271,90 @@ class AreaUnderROC(Metric):
                 rankSum += a.rank
         return 1.0 - (rankSum - optimumRankSum)/npairs
         
+class Accuracy(Metric):
+    
+    def microAverage(self,answers,labels):
+        # not defined
+        return -1
+
+    def computeFromList(self,answerList,solutionSet,posSet):
+        # answers are rank, score, solution, isPos, isNeg
+        instanceScores = collections.defaultdict(list)
+        for a in answerList:
+            instanceId,predictedLabel = self.parseSolution(a.solution)
+            #save a bunch of stuff for testing mostly
+            instanceScores[instanceId].append( (a.score,predictedLabel,a.isPos) )
+        numCorrect = 0
+        for instanceId in instanceScores:
+            instanceScores[instanceId].sort(reverse=True)
+            #print instanceId,instanceScores[instanceId]
+            (score,label,isPos) = instanceScores[instanceId][0]
+            if isPos: numCorrect += 1
+        totExamples = len(instanceScores)
+        for solution in posSet:
+            instanceId,predictedLabel = self.parseSolution(solution)
+            if not instanceId in instanceScores:
+                totExamples += 1
+        print '. accuracy notes:',numCorrect,'/',totExamples,'examples correct: typical instances',instanceScores.keys()[0:3]
+        return numCorrect/float(totExamples)
+
+    def dissectSolution(self,solution):
+        functor,args = solution[:-1].split("(")
+        arg1,arg2 = args.split(",")
+        return functor,arg1,arg2
+
+class AccuracyL1(Accuracy):            
+
+    def explanation(self):
+        return '(Accuracy L1): accuracy where goals are of the form predict(Y,X), ie label is first argument.'
+
+    def parseSolution(self,solution):
+        (f1,y,x) = self.dissectSolution(solution)
+        return x,y
+
+class AccuracyL2(Accuracy):            
+
+    def explanation(self):
+        return '(Accuracy L2): accuracy where goals are of the form predict(X,Y), ie label is second argument.'
+
+    def parseSolution(self,solution):
+        (f1,x,y) = self.dissectSolution(solution)
+        return x,y
+
+class MeanRecipRank(Metric):
+    
+    def explanation(self):
+        return '(Mean Reciprocal Rank): averages 1/rank for all positive answers'
+
+    def computeFromList(self,answerList,solutionSet,posSet):
+        tot = n = 0
+        for a in answerList:
+            if a.isPos:
+                tot += 1.0/a.rank
+                n += 1
+        for a in posSet:
+            if not a in solutionSet:
+                n += 1
+        if n: return tot/n
+        else: return 1.0
+        
+
 ####################  main
 
 if __name__ == "__main__":
 
-    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 'auc':AreaUnderROC()}
+    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 
+               'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
 
-    argspec = ["data=", "answers=", "metric=", "help", "debug"]
+    argspec = ["data=", "answers=", "metric=", "help", "debug", "echo", "details"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
     option = dict(optlist)
-    if ('--data' not in option) or ('--answers' not in option):
+    if ('--data' not in option) or ('--answers' not in option) or ('--help' in option):
         print 'usage:',sys.argv[0],'--data TRAIN-OR-TEST-FILE --answers ANSWER-FILE --metric M'
-        for key in metrics:
+        for key in sorted(metrics.keys()):
             print '  --metric',key,metrics[key].explanation()
+        print
+        print '  --echo will print a representation of the raw information from which metrics are computed'
         sys.exit(-1)
 
     labels = Labels(option['--data'])
@@ -284,6 +366,10 @@ if __name__ == "__main__":
         print 'answers:'
         answers.show(summary=False)
 
+    if ('--echo' in option):
+        print 'labeled answers: rank score solution isPos isNeg'
+        answers.show(summary=False)
+
     for (key,val) in optlist:
         if key=='--metric':
             if val in metrics:
@@ -291,9 +377,10 @@ if __name__ == "__main__":
                 print 'metric %s %s' % (val,metrics[val].explanation())
                 print '. micro:',metrics[val].microAverage(answers,labels)
                 print '. macro:',metrics[val].macroAverage(answers,labels)
-                print '. details:'
-                d = metrics[val].detailedReportAsDict(answers,labels)
-                for q in d:
-                    print '. . ',q,'\t',d[q]
+                if '--details' in option:
+                    print '. details:'
+                    d = metrics[val].detailedReportAsDict(answers,labels)
+                    for q in d:
+                        print '. . ',q,'\t',d[q]
             else:
                 print 'unknown metric',val,'use --help for help'

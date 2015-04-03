@@ -31,7 +31,7 @@ import java.io.*;
  */
 public class Configuration {
 	private static final Logger log = Logger.getLogger(Configuration.class);
-	public static final int FORMAT_WIDTH=16;
+	public static final int FORMAT_WIDTH=18;
 	public static final String FORMAT_STRING="%"+FORMAT_WIDTH+"s";
 	/* set files */
 	/** file. */
@@ -60,6 +60,7 @@ public class Configuration {
 	public static final int USE_TRACELOSSES = 0x8;
 	public static final int USE_FORCE = 0x10;
 	public static final int USE_ORDER = 0x20;
+	public static final int USE_DUPCHECK = 0x40;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
 	private static final String APR_CONST_OPTION = "apr";
@@ -68,6 +69,7 @@ public class Configuration {
 	private static final String TRACELOSSES_CONST_OPTION = "traceLosses";
 	private static final String FORCE_CONST_OPTION = "force";
 	private static final String ORDER_CONST_OPTION = "order";
+	private static final String DUPCHECK_CONST_OPTION = "duplicateCheck";
 
 	/* set class for module */
 	/** module. */
@@ -99,6 +101,7 @@ public class Configuration {
 	public boolean force = false;
 	public boolean ternaryIndex = false;
 	public boolean maintainOrder = true;
+	public int duplicates = (int) 1e6;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -155,6 +158,8 @@ public class Configuration {
 	}
 	protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
 		int flags;
+		
+		if (line.hasOption("help")) usageOptions(options, allFlags);
 
 		// input files: must exist already
 		flags = inputFiles(allFlags);
@@ -193,6 +198,7 @@ public class Configuration {
 			if (order.equals("same") || order.equals("maintain")) this.maintainOrder = true;
 			else this.maintainOrder = false;
 		}
+		if (anyOn(flags,USE_DUPCHECK|USE_WAM) && line.hasOption(DUPCHECK_CONST_OPTION)) this.duplicates = (int) Double.parseDouble(line.getOptionValue(DUPCHECK_CONST_OPTION));
 		
 		if (this.programFiles != null) this.loadProgramFiles();
 	}
@@ -214,10 +220,10 @@ public class Configuration {
 				this.program = WamBaseProgram.load(this.getExistingFile(s));
 				wam++;
 			} else if (s.endsWith(GraphlikePlugin.FILE_EXTENSION)) {
-				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s));
+				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s), this.duplicates);
 				graph++;
 			} else if (s.endsWith(FactsPlugin.FILE_EXTENSION)) {
-				FactsPlugin p = FactsPlugin.load(this.apr, this.getExistingFile(s), this.ternaryIndex);
+				FactsPlugin p = FactsPlugin.load(this.apr, this.getExistingFile(s), this.ternaryIndex, this.duplicates);
 				if (iFacts<0) {
 					iFacts = i;
 					this.plugins[i++] = p;
@@ -252,6 +258,12 @@ public class Configuration {
 	protected void addOptions(Options options, int[] allFlags) {
 		int flags;
 
+		options.addOption(
+				OptionBuilder
+				.withLongOpt("help")
+				.withDescription("Print usage syntax.")
+				.create());
+		
 		// input files
 		flags = inputFiles(allFlags);
 		if(isOn(flags, USE_QUERIES))
@@ -434,6 +446,15 @@ public class Configuration {
 							+"anything else (reorder outputs to save time/memory)")
 					.create()
 					);
+		if (anyOn(flags, USE_DUPCHECK|USE_WAM))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(DUPCHECK_CONST_OPTION)
+					.withArgName("size")
+					.hasArg()
+					.withDescription("Default: "+duplicates+"\nCheck for duplicates, expecting <size> values. Increasing <size> is cheap.\n"
+							+"To turn off duplicate checking, set to -1.")
+					.create());
 
 
 //		if (isOn(flags, USE_COMPLEX_FEATURES)) {
@@ -457,7 +478,7 @@ public class Configuration {
 		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(SOLUTIONS_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_TRAIN)) syntax.append(" --").append(TRAIN_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" inputFile");
-		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" inputFile");
+		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" params.wts");
 		
 		//output files
 		flags = outputFiles(allFlags);
@@ -466,7 +487,8 @@ public class Configuration {
 		if (isOn(flags, USE_ANSWERS)) syntax.append(" --").append(SOLUTIONS_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_TRAIN)) syntax.append(" --").append(TRAIN_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" outputFile");
-		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" outputFile");
+		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" params.wts");
+		if (isOn(flags, USE_GRADIENT)) syntax.append(" --").append(GRADIENT_FILE_OPTION).append(" gradient.dwts");
 		
 		//constants
 		flags = constants(allFlags);
@@ -477,6 +499,7 @@ public class Configuration {
 		if (isOn(flags, USE_TRACELOSSES)) syntax.append(" [--").append(TRACELOSSES_CONST_OPTION).append("]");
 		if (isOn(flags, USE_FORCE)) syntax.append(" [--").append(FORCE_CONST_OPTION).append("]");
 		if (isOn(flags, USE_ORDER)) syntax.append(" [--").append(ORDER_CONST_OPTION).append(" same|reorder]");
+		if (anyOn(flags, USE_DUPCHECK|USE_WAM)) syntax.append(" [--").append(DUPCHECK_CONST_OPTION).append(" -1|integer]");
 		
 	}
 	
@@ -532,14 +555,20 @@ public class Configuration {
 		displayFile(sb, PARAMS_FILE_OPTION, paramsFile);
 		displayFile(sb, SOLUTIONS_FILE_OPTION, solutionsFile);
 		displayFile(sb, GRADIENT_FILE_OPTION, gradientFile);
-		if (!maintainOrder) sb.append("\n     Output order: reordered");
+		if (!maintainOrder) display(sb, "Output order","reordered");
+		if (this.programFiles != null) {
+			display(sb, "Duplicate checking", duplicates>0? ("up to "+duplicates) : "off");
+		}
 		return sb.toString();
 	}
 	private void displayFile(StringBuilder sb, String name, File f) {
 		if (f != null) sb.append("\n")
-		.append(String.format("%"+(FORMAT_WIDTH-5)+"s", name))
-		.append(" file: ")
+		.append(String.format("%"+(FORMAT_WIDTH-5)+"s file: ", name))
 		.append(f.getPath());
+	}
+	private void display(StringBuilder sb, String name, Object value) {
+		sb.append("\n")
+		.append(String.format("%"+(FORMAT_WIDTH)+"s: %s",name,value.toString()));
 	}
 
 	protected String[] combinedArgs(String[] origArgs) {

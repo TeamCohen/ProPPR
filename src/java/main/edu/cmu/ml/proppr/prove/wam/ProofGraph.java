@@ -58,25 +58,14 @@ public class ProofGraph {
 		this.restartFeature = RESTART;
 		this.restartBoosterFeature = ALPHABOOSTER;
 		this.graph = new LightweightStateGraph(new HashingStrategy<State>() {
-
 			@Override
 			public int computeHashCode(State s) {
-				try {
-					return interpreter.canonicalForm(startState, s).hashCode();
-				} catch (LogicProgramException e) {
-					e.printStackTrace();
-				}
-				return 0;
+				return s.canonicalHash();
 			}
 
 			@Override
 			public boolean equals(State s1, State s2) {
-				try {
-					return interpreter.canonicalForm(startState, s1).equals(interpreter.canonicalForm(startState, s2));
-				} catch (LogicProgramException e) {
-					e.printStackTrace();
-				}
-				return false;
+				return s1.canonicalHash() == s2.canonicalHash();
 			}});
 	}
 	private ImmutableState createStartState() throws LogicProgramException {
@@ -99,7 +88,9 @@ public class ProofGraph {
 			if (s.hasConstantAt(i)) variableIds[i] = 0;
 			else variableIds[i] = -v++;
 		}
-		return interpreter.saveState();
+		ImmutableState result = interpreter.saveState();
+		result.setCanonicalHash(this.interpreter, result);
+		return result;
 	}
 	private WamPlugin[] addBuiltinPlugins(WamPlugin ... plugins) {
 		WamPlugin[] result = Arrays.copyOf(plugins,plugins.length+1);
@@ -144,6 +135,11 @@ public class ProofGraph {
 			}
 		} else if (!state.isFailed()) {
 			result = this.interpreter.wamOutlinks(state);
+		}
+		
+		// generate canonical versions of each state
+		for (Outlink o : result) {
+			o.child.setCanonicalHash(this.interpreter, this.startState);
 		}
 		return result;
 	}

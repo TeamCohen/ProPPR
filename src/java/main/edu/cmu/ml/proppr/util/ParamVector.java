@@ -81,11 +81,26 @@ public abstract class ParamVector<F,T> implements Map<F,Double> {
     }
 	public void adjustValue(F key, double value) {
 		T oldvalue = getBackingStore().get(key);
+		if (oldvalue == null) {
+			getBackingStore().putIfAbsent(key, newValue(0.0));
+			oldvalue = getBackingStore().get(key);
+		}
 		while( !getBackingStore().replace(key, oldvalue, newValue(getWeight(oldvalue)+value))) {
 			oldvalue = getBackingStore().get(key);
+			if (oldvalue == null) oldvalue = newValue(0.0);
 			try {
 				Thread.sleep(1);
 			} catch (InterruptedException e) {}
 		}
+	}
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("{");
+		for (Map.Entry<F,Double> e : entrySet()) {
+			if (sb.length()>1) sb.append(", ");
+			sb.append(e.getKey()).append(":").append(e.getValue());
+		}
+		sb.append("}");
+		return sb.toString();
 	}
 }

@@ -34,7 +34,6 @@ import gnu.trove.map.TObjectDoubleMap;
  *
  */
 public class LightweightGraphPlugin extends GraphlikePlugin {
-	private static final int ESTIMATED_SIZE = 1000000;
 	private static final Logger log = Logger.getLogger(LightweightGraphPlugin.class);
 	protected Map<String,Map<String,TObjectDoubleMap<String>>> graph = new HashMap<String,Map<String,TObjectDoubleMap<String>>>();
 	protected Map<Goal,Double> fd=new HashMap<Goal,Double>();
@@ -71,25 +70,31 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 		return this.fd;
 	}
 
+	public static GraphlikePlugin load(APROptions apr, File f) {
+		return load(apr, f, -1);
+	}
 	/** Return a simpleGraphComponent with all the components loaded from
         a file.  The format of the file is that each line is a tab-separated 
         triple of edgelabel, sourceNode, destNode. */
-	public static GraphlikePlugin load(APROptions apr, File f) {
+	public static GraphlikePlugin load(APROptions apr, File f, int duplicates) {
 		GraphlikePlugin p = new LightweightGraphPlugin(apr, f.getName());
 		ParsedFile parsed = new ParsedFile(f);
-		BloomFilter<String> lines = new BloomFilter<String>(1e-5,ESTIMATED_SIZE);
+		BloomFilter<String> lines = null;
+		if (duplicates>0) lines = new BloomFilter<String>(1e-5,duplicates);
 		boolean exceeds=false;
 		for (String line : parsed) {
 			String[] parts = line.split("\t");
 			if (parts.length < 3) parsed.parseError("expected 3 tab-delimited fields; got "+parts.length);
-			if (lines.contains(line)) {
-				log.warn("Skipping duplicate fact at "+f.getName()+":"+parsed.getAbsoluteLineNumber()+": "+line);
-				continue;
-			} else lines.add(line);
-
-			if (!exceeds & parsed.getLineNumber() > ESTIMATED_SIZE) {
-				exceeds=true;
-				log.warn("Number of graph edges exceeds "+ESTIMATED_SIZE+"; duplicate detection may encounter false positives. We should add a command line option to fix this.");
+			if (duplicates>0) {
+				if (lines.contains(line)) {
+					log.warn("Skipping duplicate fact at "+f.getName()+":"+parsed.getAbsoluteLineNumber()+": "+line);
+					continue;
+				} else lines.add(line);
+	
+				if (!exceeds & parsed.getLineNumber() > duplicates) {
+					exceeds=true;
+					log.warn("Number of graph edges exceeds "+duplicates+"; duplicate detection may encounter false positives. We should add a command line option to fix this.");
+				}
 			}
 			p.addEdge(parts[0].trim(),parts[1].trim(),parts[2].trim());
 		}

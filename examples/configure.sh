@@ -6,13 +6,13 @@ then
     echo -e "  --proppr path/to/proppr       Should contain bin, lib, conf"
     echo -e "  --proppr path/to/proppr.jar   Alternate ProPPR spec"
     echo -e "  --jopts java_options          Example: \"-Xmx6g\""
-    echo -e "  --threads nthreads            Ideally #cores - 1"
+    echo -e "  --threads nthreads            Ideally #cores - 2"
     echo -e "  --alpha value                 Set DPR reset hyperparameter"
     echo -e "  --epsilon value               Set DPR error bound hyperparameter"
     echo -e "  --mu value                    Set SRW regularization hyperparameter"
     echo -e "  --epochs value                Set number of training epochs"
     echo -e "  --tester value                Set tester variant"
-    echo -e "  --trainer value                Set trainer variant"
+    echo -e "  --trainer value               Set trainer variant"
     echo -e "  --srw value[:arg...]          Set SRW"
     exit 0
 fi

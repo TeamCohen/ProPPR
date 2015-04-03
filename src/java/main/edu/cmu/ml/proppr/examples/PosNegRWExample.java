@@ -28,13 +28,16 @@ public class PosNegRWExample extends RWExample {
 //		return result;
 //	}
 
-	private PosNegRWExample(LearningGraph graph, TIntDoubleMap queryVec) {
-		super(graph,queryVec);
+	private PosNegRWExample(String name, LearningGraph graph, TIntDoubleMap queryVec) {
+		super(name, graph,queryVec);
 	}
 	
-	public PosNegRWExample(LearningGraph graph, TIntDoubleMap queryVec,
+	public PosNegRWExample(LearningGraph graph, TIntDoubleMap queryVec, int[] pos, int[] neg) {
+		this("n/a", graph, queryVec, pos, neg);
+	}
+	public PosNegRWExample(String name, LearningGraph graph, TIntDoubleMap queryVec,
 			int[] pos, int[] neg) {
-		super(graph,queryVec);
+		super(name, graph,queryVec);
 		this.posList = pos;
 		this.negList = neg;
 	}
@@ -53,19 +56,20 @@ public class PosNegRWExample extends RWExample {
 
 	public String toString() {
 		final StringBuilder sb = new StringBuilder("PosNegRWExample[");
+		sb.append(this.name).append(" ");
 		sb.append(graph.nodeSize()).append("/").append(graph.edgeSize()).append("; [");
 		queryVec.forEachKey(new TIntProcedure() {
 			@Override
 			public boolean execute(int q) {
-				sb.append("'").append(q).append("',");
+				sb.append(q).append(",");
 				return true;
 			}
 		});
 		if (sb.length() > 0) sb.deleteCharAt(sb.length()-1);
 		sb.append("] -> +[");
-		if (posList.length > 0) { sb.append("'"); Dictionary.buildString(posList, sb, "','"); sb.append("'"); };
+		if (posList.length > 0) { Dictionary.buildString(posList, sb, ",",true); };
 		sb.append("]; -[");
-		if (negList.length > 0) { sb.append("'"); Dictionary.buildString(negList, sb, "','"); sb.append("'"); };
+		if (negList.length > 0) { Dictionary.buildString(negList, sb, ",",true); };
 		sb.append("]]");
 		return sb.toString();
 	}

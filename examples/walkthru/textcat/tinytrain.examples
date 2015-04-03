@@ -1,0 +1,2 @@
+predict(p1,Y)	-predict(p1,neg)	+predict(p1,pos)
+predict(n1,Y)	+predict(n1,neg)	-predict(n1,pos)

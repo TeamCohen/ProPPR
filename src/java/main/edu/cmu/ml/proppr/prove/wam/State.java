@@ -32,6 +32,7 @@ public abstract class State {
 	protected boolean completed;
 	protected boolean failed;
 	protected LinkedList<CallStackFrame> calls;
+	protected int canon;
 	/** True iff there is a constant at heap position i. */
 	public boolean hasConstantAt(int i) { return heap[i]<0; }
 	/** True iff there is a variable at heap position i. */
@@ -158,5 +159,18 @@ public abstract class State {
 			if (!mine.equals(theirs)) return false;
 		}
 		return true;
+	}
+
+	public int canonicalHash() {
+		return canon;
+	}
+	public void setCanonicalHash(WamInterpreter interpreter, State startState) {
+		try {
+//			this.canon = interpreter.canonicalForm(startState, this).hashCode();
+			this.canon = interpreter.canonicalHash(startState, this);
+		} catch (LogicProgramException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

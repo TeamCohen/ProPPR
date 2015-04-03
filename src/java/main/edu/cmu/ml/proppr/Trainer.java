@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,7 +50,7 @@ public class Trainer {
 		learner.untrainedFeatures().add("fixedWeight");
 		learner.untrainedFeatures().add("id(trueLoop)");
 		learner.untrainedFeatures().add("id(trueLoopRestart)");
-//		learner.untrainedFeatures().add("id(restart)");
+		learner.untrainedFeatures().add("id(restart)");
 //		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 
@@ -111,7 +112,7 @@ public class Trainer {
 					this.throttle);
 
 			//
-			this.learner.cleanupParams(paramVec);
+			this.learner.cleanupParams(paramVec,paramVec);
 
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
@@ -138,30 +139,62 @@ public class Trainer {
 		return paramVec;
 	}
 
-	public TObjectDoubleMap<String> findGradient(GroundedExampleStreamer examples, ParamVector paramVec) {
+	public ParamVector findGradient(Iterable<PosNegRWExample> examples, ParamVector paramVec) {
 
 		log.info("Computing gradient on cooked examples...");
-		TObjectDoubleMap<String> sumGradient = new TObjectDoubleHashMap<String>();
+		final ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
-		int k=0;
+		paramVec = this.learner.setupParams(paramVec);
+		
+//		
+//		//WW: accumulate example-size normalized gradient
+//		for (PosNegRWExample x : examples) {
+////			this.learner.initializeFeatures(paramVec,x.getGraph());
+//			this.learner.accumulateGradient(paramVec, x, sumGradient);
+//			k++;
+//		}
 
-		//WW: accumulate example-size normalized gradient
-		for (PosNegRWExample x : examples) {
-			this.learner.initializeFeatures(paramVec,x.getGraph());
-			this.learner.accumulateGradient(paramVec, x, sumGradient);
-			k++;
-		}
+		// instead let's run the examples through Multithreading
+		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
+		m.executeJob(
+				this.nthreads, 
+				new FQTrainingExampleStreamer(examples, paramVec), 
+				new Transformer<FQTrainingExample,Integer>() {
+					@Override
+					public Callable<Integer> transformer(
+							final FQTrainingExample in, final int id) {
+						return new Callable<Integer>() {
+							@Override
+							public Integer call() throws Exception {
+								in.learner.accumulateGradient(in.paramVec, in.x, sumGradient);
+								
+								return 1; 
+								// ^^^^ this is the equivalent of k++ from before;
+								// the total sum (query count) will be stored in numExamplesThisEpoch
+								// by TraceLosses. It's a hack but it works
+							}};
+					}
+				}, 
+				new Cleanup<Integer>() {
+					@Override
+					public Runnable cleanup(Future<Integer> in, int id) {
+						return new TraceLosses(in,id);
+					}
+				}, 
+				this.throttle);
 
+		this.learner.cleanupParams(paramVec, sumGradient);
+		
 		//WW: renormalize by the total number of queries
 		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
 			String feature = it.next();
 			double unnormf = sumGradient.get(feature);
-			double norm = unnormf / k;
+			// query count stored in numExamplesThisEpoch, as noted above
+			double norm = unnormf / this.numExamplesThisEpoch.intValue();
 			sumGradient.put(feature, norm);
-			//System.out.println("** GRADIENT\t" + feature + "\t" + sumGradient.get(feature));
 		}
 
 		return sumGradient;
@@ -205,7 +238,7 @@ public class Trainer {
 		}
 	}
 
-	protected int numExamplesThisEpoch;
+	protected Integer numExamplesThisEpoch = 0;
 	/**
 	 * Cleans up outputs from training (tracks some info for traceLosses)
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
@@ -222,7 +255,9 @@ public class Trainer {
 		public void run() {
 			try {
 				log.debug("Cleaning up example "+this.id);
-				numExamplesThisEpoch += this.in.get();
+				synchronized(numExamplesThisEpoch) {
+					numExamplesThisEpoch += this.in.get();
+				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {

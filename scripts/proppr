@@ -1,0 +1,180 @@
+#!/usr/bin/python
+
+import sys
+import subprocess
+import os
+import logging
+
+shortHelpMsg = {}
+logging.basicConfig(level=logging.INFO)
+
+# dispatch to subcommand
+
+def doMain():
+   logging.info('ProPPR v2')
+   com = getArg(0)
+   if com == "help":
+      doHelp()
+   elif com == "set":
+      doSet()
+   elif com == "settings":
+      doSettings()
+   elif com == "compile":
+      doCompile()
+   elif com == "answer":
+      doAnswer()
+   elif com == "ground":
+      doGround()
+   elif com == "eval":
+      doEval()
+   elif com == "train":
+      doTrain()
+   else:
+      doHelp()
+      
+# subcommands
+
+def doSet():
+   opts = loadOptionDict()  #also load command-line options
+   saveOptionDict(opts)
+shortHelpMsg['set'] = ' OPTION VALUE: store a default setting in proppr.settings, where OPTION starts with --'
+
+def doSettings():
+   for key,val in loadOptionDict().items():
+      print key,val
+shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
+
+def doAnswer():
+   stem,examples = stemExt(getArg(1),'.examples')
+   solutions = getArg(2,stem+'.solutions.txt')
+   invokeMain('QueryAnswerer','--queries',examples,'--solutions',solutions)
+   logging.info('answers in '+solutions)
+shortHelpMsg['answer'] = ' INPUT.examples [OUTPUT.solutions.txt]: answer queries from file and write solutions'
+
+def doGround():
+   stem,examples = stemExt(getArg(1),'.examples')
+   grounded = getArg(2,stem+'.examples.grounded')
+   invokeMain('Grounder','--queries',examples,'--grounded',grounded)
+   logging.info('grounded to '+grounded)
+shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from file and write graphs'
+def doEval():
+   stem,examples = stemExt(getArg(1),'.examples')
+   solutions = getArg(2, stem+'.solutions.txt')
+   opts = getArgvOptions() or ['--metric','map']
+   root = getRoot()
+   callProcess(['python',root+'/scripts/answermetrics.py','--data',examples,'--answers',solutions] + opts)
+shortHelpMsg['eval'] = ' INPUT.examples INPUT.solutions.txt [--metric mrr|recall|ap] [--echo]: evaluate proposed solutions' 
+
+def doCompile():
+   stem,src = stemExt(getArg(1),'.ppr')
+   dst = getArg(2,stem+".wam")
+   root = getRoot()
+   callProcess(['python',root+'/src/scripts/compiler.py','serialize',src],stdout=open(dst,'w'))
+   logging.info('compiled '+ src + ' to ' + dst)
+shortHelpMsg['compile'] = ' INPUT.ppr [OUTPUT.wam]: compile a ProPPR program to abstract machine'
+
+def doTrain():
+   stem,src = stemExt(getArg(1),'.examples.grounded')
+   dst = getArg(2,stem+'.params')
+   invokeMain('Trainer','--train',src,'--params',dst)
+shortHelpMsg['train'] = ' INPUT.examples.grounded [OUTPUT.params]: learn parameters for the prover'
+
+shortHelpMsg['help'] = ': this help message'
+def doHelp():
+   print 'ProPPR v2: commands are:'
+   for com in shortHelpMsg:
+      print '  proppr '+ com + shortHelpMsg[com]
+   print 'other tips:'
+   print '  (1) for all commands that invoke Java mains, options can be passed in by appending them,'
+   print '      e.g. "proppr answer test.examples --prover tr"'
+   print '  (2) for all commands that invoke Java mains, appending "--help" will give help'
+   print '      on available additional options'
+
+## helpers
+
+def stemExt(fileName,expectedExtension):
+   """Find the base file name, given an expected extension.  The first
+   arg might or might not contain the extension, so given either
+   fileName foo.ext or foo, this return the pair (foo,foo.ext).
+   """
+   if fileName.endswith(expectedExtension):
+      return (fileName[:-len(expectedExtension)],fileName)
+   else:
+      return (fileName,fileName+expectedExtension)
+
+def invokeMain(main,*mainProgArgs):
+   """Invoke a main program, supplying options from the settings file
+   and/or the command-line options."""
+   root = getRoot()
+   classPath = '.:%s/conf/:%s/bin:%s/lib/*' % (root,root,root)
+   mainClass = 'edu.cmu.ml.proppr.%s' % main
+   optArgs = []
+   for (key,val) in loadOptionDict().items():
+      optArgs.append(key)
+      optArgs.append(val)
+   callProcess(['java','-cp',classPath,mainClass] + list(mainProgArgs) + optArgs)
+
+def callProcess(args,**kw):
+   """Call a process, tracing the actual call."""
+   if kw: logging.info('subprocess call options: '+ str(kw))
+   logging.info('calling: ' + ' '.join(args))
+   subprocess.call(args,**kw)
+
+def getRoot():
+   """Get the root dir for the ProPPR codebase."""
+   try:
+      return os.environ['PROPPR']
+   except IndexError:
+      print "you must set the environment variable 'PROPPR' to the root of your source tree"
+      sys.exit(-1)
+
+def getArg(i,defaultVal=None):
+   """Get the i-th command line argument."""
+   def safeDefault():
+      if defaultVal: 
+         return defaultVal
+      else:
+         logging.warn("expected at least %d command-line arguments - use 'proppr help' for help" % (i+1))
+         sys.exit(-1)
+   try:
+      result = sys.argv[i+1]
+      return result if not result.startswith("--") else safeDefault()
+   except IndexError:      
+      return safeDefault()
+
+def getArgvOptions():
+   """Find the command-line arguments starting with the first one that begins with --"""
+   for i in range(len(sys.argv)):
+      if sys.argv[i].startswith('--'):
+         return sys.argv[i:]
+   return []
+
+def loadOptionDict():
+   """Load options from proppr.settings, ie previously stored with 'proppr set',
+   or from the command line."""
+   opts = {}
+   try:
+      for line in open("proppr.settings",'r'):
+         key,val = line.strip().split("\t")
+         opts[key] = val
+   except IOError:
+      print 'warning: no options in proppr.settings yet'
+   commandLineOpts = getArgvOptions()
+   try:
+      for i in range(0,len(commandLineOpts),2):
+         opts[commandLineOpts[i]] = commandLineOpts[i+1]
+   except IndexError:  #missing option value
+      opts[commandLineOpts[i]] = '1'
+   return opts
+
+def saveOptionDict(opts):
+   fp = open("proppr.settings",'w')
+   for key,val in opts.items():
+      fp.write(key + '\t' + val + '\n')
+   fp.close()
+   print 'saved',len(opts),'option(s) into proppr.settings'
+
+## invoke main
+
+if __name__ == "__main__":
+   doMain()

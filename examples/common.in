@@ -1,12 +1,17 @@
 
+default: all
+
 ifeq (1,$(words $(TRAIN)))
 
-results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
-	echo phase subset uR mR uMRR mMRR uMAP mMAP > $@
-	cat $^ >> $@
+#results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
+#	echo phase subset uR mR uMRR mMRR uMAP mMAP > $@
+#	cat $^ >> $@
 
 post.%.solutions.txt: %.examples params.wts $(PROGRAM_DEPS)
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR} ${UNNORMALIZED}
+
+#post.%.gradient: %.examples.grounded params.wts $(PROGRAM_DEPS)
+#	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $(word 1,$^) --params $(word 2,$^) --threads ${THREADS} --apr ${APR} --epochs ${EPOCHS} --srw ${SRW} --gradient $@
 
 params.wts: ${TRAIN}.examples.grounded
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${SRW} --epochs ${EPOCHS} --apr ${APR}
@@ -19,9 +24,10 @@ endif
 	awk '{print $$3}' |\
 	tr "\n" " " |\
 	awk '{name="$*"; gsub("\."," ",name); print name,$$0}' > $@
+	cat $@
 
 pre.%.solutions.txt: %.examples $(PROGRAM_DEPS)
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
 
 
 %.examples.grounded: %.examples $(PROGRAM_DEPS)

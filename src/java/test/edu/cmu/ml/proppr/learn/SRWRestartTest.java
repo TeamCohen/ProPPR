@@ -12,9 +12,7 @@ import java.util.TreeMap;
 
 import org.junit.Test;
 
-import edu.cmu.ml.proppr.examples.PairwiseRWExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.examples.PairwiseRWExample.HiLo;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;

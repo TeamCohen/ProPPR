@@ -285,26 +285,13 @@ public class ModuleConfiguration extends Configuration {
 		StringBuilder sb = new StringBuilder(superString).append("\n");
 		if (prover != null)
 			sb.append(String.format(FORMAT_STRING, "Prover")).append(": ").append(prover.getClass().getCanonicalName()).append("\n");
-//		if (grounder != null) sb.append(" Grounder: ").append(grounder.getClass().getCanonicalName()).append("\n");
 		if (srw != null)
 			sb.append(String.format(FORMAT_STRING, "Walker")).append(": ").append(srw.getClass().getCanonicalName()).append("\n");
-//		if (trainer != null)  sb.append("  Trainer: ").append(trainer.getClass().getCanonicalName()).append("\n");
-		//sb.append("  Tester: ");
-		//		if (tester != null) 
-		//			sb.append(tester.getClass().getCanonicalName()).append("\n");
-		//		else 
-		//			sb.append("none\n");
-		//		if (queryAnswerer != null) {
-		//			sb.append("QueryAnswerer: ").append(queryAnswerer.getClass().getCanonicalName());
-		//			sb.append(" (").append(this.normalize ? "normalized" : "unnormalized").append(")\n");
-		//		}
 		if (weightingScheme != null)
 			sb.append(String.format(FORMAT_STRING, "Weighting Scheme")).append(": ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
-		//		sb.append("Pretest? ").append(this.pretest ? "yes" : "no").append("\n");
-		//		sb.append("Strict? ").append(this.strict ? "yes" : "no").append("\n");
-		sb.append(String.format(FORMAT_STRING, "Alpha")).append(": ").append(apr.alpha).append("\n");
-		sb.append(String.format(FORMAT_STRING, "Epsilon")).append(": ").append(apr.epsilon).append("\n");
-		sb.append(String.format(FORMAT_STRING, "Max depth")).append(": ").append(apr.maxDepth).append("\n");
+		sb.append(String.format(FORMAT_STRING, "APR Alpha")).append(": ").append(apr.alpha).append("\n");
+		sb.append(String.format(FORMAT_STRING, "APR Epsilon")).append(": ").append(apr.epsilon).append("\n");
+		sb.append(String.format(FORMAT_STRING, "APR Depth")).append(": ").append(apr.maxDepth).append("\n");
 		return sb.toString();
 	}
 }

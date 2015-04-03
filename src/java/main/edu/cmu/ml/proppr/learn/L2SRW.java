@@ -23,8 +23,8 @@ public class L2SRW extends SRW {
 	}
 
 	/**
-	 * Loss is mu * theta_f^2
-	 * d/df Loss is then 2 * mu * theta_f
+	 * L2 loss is mu * theta_f^2
+	 * d/df L2 loss is then 2 * mu * theta_f
 	 * @param f
 	 * @param paramVec
 	 * @return
@@ -34,17 +34,9 @@ public class L2SRW extends SRW {
 		for (String f : localFeatures(params, ex.g)) {
 			double value = Dictionary.safeGet(params, f);
 			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
+			if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ret);
 			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
 			gradient.adjustOrPutValue(ex.getFeatureId(f), ret, ret);
 		}
 	}
-
-//	@Override
-//	protected GradientComponents makeGradientComponents(
-//			ParamVector<String, ?> paramVec, PosNegRWExample example) {
-//		GradientComponents g = new GradientComponents();
-//		g.p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
-//		g.d = derivRWRbyParams(example.getGraph(), example.getQueryVec(), paramVec);
-//		return g;
-//	}
 }

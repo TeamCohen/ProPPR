@@ -1,0 +1,5 @@
+seed	pos	seed1
+edge	seed1	f1
+edge	f1	other
+
+
