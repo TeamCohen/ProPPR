@@ -1,0 +1,11 @@
+seed	pos	dollhouse
+seed	pos	firetruck
+seed	pos	redwagon
+seed	pos	sportscar
+seed	pos	barbieken
+seed	pos	redbike
+seed	neg	minivan
+seed	neg	house
+seed	neg	jobIBM
+seed	neg	taxforms
+seed	neg	junkmail

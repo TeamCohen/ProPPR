@@ -1,0 +1,170 @@
+STUFF TO ADD/ISSUES
+
+   I really need weighted features here....that's a python addition
+
+  - r8 acc2: 0.82686158063-0.72 with shuffled data, duplicate hasWord edges, 5 epochs  [why is it all over the map? randomized order due to parallism?
+  - r8 acc2: 0.372316126085 with shuffled data, no duplicate hasWord edges, 5 epochs
+
+STARTING UP
+
+Prepare to run the proppr routines.  It needs to know where the ProPPR
+codebase is, and for you to invoke it easily, it should be on your
+path.
+
+To get and compile the code:
+
+% git clone https://github.com/TeamCohen/ProPPR.git
+% cd ProPPR
+% git checkout 2.0
+% ant
+
+To prepare to run the commands below:
+
+% export PROPPR=/afs/cs.cmu.edu/user/wcohen/shared-home/code/ProPPR/
+% export PATH=$PATH:$PROPPR/scripts
+
+GRAPH-BASED SEMI-SUPERVISED LEARNING: A TOY DATASET
+
+This is in the 'ssl' subdirectory.
+
+There's a tiny dataset in toyedges.graph, with edges from documents
+to words, and words to documents.  There are also some test cases in
+toytest.examples, and some seeds for this dataset in toyseeds.graph.
+One SSL algorithm is in multirankwalk.ppr.
+
+To do this example compile it: 
+
+% proppr compile multirankwalk.ppr
+...
+INFO:root:compiled multirankwalk.ppr to multirankwalk.wam
+
+Now define the set files you want to use for a program, which would be
+the graph files and the compiled program, multirankwalk.wam.
+
+% proppr set --programFiles multirankwalk.wam:toyseeds.graph:toyedges.graph
+
+Now, execute the program, with the default prover, on
+toytest.examples.  This step uses the queries, but not the labeled
+training data.
+
+% proppr answer toytest.examples
+..
+INFO:root:answers in toytest.solutions.txt
+
+The output is a ranked list of answers to each query, obtained with
+the current program:
+
+% cat toytest.solutions.txt
+# proved 1	predict(pos,X-1)  #v:[?].	784 msec
+1	0.13044017919118678	predict(pos,firetruck).
+2	0.13002050865751963	predict(pos,sportscar).
+3	0.129189793006118	predict(pos,barbieken).
+..
+24	0.003561061442635286	predict(pos,pricybarbie).
+25	0.0031454213720487536	predict(pos,redbike2).
+...
+
+In this case the answers include words ('red','pricy') and documents.
+
+Alternatively, to see a trace of the logic program (and save the
+answers in a temp file tmp.txt), we can specify a different prover,
+one which writes a trace.
+
+% proppr answer toytest.examples tmp.txt --prover tr
+...
+predict(pos,X1) => predict(pos,X1). <1>
+| seed(pos,X1) => predict(pos,X1). <2>
+| | predict(pos,dollhouse). <3>
+| | predict(pos,redwagon). <4>
+...
+| predict(pos,X3), edge(X3,X1) => predict(pos,X1). <9>
+| | seed(pos,X3), edge(X3,X1) => predict(pos,X1). <10>
+| | | edge(dollhouse,X1) => predict(pos,X1). <11>
+| | | | predict(pos,house). <12>
+| | | | predict(pos,pricy). <13>
+...
+
+To evaluate a list of solutions you need the examples, which have the labeled data in them,
+as well as the solutions:
+
+% proppr eval toytest.examples toytest.solutions.txt
+
+To see more detail you could say
+
+% proppr eval toytest.examples toytest.solutions.txt --echo --metric map --metric recall --metric mrr
+
+TIP. The command 'proppr' is a script, which invokes other common
+bcommands.  To get help on what these common commands are use
+
+% proppr help
+
+Generally if you append options to a 'proppr' command they will be
+passed in, and usually if you append --help to a proppr command, then
+this will be passed in to whatever main program proppr executes, and
+it will give you some idea what options are available.
+
+SUPERVISED LEARNING: A TOY DATASET
+
+This is in the 'textcat' subdirectory.
+
+There's another copy of the corpus in a slightly different format.
+There is a file toycorpus.graph, which defines a binary relationship
+hasWord(doc,word), and a file toylabels.cfacts which contains two
+facts: isLabel(pos) and isLabel(neg).
+
+There's also a small program for text classification which uses these
+to learn a classifier: textcat.ppr.
+
+Finally there is some training data and test data in toytrain.examples
+and toytest.examples.
+
+To run this example, go through these steps.  First compile the
+program, and specify the logic program you want to use, which also
+includes the label facts and the corpus graph.
+
+% proppr compile textcat.ppr
+% proppr set --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
+
+Next, convert the training examples toytrain.examples to labeled
+graphs, which will be stored by default in toytrain.examples.grounded.
+
+% proppr ground toytrain
+...
+INFO:root:grounded to toytrain.examples.grounded
+
+These grounded examples can be used as training.  In training ProPPR
+will randomly initialize the parameters, and write out the optimized
+values in toytrain.params.
+
+% proppr train toytrain
+...
+ INFO [Trainer] Finished training in 1623 ms
+ INFO [Trainer] Saving parameters to toytrain.params...
+
+
+Currently training throws a warning, which can be ignored, since the
+--programFiles parameter is passed in, but not needed by the trainer.
+All the information that's needed is in the grounded graph.  If you
+want a little more detail you can use the option --traceLosses
+
+% proppr train toytrain --traceLosses
+
+To see the train performance with the learned parameters, you can use
+
+% proppr answer toytrain --params toytrain.params
+% proppr eval toytrain 
+
+The micro-average is 0.81, so it's nearly fit the train data.  To see
+what performance is like with uniform weights, drop the --params
+argument:
+
+% proppr answer toytrain
+
+Before training, macro and micro averages should be 0.5, which is
+random guessing on this data (since there are two valid labels).
+
+To see test performance, you can use
+
+% proppr answer toytest --params toytrain.params
+% proppr eval toytest
+ 
