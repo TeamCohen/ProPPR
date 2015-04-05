@@ -11,7 +11,28 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.GraphlikePlugin;
 import edu.cmu.ml.proppr.util.SymbolTable;
+
+
+/* wwcmod: how can { f(W,Y) : hasWord(X,W) } do something for weighted features?
+
+	 1) use { f(W,Y)=Z : hasWord(X,W,Z) } and add some special opcodes
+	 to convert numerically-encoded arguments to feature weights.
+
+	 2) { f(W,Y)=* : hasWord(X,W) } and compile to modified codes such that
+	   a) doFeatureFindallDFS finds all outlinks WITH feature computation, so hasWord(x,W) returns a state with feature { .. = z }
+		 [will I clobber the feature stack this way? I guess I need to make sure it's real stack!]
+		 b) before report you compute some sort of final weight based on the feature weight....?
+
+	 3) extend LightweightGraphPlugin to also accept f(x,Y,Z) predicates
+	    and return a string encoding of the weight of Z as its final
+			argument; then extend freport to report a weighted feature.
+			
+			maybe the syntax could be hasWord#(X,Y,W) internally and the 
+			overall syntax could be { f#(W,Y,Z) : hasWord#(X,W,Z) }
+ */
+
 
 /**
  *  # Implementation of opcodes. The convention here is that both
@@ -117,6 +138,7 @@ public class WamInterpreter {
 	private void doFeatureFindallDFS(State state, int depth) throws LogicProgramException {
 		if (depth>=MAXDEPTH) throw new IllegalStateException("depth bound "+MAXDEPTH+" exceeded in feature computation");
 		if (!state.isCompleted()) {
+			// wwcmod: replace false with true to that you compute the features as well
 			for (Outlink o : wamOutlinks(state,false)) {
 				doFeatureFindallDFS(o.child, depth+1);
 			}
@@ -181,8 +203,8 @@ public class WamInterpreter {
 	public Feature getFeaturePeek() {
 		return featureStack.get(featureStack.size()-1);
 	}
-	public void reportFeature(Goal g) {
-		this.reportedFeatures.put(g,1.0);
+	public void reportFeature(Goal g,double wt) {
+		this.reportedFeatures.put(g,wt);
 	}
 
 	/********************* op codes ***************************/
@@ -309,12 +331,28 @@ public class WamInterpreter {
 		getFeaturePeek().append(new ConstantArgument(getConstantTable().getSymbol(cid)));
 		state.incrementProgramCounter();
 	}
-	public void freport() {
+
+	public void freport() throws LogicProgramException {
 		for (Feature f : this.featureStack) {
-			Goal g = new Goal(f.functor,f.args);
-			reportFeature(g);
+			if (f.functor.endsWith(GraphlikePlugin.WEIGHTED_GRAPH_SUFFIX)) {
+				// convert foo#(X,Y,W) to foo(X,Y) with weight of W 
+				String fun = f.functor.substring(0,f.functor.length()-GraphlikePlugin.WEIGHTED_GRAPH_SUFFIX.length());
+				Argument[] args = new Argument[2];
+				args[0] = f.args[0];
+				args[1] = f.args[1];
+				try {
+					double weight = Double.parseDouble(f.args[2].getName());
+					Goal g = new Goal(fun,args);
+					reportFeature(g,weight);
+				} catch (NumberFormatException e) {
+					throw new LogicProgramException("illegal weight of "+f.args[2]+" for "+f.functor+", should be a double");
+				}
+			} else {
+				Goal g = new Goal(f.functor,f.args);
+				reportFeature(g,1.0);
+			}
 		}
-		if (this.featureStack.isEmpty()) reportFeature(new Goal("_no_features_"));
+		if (this.featureStack.isEmpty()) reportFeature(new Goal("_no_features_"),1.0);
 		this.state.incrementProgramCounter();
 	}
 	public void ffindall(int address) throws LogicProgramException {
@@ -402,16 +440,16 @@ public class WamInterpreter {
 		this.restoreState(from);
 		// simulate executing the remainder of the program, till completion, but
 		// when there is a 'callp', just emit the current goal and return
-		for(int c=0; !this.state.completed; c++) {
+		while(!this.state.completed) {
 			this.executeWithoutBranching(false);
 			if (this.state.getJumpTo() != null) {
 				// call information
-				int call = new StringBuilder(String.valueOf(c)).append(this.state.getJumpTo()).hashCode();
+				hash = hash << 1;
+				hash = hash ^ this.state.getJumpTo().hashCode();
 				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
 				for (int i=0; i<arity; i++) {
-					call = call ^ this.getArg(arity, i+1).hashCode();
+					hash = hash ^ this.getArg(arity, i+1).hashCode();
 				}
-				hash = hash ^ call;
 				this.returnp();
 			}
 		}
