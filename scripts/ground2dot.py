@@ -20,14 +20,28 @@ if __name__ == '__main__':
             (query,id,state) = k.split("\t")
             if len(Q)>0 and Q != query:
                 break
-            state = state.replace("state<","")
-            state = state.replace(">","")
-            (heap,reg,calls,rest) = state.split("] ")
-            calls = calls.replace("c[","").replace("sf:","\\lsf:")
-            if "*" in rest or id=="1":
-                print "%s [fillcolor=gray,style=filled,label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (id,id,heap,reg,rest,calls)
+            if state.startswith("state"): # 2.0 notation
+                state = state.replace("state<","")
+                state = state.replace(">","")
+                (heap,reg,calls,rest) = state.split("] ")
+                calls = calls.replace("c[","").replace("sf:","\\lsf:")
+                if "*" in rest or id=="1":
+                    print "%s [fillcolor=gray,style=filled,label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (id,id,heap,reg,rest,calls)
+                else:
+                    print "%s [label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (id,id,heap,reg,rest,calls)
+            elif state.startswith("lpState"): # 1.0 notation
+                state = state.replace("lpState: ","")
+                state = state.replace("c[","")
+                state = state.replace("v[-","X")
+                state = state.replace("]","")
+                (head,tail) = state.split(" ... ")
+                tail = tail.replace(" ","\\l")
+                if tail is "" or id is "1":
+                    print "%s [fillcolor=gray,style=filled,label=\"%s| %s\\l\"];" % (id,id,head)
+                else:
+                    print "%s [label=\"%s| %s ...\\l%s\\l\"];" % (id,id,head,tail)
             else:
-                print "%s [label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (id,id,heap,reg,rest,calls)
+                write(2, "Didn't recognize key file syntax :(\n")
             Q = query
                 
     N=1;
@@ -43,7 +57,7 @@ if __name__ == '__main__':
             for e in graph.split("\t"):
                 (ns,fs) = e.split(":")
                 (src,dst) = ns.split("->")
-                fs = "\\n".join([features[int(f[0:f.find("@")])] for f in fs.split(",")])
+                fs = "\\n".join([features[int(f[0:(f.find("@"),len(f))[f.find("@")<0]])+1] for f in fs.split(",")])
                 if fs == "id(restart)": continue
                 print "%s -> %s [label=\" %s\"];" % (src,dst,fs)
             N+=1
