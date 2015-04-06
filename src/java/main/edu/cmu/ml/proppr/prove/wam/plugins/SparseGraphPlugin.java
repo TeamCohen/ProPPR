@@ -119,6 +119,11 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 	}
 
 	@Override
+	protected void indexAdd(String label, String src, String dst,double weight) {
+		throw new UnsupportedOperationException("Can't add to a sparse graph!");
+	}
+
+	@Override
 	protected Map<Goal, Double> getFD() {
 		return this.featureDict;
 	}

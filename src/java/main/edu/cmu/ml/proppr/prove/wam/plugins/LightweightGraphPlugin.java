@@ -65,6 +65,10 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 		Dictionary.safePut(graph, label, src, dst, DEFAULT_DSTWEIGHT);
 	}
 
+	protected void indexAdd(String label, String src, String dst,double weight) {
+		Dictionary.safePut(graph, label, src, dst, weight);
+	}
+
 	@Override
 	protected Map<Goal, Double> getFD() {
 		return this.fd;
@@ -96,7 +100,11 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 					log.warn("Number of graph edges exceeds "+duplicates+"; duplicate detection may encounter false positives. We should add a command line option to fix this.");
 				}
 			}
-			p.addEdge(parts[0].trim(),parts[1].trim(),parts[2].trim());
+			if (parts.length==3) {
+				p.addEdge(parts[0].trim(),parts[1].trim(),parts[2].trim());
+			} else if (parts.length==4) {
+				p.addEdge(parts[0].trim(),parts[1].trim(),parts[2].trim(),Double.parseDouble(parts[3].trim()));
+			}
 		}
 		return p;
 	}
