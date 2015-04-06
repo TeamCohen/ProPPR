@@ -211,22 +211,20 @@ public class Configuration {
 	 */
 	protected void loadProgramFiles(CommandLine line, int[] flags, Options options) throws IOException {
 		this.program = null;
-		this.plugins = new WamPlugin[programFiles.length-1];
+		int nplugins = programFiles.length;
+		for (String s : programFiles) if (s.endsWith(".wam")) nplugins--;
+		this.plugins = new WamPlugin[nplugins];
 		int i=0;
 		int wam,graph,facts;
 		wam = graph = facts = 0;
 		int iFacts = -1;
 		for (String s : programFiles) {
-			if (i>=this.plugins.length) {
-				boolean hasWam=false;
-				for (String w : programFiles) if (w.endsWith(".wam")) hasWam=true;
-				if (!hasWam) usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Must contain a WAM file.");
-				else  usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Parser got very confused about how many plugins you specified. Send Katie a bug report!");
-			}
 			if (s.endsWith(".wam")) {
 				if (this.program != null) usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Multiple WAM programs not supported");
 				this.program = WamBaseProgram.load(this.getExistingFile(s));
 				wam++;
+			} else if (i>=this.plugins.length) {
+				usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Parser got very confused about how many plugins you specified. Send Katie a bug report!");
 			} else if (s.endsWith(GraphlikePlugin.FILE_EXTENSION)) {
 				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s), this.duplicates);
 				graph++;
