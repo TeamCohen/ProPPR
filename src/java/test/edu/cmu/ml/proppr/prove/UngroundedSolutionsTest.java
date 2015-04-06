@@ -19,8 +19,8 @@ import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
-import edu.cmu.ml.proppr.prove.wam.plugins.GraphlikePlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 
@@ -34,7 +34,7 @@ public class UngroundedSolutionsTest {
 	public void test() throws IOException, LogicProgramException {
 		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
 		APROptions apr = new APROptions("depth=20");
-		GraphlikePlugin facts = LightweightGraphPlugin.load(apr,new File(FACTS));
+		WamPlugin facts = LightweightGraphPlugin.load(apr,new File(FACTS));
 		Query q = new Query(new Goal("grandparent",new ConstantArgument("X"),new ConstantArgument("Y")));
 //		q.variabilize();
 		ProofGraph pg = new ProofGraph(q,apr,program,facts);

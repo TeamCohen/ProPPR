@@ -22,7 +22,7 @@ import gnu.trove.procedure.TObjectDoubleProcedure;
 /**
  * An 'extensional database' - restricted to be a labeled directed
     graph, or equivalently, a set of f(+X,-Y) unit predicates.
-    
+
 	 As an alternative usage, the predicate f#(+X,-Y,-W) will return
 	 the weight assigned to the edge, encoded as an atom which
 	 can be converted back to a double with Doubel.parseDouble()
@@ -48,15 +48,15 @@ public abstract class GraphlikePlugin extends WamPlugin {
 	protected abstract void indexAdd(String label, String src, String dst);
 	protected abstract void indexAdd(String label, String src, String dst,double weight);
 	protected abstract Map<Goal,Double> getFD();
-	
+
 	public GraphlikePlugin(APROptions apr) {
 		super(apr);
 	}
-	
+
 	public void addEdge(String functor, String src, String dst) {
 		indexAdd(functor+GRAPH_ARITY,src,dst);
 	}
-	
+
 	public void addEdge(String functor, String src, String dst,double weight) {
 		if (weight<=0) {
 			log.error("Negative weights discarded for graph edge"+functor+"("+src+","+dst+")");
@@ -67,27 +67,8 @@ public abstract class GraphlikePlugin extends WamPlugin {
 
 	@Override
 	public boolean claim(String jumpto) {
-		if (jumpto.endsWith(GRAPH_ARITY)) {
-				return indexContains(jumpto);
-		} else if (jumpto.endsWith(WEIGHTED_GRAPH_SUFFIX_PLUS_ARITY)) {
-			return indexContains(asIndexKey(jumpto));
-		} else {
-			return false;
-		}
+		return indexContains(jumpto);
 	}
-	
-	/** Convert from a string like "foo#/3" to "foo/2" **/
-	public static String asIndexKey(String jumpto) {
-		int n = jumpto.length();
-		String stem = jumpto.substring(0,n-WEIGHTED_GRAPH_SUFFIX_PLUS_ARITY.length());
-		return stem + GRAPH_ARITY;
-	}
-
-
-//	@Override
-//	public void restartFD(State state, WamInterpreter wamInterp) {
-//		throw new RuntimeException("Not yet implemented");
-//	}
 
 	@Override
 	public List<Outlink> outlinks(State state, WamInterpreter wamInterp,
@@ -104,7 +85,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 			srcConst = wamInterp.getConstantArg(3,1);
 			dstConst = wamInterp.getConstantArg(3,2);
 			weightConst = wamInterp.getConstantArg(3,3);
-			indexKey = asIndexKey(state.getJumpTo());
+			indexKey = unweightedJumpto(state.getJumpTo());
 		}
 		if (returnWeights && weightConst!=null) {
 			throw new LogicProgramException("predicate "+state.getJumpTo()+" called with bound third argument!");
@@ -122,11 +103,11 @@ public abstract class GraphlikePlugin extends WamPlugin {
 		}
 		return result;
 	}
-	
+
 	private void outlinksPerSource(final State state, final WamInterpreter wamInterp, 
-																 final boolean computeFeatures, final boolean returnWeights, final String indexKey,
-																 final String srcConst, final String dstConst,final String weightConst,
-																 final List<Outlink> result) throws LogicProgramException 
+			final boolean computeFeatures, final boolean returnWeights, final String indexKey,
+			final String srcConst, final String dstConst,final String weightConst,
+			final List<Outlink> result) throws LogicProgramException 
 	{
 		TObjectDoubleMap<String> values = this.indexGet(indexKey, srcConst);
 		if (!values.isEmpty()) {
@@ -173,7 +154,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 			}
 		}
 	}
-	
+
 	private Map<Goal,Double> scaleFD(Map<Goal,Double> fd, double wt) {
 		if (wt == 1.0) return fd;
 		Map<Goal,Double> ret = new HashMap<Goal,Double>();

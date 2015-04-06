@@ -24,6 +24,15 @@ public abstract class WamPlugin {
 		return new Goal("db",new ConstantArgument(plugin.getClass().getSimpleName()),new ConstantArgument(identifier));
 	}
 
+	/** Convert from a string like "foo#/3" to "foo/2" **/
+	public static String unweightedJumpto(String jumpto) {
+		int n = jumpto.length();
+		String[] parts = jumpto.split(WamInterpreter.WEIGHTED_JUMPTO_DELIMITER,2);
+		// String stem = jumpto.substring(0,n-WEIGHTED_GRAPH_SUFFIX_PLUS_ARITY.length());
+		// return stem + GRAPH_ARITY;
+		return parts[0] + WamInterpreter.JUMPTO_DELIMITER + (Integer.parseInt(parts[1])-1);
+	}
+
 	protected APROptions apr;
 	public WamPlugin(APROptions apr) {
 		this.apr = apr;
@@ -37,6 +46,12 @@ public abstract class WamPlugin {
 	 * @return
 	 */
 	public abstract boolean claim(String jumpto);
+	
+	public boolean claimRaw(String raw) {
+		if (raw.indexOf(WamInterpreter.WEIGHTED_JUMPTO_DELIMITER) < 0)
+			return claim(raw);
+		return claim(unweightedJumpto(raw));
+	}
 //	/** The feature dictionary for the restart state.
 //	 * 
 //	 * @param state

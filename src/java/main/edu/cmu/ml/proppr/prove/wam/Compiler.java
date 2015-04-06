@@ -12,8 +12,6 @@ import edu.cmu.ml.proppr.util.Dictionary;
  *
  */
 public class Compiler {
-	public static final String JUMPTO_DELIMITER = "/";
-
 	public void compileRule(Rule rule, WamProgram wamprog) {
 		// allocate variables
 		int nvars = rule.nvars;
@@ -104,7 +102,7 @@ public class Compiler {
 				previousVars.add(a);
 			}
 		}
-		wamprog.append(new Instruction(OP.callp,new StringBuilder(g.getFunctor()).append(JUMPTO_DELIMITER).append(g.getArity()).toString()));
+		wamprog.append(new Instruction(OP.callp,new StringBuilder(g.getFunctor()).append(WamInterpreter.JUMPTO_DELIMITER).append(g.getArity()).toString()));
 	}
 
 	private void compileFeatures(Rule rule, WamProgram wamprog,

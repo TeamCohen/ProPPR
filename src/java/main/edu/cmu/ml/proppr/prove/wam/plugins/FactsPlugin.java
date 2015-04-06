@@ -72,11 +72,6 @@ public class FactsPlugin extends WamPlugin {
 		return this.indexJ.containsKey(jumpto);
 	}
 
-//	@Override
-//	public void restartFD(State state, WamInterpreter wamInterp) {
-//		throw new RuntimeException("Not yet implemented");
-//	}
-
 	@Override
 	public List<Outlink> outlinks(State state, WamInterpreter wamInterp,
 			boolean computeFeatures) throws LogicProgramException {
@@ -168,7 +163,7 @@ public class FactsPlugin extends WamPlugin {
 	public void load(File f, int duplicates) {
 		ParsedFile parsed = new ParsedFile(f);
 		BloomFilter<String> lines = null;
-		if (duplicates>0) lines = new BloomFilter(1e-5,duplicates);
+		if (duplicates>0) lines = new BloomFilter<String>(1e-5,duplicates);
 		boolean exceeds=false;
 		for (String line : parsed) {
 			String[] parts =line.split("\t",2);

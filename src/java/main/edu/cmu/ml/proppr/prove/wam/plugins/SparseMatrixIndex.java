@@ -18,7 +18,7 @@ import gnu.trove.procedure.TObjectIntProcedure;
 /**
  * Reads in 5 files to produce a CRS-type sparse matrix:
  *  - [functor]_[arg1type]_[arg2type].rce: [int]\n[int]\n[int] for the matrix dimensions: rows, columns, entries
- *  - [functor]_[arg1type]_[arg2type].colIndes: [int]-per-line, in row order. The kth line stores the column index (j) of the kth value.
+ *  - [functor]_[arg1type]_[arg2type].colIndex: [int]-per-line, in row order. The kth line stores the column index (j) of the kth value. Optional kth value included after a tab.
  *  - [functor]_[arg1type]_[arg2type].rowOffset: [int]-per-line. The ith line stores the line number (k) in colIndices where row i begins.
  *  - [arg1type].i: Sorted in lex order. The ith line stores the name of row i.
  *  - [arg2type].i: The jth line stores the name of column j.

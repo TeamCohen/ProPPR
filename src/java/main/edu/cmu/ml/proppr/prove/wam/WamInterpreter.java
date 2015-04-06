@@ -52,6 +52,8 @@ public class WamInterpreter {
 	private Map<Goal,Double> reportedFeatures;
 	private WamProgram program;
 	private WamPlugin[] plugins;
+	public static final String WEIGHTED_JUMPTO_DELIMITER="#/";
+	public static final String JUMPTO_DELIMITER = "/";
 	public WamInterpreter(WamProgram program, WamPlugin[] plugins) {
 		this(new SymbolTable<String>(), program, plugins);
 	}
@@ -154,7 +156,7 @@ public class WamInterpreter {
 		if (s.isCompleted()) return Collections.emptyList();
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (WamPlugin plugin : this.plugins) {
-			if (plugin.claim(s.getJumpTo())) {
+			if (plugin.claimRaw(s.getJumpTo())) {
 				if (log.isDebugEnabled()) log.debug("Executing "+s.getJumpTo()+" from "+plugin.about());
 				this.restoreState(s);
 				if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
@@ -446,7 +448,7 @@ public class WamInterpreter {
 				// call information
 				hash = hash << 1;
 				hash = hash ^ this.state.getJumpTo().hashCode();
-				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
+				int arity = Integer.parseInt(this.state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER)[1]);
 				for (int i=0; i<arity; i++) {
 					hash = hash ^ this.getArg(arity, i+1).hashCode();
 				}
@@ -481,7 +483,7 @@ public class WamInterpreter {
 			if (this.state.getJumpTo() != null) {
 				// call information
 				sb.append(this.state.getJumpTo()).append(" ");
-				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
+				int arity = Integer.parseInt(this.state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER)[1]);
 				for (int i=0; i<arity; i++) {
 					if (i>0) sb.append(" ");
 					sb.append(this.getArg(arity, i+1));
@@ -517,7 +519,7 @@ public class WamInterpreter {
 	 * @throws LogicProgramException */
 	private Goal nextPendingGoal() throws LogicProgramException {
 		State s = this.state;
-		String[] parts = state.getJumpTo().split(Compiler.JUMPTO_DELIMITER);
+		String[] parts = state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER);
 		int arity = Integer.parseInt(parts[1]);
 		Argument[] args = new Argument[arity];
 		for (int i=1; i<arity+1; i++) {
