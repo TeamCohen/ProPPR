@@ -232,8 +232,9 @@ public class Trainer {
 		}
 		@Override
 		public Integer call() throws Exception {
-			log.debug("Training on example "+this.id);
+		    if (log.isDebugEnabled()) log.debug("Training start: example "+this.id);
 			in.learner.trainOnExample(in.paramVec, in.x);
+			if (log.isDebugEnabled()) log.debug("Training done: example "+this.id);
 			return in.x.length();
 		}
 	}
@@ -254,10 +255,12 @@ public class Trainer {
 		@Override
 		public void run() {
 			try {
-				log.debug("Cleaning up example "+this.id);
+			    if (log.isDebugEnabled()) log.debug("Cleaning start: example "+this.id);
+				int n = this.in.get();
 				synchronized(numExamplesThisEpoch) {
-					numExamplesThisEpoch += this.in.get();
+				    numExamplesThisEpoch += n;
 				}
+			    if (log.isDebugEnabled()) log.debug("Cleaning done: example "+this.id);				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
