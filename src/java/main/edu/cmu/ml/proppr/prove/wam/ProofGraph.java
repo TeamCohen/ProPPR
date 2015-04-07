@@ -5,6 +5,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
@@ -23,6 +27,7 @@ import gnu.trove.strategy.HashingStrategy;
  *
  */
 public class ProofGraph {
+	private static final Logger log = Logger.getLogger(ProofGraph.class);
 	public static final boolean DEFAULT_RESTART = false;
 	public static final boolean DEFAULT_TRUELOOP = true;
 	public static final Goal TRUELOOP = new Goal("id",new ConstantArgument("trueLoop"));
@@ -122,6 +127,14 @@ public class ProofGraph {
 			Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
 			restartFD.put(this.restartFeature,1.0);
 			outlinks.add(new Outlink(restartFD, this.startState));
+			if (log.isDebugEnabled()) {
+				// check for duplicate hashes
+				Set<Integer> canons = new TreeSet<Integer>();
+				for (Outlink o : outlinks) {
+					if (canons.contains(o.child.canon)) log.warn("Duplicate canonical hash found in outlinks of state "+state);
+					canons.add(o.child.canon);
+				}
+			}
 			this.graph.setOutlinks(state,outlinks);
 			return outlinks;
 		}

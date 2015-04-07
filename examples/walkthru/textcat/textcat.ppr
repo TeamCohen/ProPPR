@@ -14,5 +14,7 @@ predict(X,Y) :- isLabel(Y), ab_classify(X,Y).
 # weight of this rule will compete with the weight of the implicit
 # 'reset' rule.
 
-ab_classify(X,Y) :- { f(W,Y): hasWord(X,W) }.
+# old version, which doesn't use word weights
+# ab_classify(X,Y) :- { f(W,Y): hasWord(X,W) }.
 
+ab_classify(X,Y) :- { f#(Word,Y,Weight): hasWord#(X,Word,Weight) }.

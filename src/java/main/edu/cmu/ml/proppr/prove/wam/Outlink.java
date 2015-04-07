@@ -18,6 +18,7 @@ public class Outlink {
 	public String toString() {
 		StringBuilder sb = new StringBuilder(child.toString());
 		Dictionary.buildString(fd, sb, "\n  ");
+		sb.append("\n");
 		return sb.toString();
 	}
 }

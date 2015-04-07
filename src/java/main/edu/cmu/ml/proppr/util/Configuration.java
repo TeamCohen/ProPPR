@@ -200,25 +200,31 @@ public class Configuration {
 		}
 		if (anyOn(flags,USE_DUPCHECK|USE_WAM) && line.hasOption(DUPCHECK_CONST_OPTION)) this.duplicates = (int) Double.parseDouble(line.getOptionValue(DUPCHECK_CONST_OPTION));
 		
-		if (this.programFiles != null) this.loadProgramFiles();
+		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
 	}
 
 	/**
 	 * Clears program and plugin list, then loads them from --programFiles option.
+	 * @param flags 
+	 * @param options 
 	 * @throws IOException
 	 */
-	protected void loadProgramFiles() throws IOException {
+	protected void loadProgramFiles(CommandLine line, int[] flags, Options options) throws IOException {
 		this.program = null;
-		this.plugins = new WamPlugin[programFiles.length-1];
+		int nplugins = programFiles.length;
+		for (String s : programFiles) if (s.endsWith(".wam")) nplugins--;
+		this.plugins = new WamPlugin[nplugins];
 		int i=0;
 		int wam,graph,facts;
 		wam = graph = facts = 0;
 		int iFacts = -1;
 		for (String s : programFiles) {
 			if (s.endsWith(".wam")) {
-				if (this.program != null) throw new IllegalArgumentException("Multiple WAM programs not supported");
+				if (this.program != null) usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Multiple WAM programs not supported");
 				this.program = WamBaseProgram.load(this.getExistingFile(s));
 				wam++;
+			} else if (i>=this.plugins.length) {
+				usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Parser got very confused about how many plugins you specified. Send Katie a bug report!");
 			} else if (s.endsWith(GraphlikePlugin.FILE_EXTENSION)) {
 				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s), this.duplicates);
 				graph++;
@@ -240,7 +246,7 @@ public class Configuration {
 			} else if (s.endsWith(SparseGraphPlugin.FILE_EXTENSION)) {
 				this.plugins[i++] = SparseGraphPlugin.load(this.apr, this.getExistingFile(s));
 			} else {
-				throw new IllegalArgumentException("Plugin type for "+s+" unsupported/unknown");
+				usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Plugin type for "+s+" unsupported/unknown");
 			}
 		}
 		if (facts>1) { // trim array
@@ -537,10 +543,11 @@ public class Configuration {
 		StringBuilder syntax = new StringBuilder();
 		constructUsageSyntax(syntax, flags);
 		String printMsg = "";
-		if (msg != null) printMsg = ("\nBAD USAGE:" + msg +"\n\n");
+		if (msg != null) printMsg = ("\nBAD USAGE:\n" + msg +"\n");
 		//        formatter.printHelp(syntax.toString(), options);
 		PrintWriter pw = new PrintWriter(System.err);
 		formatter.printHelp(pw, width, syntax.toString(), "", options, 0, 2, printMsg);
+		pw.write("\n");
 		pw.flush();
 		pw.close();
 		System.exit(0);
