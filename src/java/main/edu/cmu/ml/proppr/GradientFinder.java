@@ -8,7 +8,7 @@ import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
-import edu.cmu.ml.proppr.learn.tools.GroundedExampleStreamer;
+import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
@@ -53,7 +53,8 @@ public class GradientFinder {
 			ParamVector params = null;
 			if (c.epochs > 0) {
 				params = c.trainer.train(
-						new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
+						new ParsedFile(c.groundedFile), 
+						new ArrayLearningGraph.ArrayLearningGraphBuilder(), 
 						c.epochs, 
 						c.traceLosses);
 			} else if (c.paramsFile != null) {
@@ -63,7 +64,8 @@ public class GradientFinder {
 			}
 
 			ParamVector batchGradient = c.trainer.findGradient(
-					new GroundedExampleStreamer(new ParsedFile(c.groundedFile), new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
+					new ParsedFile(c.groundedFile), 
+					new ArrayLearningGraph.ArrayLearningGraphBuilder(), 
 					params);
 
 			ParamsFile.save(batchGradient, c.gradientFile, c);

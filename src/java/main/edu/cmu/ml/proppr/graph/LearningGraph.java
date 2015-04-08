@@ -23,4 +23,5 @@ public abstract class LearningGraph {
 //	/** No further edits will be made; optimize the graph. */
 //	public abstract void freeze();
 //	public abstract void addOutlink(int i, RWOutlink rwOutlink);
+	public abstract void serialize(StringBuilder serialized);
 }

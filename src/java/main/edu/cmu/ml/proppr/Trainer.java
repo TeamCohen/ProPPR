@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -14,8 +15,9 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.GroundedExampleStreamer;
+import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Configuration;
@@ -24,6 +26,7 @@ import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.FileBackedIterable;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
+import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
@@ -66,16 +69,17 @@ public class Trainer {
 		this.learner.trainOnExample(paramVec, x);
 	}
 
-	public ParamVector train(Iterable<PosNegRWExample> examples, int numEpochs, boolean traceLosses) {
+	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, int numEpochs, boolean traceLosses) {
 		return train(
 				examples,
+				builder,
 				createParamVector(),
 				numEpochs,
 				traceLosses
 				);
 	}
 
-	public ParamVector train(Iterable<PosNegRWExample> examples, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
@@ -95,7 +99,7 @@ public class Trainer {
 			// run examples through Multithreading
 			m.executeJob(
 					this.nthreads, 
-					new FQTrainingExampleStreamer(examples, paramVec), 
+					new FQTrainingExampleStreamer(examples, builder, paramVec), 
 					new Transformer<FQTrainingExample,Integer>() {
 						@Override
 						public Callable<Integer> transformer(
@@ -139,7 +143,7 @@ public class Trainer {
 		return paramVec;
 	}
 
-	public ParamVector findGradient(Iterable<PosNegRWExample> examples, ParamVector paramVec) {
+	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
 
 		log.info("Computing gradient on cooked examples...");
 		final ParamVector sumGradient = new SimpleParamVector<String>();
@@ -161,7 +165,7 @@ public class Trainer {
 		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
 		m.executeJob(
 				this.nthreads, 
-				new FQTrainingExampleStreamer(examples, paramVec), 
+				new FQTrainingExampleStreamer(examples, builder, paramVec), 
 				new Transformer<FQTrainingExample,Integer>() {
 					@Override
 					public Callable<Integer> transformer(
@@ -169,7 +173,8 @@ public class Trainer {
 						return new Callable<Integer>() {
 							@Override
 							public Integer call() throws Exception {
-								in.learner.accumulateGradient(in.paramVec, in.x, sumGradient);
+								PosNegRWExample x = GroundedExampleParser.parse(in.g, in.builder);
+								in.learner.accumulateGradient(in.paramVec, x, sumGradient);
 								
 								return 1; 
 								// ^^^^ this is the equivalent of k++ from before;
@@ -199,6 +204,12 @@ public class Trainer {
 
 		return sumGradient;
 	}
+	
+	public ParamVector findGradient(ArrayList<PosNegRWExample> examples,
+			SimpleParamVector<String> simpleParamVector) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	/////////////////////// Multithreading scaffold ///////////////////////
 
@@ -208,11 +219,13 @@ public class Trainer {
 	 *
 	 */
 	private class FQTrainingExample {
-		PosNegRWExample x;
+		String g;
 		ParamVector paramVec;
 		SRW learner;
-		public FQTrainingExample(PosNegRWExample x, ParamVector paramVec, SRW learner) {
-			this.x = x;
+		LearningGraphBuilder builder;
+		public FQTrainingExample(String g, LearningGraphBuilder builder, ParamVector paramVec, SRW learner) {
+			this.g = g;
+			this.builder = builder;
 			this.paramVec = paramVec;
 			this.learner = learner;
 		}
@@ -232,9 +245,11 @@ public class Trainer {
 		}
 		@Override
 		public Integer call() throws Exception {
-			log.debug("Training on example "+this.id);
-			in.learner.trainOnExample(in.paramVec, in.x);
-			return in.x.length();
+			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
+			PosNegRWExample ex = GroundedExampleParser.parse(in.g, in.builder);
+			in.learner.trainOnExample(in.paramVec, ex);
+			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
+			return in.g.length();
 		}
 	}
 
@@ -254,10 +269,12 @@ public class Trainer {
 		@Override
 		public void run() {
 			try {
-				log.debug("Cleaning up example "+this.id);
+				if (log.isDebugEnabled()) log.debug("Cleaning start "+this.id);
+				int n = this.in.get();
 				synchronized(numExamplesThisEpoch) {
-					numExamplesThisEpoch += this.in.get();
+					numExamplesThisEpoch += n;
 				}
+				if (log.isDebugEnabled()) log.debug("Cleaning done "+this.id);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
@@ -271,10 +288,12 @@ public class Trainer {
 	 *
 	 */
 	private class FQTrainingExampleStreamer implements Iterable<FQTrainingExample>,Iterator<FQTrainingExample> {
-		Iterator<PosNegRWExample> examples;
+		Iterator<String> examples;
 		ParamVector paramVec;
-		public FQTrainingExampleStreamer(Iterable<PosNegRWExample> examples, ParamVector paramVec) {
+		LearningGraphBuilder builder;
+		public FQTrainingExampleStreamer(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
 			this.examples = examples.iterator();
+			this.builder = builder;
 			this.paramVec = paramVec;
 		}
 		@Override
@@ -289,8 +308,8 @@ public class Trainer {
 
 		@Override
 		public FQTrainingExample next() {
-			PosNegRWExample example = examples.next();
-			return new FQTrainingExample(example, paramVec, learner);
+			String example = examples.next();
+			return new FQTrainingExample(example, builder, paramVec, learner);
 		}
 
 		@Override
@@ -322,7 +341,8 @@ public class Trainer {
 			log.info("Training model parameters on "+groundedFile+"...");
 			long start = System.currentTimeMillis();
 			ParamVector params = c.trainer.train(
-					new GroundedExampleStreamer(groundedFile, new ArrayLearningGraph.ArrayLearningGraphBuilder()), 
+					new ParsedFile(groundedFile), 
+					new ArrayLearningGraph.ArrayLearningGraphBuilder(), 
 					c.epochs, 
 					c.traceLosses);
 			log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");
@@ -336,6 +356,8 @@ public class Trainer {
 			System.exit(-1);
 		}
 	}
+
+
 
 
 }

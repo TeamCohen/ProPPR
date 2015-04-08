@@ -98,6 +98,7 @@ public class Multithreading<In,Out> {
 		ArrayDeque<Future<?>> transformerQueue = new ArrayDeque<Future<?>>();
 		
 		int id=0;
+		if (log.isDebugEnabled()) log.debug("Adding start "+(id+1));
 		for (In item : streamer) {
 			id++;
 
@@ -117,8 +118,8 @@ public class Multithreading<In,Out> {
 				if (log.isDebugEnabled()) log.debug("Throttling complete "+wait);
 			}
 			
-			if (log.isDebugEnabled()) log.debug("Adding "+id);
 			Future<Out> transformerFuture = transformerPool.submit(transformer.transformer(item, id));
+			if (log.isDebugEnabled()) log.debug("Adding done "+(id));
 			if (maintainOrder) {
 				cleanupPool.submit(cleanup.cleanup(transformerFuture, id));
 			} else {
@@ -126,6 +127,7 @@ public class Multithreading<In,Out> {
 				cleanupPool.submit(cleanup.cleanup(transformerFuture, cleanupPool, id));
 			}
 			transformerQueue.add(transformerFuture);
+			if (log.isDebugEnabled()) log.debug("Adding start "+(id+1));
 		}
 		
 		// first we wait for all transformers to finish

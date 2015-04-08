@@ -14,37 +14,27 @@ import edu.cmu.ml.proppr.util.ParsedFile;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
-public class GroundedExampleStreamer implements Iterable<PosNegRWExample>, Iterator<PosNegRWExample>, FileBackedIterable {
-	private static final Logger log = Logger.getLogger(GroundedExampleStreamer.class);
+public class GroundedExampleParser implements Iterable<PosNegRWExample>, Iterator<PosNegRWExample>, FileBackedIterable {
+	private static final Logger log = Logger.getLogger(GroundedExampleParser.class);
 	public static final String MAJOR_DELIM="\t";
 	public static final String MINOR_DELIM=",";
 	private ParsedFile file;
 	private LearningGraphBuilder builder;
- 	public GroundedExampleStreamer(String cookedExamplesFile, LearningGraphBuilder builder) {
+ 	public GroundedExampleParser(String cookedExamplesFile, LearningGraphBuilder builder) {
  		this(new ParsedFile(cookedExamplesFile), builder);
  	}
-	public GroundedExampleStreamer(ParsedFile cookedExamplesFile, LearningGraphBuilder builder) {
+	public GroundedExampleParser(ParsedFile cookedExamplesFile, LearningGraphBuilder builder) {
 		log.info("Importing cooked examples from "+cookedExamplesFile.getFileName());
 		this.file = cookedExamplesFile;
 		this.builder = builder;
 	}
 
-	@Override
-	public boolean hasNext() {
-		return this.file.hasNext();
-	}
-	
-	private int[] stringToInt(String[] raw) {
+	private static int[] stringToInt(String[] raw) {
 		int[] ret = new int[raw.length];
 		for (int i=0; i<raw.length; i++) { ret[i] = Integer.parseInt(raw[i]); }
 		return ret;
 	}
-
-	@Override
-	public PosNegRWExample next() {
-		String line = this.file.next();
-		log.debug("Importing example from line "+file.getLineNumber());
-
+	public static PosNegRWExample parse(String line, LearningGraphBuilder builder) throws GraphFormatException {
 		String[] parts = line.trim().split(MAJOR_DELIM,5);
 
 		TIntDoubleMap queryVec = new TIntDoubleHashMap();
@@ -55,19 +45,34 @@ public class GroundedExampleStreamer implements Iterable<PosNegRWExample>, Itera
 		else posList = new int[0];
 		if (parts[3].length()>0) negList = stringToInt(parts[3].split(MINOR_DELIM));
 		else negList = new int[0];
-		if (posList.length + negList.length == 0) {
-			log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
-			if (this.hasNext()) return next();
-			else return null;
-		}
+
+		LearningGraph g = builder.deserialize(parts[4]);
+		return new PosNegRWExample(parts[0],g,queryVec,posList,negList);
+	}
+
+	@Override
+	public boolean hasNext() {
+		return this.file.hasNext();
+	}
+	
+
+	@Override
+	public PosNegRWExample next() {
+		String line = this.file.next();
+		if (log.isDebugEnabled()) log.debug("Importing example from line "+file.getLineNumber());
 		try {
-			LearningGraph g = builder.deserialize(parts[4]);
-			return new PosNegRWExample(parts[0],g,queryVec,posList,negList);
+			PosNegRWExample ret = parse(line, builder);
+			if (ret == null) {
+				log.warn("no labeled solutions for example on line "+file.getAbsoluteLineNumber()+"; skipping");
+				if (this.hasNext()) return next();
+				else return null;
+			}
 		} catch (GraphFormatException e) {
 			file.parseError("["+e.getMessage()+"]");
 			if (this.hasNext()) return next();
 			else return null;
 		}
+		return null;
 	}
 
 	@Override
@@ -86,5 +91,4 @@ public class GroundedExampleStreamer implements Iterable<PosNegRWExample>, Itera
 		if (this.hasNext()) return;
 		this.file.reset();
 	}
-
 }

@@ -62,6 +62,26 @@ public class ArrayLearningGraph extends LearningGraph {
 		this.index = i;
 	}
 	
+	public void serialize(StringBuilder serialized) {
+		serialized.append(nodeSize()) // nodes
+		.append("\t").append(edgeSize()) //edges
+		.append("\t");
+		for (int i = 0; i<getFeatureSet().size(); i++) {
+			if (i>0) serialized.append(":");
+			serialized.append(featureLibrary.getSymbol(i+1));
+		}
+		for (int u=0; u<node_hi; u++) {
+			for (int ec=node_near_lo[u]; ec<node_near_hi[u]; ec++) {
+				int v = edge_dest[ec];
+				serialized.append("\t").append(u).append("->").append(v).append(":");
+				for (int lc = edge_labels_lo[ec]; lc < edge_labels_hi[ec]; lc++) {
+					if (lc > edge_labels_lo[ec]) serialized.append(",");
+					serialized.append(label_feature_id[lc]).append("@").append(label_feature_weight[lc]);
+				}
+			}
+		}
+	}
+	
 	public static class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 		SymbolTable<String> featureLibrary = new SymbolTable<String>();
 		ArrayLearningGraph current = null;
