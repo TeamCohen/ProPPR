@@ -309,7 +309,7 @@ public class Trainer {
 		@Override
 		public FQTrainingExample next() {
 			String example = examples.next();
-			return new FQTrainingExample(example, builder, paramVec, learner);
+			return new FQTrainingExample(example, builder.copy(), paramVec, learner);
 		}
 
 		@Override

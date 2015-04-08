@@ -175,6 +175,11 @@ public class ArrayLearningGraph extends LearningGraph {
 			labelSize = 0;
 			index = 0;
 		}
+
+		@Override
+		public LearningGraphBuilder copy() {
+			return new ArrayLearningGraphBuilder();
+		}
 		
 	}
 }

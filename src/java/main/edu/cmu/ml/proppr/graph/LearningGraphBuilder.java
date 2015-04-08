@@ -11,6 +11,7 @@ public abstract class LearningGraphBuilder {
 	public static final String FEATURE_DELIM = ",";
 	public static final String FEATURE_WEIGHT_DELIM = "@";
 	
+	public abstract LearningGraphBuilder copy();
 	public abstract LearningGraph create();
 	public abstract void setGraphSize(LearningGraph g, int nodeSize, int edgeSize);
 	public abstract void addOutlink(LearningGraph g, int u, RWOutlink rwOutlink);
