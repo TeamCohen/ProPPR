@@ -46,7 +46,7 @@ public abstract class LearningGraphBuilder {
 
 //		int last = parts[3], next;
 		//for (String p : string.substring(parts[3]+1).split("\t")) {
-		for (int last = start, next=0; true ; last=next, next = string.indexOf('\t',last+1) ) {
+		for (int last = start, next=string.indexOf('\t',last+1); true ; last=next, next = string.indexOf('\t',last+1) ) {
 			if (next == -1) next = string.length();
 			if (next == last) break;
 			
@@ -62,7 +62,7 @@ public abstract class LearningGraphBuilder {
 //			for (int i=0; i<raw.length; i++) { nodes[i] = Integer.parseInt(raw[i]); }
 
 			TObjectDoubleMap<String> fd = new TObjectDoubleHashMap<String>();
-			handleEdgeFeatures(string, edgeDelim, next, fd, featureList);
+			handleEdgeFeatureList(string, edgeDelim, next, fd, featureList);
 			if (fd.isEmpty()) {
 				throw new GraphFormatException("Can't have no features on an edge for ("+nodes[0]+", "+nodes[1]+")");
 			}
@@ -70,26 +70,29 @@ public abstract class LearningGraphBuilder {
 		}
 	}
 	
-	private void handleEdgeFeatures(String string, int start, int next, TObjectDoubleMap<String> fd, String[] featureList) {
-
-//		for (String f : featStr.split(FEATURE_DELIM)) {
-		for (int lastF = start, nextF = 0; true ; lastF=nextF, nextF = Math.min(next, string.indexOf(FEATURE_DELIM, lastF+1)) ) {
-			if (nextF == -1) nextF = next;
-			if (nextF == lastF) break;
-			
-			double wt = 1.0;
-			String f = string.substring(lastF+1, nextF);
-			if (featureList.length > 0) {
-				int weightDelim = f.indexOf(FEATURE_WEIGHT_DELIM);
-				if (weightDelim>0) { // @ is never the first char in the feature string
-					wt = Double.parseDouble(f.substring(weightDelim+1));
-					f = f.substring(0,weightDelim);
-				}
-//				String[] fw = f.split(FEATURE_WEIGHT_DELIM);
-				fd.put(featureList[Integer.parseInt(f)-1],wt);
-			} else {
-				fd.put(f,wt);
+	private void handleEdgeFeatureList(String string, int start, int next, TObjectDoubleMap<String> fd, String[] featureList) {
+		StringBuilder f = new StringBuilder();
+		for (int i=start+1; i<next; i++) {
+			char c = string.charAt(i);
+			if (c == FEATURE_DELIM) {
+				handleEdgeFeature(f.toString(),fd,featureList);
+				f = new StringBuilder();
+			} else f.append(c);
+		}
+		handleEdgeFeature(f.toString(),fd,featureList);
+	}
+	private void handleEdgeFeature(String f, TObjectDoubleMap<String> fd, String[] featureList) {
+		double wt = 1.0;
+		if (featureList.length > 0) {
+			int weightDelim = f.indexOf(FEATURE_WEIGHT_DELIM);
+			if (weightDelim>0) { // @ is never the first char in the feature string
+				wt = Double.parseDouble(f.substring(weightDelim+1));
+				f = f.substring(0,weightDelim);
 			}
+//			String[] fw = f.split(FEATURE_WEIGHT_DELIM);
+			fd.put(featureList[Integer.parseInt(f)-1],wt);
+		} else {
+			fd.put(f,wt);
 		}
 	}
 }
