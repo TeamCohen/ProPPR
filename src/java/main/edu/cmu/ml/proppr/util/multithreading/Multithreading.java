@@ -102,20 +102,22 @@ public class Multithreading<In,Out> {
 		for (In item : streamer) {
 			id++;
 
-			tidyQueue(transformerQueue);
-			if (throttle > 0 && transformerQueue.size() > throttle) {
-				int wait = 100;
-				if (log.isDebugEnabled()) log.debug("Throttling @"+id+"...");
-				while(transformerQueue.size() > throttle) {
-					try {
-						Thread.sleep(wait);
-					} catch (InterruptedException e) {
-						log.error("Interrupted while throttling tasks");
+			if (throttle > 0) {
+				tidyQueue(transformerQueue);
+				if(transformerQueue.size() > throttle) {
+					int wait = 100;
+					if (log.isDebugEnabled()) log.debug("Throttling @"+id+"...");
+					while(transformerQueue.size() > throttle) {
+						try {
+							Thread.sleep(wait);
+						} catch (InterruptedException e) {
+							log.error("Interrupted while throttling tasks");
+						}
+						tidyQueue(transformerQueue);
+						wait *= 1.5;
 					}
-					tidyQueue(transformerQueue);
-					wait *= 1.5;
+					if (log.isDebugEnabled()) log.debug("Throttling complete "+wait);
 				}
-				if (log.isDebugEnabled()) log.debug("Throttling complete "+wait);
 			}
 			
 			Future<Out> transformerFuture = transformerPool.submit(transformer.transformer(item, id));
@@ -126,7 +128,7 @@ public class Multithreading<In,Out> {
 				if (log.isDebugEnabled()) log.debug("Permitting rescheduling of #"+id);
 				cleanupPool.submit(cleanup.cleanup(transformerFuture, cleanupPool, id));
 			}
-			transformerQueue.add(transformerFuture);
+			if (throttle > 0) transformerQueue.add(transformerFuture);
 			if (log.isDebugEnabled()) log.debug("Adding start "+(id+1));
 		}
 		
