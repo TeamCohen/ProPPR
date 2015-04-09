@@ -2,6 +2,7 @@ package edu.cmu.ml.proppr;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -173,7 +174,7 @@ public class Trainer {
 						return new Callable<Integer>() {
 							@Override
 							public Integer call() throws Exception {
-								PosNegRWExample x = GroundedExampleParser.parse(in.g, in.builder);
+								PosNegRWExample x = GroundedExampleParser.parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
 								in.learner.accumulateGradient(in.paramVec, x, sumGradient);
 								
 								return 1; 
@@ -222,10 +223,10 @@ public class Trainer {
 		String g;
 		ParamVector paramVec;
 		SRW learner;
-		LearningGraphBuilder builder;
-		public FQTrainingExample(String g, LearningGraphBuilder builder, ParamVector paramVec, SRW learner) {
+		FQTrainingExampleStreamer builderFactory;
+		public FQTrainingExample(String g, FQTrainingExampleStreamer builderFactory, ParamVector paramVec, SRW learner) {
 			this.g = g;
-			this.builder = builder;
+			this.builderFactory = builderFactory;
 			this.paramVec = paramVec;
 			this.learner = learner;
 		}
@@ -246,7 +247,7 @@ public class Trainer {
 		@Override
 		public Integer call() throws Exception {
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
-			PosNegRWExample ex = GroundedExampleParser.parse(in.g, in.builder);
+			PosNegRWExample ex = GroundedExampleParser.parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
 			in.learner.trainOnExample(in.paramVec, ex);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			return in.g.length();
@@ -290,6 +291,7 @@ public class Trainer {
 	private class FQTrainingExampleStreamer implements Iterable<FQTrainingExample>,Iterator<FQTrainingExample> {
 		Iterator<String> examples;
 		ParamVector paramVec;
+		HashMap<String,LearningGraphBuilder> builderSource = new HashMap<String,LearningGraphBuilder>();
 		LearningGraphBuilder builder;
 		public FQTrainingExampleStreamer(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
 			this.examples = examples.iterator();
@@ -309,12 +311,17 @@ public class Trainer {
 		@Override
 		public FQTrainingExample next() {
 			String example = examples.next();
-			return new FQTrainingExample(example, builder.copy(), paramVec, learner);
+			return new FQTrainingExample(example, this, paramVec, learner);
 		}
 
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException("No removal of examples permitted during training!");
+		}
+		
+		public LearningGraphBuilder getBuilder(Thread t) {
+			if (!builderSource.containsKey(t.getName())) builderSource.put(t.getName(),builder.copy());
+			return builderSource.get(t.getName());
 		}
 	}
 

@@ -47,13 +47,7 @@ public abstract class LearningGraphBuilder {
 		int featureStart = -1;
 		int[] nodes = {-1,-1};
 		
-//		int last = parts[3], next;
-		//for (String p : string.substring(parts[3]+1).split("\t")) {
 		for (int i=start+1; i<string.length(); i++) {
-			//int last = start, next=string.indexOf('\t',last+1); true ; last=next, next = string.indexOf('\t',last+1) ) {
-//			if (next == -1) next = string.length();
-//			if (next == last) break;
-			
 			char c = string.charAt(i);
 			if (c == EDGE_FEATURE_DELIM) {
 				int nodeDelim = edge.indexOf(SRC_DST_DELIM);
@@ -69,24 +63,6 @@ public abstract class LearningGraphBuilder {
 				addOutlink(graph, nodes[0], new RWOutlink(fd, nodes[1]));
 				edge = new StringBuilder();
 			} else edge.append(c);
-			
-//			int edgeDelim = string.indexOf(EDGE_FEATURE_DELIM,last+1);
-////			String[] pair = p.split(EDGE_FEATURE_DELIM);
-////			String edgeStr = pair[0], featStr = pair[1];
-//
-////			String[] raw = edgeStr.split(SRC_DST_DELIM);
-//			int nodeDelim = string.indexOf(SRC_DST_DELIM, last+1);
-//			int[] nodes = {Integer.parseInt(string.substring(last+1,nodeDelim)), 
-//					Integer.parseInt(string.substring(nodeDelim+SRC_DST_DELIM.length(), edgeDelim)) };
-////			int[] nodes = new int[raw.length];
-////			for (int i=0; i<raw.length; i++) { nodes[i] = Integer.parseInt(raw[i]); }
-//
-//			TObjectDoubleMap<String> fd = new TObjectDoubleHashMap<String>();
-//			handleEdgeFeatureList(string, edgeDelim, next, fd, featureList);
-//			if (fd.isEmpty()) {
-//				throw new GraphFormatException("Can't have no features on an edge for ("+nodes[0]+", "+nodes[1]+")");
-//			}
-//			addOutlink(graph, nodes[0], new RWOutlink(fd, nodes[1]));
 		}
 		TObjectDoubleMap<String> fd = new TObjectDoubleHashMap<String>();
 		handleEdgeFeatureList(edge.toString(), featureStart, fd, featureList);
@@ -115,7 +91,6 @@ public abstract class LearningGraphBuilder {
 				wt = Double.parseDouble(f.substring(weightDelim+1));
 				f = f.substring(0,weightDelim);
 			}
-//			String[] fw = f.split(FEATURE_WEIGHT_DELIM);
 			fd.put(featureList[Integer.parseInt(f)-1],wt);
 		} else {
 			fd.put(f,wt);
