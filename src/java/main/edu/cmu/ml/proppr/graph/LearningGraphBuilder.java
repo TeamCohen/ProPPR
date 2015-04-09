@@ -43,37 +43,63 @@ public abstract class LearningGraphBuilder {
 	}
 
 	private void handleEdgeList(String string, int start, LearningGraph graph, String[] featureList) throws GraphFormatException {
-
+		StringBuilder edge = new StringBuilder();
+		int featureStart = -1;
+		int[] nodes = {-1,-1};
+		
 //		int last = parts[3], next;
 		//for (String p : string.substring(parts[3]+1).split("\t")) {
-		for (int last = start, next=string.indexOf('\t',last+1); true ; last=next, next = string.indexOf('\t',last+1) ) {
-			if (next == -1) next = string.length();
-			if (next == last) break;
+		for (int i=start+1; i<string.length(); i++) {
+			//int last = start, next=string.indexOf('\t',last+1); true ; last=next, next = string.indexOf('\t',last+1) ) {
+//			if (next == -1) next = string.length();
+//			if (next == last) break;
 			
-			int edgeDelim = string.indexOf(EDGE_FEATURE_DELIM,last+1);
-//			String[] pair = p.split(EDGE_FEATURE_DELIM);
-//			String edgeStr = pair[0], featStr = pair[1];
-
-//			String[] raw = edgeStr.split(SRC_DST_DELIM);
-			int nodeDelim = string.indexOf(SRC_DST_DELIM, last+1);
-			int[] nodes = {Integer.parseInt(string.substring(last+1,nodeDelim)), 
-					Integer.parseInt(string.substring(nodeDelim+SRC_DST_DELIM.length(), edgeDelim)) };
-//			int[] nodes = new int[raw.length];
-//			for (int i=0; i<raw.length; i++) { nodes[i] = Integer.parseInt(raw[i]); }
-
-			TObjectDoubleMap<String> fd = new TObjectDoubleHashMap<String>();
-			handleEdgeFeatureList(string, edgeDelim, next, fd, featureList);
-			if (fd.isEmpty()) {
-				throw new GraphFormatException("Can't have no features on an edge for ("+nodes[0]+", "+nodes[1]+")");
-			}
-			addOutlink(graph, nodes[0], new RWOutlink(fd, nodes[1]));
+			char c = string.charAt(i);
+			if (c == EDGE_FEATURE_DELIM) {
+				int nodeDelim = edge.indexOf(SRC_DST_DELIM);
+				nodes[0] = Integer.parseInt(edge.substring(0,nodeDelim));
+				nodes[1] = Integer.parseInt(edge.substring(nodeDelim+SRC_DST_DELIM.length()));
+				featureStart = edge.length();
+			} else if (c == '\t') {
+				TObjectDoubleMap<String> fd = new TObjectDoubleHashMap<String>();
+				handleEdgeFeatureList(edge.toString(), featureStart, fd, featureList);
+				if (fd.isEmpty()) {
+					throw new GraphFormatException("Can't have no features on an edge for ("+nodes[0]+", "+nodes[1]+")");
+				}
+				addOutlink(graph, nodes[0], new RWOutlink(fd, nodes[1]));
+				edge = new StringBuilder();
+			} else edge.append(c);
+			
+//			int edgeDelim = string.indexOf(EDGE_FEATURE_DELIM,last+1);
+////			String[] pair = p.split(EDGE_FEATURE_DELIM);
+////			String edgeStr = pair[0], featStr = pair[1];
+//
+////			String[] raw = edgeStr.split(SRC_DST_DELIM);
+//			int nodeDelim = string.indexOf(SRC_DST_DELIM, last+1);
+//			int[] nodes = {Integer.parseInt(string.substring(last+1,nodeDelim)), 
+//					Integer.parseInt(string.substring(nodeDelim+SRC_DST_DELIM.length(), edgeDelim)) };
+////			int[] nodes = new int[raw.length];
+////			for (int i=0; i<raw.length; i++) { nodes[i] = Integer.parseInt(raw[i]); }
+//
+//			TObjectDoubleMap<String> fd = new TObjectDoubleHashMap<String>();
+//			handleEdgeFeatureList(string, edgeDelim, next, fd, featureList);
+//			if (fd.isEmpty()) {
+//				throw new GraphFormatException("Can't have no features on an edge for ("+nodes[0]+", "+nodes[1]+")");
+//			}
+//			addOutlink(graph, nodes[0], new RWOutlink(fd, nodes[1]));
 		}
+		TObjectDoubleMap<String> fd = new TObjectDoubleHashMap<String>();
+		handleEdgeFeatureList(edge.toString(), featureStart, fd, featureList);
+		if (fd.isEmpty()) {
+			throw new GraphFormatException("Can't have no features on an edge for ("+nodes[0]+", "+nodes[1]+")");
+		}
+		addOutlink(graph, nodes[0], new RWOutlink(fd, nodes[1]));
 	}
 	
-	private void handleEdgeFeatureList(String string, int start, int next, TObjectDoubleMap<String> fd, String[] featureList) {
+	private void handleEdgeFeatureList(String edge, int start, TObjectDoubleMap<String> fd, String[] featureList) {
 		StringBuilder f = new StringBuilder();
-		for (int i=start+1; i<next; i++) {
-			char c = string.charAt(i);
+		for (int i=start; i<edge.length(); i++) {
+			char c = edge.charAt(i);
 			if (c == FEATURE_DELIM) {
 				handleEdgeFeature(f.toString(),fd,featureList);
 				f = new StringBuilder();
