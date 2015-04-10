@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
@@ -51,7 +51,7 @@ public class TrainerTest extends RedBlueGraph {
 	}
 	
 	public ParamVector train() {
-		return this.trainer.train(examples, new ArrayLearningGraph.ArrayLearningGraphBuilder(), 5, true);
+		return this.trainer.train(examples, new ArrayLearningGraphBuilder(), 5, true);
 	}
 
 	@Test

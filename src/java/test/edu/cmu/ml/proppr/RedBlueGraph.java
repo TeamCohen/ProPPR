@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.RWOutlink;
@@ -59,7 +60,7 @@ public class RedBlueGraph {
 //			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
 //		}
 
-		LearningGraphBuilder lgb = new ArrayLearningGraph.ArrayLearningGraphBuilder();
+		LearningGraphBuilder lgb = new ArrayLearningGraphBuilder();
 		brGraph = (ArrayLearningGraph) lgb.create();
 		lgb.index(1);
 		lgb.setGraphSize(brGraph, magicNumber*2, -1);

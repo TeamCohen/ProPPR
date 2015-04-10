@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
@@ -351,7 +351,7 @@ public class Trainer {
 			long start = System.currentTimeMillis();
 			ParamVector params = c.trainer.train(
 					new ParsedFile(groundedFile), 
-					new ArrayLearningGraph.ArrayLearningGraphBuilder(), 
+					new ArrayLearningGraphBuilder(), 
 					c.epochs, 
 					c.traceLosses);
 			log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");

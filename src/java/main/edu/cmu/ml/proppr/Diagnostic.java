@@ -1,13 +1,14 @@
 package edu.cmu.ml.proppr;
 
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph.ArrayLearningGraphBuilder;
+import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
@@ -23,7 +24,7 @@ public class Diagnostic {
 		try {
 			int inputFiles = Configuration.USE_TRAIN;
 			int outputFiles = 0;
-			int constants = Configuration.USE_THREADS;
+			int constants = Configuration.USE_THREADS | Configuration.USE_THROTTLE;
 			int modules = 0;
 			ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
 			log.info(c.toString());
@@ -31,33 +32,34 @@ public class Diagnostic {
 			String groundedFile=c.queryFile.getPath();
 			log.info("Parsing "+groundedFile+"...");
 			long start = System.currentTimeMillis();
-			Multithreading<String, Integer> m = new Multithreading<String, Integer>(log);
-			final ArrayLearningGraphBuilder b = new ArrayLearningGraph.ArrayLearningGraphBuilder();
+			Multithreading<String, PosNegRWExample> m = new Multithreading<String, PosNegRWExample>(log);
+			final ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
 			m.executeJob(c.nthreads, new ParsedFile(groundedFile), 
-					new Transformer<String,Integer>() {
+					new Transformer<String,PosNegRWExample>() {
 						@Override
-						public Callable<Integer> transformer(final String in, final int id) {
-							return new Callable<Integer>() {
+						public Callable<PosNegRWExample> transformer(final String in, final int id) {
+							return new Callable<PosNegRWExample>() {
 								@Override
-								public Integer call() throws Exception {
+								public PosNegRWExample call() throws Exception {
 									log.debug("Job start "+id);
-									int ret = GroundedExampleParser.parse(in, b.copy()).length();
+									PosNegRWExample ret = GroundedExampleParser.parse(in, b.copy());
 									log.debug("Job done "+id);
 									return ret;
 								}};
-						}}, new Cleanup<Integer>() {
+						}}, new Cleanup<PosNegRWExample>() {
 							@Override
-							public Runnable cleanup(final Future<Integer> in, final int id) {
+							public Runnable cleanup(final Future<PosNegRWExample> in, final int id) {
 								return new Runnable(){
+									ArrayList<PosNegRWExample> done = new ArrayList<PosNegRWExample>();
 									@Override
 									public void run() {
 										try {
-											in.get();
+											done.add(in.get());
 										} catch (InterruptedException e) {} catch (ExecutionException e) {}
 										log.debug("Cleanup start "+id);
 										log.debug("Cleanup done "+id);
 									}};
-							}}, Multithreading.DEFAULT_THROTTLE);
+							}}, c.throttle);
 			log.info("Finished diagnostic in "+(System.currentTimeMillis()-start)+" ms");
 		} catch (Throwable t) {
 			t.printStackTrace();

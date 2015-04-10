@@ -16,7 +16,7 @@ public class LearningGraphTest {
 	@Test
 	public void testArray() throws GraphFormatException {
 		String s = "3	2	foo	1->2:1	3->2:1";
-		LearningGraphBuilder b = new ArrayLearningGraph.ArrayLearningGraphBuilder();
+		LearningGraphBuilder b = new ArrayLearningGraphBuilder();
 		ArrayLearningGraph g = (ArrayLearningGraph) b.deserialize(s);
 		assertEquals("#nodes",3,g.nodeSize());
 		assertEquals("#edges",2,g.edgeSize());
@@ -30,7 +30,7 @@ public class LearningGraphTest {
 		LineNumberReader r = new LineNumberReader(new FileReader("examples/cora/train.examples.1.grounded"));
 		String s = r.readLine().split("\t",5)[4];
 		r.close();
-		LearningGraphBuilder b = new ArrayLearningGraph.ArrayLearningGraphBuilder();
+		LearningGraphBuilder b = new ArrayLearningGraphBuilder();
 		ArrayLearningGraph g = (ArrayLearningGraph) b.deserialize(s);
 	}
 }

@@ -13,8 +13,7 @@ import java.util.TreeMap;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph.ArrayLearningGraphBuilder;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.RWOutlink;
 import edu.cmu.ml.proppr.learn.SRW;
@@ -44,7 +43,7 @@ public class SRWRestartTest extends SRWTest {
 		// add restart links to r0
 		for (int u : brGraph.getNodes()) {
 			TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
-			ArrayLearningGraph.ArrayLearningGraphBuilder b = ((ArrayLearningGraph.ArrayLearningGraphBuilder) lgb);
+			ArrayLearningGraphBuilder b = ((ArrayLearningGraphBuilder) lgb);
 			int r0 = nodes.getId("r0");
 			RWOutlink outlinkR0 = null;
 			if (b.outlinks[u] != null) {

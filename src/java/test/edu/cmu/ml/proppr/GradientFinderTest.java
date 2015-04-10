@@ -2,7 +2,7 @@ package edu.cmu.ml.proppr;
 
 import static org.junit.Assert.*;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
@@ -72,7 +72,7 @@ public class GradientFinderTest extends RedBlueGraph {
 	}
 	
 	public ParamVector train() {
-		return this.trainer.findGradient(examples, new ArrayLearningGraph.ArrayLearningGraphBuilder(), new SimpleParamVector<String>());
+		return this.trainer.findGradient(examples, new ArrayLearningGraphBuilder(), new SimpleParamVector<String>());
 	}
 
 	@Test
