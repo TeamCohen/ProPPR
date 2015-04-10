@@ -246,8 +246,10 @@ public class Trainer {
 		}
 		@Override
 		public Integer call() throws Exception {
-			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
+			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
 			PosNegRWExample ex = GroundedExampleParser.parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
+			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
+			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
 			in.learner.trainOnExample(in.paramVec, ex);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			return in.g.length();

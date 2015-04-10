@@ -83,7 +83,6 @@ public class ArrayLearningGraph extends LearningGraph {
 	}
 	
 	public static class ArrayLearningGraphBuilder extends LearningGraphBuilder {
-		SymbolTable<String> featureLibrary = new SymbolTable<String>();
 		ArrayLearningGraph current = null;
 		public ArrayList<RWOutlink>[] outlinks = null;
 		int labelSize=0;
@@ -92,7 +91,7 @@ public class ArrayLearningGraph extends LearningGraph {
 		@Override
 		public LearningGraph create() {
 			if (current != null) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
-			current =  new ArrayLearningGraph(featureLibrary);
+			current =  new ArrayLearningGraph(new SymbolTable<String>());
 			return current;
 		}
 
@@ -156,7 +155,7 @@ public class ArrayLearningGraph extends LearningGraph {
 						current.edge_labels_lo[edge_cursor] = label_cursor;
 						for (TObjectDoubleIterator<String> it = o.fd.iterator(); it.hasNext(); ) {
 							it.advance();
-							current.label_feature_id[label_cursor] = featureLibrary.getId(it.key());
+							current.label_feature_id[label_cursor] = ((ArrayLearningGraph) g).featureLibrary.getId(it.key());
 							current.label_feature_weight[label_cursor] = it.value();
 							label_cursor++;
 						}

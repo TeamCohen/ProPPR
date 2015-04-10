@@ -80,6 +80,9 @@ public abstract class ParamVector<F,T> implements Map<F,Double> {
         return copy;
     }
 	public void adjustValue(F key, double value) {
+	    this.put(key, this.get(key)+value);
+	}
+	private void oldAdjustValue(F key, double value) {
 		T oldvalue = getBackingStore().get(key);
 		if (oldvalue == null) {
 			getBackingStore().putIfAbsent(key, newValue(0.0));
