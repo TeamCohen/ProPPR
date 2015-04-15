@@ -2,28 +2,18 @@ package edu.cmu.ml.proppr.learn;
 
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+
 
 import org.junit.Test;
 
-import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import java.util.HashMap;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.RWOutlink;
-import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.LossData;
-import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
-import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 /**
@@ -55,7 +45,7 @@ public class SRWRestartTest extends SRWTest {
 				}
 			}
 			if (outlinkR0 == null) {
-				outlinkR0 = new RWOutlink(new TObjectDoubleHashMap<String>(), r0);
+				outlinkR0 = new RWOutlink(new HashMap<String,Double>(), r0);
 				lgb.addOutlink(brGraph, u, outlinkR0);
 			}
 			outlinkR0.fd.put("id(restart)",this.srw.getWeightingScheme().defaultWeight());

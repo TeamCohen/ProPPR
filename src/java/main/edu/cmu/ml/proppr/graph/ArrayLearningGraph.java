@@ -62,19 +62,22 @@ public class ArrayLearningGraph extends LearningGraph {
 	
 	public void serialize(StringBuilder serialized) {
 		serialized.append(nodeSize()) // nodes
-		.append("\t").append(edgeSize()) //edges
-		.append("\t");
+		.append(LearningGraphBuilder.TAB).append(edgeSize()) //edges
+		.append(LearningGraphBuilder.TAB);
 		for (int i = 0; i<getFeatureSet().size(); i++) {
-			if (i>0) serialized.append(":");
+			if (i>0) serialized.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
 			serialized.append(featureLibrary.getSymbol(i+1));
 		}
 		for (int u=0; u<node_hi; u++) {
 			for (int ec=node_near_lo[u]; ec<node_near_hi[u]; ec++) {
 				int v = edge_dest[ec];
-				serialized.append("\t").append(u).append("->").append(v).append(":");
+				serialized.append(LearningGraphBuilder.TAB)
+				.append(u)
+				.append(LearningGraphBuilder.SRC_DST_DELIM)
+				.append(v).append(LearningGraphBuilder.EDGE_DELIM);
 				for (int lc = edge_labels_lo[ec]; lc < edge_labels_hi[ec]; lc++) {
-					if (lc > edge_labels_lo[ec]) serialized.append(",");
-					serialized.append(label_feature_id[lc]).append("@").append(label_feature_weight[lc]);
+					if (lc > edge_labels_lo[ec]) serialized.append(LearningGraphBuilder.EDGE_FEATURE_DELIM);
+					serialized.append(label_feature_id[lc]).append(LearningGraphBuilder.FEATURE_WEIGHT_DELIM).append(label_feature_weight[lc]);
 				}
 			}
 		}

@@ -51,7 +51,7 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 		if (outlinks[u] == null) outlinks[u] = new ArrayList<RWOutlink>();
 		if (rwOutlink != null) {
 			outlinks[u].add(rwOutlink);
-			labelSize += rwOutlink.fdJava.size();
+			labelSize += rwOutlink.fd.size();
 		} else labelSize++;
 	}
 
@@ -71,26 +71,17 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 		}
 		int edge_cursor=0;
 		int label_cursor=0;
-		//init(); if (true) return; // timepoint 3
 		for (int u=0; u<current.node_hi; u++) {
 			current.node_near_lo[u]=edge_cursor;
 			if (outlinks[u] != null) {
 				for (RWOutlink o : outlinks[u]) {
 					current.edge_dest[edge_cursor] = o.nodeid;
 					current.edge_labels_lo[edge_cursor] = label_cursor;
-					for(Map.Entry<String,Double> it : o.fdJava.entrySet()) {
+					for(Map.Entry<String,Double> it : o.fd.entrySet()) {
 						current.label_feature_id[label_cursor] = ((ArrayLearningGraph) g).featureLibrary.getId(it.getKey());
 						current.label_feature_weight[label_cursor] = it.getValue();
 						label_cursor++;
 					}
-					/*
-					for (TObjectDoubleIterator<String> it = o.fd.iterator(); it.hasNext(); ) {
-						it.advance();
-						current.label_feature_id[label_cursor] = ((ArrayLearningGraph) g).featureLibrary.getId(it.key());
-						current.label_feature_weight[label_cursor] = it.value();
-						label_cursor++;
-					}
-					*/
 					current.edge_labels_hi[edge_cursor] = label_cursor;
 					edge_cursor++;
 				}
