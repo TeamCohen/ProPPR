@@ -55,7 +55,11 @@ public class Diagnostic {
 									public void run() {
 										try {
 											done.add(in.get());
-										} catch (InterruptedException e) {} catch (ExecutionException e) {}
+										} catch (InterruptedException e) {
+										    e.printStackTrace(); 
+										} catch (ExecutionException e) {
+										    e.printStackTrace();
+										}
 										log.debug("Cleanup start "+id);
 										log.debug("Cleanup done "+id);
 									}};
