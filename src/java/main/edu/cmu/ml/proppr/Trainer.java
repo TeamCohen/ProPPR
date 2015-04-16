@@ -163,6 +163,7 @@ public class Trainer {
 //		}
 
 		// instead let's run the examples through Multithreading
+		final GroundedExampleParser parser = new GroundedExampleParser();
 		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
 		m.executeJob(
 				this.nthreads, 
@@ -174,7 +175,7 @@ public class Trainer {
 						return new Callable<Integer>() {
 							@Override
 							public Integer call() throws Exception {
-								PosNegRWExample x = GroundedExampleParser.parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
+								PosNegRWExample x = parser.parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
 								in.learner.accumulateGradient(in.paramVec, x, sumGradient);
 								
 								return 1; 
@@ -247,7 +248,7 @@ public class Trainer {
 		@Override
 		public Integer call() throws Exception {
 			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
-			PosNegRWExample ex = GroundedExampleParser.parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
+			PosNegRWExample ex = new GroundedExampleParser().parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
 			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
 			in.learner.trainOnExample(in.paramVec, ex);

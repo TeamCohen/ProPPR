@@ -34,6 +34,7 @@ public class Diagnostic {
 			long start = System.currentTimeMillis();
 			Multithreading<String, PosNegRWExample> m = new Multithreading<String, PosNegRWExample>(log);
 			final ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
+			final GroundedExampleParser parser = new GroundedExampleParser();
 			m.executeJob(c.nthreads, new ParsedFile(groundedFile), 
 					new Transformer<String,PosNegRWExample>() {
 						@Override
@@ -42,7 +43,7 @@ public class Diagnostic {
 								@Override
 								public PosNegRWExample call() throws Exception {
 									log.debug("Job start "+id);
-									PosNegRWExample ret = GroundedExampleParser.parse(in, b.copy());
+									PosNegRWExample ret = parser.parse(in, b.copy());
 									log.debug("Job done "+id);
 									return ret;
 								}};
