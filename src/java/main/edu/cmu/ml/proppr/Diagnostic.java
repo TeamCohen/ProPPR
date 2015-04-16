@@ -50,11 +50,12 @@ public class Diagnostic {
 							@Override
 							public Runnable cleanup(final Future<PosNegRWExample> in, final int id) {
 								return new Runnable(){
-									ArrayList<PosNegRWExample> done = new ArrayList<PosNegRWExample>();
+									//ArrayList<PosNegRWExample> done = new ArrayList<PosNegRWExample>();
 									@Override
 									public void run() {
 										try {
-											done.add(in.get());
+											//done.add(in.get());
+											in.get();
 										} catch (InterruptedException e) {
 										    e.printStackTrace(); 
 										} catch (ExecutionException e) {

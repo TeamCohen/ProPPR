@@ -11,7 +11,6 @@ import java.util.StringTokenizer;
 
 public abstract class LearningGraphBuilder {
 	public static final char TAB = '\t';
-	public static final char NODE_DELIM = ',';
 	public static final char FEATURE_INDEX_DELIM = ':';
 	public static final String SRC_DST_DELIM = "->";
 	public static final char EDGE_DELIM = ':';
@@ -110,19 +109,14 @@ public abstract class LearningGraphBuilder {
 		b.freeze(g);
 		return g;
 	}
-	private int[] parseNodes(String string) {
-		String[] nodeStrings = split(string,NODE_DELIM);
-		int[] nodes = new int[nodeStrings.length];
-		for (int i=0; i<nodeStrings.length; i++) {
-			nodes[i] = Integer.parseInt(nodeStrings[i]);
-		}
-		return nodes;
-	}
 
-	private String[] split(String string, char delim) {
+	public static String[] split(String string, char delim) {
 		if (string.length() == 0) return new String[0];
 		int nitems=1;
 		for (int i=0; i<string.length(); i++) if (string.charAt(i) == delim) nitems++;
+		return split(string,delim,nitems);
+	}
+	public static String[] split(String string, char delim, int nitems) {
 		String[] items = new String[nitems];
 		int last=0;
 		for (int next=last,i=0; i<items.length && next!=-1; last=next+1,i++) {
