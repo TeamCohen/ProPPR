@@ -155,6 +155,8 @@ public class SRW {
 			}
 			// end (c)
 
+			if (tu==0 && udeg>0) { throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.ex.toString()); }
+
 			// begin (d): for each neighbor v of u,
 			ex.dM_lo[uid] = new int[udeg];
 			ex.dM_hi[uid] = new int[udeg];
