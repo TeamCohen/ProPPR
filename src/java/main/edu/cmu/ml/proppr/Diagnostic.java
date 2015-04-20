@@ -40,7 +40,7 @@ public class Diagnostic {
 			String groundedFile=c.queryFile.getPath();
 			log.info("Parsing "+groundedFile+"...");
 			long start = System.currentTimeMillis();
-			Multithreading<PosNegRWExample,Integer> m = new Multithreading<PosNegRWExample,Integer>(log);
+			
 			final ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
 			final SRW srw = c.srw;
 			final ParamVector params = srw.setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(16,(float) 0.75,24)));
@@ -51,7 +51,8 @@ public class Diagnostic {
 			srw.untrainedFeatures().add("id(trueLoop)");
 			srw.untrainedFeatures().add("id(trueLoopRestart)");
 			srw.untrainedFeatures().add("fixedWeight");
-			/* all diag tasks up to Srw:
+			/* all diag tasks up to Srw: */
+			Multithreading<String,PosNegRWExample> m = new Multithreading<String,PosNegRWExample>(log);
 			m.executeJob(c.nthreads, new ParsedFile(groundedFile), 
 					new Transformer<String,PosNegRWExample>() {
 						@Override
@@ -95,8 +96,10 @@ public class Diagnostic {
 										log.debug("Cleanup done "+id);
 									}};
 							}}, c.throttle);
-			*/
+			/**/
 
+			/* SrwO:
+			   Multithreading<PosNegRWExample,Integer> m = new Multithreading<PosNegRWExample,Integer>(log);
 			m.executeJob(c.nthreads, new PosNegRWExampleStreamer(new ParsedFile(groundedFile),new ArrayLearningGraphBuilder()), 
 						 new Transformer<PosNegRWExample,Integer>() {
 						@Override
@@ -136,7 +139,7 @@ public class Diagnostic {
 										log.debug("Cleanup done "+id);
 									}};
 							}}, c.throttle);
-
+			*/
 
 			srw.cleanupParams(params,params);
 			log.info("Finished diagnostic in "+(System.currentTimeMillis()-start)+" ms");
