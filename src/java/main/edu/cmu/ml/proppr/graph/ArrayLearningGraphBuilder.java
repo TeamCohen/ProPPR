@@ -4,9 +4,11 @@ import edu.cmu.ml.proppr.util.SymbolTable;
 import gnu.trove.iterator.TObjectDoubleIterator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
+	static final HashMap<String,ArrayLearningGraphBuilder> copies = new HashMap<String,ArrayLearningGraphBuilder>();
 	ArrayLearningGraph current = null;
 	public ArrayList<RWOutlink>[] outlinks = null;
 	int labelSize=0;
@@ -103,4 +105,9 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 		return new ArrayLearningGraphBuilder();
 	}
 	
+	private LearningGraphBuilder threadsafeCopy() {
+		String name = Thread.currentThread().getName();
+		if (!copies.containsKey(name)) copies.put(name,new ArrayLearningGraphBuilder());
+		return copies.get(name);
+	}
 }

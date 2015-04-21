@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr;
 
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,7 +11,11 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -31,6 +36,7 @@ import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
+import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
@@ -55,7 +61,6 @@ public class Trainer {
 		learner.untrainedFeatures().add("id(trueLoop)");
 		learner.untrainedFeatures().add("id(trueLoopRestart)");
 		learner.untrainedFeatures().add("id(restart)");
-//		learner.untrainedFeatures().add("id(alphaBooster)");
 	}
 
 	public Trainer(SRW srw) {
@@ -84,7 +89,12 @@ public class Trainer {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
-		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
+//		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
+		ArrayDeque<Future<?>> queue = new ArrayDeque<Future<?>>();
+		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
+		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
+		int nthreadsper = Math.min(this.nthreads/2, 1);
+		ExecutorService parsePool, trainPool, cleanPool; 
 		// loop over epochs
 		for (int i=0; i<numEpochs; i++) {
 			// set up current epoch
@@ -97,24 +107,45 @@ public class Trainer {
 
 			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 
-			// run examples through Multithreading
-			m.executeJob(
-					this.nthreads, 
-					new FQTrainingExampleStreamer(examples, builder, paramVec), 
-					new Transformer<FQTrainingExample,Integer>() {
-						@Override
-						public Callable<Integer> transformer(
-								FQTrainingExample in, int id) {
-							return new Train(in,id);
-						}
-					}, 
-					new Cleanup<Integer>() {
-						@Override
-						public Runnable cleanup(Future<Integer> in, int id) {
-							return new TraceLosses(in,id);
-						}
-					}, 
-					this.throttle);
+			parsePool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
+			trainPool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
+			cleanPool = Executors.newSingleThreadExecutor();
+			
+			// run examples
+			int id=1;
+			for (String s : examples) {
+				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
+				Future<Integer> trained = trainPool.submit(new Train(parsed, paramVec, learner, id));
+				cleanPool.submit(new TraceLosses(trained, id));
+			}
+			parsePool.shutdown();
+			try {
+				parsePool.awaitTermination(7,TimeUnit.DAYS);
+				trainPool.shutdown();
+				trainPool.awaitTermination(7, TimeUnit.DAYS);
+				cleanPool.shutdown();
+				cleanPool.awaitTermination(7, TimeUnit.DAYS);
+			} catch (InterruptedException e) {
+				log.error("Interrupted?",e);
+			}
+			
+//			m.executeJob(
+//					this.nthreads, 
+//					new FQTrainingExampleStreamer(examples, builder, paramVec), 
+//					new Transformer<FQTrainingExample,Integer>() {
+//						@Override
+//						public Callable<Integer> transformer(
+//								FQTrainingExample in, int id) {
+//							return new Train(in,id);
+//						}
+//					}, 
+//					new Cleanup<Integer>() {
+//						@Override
+//						public Runnable cleanup(Future<Integer> in, int id) {
+//							return new TraceLosses(in,id);
+//						}
+//					}, 
+//					this.throttle);
 
 			//
 			this.learner.cleanupParams(paramVec,paramVec);
@@ -146,6 +177,8 @@ public class Trainer {
 
 	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
 
+		/*
+		
 		log.info("Computing gradient on cooked examples...");
 		final ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
@@ -205,6 +238,9 @@ public class Trainer {
 		}
 
 		return sumGradient;
+		
+		 */
+		return null;
 	}
 	
 	public ParamVector findGradient(ArrayList<PosNegRWExample> examples,
@@ -215,22 +251,41 @@ public class Trainer {
 
 	/////////////////////// Multithreading scaffold ///////////////////////
 
-	/**
-	 * Stream over instances of this class
-	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
-	 *
-	 */
-	private class FQTrainingExample {
-		String g;
-		ParamVector paramVec;
-		SRW learner;
-		FQTrainingExampleStreamer builderFactory;
-		public FQTrainingExample(String g, FQTrainingExampleStreamer builderFactory, ParamVector paramVec, SRW learner) {
-			this.g = g;
-			this.builderFactory = builderFactory;
-			this.paramVec = paramVec;
-			this.learner = learner;
+//	/**
+//	 * Stream over instances of this class
+//	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+//	 *
+//	 */
+//	private class FQTrainingExample {
+//		String g;
+//		ParamVector paramVec;
+//		SRW learner;
+//		FQTrainingExampleStreamer builderFactory;
+//		public FQTrainingExample(String g, FQTrainingExampleStreamer builderFactory, ParamVector paramVec, SRW learner) {
+//			this.g = g;
+//			this.builderFactory = builderFactory;
+//			this.paramVec = paramVec;
+//			this.learner = learner;
+//		}
+//	}
+	
+	private class Parse implements Callable<PosNegRWExample> {
+		String in;
+		LearningGraphBuilder builder;
+		int id;
+		public Parse(String in, LearningGraphBuilder builder, int id) {
+			this.in=in;
+			this.id=id;
+			this.builder = builder;
 		}
+		@Override
+		public PosNegRWExample call() throws Exception {
+			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
+			PosNegRWExample ex = new GroundedExampleParser().parse(in, builder.copy());
+			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
+			return ex;
+		}
+		
 	}
 
 	/**
@@ -239,21 +294,23 @@ public class Trainer {
 	 *
 	 */
 	private class Train implements Callable<Integer> {
-		FQTrainingExample in;
+		Future<PosNegRWExample> in;
+		ParamVector paramVec;
+		SRW learner;
 		int id;
-		public Train(FQTrainingExample in, int id) {
-			this.in = in;
+		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, SRW learner, int id) {
+			this.in = parsed;
 			this.id = id;
+			this.learner = learner;
+			this.paramVec = paramVec;
 		}
 		@Override
 		public Integer call() throws Exception {
-			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
-			PosNegRWExample ex = new GroundedExampleParser().parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
-			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
+			PosNegRWExample ex = in.get();
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
-			in.learner.trainOnExample(in.paramVec, ex);
+			learner.trainOnExample(paramVec, ex);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
-			return in.g.length();
+			return ex.length();
 		}
 	}
 
@@ -273,8 +330,8 @@ public class Trainer {
 		@Override
 		public void run() {
 			try {
-				if (log.isDebugEnabled()) log.debug("Cleaning start "+this.id);
 				int n = this.in.get();
+				if (log.isDebugEnabled()) log.debug("Cleaning start "+this.id);
 				synchronized(numExamplesThisEpoch) {
 					numExamplesThisEpoch += n;
 				}
@@ -286,47 +343,47 @@ public class Trainer {
 			}
 		}
 	}
-	/**
-	 * Builds the streamer of all training inputs from the streamer of training examples. 
-	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
-	 *
-	 */
-	private class FQTrainingExampleStreamer implements Iterable<FQTrainingExample>,Iterator<FQTrainingExample> {
-		Iterator<String> examples;
-		ParamVector paramVec;
-		HashMap<String,LearningGraphBuilder> builderSource = new HashMap<String,LearningGraphBuilder>();
-		LearningGraphBuilder builder;
-		public FQTrainingExampleStreamer(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
-			this.examples = examples.iterator();
-			this.builder = builder;
-			this.paramVec = paramVec;
-		}
-		@Override
-		public Iterator<FQTrainingExample> iterator() {
-			return this;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return examples.hasNext();
-		}
-
-		@Override
-		public FQTrainingExample next() {
-			String example = examples.next();
-			return new FQTrainingExample(example, this, paramVec, learner);
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("No removal of examples permitted during training!");
-		}
-		
-		public LearningGraphBuilder getBuilder(Thread t) {
-			if (!builderSource.containsKey(t.getName())) builderSource.put(t.getName(),builder.copy());
-			return builderSource.get(t.getName());
-		}
-	}
+//	/**
+//	 * Builds the streamer of all training inputs from the streamer of training examples. 
+//	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
+//	 *
+//	 */
+//	private class FQTrainingExampleStreamer implements Iterable<FQTrainingExample>,Iterator<FQTrainingExample> {
+//		Iterator<String> examples;
+//		ParamVector paramVec;
+//		HashMap<String,LearningGraphBuilder> builderSource = new HashMap<String,LearningGraphBuilder>();
+//		LearningGraphBuilder builder;
+//		public FQTrainingExampleStreamer(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
+//			this.examples = examples.iterator();
+//			this.builder = builder;
+//			this.paramVec = paramVec;
+//		}
+//		@Override
+//		public Iterator<FQTrainingExample> iterator() {
+//			return this;
+//		}
+//
+//		@Override
+//		public boolean hasNext() {
+//			return examples.hasNext();
+//		}
+//
+//		@Override
+//		public FQTrainingExample next() {
+//			String example = examples.next();
+//			return new FQTrainingExample(example, this, paramVec, learner);
+//		}
+//
+//		@Override
+//		public void remove() {
+//			throw new UnsupportedOperationException("No removal of examples permitted during training!");
+//		}
+//		
+//		public LearningGraphBuilder getBuilder(Thread t) {
+//			if (!builderSource.containsKey(t.getName())) builderSource.put(t.getName(),builder.copy());
+//			return builderSource.get(t.getName());
+//		}
+//	}
 
 	public static void main(String[] args) {
 		try {
