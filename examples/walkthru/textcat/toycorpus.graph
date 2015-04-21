@@ -1,99 +1,99 @@
-hasWord	dh	a
-hasWord	dh	pricy
-hasWord	dh	doll
-hasWord	dh	house
-hasWord	ft	a
-hasWord	ft	little
-hasWord	ft	red
-hasWord	ft	fire
-hasWord	ft	truck
-hasWord	rw	a
-hasWord	rw	red
-hasWord	rw	wagon
-hasWord	sc	a
-hasWord	sc	pricy
-hasWord	sc	red
-hasWord	sc	sports
-hasWord	sc	car
-hasWord	bk	punk
-hasWord	bk	queen
-hasWord	bk	barbie
-hasWord	bk	and
-hasWord	bk	ken
-hasWord	rb	a
-hasWord	rb	little
-hasWord	rb	red
-hasWord	rb	bike
-hasWord	mv	a
-hasWord	mv	big
-hasWord	mv	7-seater
-hasWord	mv	minivan
-hasWord	mv	with
-hasWord	mv	an
-hasWord	mv	automatic
-hasWord	mv	transmission
-hasWord	hs	a
-hasWord	hs	big
-hasWord	hs	house
-hasWord	hs	in
-hasWord	hs	the
-hasWord	hs	suburbs
-hasWord	hs	with
-hasWord	hs	crushing
-hasWord	hs	mortgage
-hasWord	ji	a
-hasWord	ji	job
-hasWord	ji	for
-hasWord	ji	life
-hasWord	ji	at
-hasWord	ji	IBM
-hasWord	tf	a
-hasWord	tf	huge
-hasWord	tf	pile
-hasWord	tf	of
-hasWord	tf	tax
-hasWord	tf	forms
-hasWord	tf	due
-hasWord	tf	yesterday
-hasWord	jm	huge
-hasWord	jm	pile
-hasWord	jm	of
-hasWord	jm	junk
-hasWord	jm	mail
-hasWord	jm	bills
-hasWord	jm	and
-hasWord	jm	catalogs
-hasWord	pb	a
-hasWord	pb	pricy
-hasWord	pb	barbie
-hasWord	pb	doll
-hasWord	yc	a
-hasWord	yc	little
-hasWord	yc	yellow
-hasWord	yc	toy
-hasWord	yc	car
-hasWord	rb2	a
-hasWord	rb2	red
-hasWord	rb2	10
-hasWord	rb2	speed
-hasWord	rb2	bike
-hasWord	rp	a
-hasWord	rp	red
-hasWord	rp	convertible
-hasWord	rp	porshe
-hasWord	bp	a
-hasWord	bp	big
-hasWord	bp	pile
-hasWord	bp	of
-hasWord	bp	paperwork
-hasWord	he	a
-hasWord	he	huge
-hasWord	he	backlog
-hasWord	he	of
-hasWord	he	email
-hasWord	wt	a
-hasWord	wt	life
-hasWord	wt	of
-hasWord	wt	woe
-hasWord	wt	and
-hasWord	wt	trouble
+hasWord	train00001	a	0.0589
+hasWord	train00001	house	0.5005
+hasWord	train00001	pricy	0.5005
+hasWord	train00001	doll	0.7040
+hasWord	train00002	a	0.0510
+hasWord	train00002	fire	0.6097
+hasWord	train00002	little	0.4334
+hasWord	train00002	truck	0.6097
+hasWord	train00002	red	0.2572
+hasWord	train00003	a	0.0769
+hasWord	train00003	wagon	0.9186
+hasWord	train00003	red	0.3875
+hasWord	train00004	a	0.0510
+hasWord	train00004	car	0.6097
+hasWord	train00004	red	0.2572
+hasWord	train00004	pricy	0.4334
+hasWord	train00004	sports	0.6097
+hasWord	train00005	and	0.3349
+hasWord	train00005	ken	0.4711
+hasWord	train00005	queen	0.4711
+hasWord	train00005	punk	0.4711
+hasWord	train00005	barbie	0.4711
+hasWord	train00006	a	0.0644
+hasWord	train00006	little	0.5468
+hasWord	train00006	bike	0.7691
+hasWord	train00006	red	0.3245
+hasWord	train00007	a	0.0341
+hasWord	train00007	transmission	0.4076
+hasWord	train00007	big	0.2898
+hasWord	train00007	7-seater	0.4076
+hasWord	train00007	an	0.4076
+hasWord	train00007	automatic	0.4076
+hasWord	train00007	minivan	0.4076
+hasWord	train00007	with	0.2898
+hasWord	train00008	a	0.0328
+hasWord	train00008	mortgage	0.3915
+hasWord	train00008	house	0.2784
+hasWord	train00008	big	0.2784
+hasWord	train00008	crushing	0.3915
+hasWord	train00008	suburbs	0.3915
+hasWord	train00008	in	0.3915
+hasWord	train00008	the	0.3915
+hasWord	train00008	with	0.2784
+hasWord	train00009	a	0.0374
+hasWord	train00009	life	0.4469
+hasWord	train00009	IBM	0.4469
+hasWord	train00009	for	0.4469
+hasWord	train00009	job	0.4469
+hasWord	train00009	at	0.4469
+hasWord	train00010	a	0.0356
+hasWord	train00010	huge	0.3025
+hasWord	train00010	of	0.3025
+hasWord	train00010	tax	0.4255
+hasWord	train00010	due	0.4255
+hasWord	train00010	yesterday	0.4255
+hasWord	train00010	forms	0.4255
+hasWord	train00010	pile	0.3025
+hasWord	train00011	and	0.2897
+hasWord	train00011	huge	0.2897
+hasWord	train00011	junk	0.4075
+hasWord	train00011	catalogs	0.4075
+hasWord	train00011	of	0.2897
+hasWord	train00011	pile	0.2897
+hasWord	train00011	mail	0.4075
+hasWord	train00011	bills	0.4075
+hasWord	test00001	a	0.0000
+hasWord	test00001	doll	0.5774
+hasWord	test00001	pricy	0.5774
+hasWord	test00001	barbie	0.5774
+hasWord	test00002	a	0.0000
+hasWord	test00002	car	0.5000
+hasWord	test00002	little	0.5000
+hasWord	test00002	toy	0.5000
+hasWord	test00002	yellow	0.5000
+hasWord	test00003	a	0.0000
+hasWord	test00003	10	0.5412
+hasWord	test00003	bike	0.5412
+hasWord	test00003	speed	0.5412
+hasWord	test00003	red	0.3484
+hasWord	test00004	a	0.0000
+hasWord	test00004	convertible	0.6436
+hasWord	test00004	porshe	0.6436
+hasWord	test00004	red	0.4143
+hasWord	test00005	a	0.0000
+hasWord	test00005	big	0.5599
+hasWord	test00005	paperwork	0.5599
+hasWord	test00005	pile	0.5599
+hasWord	test00005	of	0.2438
+hasWord	test00006	a	0.0000
+hasWord	test00006	huge	0.5599
+hasWord	test00006	email	0.5599
+hasWord	test00006	backlog	0.5599
+hasWord	test00006	of	0.2438
+hasWord	test00007	a	0.0000
+hasWord	test00007	and	0.4886
+hasWord	test00007	life	0.4886
+hasWord	test00007	of	0.2127
+hasWord	test00007	woe	0.4886
+hasWord	test00007	trouble	0.4886

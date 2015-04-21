@@ -8,13 +8,13 @@ toy:
 	proppr compile multirankwalk.ppr
 	proppr set --programFiles multirankwalk.wam:toyseeds.graph:toyedges.graph
 	proppr answer toytest.examples
-	proppr eval toytest.examples toytest.solutions.txt
+	proppr eval toytest.examples toytest.solutions.txtw
 
 r8:
 	proppr compile multirankwalk.ppr
 	proppr set --programFiles multirankwalk.wam:r8seeds.graph:r8edges.graph
-	proppr answer r8test.examples --apr eps=5e-7 --threads 10
-	proppr eval r8test.examples r8test.solutions.txt --metric recall --metric acc1 --metric ap
+	proppr answer r8test.examples --apr eps=5e-7 --threads 10 --unnormalized
+	proppr eval r8test.examples r8test.solutions.txt --metric recall --metric acc1 --metric map
 
 20ng:
 	proppr compile multirankwalk.ppr
