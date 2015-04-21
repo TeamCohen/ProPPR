@@ -89,11 +89,9 @@ public class Trainer {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
-//		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
-		ArrayDeque<Future<?>> queue = new ArrayDeque<Future<?>>();
 		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
-		int nthreadsper = Math.min(this.nthreads/2, 1);
+		int nthreadsper = Math.max(this.nthreads/2, 1);
 		ExecutorService parsePool, trainPool, cleanPool; 
 		// loop over epochs
 		for (int i=0; i<numEpochs; i++) {
@@ -102,13 +100,16 @@ public class Trainer {
 			this.learner.setEpoch(epoch);
 			log.info("epoch "+epoch+" ...");
 
+			// reset counters & file pointers
 			this.learner.clearLoss();
 			numExamplesThisEpoch = 0;
-
+			parseThreads.reset();
+			trainThreads.reset();
 			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 
+			// set up separate pools for parsing, training, and tracing losses
 			parsePool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
-			trainPool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
+			trainPool = Executors.newFixedThreadPool(nthreadsper, trainThreads);
 			cleanPool = Executors.newSingleThreadExecutor();
 			
 			// run examples
@@ -129,58 +130,40 @@ public class Trainer {
 				log.error("Interrupted?",e);
 			}
 			
-//			m.executeJob(
-//					this.nthreads, 
-//					new FQTrainingExampleStreamer(examples, builder, paramVec), 
-//					new Transformer<FQTrainingExample,Integer>() {
-//						@Override
-//						public Callable<Integer> transformer(
-//								FQTrainingExample in, int id) {
-//							return new Train(in,id);
-//						}
-//					}, 
-//					new Cleanup<Integer>() {
-//						@Override
-//						public Runnable cleanup(Future<Integer> in, int id) {
-//							return new TraceLosses(in,id);
-//						}
-//					}, 
-//					this.throttle);
-
-			//
+			// finish any trailing updates for this epoch
 			this.learner.cleanupParams(paramVec,paramVec);
 
+			// loss status
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
-				for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / numExamplesThisEpoch);
-				System.out.print("avg training loss " + lossThisEpoch.total()
-						+ " on "+ numExamplesThisEpoch +" examples");
-				System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
-				System.out.print(" : " + lossThisEpoch.loss.get(LOSS.REGULARIZATION));
-				if (epoch>1) {
-					LossData diff = lossLastEpoch.diff(lossThisEpoch);
-					System.out.println(" improved by " + diff.total()
-							+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
-					if (diff.total() < 0.0) {
-						System.out.println("WARNING: loss INCREASED by " + 
-								(-diff.total()) + " - what's THAT about?");
-					}
-				} else 
-					System.out.println();
-
+				printLossOutput(lossThisEpoch);
 				lossLastEpoch = lossThisEpoch;
-
 			}
 		}
 		return paramVec;
 	}
+	
+	private void printLossOutput(LossData lossThisEpoch) {
+		for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / numExamplesThisEpoch);
+		System.out.print("avg training loss " + lossThisEpoch.total()
+				+ " on "+ numExamplesThisEpoch +" examples");
+		System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
+		System.out.print(" : " + lossThisEpoch.loss.get(LOSS.REGULARIZATION));
+		if (epoch>1) {
+			LossData diff = lossLastEpoch.diff(lossThisEpoch);
+			System.out.println(" improved by " + diff.total()
+					+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
+			if (diff.total() < 0.0) {
+				System.out.println("WARNING: loss INCREASED by " + 
+						(-diff.total()) + " - what's THAT about?");
+			}
+		} else 
+			System.out.println();
+	}
 
 	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
-
-		/*
-		
 		log.info("Computing gradient on cooked examples...");
-		final ParamVector sumGradient = new SimpleParamVector<String>();
+		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
@@ -195,36 +178,32 @@ public class Trainer {
 //			k++;
 //		}
 
-		// instead let's run the examples through Multithreading
-		final GroundedExampleParser parser = new GroundedExampleParser();
-		Multithreading<FQTrainingExample,Integer> m = new Multithreading<FQTrainingExample,Integer>(log);
-		m.executeJob(
-				this.nthreads, 
-				new FQTrainingExampleStreamer(examples, builder, paramVec), 
-				new Transformer<FQTrainingExample,Integer>() {
-					@Override
-					public Callable<Integer> transformer(
-							final FQTrainingExample in, final int id) {
-						return new Callable<Integer>() {
-							@Override
-							public Integer call() throws Exception {
-								PosNegRWExample x = parser.parse(in.g, in.builderFactory.getBuilder(Thread.currentThread()));
-								in.learner.accumulateGradient(in.paramVec, x, sumGradient);
-								
-								return 1; 
-								// ^^^^ this is the equivalent of k++ from before;
-								// the total sum (query count) will be stored in numExamplesThisEpoch
-								// by TraceLosses. It's a hack but it works
-							}};
-					}
-				}, 
-				new Cleanup<Integer>() {
-					@Override
-					public Runnable cleanup(Future<Integer> in, int id) {
-						return new TraceLosses(in,id);
-					}
-				}, 
-				this.throttle);
+		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
+		NamedThreadFactory gradThreads = new NamedThreadFactory("grad-");
+		int nthreadsper = Math.max(this.nthreads/2, 1);
+		ExecutorService parsePool, gradPool, cleanPool; 
+		
+		parsePool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
+		gradPool = Executors.newFixedThreadPool(nthreadsper, gradThreads);
+		cleanPool = Executors.newSingleThreadExecutor();
+		
+		// run examples
+		int id=1;
+		for (String s : examples) {
+			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
+			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id));
+			cleanPool.submit(new TraceLosses(gradfound, id));
+		}
+		parsePool.shutdown();
+		try {
+			parsePool.awaitTermination(7,TimeUnit.DAYS);
+			gradPool.shutdown();
+			gradPool.awaitTermination(7, TimeUnit.DAYS);
+			cleanPool.shutdown();
+			cleanPool.awaitTermination(7, TimeUnit.DAYS);
+		} catch (InterruptedException e) {
+			log.error("Interrupted?",e);
+		}
 
 		this.learner.cleanupParams(paramVec, sumGradient);
 		
@@ -238,9 +217,6 @@ public class Trainer {
 		}
 
 		return sumGradient;
-		
-		 */
-		return null;
 	}
 	
 	public ParamVector findGradient(ArrayList<PosNegRWExample> examples,
@@ -250,24 +226,6 @@ public class Trainer {
 	}
 
 	/////////////////////// Multithreading scaffold ///////////////////////
-
-//	/**
-//	 * Stream over instances of this class
-//	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
-//	 *
-//	 */
-//	private class FQTrainingExample {
-//		String g;
-//		ParamVector paramVec;
-//		SRW learner;
-//		FQTrainingExampleStreamer builderFactory;
-//		public FQTrainingExample(String g, FQTrainingExampleStreamer builderFactory, ParamVector paramVec, SRW learner) {
-//			this.g = g;
-//			this.builderFactory = builderFactory;
-//			this.paramVec = paramVec;
-//			this.learner = learner;
-//		}
-//	}
 	
 	private class Parse implements Callable<PosNegRWExample> {
 		String in;
@@ -313,6 +271,33 @@ public class Trainer {
 			return ex.length();
 		}
 	}
+	
+	private class Grad implements Callable<Integer> {
+		Future<PosNegRWExample> in;
+		ParamVector paramVec;
+		ParamVector sumGradient;
+		SRW learner;
+		int id;
+		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SRW learner, int id) {
+			this.in = parsed;
+			this.id = id;
+			this.learner = learner;
+			this.paramVec = paramVec;
+			this.sumGradient = sumGradient;
+		}
+		@Override
+		public Integer call() throws Exception {
+			PosNegRWExample ex = in.get();
+			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
+			learner.accumulateGradient(paramVec, ex, sumGradient);
+			if (log.isDebugEnabled()) log.debug("Gradient done "+this.id);
+			return 1; 
+			// ^^^^ this is the equivalent of k++ from before;
+			// the total sum (query count) will be stored in numExamplesThisEpoch
+			// by TraceLosses. It's a hack but it works
+		}
+	}
+	
 
 	protected Integer numExamplesThisEpoch = 0;
 	/**
@@ -343,47 +328,6 @@ public class Trainer {
 			}
 		}
 	}
-//	/**
-//	 * Builds the streamer of all training inputs from the streamer of training examples. 
-//	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
-//	 *
-//	 */
-//	private class FQTrainingExampleStreamer implements Iterable<FQTrainingExample>,Iterator<FQTrainingExample> {
-//		Iterator<String> examples;
-//		ParamVector paramVec;
-//		HashMap<String,LearningGraphBuilder> builderSource = new HashMap<String,LearningGraphBuilder>();
-//		LearningGraphBuilder builder;
-//		public FQTrainingExampleStreamer(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
-//			this.examples = examples.iterator();
-//			this.builder = builder;
-//			this.paramVec = paramVec;
-//		}
-//		@Override
-//		public Iterator<FQTrainingExample> iterator() {
-//			return this;
-//		}
-//
-//		@Override
-//		public boolean hasNext() {
-//			return examples.hasNext();
-//		}
-//
-//		@Override
-//		public FQTrainingExample next() {
-//			String example = examples.next();
-//			return new FQTrainingExample(example, this, paramVec, learner);
-//		}
-//
-//		@Override
-//		public void remove() {
-//			throw new UnsupportedOperationException("No removal of examples permitted during training!");
-//		}
-//		
-//		public LearningGraphBuilder getBuilder(Thread t) {
-//			if (!builderSource.containsKey(t.getName())) builderSource.put(t.getName(),builder.copy());
-//			return builderSource.get(t.getName());
-//		}
-//	}
 
 	public static void main(String[] args) {
 		try {
@@ -391,13 +335,6 @@ public class Trainer {
 			int outputFiles = Configuration.USE_PARAMS;
 			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
-			//		int flags = Configuration.USE_DEFAULTS 
-			//				| Configuration.USE_TRAIN 
-			//				| Configuration.USE_SRW 
-			//				| Configuration.USE_LEARNINGSET 
-			//				| Configuration.USE_PARAMS 
-			//				| Configuration.USE_DEFERREDPROGRAM
-			//				| Configuration.USE_MAXT;
 			ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
 			log.info(c.toString());
 
