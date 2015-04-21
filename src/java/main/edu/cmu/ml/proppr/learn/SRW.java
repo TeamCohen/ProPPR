@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.log4j.Logger;
 
@@ -204,6 +205,7 @@ public class SRW {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
 				params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
+				//params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*ThreadLocalRandom.current().nextDouble() : 0));
 			}
 		}
 	}

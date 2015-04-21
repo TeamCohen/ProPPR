@@ -5,6 +5,10 @@ import java.util.Iterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -51,7 +55,124 @@ public class Diagnostic {
 			srw.untrainedFeatures().add("id(trueLoop)");
 			srw.untrainedFeatures().add("id(trueLoopRestart)");
 			srw.untrainedFeatures().add("fixedWeight");
-			/* all diag tasks up to Srw: */
+
+
+			/* DiagSrwES: */
+
+			ArrayList<Future<PosNegRWExample>> parsed = new ArrayList<Future<PosNegRWExample>>();
+			final ExecutorService trainerPool = Executors.newFixedThreadPool(c.nthreads>1?c.nthreads/2:1);
+			final ExecutorService parserPool = Executors.newFixedThreadPool(c.nthreads>1?c.nthreads/2:1);
+			int i=1;
+			for (String s : new ParsedFile(groundedFile)) {
+				final int id = i++;
+				final String in = s;
+				parsed.add(parserPool.submit(new Callable<PosNegRWExample>() {
+								@Override
+								public PosNegRWExample call() throws Exception {
+									try {
+									//log.debug("Job start "+id);
+									//PosNegRWExample ret = parser.parse(in, b.copy());
+									log.debug("Parsing start "+id);
+									PosNegRWExample ret = new GroundedExampleParser().parse(in, b.copy());
+									log.debug("Parsing done "+id);
+									//log.debug("Job done "+id);
+									return ret;
+									} catch (IllegalArgumentException e) {
+										System.err.println("Problem with #"+id);
+										e.printStackTrace();
+									}
+									return null;
+								}}));
+			}
+			parserPool.shutdown();
+			i=1;
+			for (Future<PosNegRWExample> future : parsed) {
+				final int id = i++;
+				final Future<PosNegRWExample> in = future;
+				trainerPool.submit(new Runnable(){
+						@Override
+							public void run() {
+							try {
+								PosNegRWExample ex = in.get();
+								log.debug("Training start "+id);
+								srw.trainOnExample(params,ex);
+								log.debug("Training done "+id);
+							} catch (InterruptedException e) {
+								e.printStackTrace(); 
+							} catch (ExecutionException e) {
+								e.printStackTrace();
+							}
+							
+						}});
+			}
+			trainerPool.shutdown();
+			try {
+				parserPool.awaitTermination(7,TimeUnit.DAYS);
+				trainerPool.awaitTermination(7, TimeUnit.DAYS);
+			} catch (InterruptedException e) {
+				log.error("Interrupted?",e);
+			}
+			/* /SrwES */
+
+			/* SrwTtwop: 
+			final ExecutorService parserPool = Executors.newFixedThreadPool(c.nthreads>1?c.nthreads/2:1);
+			Multithreading<String,PosNegRWExample> m = new Multithreading<String,PosNegRWExample>(log);
+			m.executeJob(c.nthreads/2, new ParsedFile(groundedFile), 
+					new Transformer<String,PosNegRWExample>() {
+						@Override
+						public Callable<PosNegRWExample> transformer(final String in, final int id) {
+							return new Callable<PosNegRWExample>() {
+								@Override
+								public PosNegRWExample call() throws Exception {
+									try {
+									//log.debug("Job start "+id);
+									//PosNegRWExample ret = parser.parse(in, b.copy());
+									log.debug("Parsing start "+id);
+									PosNegRWExample ret = new GroundedExampleParser().parse(in, b.copy());
+									log.debug("Parsing done "+id);
+									//log.debug("Job done "+id);
+									return ret;
+									} catch (IllegalArgumentException e) {
+										System.err.println("Problem with #"+id);
+										e.printStackTrace();
+									}
+									return null;
+								}};
+						}}, new Cleanup<PosNegRWExample>() {
+							@Override
+							public Runnable cleanup(final Future<PosNegRWExample> in, final int id) {
+								return new Runnable(){
+									@Override
+									public void run() {
+										try {
+											final PosNegRWExample ex = in.get();
+											log.debug("Cleanup start "+id);
+											trainerPool.submit(new Runnable() {
+													@Override
+													public void run(){
+														log.debug("Training start "+id);
+														srw.trainOnExample(params,ex);
+														log.debug("Training done "+id);
+													}
+												});
+										} catch (InterruptedException e) {
+										    e.printStackTrace(); 
+										} catch (ExecutionException e) {
+										    e.printStackTrace();
+										}
+										log.debug("Cleanup done "+id);
+									}};
+							}}, c.throttle);
+			trainerPool.shutdown();
+			try {
+				trainerPool.awaitTermination(7, TimeUnit.DAYS);
+			} catch (InterruptedException e) {
+				log.error("Interrupted?",e);
+			}
+
+			 /SrwTtwop */
+
+			/* all diag tasks except SrwO: 
 			Multithreading<String,PosNegRWExample> m = new Multithreading<String,PosNegRWExample>(log);
 			m.executeJob(c.nthreads, new ParsedFile(groundedFile), 
 					new Transformer<String,PosNegRWExample>() {
@@ -96,7 +217,7 @@ public class Diagnostic {
 										log.debug("Cleanup done "+id);
 									}};
 							}}, c.throttle);
-			/**/
+			*/
 
 			/* SrwO:
 			   Multithreading<PosNegRWExample,Integer> m = new Multithreading<PosNegRWExample,Integer>(log);
