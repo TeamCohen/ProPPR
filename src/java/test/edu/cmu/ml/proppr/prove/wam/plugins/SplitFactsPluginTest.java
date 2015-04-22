@@ -26,7 +26,7 @@ public class SplitFactsPluginTest {
 				input,output,constants,modules);
 		assertEquals("# of plugins",c.plugins.length,1);
 		assertEquals("# of members",((SplitFactsPlugin)c.plugins[0]).plugins.size(),2);
-		assertTrue("claim",c.plugins[0].claim("validClass/1"));
+		assertTrue("claim",c.plugins[0]._claim("validClass/1"));
 		
 		Query q = Query.parse("validClass(X)");
 		WamInterpreter interp = new WamInterpreter(c.program,c.plugins);

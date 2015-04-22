@@ -11,7 +11,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
-import edu.cmu.ml.proppr.prove.wam.plugins.GraphlikePlugin;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
 
@@ -156,7 +155,7 @@ public class WamInterpreter {
 		if (s.isCompleted()) return Collections.emptyList();
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (WamPlugin plugin : this.plugins) {
-			if (plugin.claimRaw(s.getJumpTo())) {
+			if (plugin.claim(s.getJumpTo())) {
 				if (log.isDebugEnabled()) log.debug("Executing "+s.getJumpTo()+" from "+plugin.about());
 				this.restoreState(s);
 				if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
@@ -336,9 +335,9 @@ public class WamInterpreter {
 
 	public void freport() throws LogicProgramException {
 		for (Feature f : this.featureStack) {
-			if (f.functor.endsWith(GraphlikePlugin.WEIGHTED_GRAPH_SUFFIX)) {
+			if (f.functor.endsWith(WamPlugin.WEIGHTED_SUFFIX)) {
 				// convert foo#(X,Y,W) to foo(X,Y) with weight of W 
-				String fun = f.functor.substring(0,f.functor.length()-GraphlikePlugin.WEIGHTED_GRAPH_SUFFIX.length());
+				String fun = f.functor.substring(0,f.functor.length()-WamPlugin.WEIGHTED_SUFFIX.length());
 				Argument[] args = new Argument[2];
 				args[0] = f.args[0];
 				args[1] = f.args[1];

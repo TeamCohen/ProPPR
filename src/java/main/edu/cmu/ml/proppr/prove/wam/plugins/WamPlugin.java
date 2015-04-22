@@ -1,6 +1,8 @@
 package edu.cmu.ml.proppr.prove.wam.plugins;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
@@ -20,6 +22,8 @@ import edu.cmu.ml.proppr.util.APROptions;
  */
 public abstract class WamPlugin {
 	public static final String FACTS_FUNCTOR = "db(";
+	protected static final double DEFAULT_DSTWEIGHT = 1.0;
+	public static final String WEIGHTED_SUFFIX = "#";
 	public static Goal pluginFeature(WamPlugin plugin, String identifier) {
 		return new Goal("db",new ConstantArgument(plugin.getClass().getSimpleName()),new ConstantArgument(identifier));
 	}
@@ -45,19 +49,14 @@ public abstract class WamPlugin {
 	 * @param jumpto
 	 * @return
 	 */
-	public abstract boolean claim(String jumpto);
+	public abstract boolean _claim(String jumpto);
 	
-	public boolean claimRaw(String raw) {
-		if (raw.indexOf(WamInterpreter.WEIGHTED_JUMPTO_DELIMITER) < 0)
-			return claim(raw);
-		return claim(unweightedJumpto(raw));
+	public boolean claim(String rawJumpto) {
+		if (rawJumpto.indexOf(WamInterpreter.WEIGHTED_JUMPTO_DELIMITER) < 0)
+			return _claim(rawJumpto);
+		return _claim(unweightedJumpto(rawJumpto));
 	}
-//	/** The feature dictionary for the restart state.
-//	 * 
-//	 * @param state
-//	 * @param wamInterp
-//	 */
-//	public abstract void restartFD(State state, WamInterpreter wamInterp);
+	
 	/** Yield a list of successor states, not including the restart state.
 	 * 
 	 * @param state
@@ -87,5 +86,15 @@ public abstract class WamPlugin {
 	
 	public String toString() {
 		return this.about();
+	}
+
+	protected Map<Goal,Double> scaleFD(Map<Goal,Double> fd, double wt) {
+		if (wt == 1.0) return fd;
+		Map<Goal,Double> ret = new HashMap<Goal,Double>();
+		ret.putAll(fd);
+		for (Map.Entry<Goal, Double> val : ret.entrySet()) {
+			val.setValue(val.getValue() * wt);
+		}
+		return ret;
 	}
 }

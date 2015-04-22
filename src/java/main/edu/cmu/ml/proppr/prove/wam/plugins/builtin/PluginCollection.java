@@ -44,7 +44,7 @@ public abstract class PluginCollection extends WamPlugin {
 	}
 
 	@Override
-	public boolean claim(String jumpto) {
+	public boolean _claim(String jumpto) {
 		return registry.containsKey(jumpto);
 	}
 

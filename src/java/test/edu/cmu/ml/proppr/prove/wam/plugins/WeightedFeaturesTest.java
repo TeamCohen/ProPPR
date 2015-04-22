@@ -23,7 +23,8 @@ public class WeightedFeaturesTest {
 	public static final File DIR = new File("src/testcases/weighted");
 	public static final File RULES = new File(DIR,"tiny.wam");
 	public static final File LABELS = new File(DIR,"tinylabels.cfacts");
-	public static final File WORDS = new File(DIR,"tinycorpus.graph");
+	public static final File WORDSGRAPH = new File(DIR,"tinycorpus.graph");
+	public static final File WORDSFACTS = new File(DIR,"tinycorpus.cfacts");
 	
 
 	@Test
@@ -31,8 +32,9 @@ public class WeightedFeaturesTest {
 		APROptions apr = new APROptions();
 		Prover p = new DprProver(apr);
 		WamProgram program = WamBaseProgram.load(RULES);
-		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, LABELS, false), LightweightGraphPlugin.load(apr, WORDS, -1)};
+		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, LABELS, false), LightweightGraphPlugin.load(apr, WORDSGRAPH, -1)};
 		Grounder grounder = new Grounder(apr, p, program, plugins);
+		assertTrue(plugins[1].claim("hasWord#/3"));
 
 		Query query = Query.parse("predict(p1,Y)");
 		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
@@ -49,8 +51,9 @@ public class WeightedFeaturesTest {
 		APROptions apr = new APROptions();
 		Prover p = new DprProver(apr);
 		WamProgram program = WamBaseProgram.load(RULES);
-		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, LABELS, false), FactsPlugin.load(apr, WORDS, false)};
+		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, LABELS, false), FactsPlugin.load(apr, WORDSFACTS, false)};
 		Grounder grounder = new Grounder(apr, p, program, plugins);
+		assertTrue(plugins[1].claim("hasWord#/3"));
 
 		Query query = Query.parse("predict(p1,Y)");
 		ProofGraph pg = new ProofGraph(new InferenceExample(query, 

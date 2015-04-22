@@ -2,7 +2,6 @@ package edu.cmu.ml.proppr.prove.wam.plugins;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +32,9 @@ import gnu.trove.procedure.TObjectDoubleProcedure;
  */
 public abstract class GraphlikePlugin extends WamPlugin {
 	private static final Logger log = Logger.getLogger(LightweightGraphPlugin.class);
-
 	protected static final TObjectDoubleMap<String> DEFAULT_DSTLIST = new TObjectDoubleHashMap<String>(0);
 	protected static final List<String> DEFAULT_SRCLIST = Collections.emptyList();
-	protected static final double DEFAULT_DSTWEIGHT = 1.0;
 	protected static final String GRAPH_ARITY = "/2";
-	protected static final String WEIGHTED_GRAPH_SUFFIX_PLUS_ARITY = "#/3";
-	public static final String WEIGHTED_GRAPH_SUFFIX = "#";
 	public static final String FILE_EXTENSION = "graph";
 
 	protected abstract boolean indexContains(String label);
@@ -66,7 +61,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 	}
 
 	@Override
-	public boolean claim(String jumpto) {
+	public boolean _claim(String jumpto) {
 		return indexContains(jumpto);
 	}
 
@@ -74,32 +69,31 @@ public abstract class GraphlikePlugin extends WamPlugin {
 	public List<Outlink> outlinks(State state, WamInterpreter wamInterp,
 			boolean computeFeatures) throws LogicProgramException {
 		List<Outlink> result = new LinkedList<Outlink>();
-		String srcConst,dstConst,weightConst,indexKey;
-		boolean returnWeights = state.getJumpTo().endsWith(WEIGHTED_GRAPH_SUFFIX_PLUS_ARITY);
-		if (!returnWeights) {
-			srcConst = wamInterp.getConstantArg(2,1);
-			dstConst = wamInterp.getConstantArg(2,2);
-			weightConst = null;
-			indexKey = state.getJumpTo();
-		} else {
-			srcConst = wamInterp.getConstantArg(3,1);
-			dstConst = wamInterp.getConstantArg(3,2);
-			weightConst = wamInterp.getConstantArg(3,3);
-			indexKey = unweightedJumpto(state.getJumpTo());
-		}
-		if (returnWeights && weightConst!=null) {
-			throw new LogicProgramException("predicate "+state.getJumpTo()+" called with bound third argument!");
+		String indexKey = state.getJumpTo();
+		int delim = indexKey.indexOf(WamInterpreter.JUMPTO_DELIMITER);
+		int arity = Integer.parseInt(indexKey.substring(delim+1));
+		boolean returnWeights = indexKey.substring(0,delim).endsWith(WamPlugin.WEIGHTED_SUFFIX);
+		
+		String srcConst = wamInterp.getConstantArg(arity,1);
+		String dstConst = wamInterp.getConstantArg(arity,2);
+		String weightConst = null;
+		if (returnWeights) {
+			indexKey = unweightedJumpto(indexKey);
+			weightConst = wamInterp.getConstantArg(arity,3);
+			if (weightConst!=null) {
+				throw new LogicProgramException("predicate "+state.getJumpTo()+" called with bound third argument!");
+			}
 		}
 		if(srcConst == null) {
 			//throw new LogicProgramException("predicate "+state.getJumpTo()+" called with non-constant first argument!");
 			for (String src : indexGet(indexKey)) {
 				wamInterp.restoreState(state);
-				wamInterp.setArg(2,1,src);
+				wamInterp.setArg(arity,1,src);
 				State srcState = wamInterp.saveState();
-				outlinksPerSource(srcState, wamInterp, computeFeatures, returnWeights, indexKey, src, dstConst, weightConst, result);
+				outlinksPerSource(srcState, wamInterp, computeFeatures, returnWeights, indexKey, src, dstConst, weightConst, result, arity);
 			}
 		} else {
-			outlinksPerSource(state, wamInterp, computeFeatures, returnWeights, indexKey, srcConst, dstConst, weightConst, result);
+			outlinksPerSource(state, wamInterp, computeFeatures, returnWeights, indexKey, srcConst, dstConst, weightConst, result, arity);
 		}
 		return result;
 	}
@@ -107,7 +101,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 	private void outlinksPerSource(final State state, final WamInterpreter wamInterp, 
 			final boolean computeFeatures, final boolean returnWeights, final String indexKey,
 			final String srcConst, final String dstConst,final String weightConst,
-			final List<Outlink> result) throws LogicProgramException 
+			final List<Outlink> result, final int arity) throws LogicProgramException 
 	{
 		TObjectDoubleMap<String> values = this.indexGet(indexKey, srcConst);
 		if (!values.isEmpty()) {
@@ -120,17 +114,15 @@ public abstract class GraphlikePlugin extends WamPlugin {
 							if (dstConst != null && val==dstConst) {
 								wamInterp.restoreState(state);
 								if (returnWeights) {
-									wamInterp.setArg(3,3,weightString);
+									wamInterp.setArg(arity,3,weightString);
 								}
 								wamInterp.returnp();
 								wamInterp.executeWithoutBranching();
 							} else if (dstConst == null) {
 								wamInterp.restoreState(state);
-								if (returnWeights) {
-									wamInterp.setArg(3,2,val);										
-									wamInterp.setArg(3,3,weightString);
-								} else {
-									wamInterp.setArg(2,2,val);
+								wamInterp.setArg(arity,2,val);
+								if (returnWeights) {							
+									wamInterp.setArg(arity,3,weightString);
 								}
 								wamInterp.returnp();
 								wamInterp.executeWithoutBranching();
@@ -153,15 +145,5 @@ public abstract class GraphlikePlugin extends WamPlugin {
 					throw (LogicProgramException) e.getCause();
 			}
 		}
-	}
-
-	private Map<Goal,Double> scaleFD(Map<Goal,Double> fd, double wt) {
-		if (wt == 1.0) return fd;
-		Map<Goal,Double> ret = new HashMap<Goal,Double>();
-		ret.putAll(fd);
-		for (Map.Entry<Goal, Double> val : ret.entrySet()) {
-			val.setValue(val.getValue() * wt);
-		}
-		return ret;
 	}
 }
