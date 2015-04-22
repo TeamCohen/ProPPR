@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +18,7 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.RWOutlink;
@@ -59,7 +61,7 @@ public class RedBlueGraph {
 //			BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.WARN);
 //		}
 
-		LearningGraphBuilder lgb = new ArrayLearningGraph.ArrayLearningGraphBuilder();
+		LearningGraphBuilder lgb = new ArrayLearningGraphBuilder();
 		brGraph = (ArrayLearningGraph) lgb.create();
 		lgb.index(1);
 		lgb.setGraphSize(brGraph, magicNumber*2, -1);
@@ -71,12 +73,12 @@ public class RedBlueGraph {
 		addColor(lgb, brGraph, magicNumber,"b");
 		{
 			int u = nodes.getId("b0"), v=nodes.getId("r0");
-			TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
+			HashMap<String,Double> ff = new HashMap<String,Double>();
 			ff.put("fromb", 1.0);
 			ff.put("tor",1.0);
 			lgb.addOutlink(brGraph, u, new RWOutlink(ff,v));
 
-			ff = new TObjectDoubleHashMap<String>();
+			ff = new HashMap<String,Double>();
 			ff.put("fromr", 1.0);
 			ff.put("tob",1.0);
 			lgb.addOutlink(brGraph, v, new RWOutlink(ff,u));
@@ -106,7 +108,7 @@ public class RedBlueGraph {
 //				if (x!=y) {
 					String u = label+x;
 					String v = label+y;
-					TObjectDoubleMap<String> ff = new TObjectDoubleHashMap<String>();
+					HashMap<String,Double> ff = new HashMap<String,Double>();
 					ff.put("from"+label, 1.0);
 					ff.put("to"+label,1.0);
 					lgb.addOutlink(graph, nodes.getId(u),new RWOutlink(ff,nodes.getId(v)));

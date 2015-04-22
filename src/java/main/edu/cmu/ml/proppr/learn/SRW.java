@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.log4j.Logger;
 
@@ -155,6 +156,8 @@ public class SRW {
 			}
 			// end (c)
 
+			if (tu==0 && udeg>0) { throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.ex.toString()); }
+
 			// begin (d): for each neighbor v of u,
 			ex.dM_lo[uid] = new int[udeg];
 			ex.dM_hi[uid] = new int[udeg];
@@ -202,6 +205,7 @@ public class SRW {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
 				params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
+				//params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*ThreadLocalRandom.current().nextDouble() : 0));
 			}
 		}
 	}

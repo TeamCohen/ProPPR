@@ -18,7 +18,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.SplitFactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
-
+import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 
 import java.io.*;
 
@@ -61,6 +61,7 @@ public class Configuration {
 	public static final int USE_FORCE = 0x10;
 	public static final int USE_ORDER = 0x20;
 	public static final int USE_DUPCHECK = 0x40;
+	public static final int USE_THROTTLE = 0x80;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
 	private static final String APR_CONST_OPTION = "apr";
@@ -70,6 +71,8 @@ public class Configuration {
 	private static final String FORCE_CONST_OPTION = "force";
 	private static final String ORDER_CONST_OPTION = "order";
 	private static final String DUPCHECK_CONST_OPTION = "duplicateCheck";
+	private static final String THROTTLE_CONST_OPTION = "throttle";
+	
 
 	/* set class for module */
 	/** module. */
@@ -102,6 +105,7 @@ public class Configuration {
 	public boolean ternaryIndex = false;
 	public boolean maintainOrder = true;
 	public int duplicates = (int) 1e6;
+	public int throttle = Multithreading.DEFAULT_THROTTLE;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -199,6 +203,7 @@ public class Configuration {
 			else this.maintainOrder = false;
 		}
 		if (anyOn(flags,USE_DUPCHECK|USE_WAM) && line.hasOption(DUPCHECK_CONST_OPTION)) this.duplicates = (int) Double.parseDouble(line.getOptionValue(DUPCHECK_CONST_OPTION));
+		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION)) this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
 		
 		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
 	}
@@ -211,22 +216,20 @@ public class Configuration {
 	 */
 	protected void loadProgramFiles(CommandLine line, int[] flags, Options options) throws IOException {
 		this.program = null;
-		this.plugins = new WamPlugin[programFiles.length-1];
+		int nplugins = programFiles.length;
+		for (String s : programFiles) if (s.endsWith(".wam")) nplugins--;
+		this.plugins = new WamPlugin[nplugins];
 		int i=0;
 		int wam,graph,facts;
 		wam = graph = facts = 0;
 		int iFacts = -1;
 		for (String s : programFiles) {
-			if (i>=this.plugins.length) {
-				boolean hasWam=false;
-				for (String w : programFiles) if (w.endsWith(".wam")) hasWam=true;
-				if (!hasWam) usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Must contain a WAM file.");
-				else  usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Parser got very confused about how many plugins you specified. Send Katie a bug report!");
-			}
 			if (s.endsWith(".wam")) {
 				if (this.program != null) usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Multiple WAM programs not supported");
 				this.program = WamBaseProgram.load(this.getExistingFile(s));
 				wam++;
+			} else if (i>=this.plugins.length) {
+				usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Parser got very confused about how many plugins you specified. Send Katie a bug report!");
 			} else if (s.endsWith(GraphlikePlugin.FILE_EXTENSION)) {
 				this.plugins[i++] = LightweightGraphPlugin.load(this.apr, this.getExistingFile(s), this.duplicates);
 				graph++;
@@ -463,6 +466,14 @@ public class Configuration {
 					.withDescription("Default: "+duplicates+"\nCheck for duplicates, expecting <size> values. Increasing <size> is cheap.\n"
 							+"To turn off duplicate checking, set to -1.")
 					.create());
+		if (isOn(flags, USE_THROTTLE)) 
+			options.addOption(
+				OptionBuilder
+				.withLongOpt(THROTTLE_CONST_OPTION)
+				.withArgName("integer")
+				.hasArg()
+				.withDescription("Default: -1\nPause buffering of new jobs if unfinished queue grows beyond x. -1 to disable.")
+				.create());
 
 
 //		if (isOn(flags, USE_COMPLEX_FEATURES)) {
@@ -508,7 +519,7 @@ public class Configuration {
 		if (isOn(flags, USE_FORCE)) syntax.append(" [--").append(FORCE_CONST_OPTION).append("]");
 		if (isOn(flags, USE_ORDER)) syntax.append(" [--").append(ORDER_CONST_OPTION).append(" same|reorder]");
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM)) syntax.append(" [--").append(DUPCHECK_CONST_OPTION).append(" -1|integer]");
-		
+		if (isOn(flags, USE_THROTTLE)) syntax.append(" [--").append(THROTTLE_CONST_OPTION).append(" integer]");
 	}
 	
 	/**

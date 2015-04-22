@@ -81,4 +81,17 @@ public class PosNegRWExample extends RWExample {
 	public int[] getNegList() {
 		return negList;
 	}
+	
+	public String serialize() {
+		StringBuilder serialized = new StringBuilder("?")
+		.append("\t");
+		Dictionary.buildString(this.queryVec.keys(), serialized, ","); //query
+		serialized.append("\t");
+		Dictionary.buildString(this.posList,serialized,","); // pos
+		serialized.append("\t");
+		Dictionary.buildString(this.negList,serialized,","); //neg
+		serialized.append("\t");
+		this.graph.serialize(serialized);
+		return serialized.toString();
+	}
 }

@@ -1,13 +1,12 @@
 package edu.cmu.ml.proppr.graph;
 
-import gnu.trove.map.TObjectDoubleMap;
+import java.util.HashMap;
 
 public class RWOutlink {
-	public final TObjectDoubleMap<String> fd;
+	public final HashMap<String,Double> fd;
 	public final int nodeid;
-	public RWOutlink(TObjectDoubleMap<String> fd, int v) {
+	public RWOutlink(HashMap<String,Double> fd, int v) {
 		this.fd = fd;
 		this.nodeid = v;
 	}
-
 }

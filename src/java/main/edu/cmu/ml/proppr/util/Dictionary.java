@@ -36,7 +36,9 @@ public class Dictionary {
 			log.warn(d+" at "+msg+"; truncating");
 			return (d>0) ? Double.MAX_VALUE : -Double.MAX_VALUE; // does this even work?
 		} else if (d.isNaN()) {
-			throw new IllegalArgumentException("NaN encountered at "+msg);
+			StringBuilder sb = new StringBuilder();
+			for (K k : msg) sb.append(",").append(k.toString());
+			throw new IllegalArgumentException("NaN encountered at "+sb.substring(1));
 		}
 		return d;
 	}
