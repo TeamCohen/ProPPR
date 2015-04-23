@@ -1,10 +1,13 @@
 package edu.cmu.ml.proppr.learn;
 
 
+import java.util.ArrayList;
+
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.SRW.SgdExample;
+import edu.cmu.ml.proppr.learn.external.GradientProvider;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
@@ -20,6 +23,10 @@ public class L2SRW extends SRW {
 
 	public L2SRW() {
 		super();
+	}
+
+	public L2SRW(SRWOptions sp, ArrayList<GradientProvider> gps) {
+		super(sp, gps);
 	}
 
 	/**

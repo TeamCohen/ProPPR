@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
+import edu.cmu.ml.proppr.learn.external.GradientProvider;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
@@ -56,6 +58,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 public class SRW {	
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
+	private static final List<GradientProvider> DEFAULT_PROVIDERS = Collections.emptyList();
 	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
@@ -63,13 +66,18 @@ public class SRW {
 	protected int epoch;
 	protected SRWOptions c;
 	protected LossData cumloss;
+	List<GradientProvider> gradientProviders;
 	public SRW() { this(new SRWOptions()); }
 	public SRW(int maxT) { this(new SRWOptions(maxT)); }
 	public SRW(SRWOptions params) {
+		this(params, DEFAULT_PROVIDERS);
+	}
+	public SRW(SRWOptions params, List<GradientProvider> gradientProviders) {
 		this.c = params;
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
 		this.cumloss = new LossData();
+		this.gradientProviders = gradientProviders;
 	}
 
 	/**
@@ -94,7 +102,7 @@ public class SRW {
 
 		initializeFeatures(params, sgdex.g);
 		ParamVector<String,Double> prepare = new SimpleParamVector<String>();
-		prepareForExample(params, sgdex.g, prepare);
+		prepareForExample(params, sgdex.g, prepare); // grab any lazy-regularization terms
 		load(params, sgdex);
 		inference(params, sgdex);
 		TIntDoubleMap gradient = gradient(params,sgdex);
@@ -288,6 +296,11 @@ public class SRW {
 		// add regularization term
 		regularization(params, ex, gradient);
 		
+		// kill regularization of externally-handled features
+		for (int f : ex.blackList) {
+			gradient.put(f, 0.0);
+		}
+		
 		int nonzero=0;
 		double mag = 0;
 		
@@ -331,6 +344,11 @@ public class SRW {
 
 //		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
 		if (nonzero==0) log.warn("0 gradient. Try another weighting scheme? "+ex.ex.toString());
+		
+		for (GradientProvider gp : this.gradientProviders) {
+			if (log.isDebugEnabled()) log.debug("Sending gradient to "+gp.getClass().getName());
+			gp.updateGradient(ex.g, gradient);
+		}
 		return gradient;
 	}
 	
@@ -338,9 +356,10 @@ public class SRW {
 	protected void regularization(ParamVector params, SgdExample ex, TIntDoubleMap gradient) {}
 
 
-	static class SgdExample {
+	protected class SgdExample {
 		PosNegRWExample ex;
 		ArrayLearningGraph g;
+		int[] blackList; // non-regularized features
 
 		// length = sum(nodes i) (degree of i) = #edges
 		double[][] M;
@@ -362,6 +381,42 @@ public class SRW {
 			if (! (example.getGraph() instanceof ArrayLearningGraph))
 				throw new IllegalStateException("Revised SRW requires ArrayLearningGraph in streamed examples. Run with --graphClass ArrayLearningGraph.");
 			this.g = (ArrayLearningGraph) example.getGraph();
+			initRegularizationBlacklist();
+		}
+		
+		private void initRegularizationBlacklist() {
+			int numProviders = gradientProviders.size();
+			if (numProviders == 0) {
+				this.blackList = new int[0];
+				return;
+			}
+			int[][] blackLists = new int[numProviders][];
+			int totalLength = 0;
+			for (int i=0; i<numProviders; i++) {
+				blackLists[i] = gradientProviders.get(i).updateGraph(this.g);
+				totalLength += blackLists[i].length;
+			}
+			int[] all = new int[totalLength];
+			for (int i=0,cursor=0; i<numProviders; i++) {
+				for (int j=0; j<blackLists[i].length; j++,cursor++) {
+					all[cursor] = blackLists[i][j];
+				}
+			}
+			
+			if (numProviders == 1) {
+				this.blackList = all;
+				return;
+			} else { // if we have more than one list, merge and deduplicate them
+				Arrays.sort(all);
+				int last = -1, cursor=0;
+				for (int i=0; i<all.length; i++) {
+					if (all[i]!=last) {
+						last = all[cursor] = all[i];
+						cursor++;
+					}
+				}
+				this.blackList = Arrays.copyOfRange(all, 0, cursor); // TODO: check for off-by-1 error here @cursor
+			}
 		}
 
 		public int getFeatureId(String f) {

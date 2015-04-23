@@ -1,6 +1,9 @@
 package edu.cmu.ml.proppr.learn;
 
+import java.util.ArrayList;
+
 import edu.cmu.ml.proppr.learn.SRW.SgdExample;
+import edu.cmu.ml.proppr.learn.external.GradientProvider;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
@@ -10,16 +13,17 @@ import edu.cmu.ml.proppr.util.SRWOptions;
 import gnu.trove.map.TIntDoubleMap;
 
 public class L1SRW extends SRW {
-	protected LossData cumloss;
 
 	public L1SRW(SRWOptions params) {
 		super(params);
-		this.cumloss = new LossData();
 	}
 
 	public L1SRW() {
 		super();
-		this.cumloss = new LossData();
+	}
+
+	public L1SRW(SRWOptions sp, ArrayList<GradientProvider> gps) {
+		super(sp,gps);
 	}
 
 	/**

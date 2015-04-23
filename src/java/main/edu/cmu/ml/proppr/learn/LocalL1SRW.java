@@ -1,10 +1,12 @@
 package edu.cmu.ml.proppr.learn;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.learn.SRW.SgdExample;
+import edu.cmu.ml.proppr.learn.external.GradientProvider;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
@@ -21,6 +23,9 @@ public class LocalL1SRW extends L1SRW {
 	}
 	public LocalL1SRW() { super(); }
 
+	public LocalL1SRW(SRWOptions sp, ArrayList<GradientProvider> gps) {
+		super(sp,gps);
+	}
 	@Override
 	public Set<String> localFeatures(ParamVector paramVec, LearningGraph graph) {
 		return graph.getFeatureSet();

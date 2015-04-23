@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.learn;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,6 +10,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.SRW.SgdExample;
+import edu.cmu.ml.proppr.learn.external.GradientProvider;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -25,6 +27,9 @@ public class LocalL2SRW extends L2SRW {
 	}
 	public LocalL2SRW() { super(); }
 
+	public LocalL2SRW(SRWOptions sp, ArrayList<GradientProvider> gps) {
+		super(sp,gps);
+	}
 	@Override
 	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
 		return graph.getFeatureSet();

@@ -1,8 +1,10 @@
 package edu.cmu.ml.proppr.learn;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.List;
 
+import edu.cmu.ml.proppr.learn.external.GradientProvider;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -17,6 +19,10 @@ public class LocalL1LaplacianPosNegLossTrainedSRW extends LocalL1SRW {
 	}
 	public LocalL1LaplacianPosNegLossTrainedSRW() { super(); }
 
+	public LocalL1LaplacianPosNegLossTrainedSRW(SRWOptions sp,
+			ArrayList<GradientProvider> gps) {
+		super(sp,gps);
+	}
 	private void prepareFeature(ParamVector paramVec, String f) {
 		if (!trainable(f)) return;
 		int gap = ((MuParamVector)paramVec).getLast(f);

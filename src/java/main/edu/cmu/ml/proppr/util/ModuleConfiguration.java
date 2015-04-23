@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.util;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
@@ -10,6 +11,7 @@ import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.learn.DprSRW;
 import edu.cmu.ml.proppr.learn.SRW;
+import edu.cmu.ml.proppr.learn.external.GradientProvider;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
@@ -27,6 +29,7 @@ import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 public class ModuleConfiguration extends Configuration {
 	private static final String SEED_CONST_OPTION = "seed";
 	private static final String SRW_MODULE_OPTION = "srw";
+	private static final String GRADIENTPROVIDERS_MODULE_OPTION = "gradientProviders";
 	private static final String TRAINER_MODULE_OPTION = "trainer";
 	private static final String GROUNDER_MODULE_OPTION = "grounder";
 	private static final String WEIGHTINGSCHEME_MODULE_OPTION = "weightingScheme";
@@ -34,6 +37,7 @@ public class ModuleConfiguration extends Configuration {
 
 	private enum PROVERS { ppr, dpr, pdpr, dfs, tr };
 	private enum WEIGHTINGSCHEMES { linear, sigmoid, tanh, ReLU, exp };
+	private enum GRADIENTPROVIDERS { };
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -99,7 +103,7 @@ public class ModuleConfiguration extends Configuration {
 //							+ "Available parameters:\n"
 //							+ "throttle=integer (restrict size of job queue to save memory)")
 //							.create());
-		if (isOn(flags, USE_SRW))
+		if (isOn(flags, USE_SRW)) {
 			options.addOption(
 					OptionBuilder
 					.withLongOpt(SRW_MODULE_OPTION)
@@ -117,6 +121,17 @@ public class ModuleConfiguration extends Configuration {
 							+ "Default mu=.001\n"
 							+ "Default eta=1.0")
 							.create());
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(GRADIENTPROVIDERS_MODULE_OPTION)
+					.withArgName("class[(args)]:...")
+					.hasArgs()
+					.withValueSeparator(':')
+					.withDescription("Default: none\n"
+							+ "Specify one or more external gradient methods. Available options:\n"
+							+ "_")
+							.create());
+		}
 		if (isOn(flags, USE_SRW))
 			options.addOption(
 					OptionBuilder
@@ -224,6 +239,30 @@ public class ModuleConfiguration extends Configuration {
 	protected void setupSRW(CommandLine line, int flags, Options options) {
 		SRWOptions sp = new SRWOptions(apr);
 
+		ArrayList<GradientProvider> gps = new ArrayList<GradientProvider>();
+		if (line.hasOption(GRADIENTPROVIDERS_MODULE_OPTION)) {
+			for (String value : line.getOptionValues(GRADIENTPROVIDERS_MODULE_OPTION)) {
+				String clazz = value;
+				int delim = clazz.indexOf("("); 
+				if (delim>0) clazz = clazz.substring(0,delim);
+				GradientProvider gp = null;
+				
+				try {
+					gp = (GradientProvider) Class.forName(clazz).newInstance();
+				} catch (InstantiationException | IllegalAccessException
+						| ClassNotFoundException e) {
+					try {
+						gp = (GradientProvider) Class.forName("edu.cmu.ml.proppr.learn.external."+clazz).newInstance();
+					} catch (InstantiationException | IllegalAccessException
+							| ClassNotFoundException ee) {
+						usageOptions(options,-1,-1,-1,flags,"No GradientProvider definition for '"+clazz+"'");
+					}
+				}
+				String[] args = delim<0? new String[0] : value.substring(delim+1, value.length()).split(",");
+				gp.init(args);
+				gps.add(gp);
+			}
+		}
 		if (line.hasOption("maxT")) {
 			sp.maxT = Integer.parseInt(line.getOptionValue("maxT"));
 		}
@@ -257,24 +296,24 @@ public class ModuleConfiguration extends Configuration {
 			}
 
 			if (values[0].equals("l2p")) {
-				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp,gps);
 			} else if (values[0].equals("l1p")) {
-				this.srw = new edu.cmu.ml.proppr.learn.L1SRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.L1SRW(sp,gps);
 			} else if (values[0].equals("l1plocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1SRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1SRW(sp,gps);
 			} else if (values[0].equals("l1plaplacianlocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp,gps);
 			} else if (values[0].equals("l1plocalgrouplasso")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp,gps);
 			} else if (values[0].equals("l2plocal")) {
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp,gps);
 			} else if (values[0].equals("dpr")) {
 				this.srw = new edu.cmu.ml.proppr.learn.DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
 			} else {
 				usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
-			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
+			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp,gps);
 		}
 	}
 
