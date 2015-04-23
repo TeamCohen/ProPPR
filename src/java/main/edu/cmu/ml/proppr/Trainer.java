@@ -51,6 +51,7 @@ public class Trainer {
 	protected SRW learner;
 	protected int epoch;
 	LossData lossLastEpoch;
+	TrainingStatistics statistics=new TrainingStatistics();
 
 	public Trainer(SRW learner, int nthreads, int throttle) {
 		this.learner = learner;
@@ -65,6 +66,52 @@ public class Trainer {
 
 	public Trainer(SRW srw) {
 		this(srw, 1, Multithreading.DEFAULT_THROTTLE);
+	}
+	
+	public class TrainingStatistics {
+		int numExamplesThisEpoch = 0;
+		int exampleSetSize = 0;
+//		long minReadTime = Integer.MAX_VALUE;
+//		long maxReadTime = 0;
+		long readTime = 0;
+//		long minParseTime = Integer.MAX_VALUE;
+//		long maxParseTime = 0;
+		long parseTime = 0;
+//		long minTrainTime = Integer.MAX_VALUE;
+//		long maxTrainTime = 0;
+		long trainTime = 0;
+		void updateReadingStatistics(long time) {
+//			minReadTime = Math.min(time, minReadTime);
+//			maxReadTime = Math.max(time, maxReadTime);
+			readTime += time;
+		}
+		void updateParsingStatistics(long time) {
+//			minParseTime = Math.min(time, minParseTime);
+//			maxParseTime = Math.max(time, maxParseTime);
+			parseTime += time;
+		}
+		void updateTrainingStatistics(long time) {
+//			minTrainTime = Math.min(time, minTrainTime);
+//			maxTrainTime = Math.max(time, maxTrainTime);
+			trainTime += time;
+			exampleSetSize++;
+		}
+		synchronized void updateNumExamples(int length) {	
+			numExamplesThisEpoch+=length;
+		}
+		void checkStatistics() {
+			int poolSize = Math.max(1,nthreads/2);
+			readTime = Math.max(1, readTime);
+			parseTime = Math.max(1, parseTime);
+			trainTime = Math.max(1, trainTime);
+			// we can keep the parsing pool full if we can read $poolSize examples
+			// in the time it takes to parse 1 example
+			int parseFull = (int) Math.ceil(parseTime / readTime);
+			// we can keep the training pool full if parsing takes less time than training
+			int trainFull = (int) Math.ceil(trainTime * poolSize / parseTime);
+			if (parseFull < poolSize) log.warn((poolSize-parseFull)+" parsing threads went unused; reading from disk is slow. :(");
+			if (trainFull < poolSize) log.warn((poolSize-trainFull)+" training threads went unused; parsing is slow. Ask Katie to enable parsing vs training pool size adjustments.");
+		}
 	}
 
 	private ParamVector createParamVector() {
@@ -91,7 +138,7 @@ public class Trainer {
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
 		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
-		int nthreadsper = Math.max(this.nthreads/2, 1);
+		int poolSize = Math.max(this.nthreads/2, 1);
 		ExecutorService parsePool, trainPool, cleanPool; 
 		// loop over epochs
 		for (int i=0; i<numEpochs; i++) {
@@ -102,22 +149,25 @@ public class Trainer {
 
 			// reset counters & file pointers
 			this.learner.clearLoss();
-			numExamplesThisEpoch = 0;
+			this.statistics = new TrainingStatistics();
 			parseThreads.reset();
 			trainThreads.reset();
 			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 
 			// set up separate pools for parsing, training, and tracing losses
-			parsePool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
-			trainPool = Executors.newFixedThreadPool(nthreadsper, trainThreads);
+			parsePool = Executors.newFixedThreadPool(poolSize, parseThreads);
+			trainPool = Executors.newFixedThreadPool(poolSize, trainThreads);
 			cleanPool = Executors.newSingleThreadExecutor();
 			
 			// run examples
 			int id=1;
+			long start = System.currentTimeMillis();
 			for (String s : examples) {
+				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
 				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
 				Future<Integer> trained = trainPool.submit(new Train(parsed, paramVec, learner, id));
 				cleanPool.submit(new TraceLosses(trained, id));
+				start = System.currentTimeMillis();
 			}
 			parsePool.shutdown();
 			try {
@@ -139,14 +189,15 @@ public class Trainer {
 				printLossOutput(lossThisEpoch);
 				lossLastEpoch = lossThisEpoch;
 			}
+			statistics.checkStatistics();
 		}
 		return paramVec;
 	}
 	
 	private void printLossOutput(LossData lossThisEpoch) {
-		for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / numExamplesThisEpoch);
+		for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / statistics.numExamplesThisEpoch);
 		System.out.print("avg training loss " + lossThisEpoch.total()
-				+ " on "+ numExamplesThisEpoch +" examples");
+				+ " on "+ statistics.numExamplesThisEpoch +" examples");
 		System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
 		System.out.print(" : " + lossThisEpoch.loss.get(LOSS.REGULARIZATION));
 		if (epoch>1) {
@@ -212,7 +263,7 @@ public class Trainer {
 			String feature = it.next();
 			double unnormf = sumGradient.get(feature);
 			// query count stored in numExamplesThisEpoch, as noted above
-			double norm = unnormf / this.numExamplesThisEpoch.intValue();
+			double norm = unnormf / this.statistics.numExamplesThisEpoch;
 			sumGradient.put(feature, norm);
 		}
 
@@ -238,9 +289,11 @@ public class Trainer {
 		}
 		@Override
 		public PosNegRWExample call() throws Exception {
+			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
 			PosNegRWExample ex = new GroundedExampleParser().parse(in, builder.copy());
 			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
+			statistics.updateParsingStatistics(System.currentTimeMillis()-start);
 			return ex;
 		}
 		
@@ -265,9 +318,11 @@ public class Trainer {
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
+			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
 			learner.trainOnExample(paramVec, ex);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
+			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
 			return ex.length();
 		}
 	}
@@ -299,7 +354,6 @@ public class Trainer {
 	}
 	
 
-	protected Integer numExamplesThisEpoch = 0;
 	/**
 	 * Cleans up outputs from training (tracks some info for traceLosses)
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
@@ -317,9 +371,7 @@ public class Trainer {
 			try {
 				int n = this.in.get();
 				if (log.isDebugEnabled()) log.debug("Cleaning start "+this.id);
-				synchronized(numExamplesThisEpoch) {
-					numExamplesThisEpoch += n;
-				}
+				statistics.updateNumExamples(n);
 				if (log.isDebugEnabled()) log.debug("Cleaning done "+this.id);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
