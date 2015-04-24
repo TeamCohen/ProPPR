@@ -224,9 +224,6 @@ public class ModuleConfiguration extends Configuration {
 	protected void setupSRW(CommandLine line, int flags, Options options) {
 		SRWOptions sp = new SRWOptions(apr);
 
-		if (line.hasOption("maxT")) {
-			sp.maxT = Integer.parseInt(line.getOptionValue("maxT"));
-		}
 		if (line.hasOption(SRW_MODULE_OPTION)) {
 			String[] values = line.getOptionValues(SRW_MODULE_OPTION);
 

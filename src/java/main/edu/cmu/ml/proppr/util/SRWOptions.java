@@ -10,7 +10,6 @@ import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.DprProver;
 
 public class SRWOptions {
-	public static final int DEFAULT_MAX_T=10;
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
@@ -21,7 +20,6 @@ public class SRWOptions {
 	
 	private enum names {
 		mu,
-		maxT,
 		eta,
 		delta,
 		zeta,
@@ -32,8 +30,6 @@ public class SRWOptions {
 	
 	/** regularization */
 	public double mu;
-	/** iterations */
-	public int maxT;
 	/** learning rate */
 	public double eta;
 	/** 
@@ -57,10 +53,8 @@ public class SRWOptions {
 	public APROptions apr;
 	
 	/** */
-	public SRWOptions() { this(DEFAULT_MAX_T); }
 	public SRWOptions(APROptions options) {
 		this(
-				DEFAULT_MAX_T, 
 				DEFAULT_MU, 
 				DEFAULT_ETA, 
 				DEFAULT_WEIGHTING_SCHEME(), 
@@ -69,9 +63,8 @@ public class SRWOptions {
 				DEFAULT_ZETA, 
 				options);
 	}
-	public SRWOptions(int maxT) {
+	public SRWOptions() {
 		this(
-				maxT, 
 				DEFAULT_MU, 
 				DEFAULT_ETA, 
 				DEFAULT_WEIGHTING_SCHEME(), 
@@ -81,7 +74,6 @@ public class SRWOptions {
 				new APROptions()); 
 	}
 	public SRWOptions(
-			int maxT, 
 			double mu, 
 			double eta, 
 			WeightingScheme wScheme, 
@@ -89,7 +81,6 @@ public class SRWOptions {
 			File affgraph, 
 			double zeta,
 			APROptions options) {
-		this.maxT = maxT;
 		this.mu = mu;
 		this.eta = eta;
 		this.delta = delta;
@@ -111,7 +102,6 @@ public class SRWOptions {
 	public void set(String...setting) {
 		switch(names.valueOf(setting[0])) {
 		case mu: this.mu = Double.parseDouble(setting[1]); return;
-		case maxT: this.maxT = Integer.parseInt(setting[1]); return;
 		case eta: this.eta = Double.parseDouble(setting[1]); return;
 		case delta: this.delta = Double.parseDouble(setting[1]); return;
 		case zeta: this.zeta = Double.parseDouble(setting[1]); return;

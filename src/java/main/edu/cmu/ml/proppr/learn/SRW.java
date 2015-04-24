@@ -64,7 +64,6 @@ public class SRW {
 	protected SRWOptions c;
 	protected LossData cumloss;
 	public SRW() { this(new SRWOptions()); }
-	public SRW(int maxT) { this(new SRWOptions(maxT)); }
 	public SRW(SRWOptions params) {
 		this.c = params;
 		this.epoch = 1;
@@ -221,7 +220,7 @@ public class SRW {
 			it.advance();
 			ex.p[it.key()] = it.value();
 		}
-		for (int i=0; i<c.maxT; i++) {
+		for (int i=0; i<c.apr.maxDepth; i++) {
 			inferenceUpdate(ex);
 		}
 

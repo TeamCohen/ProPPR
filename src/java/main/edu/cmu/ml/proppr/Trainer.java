@@ -108,7 +108,7 @@ public class Trainer {
 			// in the time it takes to parse 1 example
 			int parseFull = (int) Math.ceil(parseTime / readTime);
 			// we can keep the training pool full if parsing takes less time than training
-			int trainFull = (int) Math.ceil(trainTime * poolSize / parseTime);
+			int trainFull = (int) Math.ceil(trainTime * (nthreads-poolSize) / parseTime);
 			if (parseFull < poolSize) log.warn((poolSize-parseFull)+" parsing threads went unused; reading from disk is slow. :(");
 			if (trainFull < poolSize) log.warn((poolSize-trainFull)+" training threads went unused; parsing is slow. Ask Katie to enable parsing vs training pool size adjustments.");
 		}
@@ -155,7 +155,7 @@ public class Trainer {
 			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 
 			// set up separate pools for parsing, training, and tracing losses
-			parsePool = Executors.newFixedThreadPool(poolSize, parseThreads);
+			parsePool = Executors.newFixedThreadPool(this.nthreads-poolSize, parseThreads);
 			trainPool = Executors.newFixedThreadPool(poolSize, trainThreads);
 			cleanPool = Executors.newSingleThreadExecutor();
 			
