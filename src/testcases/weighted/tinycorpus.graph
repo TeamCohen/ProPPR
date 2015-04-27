@@ -1,0 +1,5 @@
+hasWord	p1	good	0.9
+hasWord	p1	thing	0.1
+hasWord	n1	bad	1.0
+hasWord	n1	thing	0.5
+

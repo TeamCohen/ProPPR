@@ -89,17 +89,17 @@ public class ModuleConfiguration extends Configuration {
 							+ "Available options:\n"
 							+ "g[:threads[:throttle]] (default threads=3,throttle=-1)")
 							.create());
-		if (isOn(flags, USE_TRAINER))
-			options.addOption(
-					OptionBuilder
-					.withLongOpt(TRAINER_MODULE_OPTION)
-					.withArgName("class[:arg]")
-					.hasArgs()
-					.withValueSeparator(':')
-					.withDescription("Default: t:-1\n"
-							+ "Available options:\n"
-							+ "t[:throttle] (default throttle=-1)")
-							.create());
+//		if (isOn(flags, USE_TRAINER))
+//			options.addOption(
+//					OptionBuilder
+//					.withLongOpt(TRAINER_MODULE_OPTION)
+//					.withArgName("param=value:param=value...")
+//					.hasArgs()
+//					.withValueSeparator(':')
+//					.withDescription("Trainer parameters. Default: throttle=-1\n"
+//							+ "Available parameters:\n"
+//							+ "throttle=integer (restrict size of job queue to save memory)")
+//							.create());
 		if (isOn(flags, USE_SRW))
 			options.addOption(
 					OptionBuilder
@@ -198,12 +198,13 @@ public class ModuleConfiguration extends Configuration {
 		if (isOn(flags,USE_TRAIN)) {
 			this.setupSRW(line, flags, options);
 			seed(line);
-			int throttle = Multithreading.DEFAULT_THROTTLE;
-			if (line.hasOption(TRAINER_MODULE_OPTION)) {
-			    String[] values = line.getOptionValues(TRAINER_MODULE_OPTION);
-			    if (values.length > 1) throttle = Integer.parseInt(values[1]);
-			}
-			this.trainer = new Trainer(this.srw, this.nthreads, throttle);
+//			if (isOn(flags,USE_TRAINER) && line.hasOption(TRAINER_MODULE_OPTION)) {
+//				for (String v : line.getOptionValues(TRAINER_MODULE_OPTION)) {
+//					String[] parts = v.split("=");
+//					if (parts[0].equals("throttle")) throttle = Integer.parseInt(parts[1]);
+//				}
+//			}
+			this.trainer = new Trainer(this.srw, this.nthreads, this.throttle);
 		}
 
 		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
@@ -224,9 +225,6 @@ public class ModuleConfiguration extends Configuration {
 	protected void setupSRW(CommandLine line, int flags, Options options) {
 		SRWOptions sp = new SRWOptions(apr);
 
-		if (line.hasOption("maxT")) {
-			sp.maxT = Integer.parseInt(line.getOptionValue("maxT"));
-		}
 		if (line.hasOption(SRW_MODULE_OPTION)) {
 			String[] values = line.getOptionValues(SRW_MODULE_OPTION);
 

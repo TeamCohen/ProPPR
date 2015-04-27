@@ -2,7 +2,7 @@ package edu.cmu.ml.proppr.util;
 
 public class APROptions {
 	public static final double EPS_DEFAULT = 1e-4, MINALPH_DEFAULT=0.1;
-	public static final int MAXDEPTH_DEFAULT=10;
+	public static final int MAXDEPTH_DEFAULT=20;
 	private enum names {
 		eps,
 		epsilon,

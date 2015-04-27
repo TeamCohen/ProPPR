@@ -29,9 +29,9 @@ public class SparseGraphPluginTest {
 	
 	@Test
 	public void testClaim() {
-		assertTrue("child",plugin.claim("child/2"));
-		assertTrue("sister",plugin.claim("sister/2"));
-		assertTrue("spouse",plugin.claim("spouse/2"));
+		assertTrue("child",plugin._claim("child/2"));
+		assertTrue("sister",plugin._claim("sister/2"));
+		assertTrue("spouse",plugin._claim("spouse/2"));
 	}
 
 	@Test

@@ -74,13 +74,13 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 		return this.fd;
 	}
 
-	public static GraphlikePlugin load(APROptions apr, File f) {
+	public static WamPlugin load(APROptions apr, File f) {
 		return load(apr, f, -1);
 	}
 	/** Return a simpleGraphComponent with all the components loaded from
         a file.  The format of the file is that each line is a tab-separated 
         triple of edgelabel, sourceNode, destNode. */
-	public static GraphlikePlugin load(APROptions apr, File f, int duplicates) {
+	public static WamPlugin load(APROptions apr, File f, int duplicates) {
 		GraphlikePlugin p = new LightweightGraphPlugin(apr, f.getName());
 		ParsedFile parsed = new ParsedFile(f);
 		BloomFilter<String> lines = null;

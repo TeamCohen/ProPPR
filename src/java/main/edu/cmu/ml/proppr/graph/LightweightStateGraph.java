@@ -161,14 +161,14 @@ public class LightweightStateGraph extends InferenceGraph {
 					public boolean execute(int vi) {
 						sb.append("\t");
 						sb.append(ui).append(LearningGraphBuilder.SRC_DST_DELIM).append(vi);
-						sb.append(LearningGraphBuilder.EDGE_FEATURE_DELIM);
+						sb.append(LearningGraphBuilder.EDGE_DELIM);
 						//foreach feature on src,dst
 						edgeFeatureDict.get(ui).get(vi).forEachEntry(new TIntDoubleProcedure() {
 							
 							@Override
 							public boolean execute(int fi, double wi) {
 								sb.append(fi).append(LearningGraphBuilder.FEATURE_WEIGHT_DELIM)
-								.append(wi).append(LearningGraphBuilder.FEATURE_DELIM);
+								.append(wi).append(LearningGraphBuilder.EDGE_FEATURE_DELIM);
 								return true;
 							}
 						});

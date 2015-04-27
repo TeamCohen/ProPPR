@@ -250,7 +250,7 @@ class MeanAvgPrecision(Metric):
         numPosRetrieved = 0.0
         numRetrieved = 0.0
         ap = 0.0
-        for a in answerList:
+        for a in sorted(answerList, key=lambda a: -a.score):
             numRetrieved += 1.0
             if a.isPos:
                 numPosRetrieved += 1.0

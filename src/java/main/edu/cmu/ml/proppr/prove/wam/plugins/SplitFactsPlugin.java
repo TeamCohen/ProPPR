@@ -34,9 +34,9 @@ public class SplitFactsPlugin extends WamPlugin {
 	}
 
 	@Override
-	public boolean claim(String jumpto) {
+	public boolean _claim(String jumpto) {
 		for (FactsPlugin p : plugins)
-			if (p.claim(jumpto)) return true;
+			if (p._claim(jumpto)) return true;
 		return false;
 	}
 
@@ -45,7 +45,7 @@ public class SplitFactsPlugin extends WamPlugin {
 			boolean computeFeatures) throws LogicProgramException {
 		List<Outlink> ret = new ArrayList<Outlink>();
 		for (FactsPlugin p : plugins) {
-			if (p.claim(state.getJumpTo())) {
+			if (p._claim(state.getJumpTo())) {
 				wamInterp.restoreState(state);
 				List<Outlink> outs = p.outlinks(state, wamInterp, computeFeatures);
 				ret.addAll(outs);

@@ -54,7 +54,8 @@ public class SRWTest extends RedBlueGraph {
 	}
 	
 	public void initSrw() { 
-		srw = new SRW(10);
+		srw = new SRW();
+		srw.c.apr.maxDepth=10;
 	}
 	
 	public TIntDoubleMap myRWR(TIntDoubleMap startVec, ArrayLearningGraph g, int maxT) {

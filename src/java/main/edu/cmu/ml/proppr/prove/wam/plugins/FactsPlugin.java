@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.prove.wam.plugins;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,10 +24,10 @@ public class FactsPlugin extends WamPlugin {
 	public static final String FILE_EXTENSION="facts";
 	public static final boolean DEFAULT_INDICES=false;
 	protected Map<Goal,Double> fd = new HashMap<Goal,Double>();
-	protected Map<String,List<String[]>> indexJ = new HashMap<String,List<String[]>>();
-	protected Map<JumpArgKey,List<String[]>> indexJA1 = new HashMap<JumpArgKey,List<String[]>>();
-	protected Map<JumpArgKey,List<String[]>> indexJA2 = new HashMap<JumpArgKey,List<String[]>>();
-	protected Map<JumpArgArgKey,List<String[]>> indexJA1A2 = new HashMap<JumpArgArgKey,List<String[]>>();
+	protected Map<String,List<WeightedArgs>> indexJ = new HashMap<String,List<WeightedArgs>>();
+	protected Map<JumpArgKey,List<WeightedArgs>> indexJA1 = new HashMap<JumpArgKey,List<WeightedArgs>>();
+	protected Map<JumpArgKey,List<WeightedArgs>> indexJA2 = new HashMap<JumpArgKey,List<WeightedArgs>>();
+	protected Map<JumpArgArgKey,List<WeightedArgs>> indexJA1A2 = new HashMap<JumpArgArgKey,List<WeightedArgs>>();
 	// collected stats on how various indexes are used....
 	int numUsesGoalsMatching = 0;
 	int numUsesIndexF = 0;
@@ -42,23 +43,35 @@ public class FactsPlugin extends WamPlugin {
 		this.useTernaryIndex = useTernaryIndex;
 	}
 	
-	private static <T> void add(Map<T,List<String[]>> map, T key, String[] args) {
-		if (!map.containsKey(key)) map.put(key, new LinkedList<String[]>());
+	private static <T> void add(Map<T,List<WeightedArgs>> map, T key, WeightedArgs args) {
+		if (!map.containsKey(key)) map.put(key, new LinkedList<WeightedArgs>());
 		map.get(key).add(args);
 	}
 	
-	public void addFact(String functor, String ... args) {
+	public void addWeightedFact(String functor, double wt, String ... args) {
 		String jump = functor + "/" + args.length;
-		add(indexJ, jump, args);
+		WeightedArgs wargs = new WeightedArgs(args, wt);
+		add(indexJ, jump, wargs);
 		
-		add(indexJA1, new JumpArgKey(jump, args[0]), args);
+		add(indexJA1, new JumpArgKey(jump, args[0]), wargs);
 		
 		if (args.length > 1) {
-			add(indexJA2, new JumpArgKey(jump, args[1]), args);
+			add(indexJA2, new JumpArgKey(jump, args[1]), wargs);
 			
 			if (useTernaryIndex) {
-				add(indexJA1A2, new JumpArgArgKey(jump, args[0], args[1]), args);
+				add(indexJA1A2, new JumpArgArgKey(jump, args[0], args[1]), wargs);
 			}
+		}
+	}
+	
+	public void addFact(String functor, String ... args) {
+		if (functor.indexOf(WamPlugin.WEIGHTED_SUFFIX)==functor.length()-1) {
+			addWeightedFact(
+					functor.substring(0, functor.length()-1), 
+					Double.parseDouble(args[args.length-1]),
+					Arrays.copyOf(args, args.length-1));
+		} else {
+			addWeightedFact(functor, WamPlugin.DEFAULT_DSTWEIGHT, args);
 		}
 	}
 
@@ -68,39 +81,41 @@ public class FactsPlugin extends WamPlugin {
 	}
 
 	@Override
-	public boolean claim(String jumpto) {
+	public boolean _claim(String jumpto) {
 		return this.indexJ.containsKey(jumpto);
 	}
-
-//	@Override
-//	public void restartFD(State state, WamInterpreter wamInterp) {
-//		throw new RuntimeException("Not yet implemented");
-//	}
 
 	@Override
 	public List<Outlink> outlinks(State state, WamInterpreter wamInterp,
 			boolean computeFeatures) throws LogicProgramException {
 		List<Outlink> result = new LinkedList<Outlink>();
-		int arity = Integer.parseInt(state.getJumpTo().split("/")[1]);
+		String jumpTo = state.getJumpTo();
+		int delim = jumpTo.indexOf(WamInterpreter.JUMPTO_DELIMITER);
+		int arity = Integer.parseInt(jumpTo.substring(delim+1));
+		boolean returnWeights = jumpTo.substring(0,delim).endsWith(WamPlugin.WEIGHTED_SUFFIX);
+		if (returnWeights) jumpTo = unweightedJumpto(state.getJumpTo());
 		String[] argConst = new String[arity];
 		for (int i=0; i<arity; i++) argConst[i]=wamInterp.getConstantArg(arity,i+1);
-		List<String[]> values = null;
+		if (returnWeights && argConst[arity-1] != null) {
+			throw new LogicProgramException("predicate "+state.getJumpTo()+" called with bound last argument!");
+		}
+		List<WeightedArgs> values = null;
 		// fill values according to the query
 		if (argConst[0] == null && (argConst.length == 1 || argConst[1] == null)) {
-			values = indexJ.get(state.getJumpTo());
+			values = indexJ.get(jumpTo);
 		} else if (argConst[0] != null && (argConst.length == 1 || argConst[1] == null)) {
-			values = indexJA1.get(new JumpArgKey(state.getJumpTo(), argConst[0]));
+			values = indexJA1.get(new JumpArgKey(jumpTo, argConst[0]));
 		} else if (argConst[0] == null && argConst.length > 1 && argConst[1] != null) {
-			values = indexJA2.get(new JumpArgKey(state.getJumpTo(), argConst[1]));
+			values = indexJA2.get(new JumpArgKey(jumpTo, argConst[1]));
 		} else if (argConst.length > 1 && argConst[0] != null && argConst[1] != null) {
 			if (useTernaryIndex) {
-				values = indexJA1A2.get(new JumpArgArgKey(state.getJumpTo(), argConst[0], argConst[1]));
+				values = indexJA1A2.get(new JumpArgArgKey(jumpTo, argConst[0], argConst[1]));
 			} else {
-				values = indexJA1.get(new JumpArgKey(state.getJumpTo(), argConst[0]));
-				List<String[]> alternate = indexJA2.get(new JumpArgKey(state.getJumpTo(), argConst[1]));
+				values = indexJA1.get(new JumpArgKey(jumpTo, argConst[0]));
+				List<WeightedArgs> alternate = indexJA2.get(new JumpArgKey(jumpTo, argConst[1]));
 				// treat null lists as empty lists here - wwc
-				if (alternate == null) alternate = new java.util.ArrayList<String[]>();
-				if (values == null) values = new java.util.ArrayList<String[]>();
+				if (alternate == null) alternate = new java.util.ArrayList<WeightedArgs>();
+				if (values == null) values = new java.util.ArrayList<WeightedArgs>();
 				if (values.size() > alternate.size()) values = alternate;
 			}
 		} else {
@@ -108,16 +123,22 @@ public class FactsPlugin extends WamPlugin {
 		}
 		// then iterate through what you got
 		if (values == null) return result;
-		for (String[] val : values) {
-			if (!check(argConst,val)) continue;
+		for (WeightedArgs val : values) {
+			if (!check(argConst,val.args,returnWeights)) continue;
 			wamInterp.restoreState(state);
 			for (int i=0; i<argConst.length; i++) {
-				if (argConst[i] == null) wamInterp.setArg(arity,i+1,val[i]);
+				if (argConst[i] == null) {
+					if (i<val.args.length) {
+						wamInterp.setArg(arity,i+1,val.args[i]);
+					} else if (returnWeights) {
+						wamInterp.setArg(arity, i+1, Double.toString(val.wt));
+					}
+				}
 			}
 			wamInterp.returnp();
 			wamInterp.executeWithoutBranching();
 			if (computeFeatures) {
-				result.add(new Outlink(this.fd, wamInterp.saveState()));
+				result.add(new Outlink(scaleFD(this.fd,val.wt), wamInterp.saveState()));
 			} else {
 				result.add(new Outlink(null, wamInterp.saveState()));
 			}
@@ -125,8 +146,16 @@ public class FactsPlugin extends WamPlugin {
 		return result;
 	}
 	
-	private boolean check(String[] args, String[] against) {
+	/** 
+	 * Verify that all non-null values in the first arg match the values in the second arg.
+	 * @param args
+	 * @param against
+	 * @param returnWeights
+	 * @return
+	 */
+	private boolean check(String[] args, String[] against, boolean returnWeights) {
 		for (int i=0; i<args.length; i++) {
+			if (i>=against.length) return returnWeights;
 			if (args[i] != null && !(args[i].equals(against[i]))) return false;
 		}
 		return true;
@@ -164,11 +193,20 @@ public class FactsPlugin extends WamPlugin {
 			return super.equals(o) && ((JumpArgArgKey)o).arg2.equals(this.arg2);
 		}
 	}
+	
+	public static class WeightedArgs {
+		String[] args;
+		double wt;
+		public WeightedArgs(String[] args, double wt) {
+			this.args = args;
+			this.wt = wt;
+		}
+	}
 
 	public void load(File f, int duplicates) {
 		ParsedFile parsed = new ParsedFile(f);
 		BloomFilter<String> lines = null;
-		if (duplicates>0) lines = new BloomFilter(1e-5,duplicates);
+		if (duplicates>0) lines = new BloomFilter<String>(1e-5,duplicates);
 		boolean exceeds=false;
 		for (String line : parsed) {
 			String[] parts =line.split("\t",2);

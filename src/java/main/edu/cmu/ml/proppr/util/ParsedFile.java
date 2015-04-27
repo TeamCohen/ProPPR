@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  *
  */
-public class ParsedFile implements Iterable<String>, Iterator<String> {
+public class ParsedFile implements Iterable<String>, Iterator<String>, FileBackedIterable {
 	private static final Logger log = Logger.getLogger(ParsedFile.class);
 	private static final boolean DEFAULT_STRICT=true;
 	private boolean cheating=false;
@@ -181,6 +181,10 @@ public class ParsedFile implements Iterable<String>, Iterator<String> {
 			this.close();
 			this.init(this.filename);
 		}
+	}
+	@Override
+	public void wrap() {
+		this.reset();
 	}
 
 }

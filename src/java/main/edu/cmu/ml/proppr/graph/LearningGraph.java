@@ -20,7 +20,5 @@ public abstract class LearningGraph {
 	public abstract int[] getNodes();
 	public abstract int nodeSize();
 	public abstract int edgeSize();
-//	/** No further edits will be made; optimize the graph. */
-//	public abstract void freeze();
-//	public abstract void addOutlink(int i, RWOutlink rwOutlink);
+	public abstract void serialize(StringBuilder serialized);
 }

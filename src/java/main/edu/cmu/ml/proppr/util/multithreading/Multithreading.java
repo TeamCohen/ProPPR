@@ -98,36 +98,38 @@ public class Multithreading<In,Out> {
 		ArrayDeque<Future<?>> transformerQueue = new ArrayDeque<Future<?>>();
 		
 		int id=0;
-		if (log.isDebugEnabled()) log.debug("Adding start: "+(id+1));
+		if (log.isDebugEnabled()) log.debug("Adding start "+(id+1));
 		for (In item : streamer) {
 			id++;
 
-			tidyQueue(transformerQueue);
-			if (throttle > 0 && transformerQueue.size() > throttle) {
-				int wait = 100;
-				if (log.isDebugEnabled()) log.debug("Throttling @"+id+"...");
-				while(transformerQueue.size() > throttle) {
-					try {
-						Thread.sleep(wait);
-					} catch (InterruptedException e) {
-						log.error("Interrupted while throttling tasks");
+			if (throttle > 0) {
+				tidyQueue(transformerQueue);
+				if(transformerQueue.size() > throttle) {
+					int wait = 100;
+					if (log.isDebugEnabled()) log.debug("Throttling @"+id+"...");
+					while(transformerQueue.size() > throttle) {
+						try {
+							Thread.sleep(wait);
+						} catch (InterruptedException e) {
+							log.error("Interrupted while throttling tasks");
+						}
+						tidyQueue(transformerQueue);
+						wait *= 1.5;
 					}
-					tidyQueue(transformerQueue);
-					wait *= 1.5;
+					if (log.isDebugEnabled()) log.debug("Throttling complete "+wait);
 				}
-				if (log.isDebugEnabled()) log.debug("Throttling complete "+wait);
 			}
 			
 			Future<Out> transformerFuture = transformerPool.submit(transformer.transformer(item, id));
-			if (log.isDebugEnabled()) log.debug("Adding done: "+id);
+			if (log.isDebugEnabled()) log.debug("Adding done "+(id));
 			if (maintainOrder) {
 				cleanupPool.submit(cleanup.cleanup(transformerFuture, id));
 			} else {
 				if (log.isDebugEnabled()) log.debug("Permitting rescheduling of #"+id);
 				cleanupPool.submit(cleanup.cleanup(transformerFuture, cleanupPool, id));
 			}
-			transformerQueue.add(transformerFuture);
-			if (log.isDebugEnabled() && streamer.hasNext()) log.debug("Adding start: "+(id+1));
+			if (throttle > 0) transformerQueue.add(transformerFuture);
+			if (log.isDebugEnabled()) log.debug("Adding start "+(id+1));
 		}
 		
 		// first we wait for all transformers to finish

@@ -11,7 +11,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
-import edu.cmu.ml.proppr.prove.wam.plugins.GraphlikePlugin;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
 
@@ -52,6 +51,8 @@ public class WamInterpreter {
 	private Map<Goal,Double> reportedFeatures;
 	private WamProgram program;
 	private WamPlugin[] plugins;
+	public static final String WEIGHTED_JUMPTO_DELIMITER="#/";
+	public static final String JUMPTO_DELIMITER = "/";
 	public WamInterpreter(WamProgram program, WamPlugin[] plugins) {
 		this(new SymbolTable<String>(), program, plugins);
 	}
@@ -334,9 +335,9 @@ public class WamInterpreter {
 
 	public void freport() throws LogicProgramException {
 		for (Feature f : this.featureStack) {
-			if (f.functor.endsWith(GraphlikePlugin.WEIGHTED_GRAPH_SUFFIX)) {
+			if (f.functor.endsWith(WamPlugin.WEIGHTED_SUFFIX)) {
 				// convert foo#(X,Y,W) to foo(X,Y) with weight of W 
-				String fun = f.functor.substring(0,f.functor.length()-GraphlikePlugin.WEIGHTED_GRAPH_SUFFIX.length());
+				String fun = f.functor.substring(0,f.functor.length()-WamPlugin.WEIGHTED_SUFFIX.length());
 				Argument[] args = new Argument[2];
 				args[0] = f.args[0];
 				args[1] = f.args[1];
@@ -446,7 +447,7 @@ public class WamInterpreter {
 				// call information
 				hash = hash << 1;
 				hash = hash ^ this.state.getJumpTo().hashCode();
-				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
+				int arity = Integer.parseInt(this.state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER)[1]);
 				for (int i=0; i<arity; i++) {
 					hash = hash ^ this.getArg(arity, i+1).hashCode();
 				}
@@ -481,7 +482,7 @@ public class WamInterpreter {
 			if (this.state.getJumpTo() != null) {
 				// call information
 				sb.append(this.state.getJumpTo()).append(" ");
-				int arity = Integer.parseInt(this.state.getJumpTo().split(Compiler.JUMPTO_DELIMITER)[1]);
+				int arity = Integer.parseInt(this.state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER)[1]);
 				for (int i=0; i<arity; i++) {
 					if (i>0) sb.append(" ");
 					sb.append(this.getArg(arity, i+1));
@@ -517,7 +518,7 @@ public class WamInterpreter {
 	 * @throws LogicProgramException */
 	private Goal nextPendingGoal() throws LogicProgramException {
 		State s = this.state;
-		String[] parts = state.getJumpTo().split(Compiler.JUMPTO_DELIMITER);
+		String[] parts = state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER);
 		int arity = Integer.parseInt(parts[1]);
 		Argument[] args = new Argument[arity];
 		for (int i=1; i<arity+1; i++) {
