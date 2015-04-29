@@ -342,6 +342,12 @@ public class Trainer {
 		}
 		@Override
 		public Integer call() throws Exception {
+<<<<<<< HEAD
+		    if (log.isDebugEnabled()) log.debug("Training start: example "+this.id);
+			in.learner.trainOnExample(in.paramVec, in.x);
+			if (log.isDebugEnabled()) log.debug("Training done: example "+this.id);
+			return in.x.length();
+=======
 			PosNegRWExample ex = in.get();
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
 			learner.accumulateGradient(paramVec, ex, sumGradient);
@@ -350,6 +356,7 @@ public class Trainer {
 			// ^^^^ this is the equivalent of k++ from before;
 			// the total sum (query count) will be stored in numExamplesThisEpoch
 			// by TraceLosses. It's a hack but it works
+>>>>>>> f1e0493d5c4665bced591ab3e2e972bee0e3d8e0
 		}
 	}
 	
@@ -369,10 +376,19 @@ public class Trainer {
 		@Override
 		public void run() {
 			try {
+<<<<<<< HEAD
+			    if (log.isDebugEnabled()) log.debug("Cleaning start: example "+this.id);
+				int n = this.in.get();
+				synchronized(numExamplesThisEpoch) {
+				    numExamplesThisEpoch += n;
+				}
+			    if (log.isDebugEnabled()) log.debug("Cleaning done: example "+this.id);				
+=======
 				int n = this.in.get();
 				if (log.isDebugEnabled()) log.debug("Cleaning start "+this.id);
 				statistics.updateNumExamples(n);
 				if (log.isDebugEnabled()) log.debug("Cleaning done "+this.id);
+>>>>>>> f1e0493d5c4665bced591ab3e2e972bee0e3d8e0
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
@@ -401,7 +417,7 @@ public class Trainer {
 					new ArrayLearningGraphBuilder(), 
 					c.epochs, 
 					c.traceLosses);
-			System.out.println("Training time: "+(System.currentTimeMillis()-start));
+			log.info("Finished training in "+(System.currentTimeMillis()-start)+" ms");
 
 			if (c.paramsFile != null) {
 				log.info("Saving parameters to "+c.paramsFile+"...");

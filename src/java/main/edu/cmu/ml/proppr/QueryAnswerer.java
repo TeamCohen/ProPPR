@@ -239,7 +239,9 @@ public class QueryAnswerer {
 				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.weightingScheme);
 				file.check(c);
 			}
+			long start = System.currentTimeMillis();
 			qa.findSolutions(c.queryFile, c.solutionsFile, c.maintainOrder);
+			System.out.println("Query-answering time: "+(System.currentTimeMillis()-start));
 
 		} catch (Throwable t) {
 			t.printStackTrace();

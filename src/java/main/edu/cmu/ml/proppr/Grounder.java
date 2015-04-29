@@ -304,7 +304,7 @@ public class Grounder {
 			}
 			long start = System.currentTimeMillis();
 			c.grounder.groundExamples(c.queryFile, c.groundedFile, c.maintainOrder);
-			System.out.println("Time "+(System.currentTimeMillis()-start) + " msec");
+			System.out.println("Grounding time: "+(System.currentTimeMillis()-start));
 			System.out.println("Done.");
 
 		} catch (Throwable t) {

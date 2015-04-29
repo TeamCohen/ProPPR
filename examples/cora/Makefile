@@ -11,6 +11,8 @@ ifeq ($(strip $(EPOCHS)),)
 EPOCHS=30
 endif
 
+SRW=l2plocal:mu=0.002:eta=$(ETA)
+
 ### DATASET
 
 TRAIN=train
