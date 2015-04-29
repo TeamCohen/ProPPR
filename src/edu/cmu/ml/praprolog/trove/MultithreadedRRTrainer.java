@@ -51,9 +51,11 @@ public class MultithreadedRRTrainer extends Trainer {
 		if (currentTrainingRun.executor != null) {
 			throw new IllegalStateException("template called out of order! Must clean up last example set using cleanUpExamples()");
 		}
-		
+
+		currentTrainingRun.executor = Executors.newFixedThreadPool(nthreads);
+		currentTrainingRun.futures = new ArrayDeque<Future>();
 //		currentTrainingRun.trainers = new ArrayList<TrainerThread>();
-		currentTrainingRun.queue = new ArrayList<TrainerExample>();
+//		currentTrainingRun.queue = new ArrayList<TrainerExample>();
 	}
 
 	@Override
@@ -61,25 +63,24 @@ public class MultithreadedRRTrainer extends Trainer {
 //		if (currentTrainingRun.trainers == null) {
 //			throw new IllegalStateException("template called out of order! Call setUpExamples() first");
 //		}
-		currentTrainingRun.queue
-			.add(new TrainerExample(this.learner, currentTrainingRun, x, traceLosses));
+		currentTrainingRun.futures.add(
+				currentTrainingRun.executor.submit(
+						new TrainerThread(new TrainerExample(this.learner, currentTrainingRun, x, traceLosses),k)));
+//		currentTrainingRun.queue
+//			.add();
 		
 	}
 	
 	@Override
 	protected void cleanUpExamples(int epoch,ParamVector paramVec) {
 //		int n=0;
-		int nX = currentTrainingRun.queue.size();
-		currentTrainingRun.executor = Executors.newFixedThreadPool(nthreads);
-		currentTrainingRun.futures = new ArrayDeque<Future>();
-		int k=0;
-		for (TrainerExample ex : currentTrainingRun.queue) {
-			currentTrainingRun.futures.add(currentTrainingRun.executor.submit(new TrainerThread(ex,k)));
-			k++;
-		}
+//		int nX = currentTrainingRun.queue.size();
+//		for (TrainerExample ex : currentTrainingRun.queue) {
+////			k++;
+//		}
 		
 		currentTrainingRun.executor.shutdown();
-		k=0;
+		int k=0;
 		int warningCounter = 0;
 		final int MAX_WARNINGS = 3;
 		for(Future f; (f=currentTrainingRun.futures.poll()) != null; k++) {

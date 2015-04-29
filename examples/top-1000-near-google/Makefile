@@ -5,7 +5,7 @@ include ../Makefile.in
 TRAIN=train
 TEST=test
 NAME=top-1000-near-google
-PROGRAM=${NAME}-nonrecursive.crules:${NAME}.cfacts:${NAME}-fact.graph
+PROGRAM=${NAME}-recursive.crules:${NAME}.cfacts:${NAME}-fact.graph
 
 
 ### TARGETS
