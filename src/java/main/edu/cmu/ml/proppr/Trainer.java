@@ -14,7 +14,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -139,7 +141,8 @@ public class Trainer {
 		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		int poolSize = Math.max(this.nthreads/2, 1);
-		ExecutorService parsePool, trainPool, cleanPool; 
+		ThreadPoolExecutor parsePool, trainPool;
+		ExecutorService cleanPool; 
 		// loop over epochs
 		for (int i=0; i<numEpochs; i++) {
 			// set up current epoch
@@ -155,8 +158,10 @@ public class Trainer {
 			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 
 			// set up separate pools for parsing, training, and tracing losses
-			parsePool = Executors.newFixedThreadPool(this.nthreads-poolSize, parseThreads);
-			trainPool = Executors.newFixedThreadPool(poolSize, trainThreads);
+			parsePool = new ThreadPoolExecutor(this.nthreads-poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),parseThreads);
+					//Executors.newFixedThreadPool(this.nthreads-poolSize, parseThreads);
+			trainPool = new ThreadPoolExecutor(              poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),trainThreads); 
+					//Executors.newFixedThreadPool(poolSize, trainThreads);
 			cleanPool = Executors.newSingleThreadExecutor();
 			
 			// run examples
@@ -172,6 +177,11 @@ public class Trainer {
 			parsePool.shutdown();
 			try {
 				parsePool.awaitTermination(7,TimeUnit.DAYS);
+				// allocate the threads parsePool was using to finishing off training for this epoch
+				trainPool.setCorePoolSize(this.nthreads); 
+				// by default ThreadPoolExecutor only creates new threads on submit() calls, so
+				// we must start up our new threads by hand.
+				while(trainPool.getActiveCount()>0) { if (!trainPool.prestartCoreThread()) break; }
 				trainPool.shutdown();
 				trainPool.awaitTermination(7, TimeUnit.DAYS);
 				cleanPool.shutdown();
