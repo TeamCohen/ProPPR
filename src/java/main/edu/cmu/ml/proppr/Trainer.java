@@ -143,6 +143,7 @@ public class Trainer {
 		int poolSize = Math.max(this.nthreads/2, 1);
 		ThreadPoolExecutor parsePool, trainPool;
 		ExecutorService cleanPool; 
+		TrainingStatistics total = new TrainingStatistics();
 		// loop over epochs
 		for (int i=0; i<numEpochs; i++) {
 			// set up current epoch
@@ -178,6 +179,7 @@ public class Trainer {
 			try {
 				parsePool.awaitTermination(7,TimeUnit.DAYS);
 				// allocate the threads parsePool was using to finishing off training for this epoch
+				//log.info("Reclaiming parser threads...");
 				trainPool.setCorePoolSize(this.nthreads); 
 				// by default ThreadPoolExecutor only creates new threads on submit() calls, so
 				// we must start up our new threads by hand.
@@ -200,7 +202,11 @@ public class Trainer {
 				lossLastEpoch = lossThisEpoch;
 			}
 			statistics.checkStatistics();
+			total.updateReadingStatistics(statistics.readTime);
+			total.updateParsingStatistics(statistics.parseTime);
+			total.updateTrainingStatistics(statistics.trainTime);
 		}
+		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime);
 		return paramVec;
 	}
 	
