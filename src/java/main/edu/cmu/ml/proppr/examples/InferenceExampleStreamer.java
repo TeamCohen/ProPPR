@@ -16,7 +16,7 @@ import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
 /**
- * Yields a RawPosNegExample for each line in a file. The format for each line is:
+ * Yields an InferenceExample for each line in a file. The format for each line is:
              queryGoal <TAB> +posGroundGoal <TAB> ... <TAB> -negGroundGoal
    where a goal is in the space-delimited format
    			 functor arg1 arg2 ...
