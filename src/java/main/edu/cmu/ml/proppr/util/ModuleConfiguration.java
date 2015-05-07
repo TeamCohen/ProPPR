@@ -6,6 +6,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import edu.cmu.ml.proppr.CachingTrainer;
 import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.learn.DprSRW;
@@ -34,6 +35,7 @@ public class ModuleConfiguration extends Configuration {
 
 	private enum PROVERS { ppr, dpr, pdpr, dfs, tr };
 	private enum WEIGHTINGSCHEMES { linear, sigmoid, tanh, ReLU, exp };
+	private enum TRAINERS { cached, streaming };
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -88,17 +90,18 @@ public class ModuleConfiguration extends Configuration {
 							+ "Available options:\n"
 							+ "g[:threads[:throttle]] (default threads=3,throttle=-1)")
 							.create());
-//		if (isOn(flags, USE_TRAINER))
-//			options.addOption(
-//					OptionBuilder
-//					.withLongOpt(TRAINER_MODULE_OPTION)
-//					.withArgName("param=value:param=value...")
-//					.hasArgs()
-//					.withValueSeparator(':')
-//					.withDescription("Trainer parameters. Default: throttle=-1\n"
-//							+ "Available parameters:\n"
-//							+ "throttle=integer (restrict size of job queue to save memory)")
-//							.create());
+		if (isOn(flags, USE_TRAINER))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(TRAINER_MODULE_OPTION)
+					.withArgName("class")
+					.hasArgs()
+					.withValueSeparator(':')
+					.withDescription("Default: cached\n"
+							+ "Available options:\n"
+							+ "cached    (faster)\n"
+							+ "streaming (large dataset)")
+							.create());
 		if (isOn(flags, USE_SRW))
 			options.addOption(
 					OptionBuilder
@@ -197,13 +200,15 @@ public class ModuleConfiguration extends Configuration {
 		if (isOn(flags,USE_TRAIN)) {
 			this.setupSRW(line, flags, options);
 			seed(line);
-//			if (isOn(flags,USE_TRAINER) && line.hasOption(TRAINER_MODULE_OPTION)) {
-//				for (String v : line.getOptionValues(TRAINER_MODULE_OPTION)) {
-//					String[] parts = v.split("=");
-//					if (parts[0].equals("throttle")) throttle = Integer.parseInt(parts[1]);
-//				}
-//			}
-			this.trainer = new Trainer(this.srw, this.nthreads, this.throttle);
+			if (isOn(flags,USE_TRAINER)) {
+				TRAINERS type = TRAINERS.cached;
+				if (line.hasOption(TRAINER_MODULE_OPTION)) type = TRAINERS.valueOf(line.getOptionValue(TRAINER_MODULE_OPTION));
+				switch(type) {
+				case streaming: this.trainer = new Trainer(this.srw, this.nthreads, this.throttle); break;
+				case cached:    this.trainer = new CachingTrainer(this.srw, this.nthreads, this.throttle); break;
+				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));
+				}
+			}
 		}
 
 		if (isOn(flags, USE_SRW) && this.srw==null) this.setupSRW(line,flags,options);
@@ -219,6 +224,7 @@ public class ModuleConfiguration extends Configuration {
 		if (isOn(flags, USE_PROVER)) syntax.append(" [--").append(PROVER_MODULE_OPTION).append(" ppr[:depth] | dpr[:eps[:alph[:strat]]] | tr[:depth] ]");
 		if (isOn(flags, USE_WEIGHTINGSCHEME)) 
 			syntax.append(" [--").append(WEIGHTINGSCHEME_MODULE_OPTION).append(" linear | sigmoid | tanh | ReLU | exp]");
+		if (isOn(flags, USE_TRAINER)) syntax.append(" [--").append(TRAINER_MODULE_OPTION).append(" cached|streaming]");
 	}
 
 	protected void setupSRW(CommandLine line, int flags, Options options) {
@@ -280,6 +286,8 @@ public class ModuleConfiguration extends Configuration {
 		String superString = super.toString();
 		if (superString==null) superString = "unknownConfigClass";
 		StringBuilder sb = new StringBuilder(superString).append("\n");
+		if (trainer != null)
+			sb.append(String.format(FORMAT_STRING, "Trainer")).append(": ").append(trainer.getClass().getCanonicalName()).append("\n");
 		if (prover != null)
 			sb.append(String.format(FORMAT_STRING, "Prover")).append(": ").append(prover.getClass().getCanonicalName()).append("\n");
 		if (srw != null)

@@ -43,12 +43,8 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 		arg1s = new TIntObjectHashMap<TObjectIntMap<String>>();
 		arg2s = new TIntObjectHashMap<String[]>();
 
-		ArrayList<String> matrices = new ArrayList<String>();
-		ParsedFile file = new ParsedFile(new File(matrixDir,MANIFEST));
-		for (String line : file) { matrices.add(line); }
-		file.close();
 		index=new TIntObjectHashMap<SparseMatrixIndex>();
-		for(String matrix: matrices) {
+		for(String matrix: new ParsedFile(new File(matrixDir,MANIFEST))) {
 			String[] parts = matrix.split("_");
 			int[] partIDs = new int[parts.length];
 			for (int i=0;i<parts.length;i++) partIDs[i] = functors.getId(parts[i]);

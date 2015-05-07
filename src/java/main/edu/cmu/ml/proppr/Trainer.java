@@ -18,11 +18,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
+import edu.cmu.ml.proppr.graph.LearningGraph.GraphFormatException;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
@@ -69,32 +71,32 @@ public class Trainer {
 	public Trainer(SRW srw) {
 		this(srw, 1, Multithreading.DEFAULT_THROTTLE);
 	}
-	
+
 	public class TrainingStatistics {
 		int numExamplesThisEpoch = 0;
 		int exampleSetSize = 0;
-//		long minReadTime = Integer.MAX_VALUE;
-//		long maxReadTime = 0;
+		//		long minReadTime = Integer.MAX_VALUE;
+		//		long maxReadTime = 0;
 		long readTime = 0;
-//		long minParseTime = Integer.MAX_VALUE;
-//		long maxParseTime = 0;
+		//		long minParseTime = Integer.MAX_VALUE;
+		//		long maxParseTime = 0;
 		long parseTime = 0;
-//		long minTrainTime = Integer.MAX_VALUE;
-//		long maxTrainTime = 0;
+		//		long minTrainTime = Integer.MAX_VALUE;
+		//		long maxTrainTime = 0;
 		long trainTime = 0;
 		void updateReadingStatistics(long time) {
-//			minReadTime = Math.min(time, minReadTime);
-//			maxReadTime = Math.max(time, maxReadTime);
+			//			minReadTime = Math.min(time, minReadTime);
+			//			maxReadTime = Math.max(time, maxReadTime);
 			readTime += time;
 		}
 		void updateParsingStatistics(long time) {
-//			minParseTime = Math.min(time, minParseTime);
-//			maxParseTime = Math.max(time, maxParseTime);
+			//			minParseTime = Math.min(time, minParseTime);
+			//			maxParseTime = Math.max(time, maxParseTime);
 			parseTime += time;
 		}
 		void updateTrainingStatistics(long time) {
-//			minTrainTime = Math.min(time, minTrainTime);
-//			maxTrainTime = Math.max(time, maxTrainTime);
+			//			minTrainTime = Math.min(time, minTrainTime);
+			//			maxTrainTime = Math.max(time, maxTrainTime);
 			trainTime += time;
 			exampleSetSize++;
 		}
@@ -116,7 +118,7 @@ public class Trainer {
 		}
 	}
 
-	private ParamVector createParamVector() {
+	protected ParamVector createParamVector() {
 		return new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads));
 	}
 
@@ -155,15 +157,14 @@ public class Trainer {
 			this.statistics = new TrainingStatistics();
 			parseThreads.reset();
 			trainThreads.reset();
-			if (examples instanceof FileBackedIterable) ((FileBackedIterable) examples).wrap();
 
 			// set up separate pools for parsing, training, and tracing losses
 			parsePool = new ThreadPoolExecutor(this.nthreads-poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),parseThreads);
-					//Executors.newFixedThreadPool(this.nthreads-poolSize, parseThreads);
+			//Executors.newFixedThreadPool(this.nthreads-poolSize, parseThreads);
 			trainPool = new ThreadPoolExecutor(              poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),trainThreads); 
-					//Executors.newFixedThreadPool(poolSize, trainThreads);
+			//Executors.newFixedThreadPool(poolSize, trainThreads);
 			cleanPool = Executors.newSingleThreadExecutor();
-			
+
 			// run examples
 			int id=1;
 			long start = System.currentTimeMillis();
@@ -189,7 +190,7 @@ public class Trainer {
 			} catch (InterruptedException e) {
 				log.error("Interrupted?",e);
 			}
-			
+
 			// finish any trailing updates for this epoch
 			this.learner.cleanupParams(paramVec,paramVec);
 
@@ -203,8 +204,9 @@ public class Trainer {
 		}
 		return paramVec;
 	}
-	
-	private void printLossOutput(LossData lossThisEpoch) {
+
+
+	protected void printLossOutput(LossData lossThisEpoch) {
 		for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / statistics.numExamplesThisEpoch);
 		System.out.print("avg training loss " + lossThisEpoch.total()
 				+ " on "+ statistics.numExamplesThisEpoch +" examples");
@@ -230,24 +232,24 @@ public class Trainer {
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
 		paramVec = this.learner.setupParams(paramVec);
-		
-//		
-//		//WW: accumulate example-size normalized gradient
-//		for (PosNegRWExample x : examples) {
-////			this.learner.initializeFeatures(paramVec,x.getGraph());
-//			this.learner.accumulateGradient(paramVec, x, sumGradient);
-//			k++;
-//		}
+
+		//		
+		//		//WW: accumulate example-size normalized gradient
+		//		for (PosNegRWExample x : examples) {
+		////			this.learner.initializeFeatures(paramVec,x.getGraph());
+		//			this.learner.accumulateGradient(paramVec, x, sumGradient);
+		//			k++;
+		//		}
 
 		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
 		NamedThreadFactory gradThreads = new NamedThreadFactory("grad-");
 		int nthreadsper = Math.max(this.nthreads/2, 1);
 		ExecutorService parsePool, gradPool, cleanPool; 
-		
+
 		parsePool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
 		gradPool = Executors.newFixedThreadPool(nthreadsper, gradThreads);
 		cleanPool = Executors.newSingleThreadExecutor();
-		
+
 		// run examples
 		int id=1;
 		for (String s : examples) {
@@ -267,7 +269,7 @@ public class Trainer {
 		}
 
 		this.learner.cleanupParams(paramVec, sumGradient);
-		
+
 		//WW: renormalize by the total number of queries
 		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
 			String feature = it.next();
@@ -279,7 +281,7 @@ public class Trainer {
 
 		return sumGradient;
 	}
-	
+
 	public ParamVector findGradient(ArrayList<PosNegRWExample> examples,
 			SimpleParamVector<String> simpleParamVector) {
 		// TODO Auto-generated method stub
@@ -287,8 +289,8 @@ public class Trainer {
 	}
 
 	/////////////////////// Multithreading scaffold ///////////////////////
-	
-	private class Parse implements Callable<PosNegRWExample> {
+
+	protected class Parse implements Callable<PosNegRWExample> {
 		String in;
 		LearningGraphBuilder builder;
 		int id;
@@ -306,7 +308,7 @@ public class Trainer {
 			statistics.updateParsingStatistics(System.currentTimeMillis()-start);
 			return ex;
 		}
-		
+
 	}
 
 	/**
@@ -314,7 +316,7 @@ public class Trainer {
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
 	 *
 	 */
-	private class Train implements Callable<Integer> {
+	protected class Train implements Callable<Integer> {
 		Future<PosNegRWExample> in;
 		ParamVector paramVec;
 		SRW learner;
@@ -336,8 +338,8 @@ public class Trainer {
 			return ex.length();
 		}
 	}
-	
-	private class Grad implements Callable<Integer> {
+
+	protected class Grad implements Callable<Integer> {
 		Future<PosNegRWExample> in;
 		ParamVector paramVec;
 		ParamVector sumGradient;
@@ -362,14 +364,14 @@ public class Trainer {
 			// by TraceLosses. It's a hack but it works
 		}
 	}
-	
+
 
 	/**
 	 * Cleans up outputs from training (tracks some info for traceLosses)
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
 	 *
 	 */
-	private class TraceLosses implements Runnable {
+	protected class TraceLosses implements Runnable {
 		Future<Integer> in;
 		int id;
 		public TraceLosses(Future<Integer> in, int id) {

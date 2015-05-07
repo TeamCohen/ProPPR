@@ -14,7 +14,6 @@ import org.apache.log4j.Logger;
 /**
  * File utility with support for automatically skipping blank lines and #-comments.
  * 
- * See Also RawPosNegExampleStreamer, which shares the same comment syntax.
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  *
  */
@@ -25,7 +24,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String>, FileBacke
 	private String filename;
 	private LineNumberReader reader;
 	private String peek;
-	private int dataLine=-2;
+	private int dataLine;
 	private boolean closed;
 	private boolean strict;
 	public ParsedFile(String filename) {
@@ -50,6 +49,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String>, FileBacke
 	
 	private void init(String filename) {
 		this.filename = filename;
+		this.dataLine=-2;
 		try {
 			reader = new LineNumberReader(new FileReader(filename));
 			closed = false;
@@ -110,6 +110,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String>, FileBacke
 	
 	@Override
 	public Iterator<String> iterator() {
+		this.reset();
 		return this;
 	}
 
