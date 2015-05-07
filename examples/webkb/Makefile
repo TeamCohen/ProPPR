@@ -4,13 +4,12 @@ include ../Makefile.in
 PROGRAM:=webkb0.wam:webkb.graph:webkb.cfacts
 SUBSETS:=wisc wash texas cornell
 
-
 ### TARGETS
 
 all: results.txt
 
 clean:
-	rm -f *results.txt *.params *.cooked *.log
+	rm -f *results.txt *.params *.grounded *.solutions.txt
 
 results.txt: $(addsuffix .results.txt,$(foreach subset,$(SUBSETS),$(addprefix pre.,$(subset)) $(addprefix post.,$(subset))))
 	echo phase.subset uR mR uMRR mMRR uMAP mMAP > $@
@@ -24,7 +23,7 @@ results.txt: $(addsuffix .results.txt,$(foreach subset,$(SUBSETS),$(addprefix pr
 	awk '{print "$*",$$0}' > $@
 
 %.params: train_no_%.data.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --trainer ${TRAINER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
 
 train_no_%.data.grounded: train_no_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS}
