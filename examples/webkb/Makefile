@@ -4,9 +4,6 @@ include ../Makefile.in
 PROGRAM:=webkb0.wam:webkb.graph:webkb.cfacts
 SUBSETS:=wisc wash texas cornell
 
-ifeq $(REORDER,)
-ORDER=--order reorder
-endif
 
 ### TARGETS
 
@@ -30,13 +27,13 @@ results.txt: $(addsuffix .results.txt,$(foreach subset,$(SUBSETS),$(addprefix pr
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --trainer ${TRAINER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
 
 train_no_%.data.grounded: train_no_%.data
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} ${ORDER}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS}
 
 pre.%.solutions.txt: train_no_%.data
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} ${ORDER}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS}
 
 post.%.solutions.txt: train_no_%.data %.params
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^) ${ORDER}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)
 
 .SECONDARY:
 #.PRECIOUS: train_no_%.data.cooked %.params
