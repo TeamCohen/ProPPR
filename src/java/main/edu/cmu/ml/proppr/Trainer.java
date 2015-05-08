@@ -145,6 +145,7 @@ public class Trainer {
 		int poolSize = Math.max(this.nthreads/2, 1);
 		ThreadPoolExecutor parsePool, trainPool;
 		ExecutorService cleanPool; 
+		TrainingStatistics total = new TrainingStatistics();
 		// loop over epochs
 		for (int i=0; i<numEpochs; i++) {
 			// set up current epoch
@@ -201,7 +202,11 @@ public class Trainer {
 				lossLastEpoch = lossThisEpoch;
 			}
 			statistics.checkStatistics();
+			total.updateReadingStatistics(statistics.readTime);
+			total.updateParsingStatistics(statistics.parseTime);
+			total.updateTrainingStatistics(statistics.trainTime);
 		}
+		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime);
 		return paramVec;
 	}
 

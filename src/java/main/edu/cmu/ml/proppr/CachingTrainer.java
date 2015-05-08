@@ -30,19 +30,26 @@ public class CachingTrainer extends Trainer {
 	public ParamVector train(Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ArrayList<PosNegRWExample> examples = new ArrayList<PosNegRWExample>();
 		GroundedExampleParser parser = new GroundedExampleParser();
+		TrainingStatistics total = new TrainingStatistics();
 		int id=0;
+		long start = System.currentTimeMillis();
 		for (String s : exampleFile) {
+			total.updateReadingStatistics(System.currentTimeMillis()-start);
 			id++;
 			try {
-				examples.add(parser.parse(s, builder.copy()));
+				long before = System.currentTimeMillis();
+				PosNegRWExample ex = parser.parse(s, builder.copy());
+				total.updateParsingStatistics(System.currentTimeMillis()-before);
+				examples.add(ex);
 			} catch (GraphFormatException e) {
 				log.error("Trouble with #"+id,e);
 			}
+			start = System.currentTimeMillis();
 		}
-		return trainCached(examples,builder,initialParamVec,numEpochs,traceLosses);
+		return trainCached(examples,builder,initialParamVec,numEpochs,traceLosses,total);
 	}
 	
-	public ParamVector trainCached(Iterable<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector trainCached(Iterable<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
@@ -66,12 +73,9 @@ public class CachingTrainer extends Trainer {
 
 			// run examples
 			int id=1;
-			long start = System.currentTimeMillis();
 			for (PosNegRWExample s : examples) {
-				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
 				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id));
 				cleanPool.submit(new TraceLosses(trained, id));
-				start = System.currentTimeMillis();
 			}
 			try {
 				trainPool.shutdown();
@@ -91,7 +95,11 @@ public class CachingTrainer extends Trainer {
 				printLossOutput(lossThisEpoch);
 				lossLastEpoch = lossThisEpoch;
 			}
+
+			total.updateTrainingStatistics(statistics.trainTime);
 		}
+		
+		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime);
 		return paramVec;
 	}
 
