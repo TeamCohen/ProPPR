@@ -7,10 +7,10 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.examples.DprExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.examples.PprExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.learn.SRW.SgdExample;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.prove.DprProver;
@@ -59,7 +59,7 @@ public class DprSRW extends SRW {
 		this.cumloss = new LossData();
 	}
 	
-	private double dotP(ArrayLearningGraph g, int eid, ParamVector paramVec) {
+	private double dotP(LearningGraph g, int eid, ParamVector paramVec) {
 		double dotP = 0;
 		for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
 			dotP += paramVec.get(g.featureLibrary.getSymbol(g.label_feature_id[fid])) 
@@ -68,7 +68,7 @@ public class DprSRW extends SRW {
 		return dotP;
 	}
 	
-	public double totalEdgeProbWeight(ArrayLearningGraph g, int uid,  ParamVector p) {
+	public double totalEdgeProbWeight(LearningGraph g, int uid,  ParamVector p) {
 		double sum = 0.0;
 		for(int eid = g.node_near_lo[uid]; eid < g.node_near_hi[uid]; eid++) {
 			double ew = c.weightingScheme.edgeWeight(g,eid,p); 
@@ -79,7 +79,7 @@ public class DprSRW extends SRW {
 	}
 	
 	// linear in # features on the edge :(
-	private boolean hasFeature(ArrayLearningGraph g, int eid, int flid) {
+	private boolean hasFeature(LearningGraph g, int eid, int flid) {
 		for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
 			if (g.label_feature_id[fid] == flid) return true;
 		}
@@ -96,7 +96,7 @@ public class DprSRW extends SRW {
 	 * @param dp
 	 * @param dr
 	 */
-	public void push(int u, ParamVector paramVec, AprSgdExample ex) {
+	public void push(int u, ParamVector paramVec, DprExample ex) {
 		log.debug("Pushing "+u);
 		
 		// update p for the pushed node:
@@ -105,22 +105,22 @@ public class DprSRW extends SRW {
 		TIntDoubleMap dru = ex.dr[u];
 		
 		TIntDoubleMap unwrappedDotP = new TIntDoubleHashMap();
-		for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
-			int v = ex.g.edge_dest[eid];
-			unwrappedDotP.put(v, dotP(ex.g,eid,paramVec));
+		for(int eid = ex.getGraph().node_near_lo[u], xvi = 0; eid < ex.getGraph().node_near_hi[u]; eid++, xvi++) {
+			int v = ex.getGraph().edge_dest[eid];
+			unwrappedDotP.put(v, dotP(ex.getGraph(),eid,paramVec));
 		}
 		
 		// calculate the sum of the weights (raised to exp) of the edges adjacent to the input node:
-		double rowSum = this.totalEdgeProbWeight(ex.g, u, paramVec);
+		double rowSum = this.totalEdgeProbWeight(ex.getGraph(), u, paramVec);
 		
 		// calculate the gradients of the rowSums (needed for the calculation of the gradient of r):
 		TIntDoubleMap drowSums = new TIntDoubleHashMap();
 		TIntDoubleMap prevdr = new TIntDoubleHashMap();
 		
-		Set<String> exampleFeatures = ex.g.getFeatureSet();
+		Set<String> exampleFeatures = ex.getGraph().getFeatureSet();
 		
 		for(String feature : exampleFeatures) {
-			int flid = ex.g.featureLibrary.getId(feature);
+			int flid = ex.getGraph().featureLibrary.getId(feature);
 //			log.debug("dru["+feature+"] = "+dru.get(feature));
 			// simultaneously update the dp for the pushed node:
 			if (trainable(feature)) {
@@ -128,9 +128,9 @@ public class DprSRW extends SRW {
 				Dictionary.increment(ex.dp[u], flid, c.apr.alpha * dru.get(flid));
 			}
 			double drowSum = 0;
-			for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
-				int v = ex.g.edge_dest[eid];
-				if(hasFeature(ex.g,eid,flid)) { //g.getFeatures(u, v).containsKey(feature)) {
+			for(int eid = ex.getGraph().node_near_lo[u], xvi = 0; eid < ex.getGraph().node_near_hi[u]; eid++, xvi++) {
+				int v = ex.getGraph().edge_dest[eid];
+				if(hasFeature(ex.getGraph(),eid,flid)) { //g.getFeatures(u, v).containsKey(feature)) {
 					drowSum += c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 				}
 			}
@@ -142,13 +142,13 @@ public class DprSRW extends SRW {
 		}
 		
 		// update dr for other vertices:
-		for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
-			int v = ex.g.edge_dest[eid];
+		for(int eid = ex.getGraph().node_near_lo[u], xvi = 0; eid < ex.getGraph().node_near_hi[u]; eid++, xvi++) {
+			int v = ex.getGraph().edge_dest[eid];
 			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
 			double ddotP = c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
 			for(String feature : exampleFeatures) {
-				int flid = ex.g.featureLibrary.getId(feature);
-				int contained = hasFeature(ex.g,eid,flid) ? 1 : 0;
+				int flid = ex.getGraph().featureLibrary.getId(feature);
+				int contained = hasFeature(ex.getGraph(),eid,flid) ? 1 : 0;
 				if (ex.dr[v] == null) ex.dr[v] = new TIntDoubleHashMap();
 				double vdr = Dictionary.safeGet(ex.dr[v],flid,0.0);
 				
@@ -162,8 +162,8 @@ public class DprSRW extends SRW {
 		// update r for all affected vertices:
 		double ru = ex.r[u];
 		ex.r[u]= ru * stayProb * (1 - c.apr.alpha);
-		for(int eid = ex.g.node_near_lo[u], xvi = 0; eid < ex.g.node_near_hi[u]; eid++, xvi++) {
-			int v = ex.g.edge_dest[eid];
+		for(int eid = ex.getGraph().node_near_lo[u], xvi = 0; eid < ex.getGraph().node_near_hi[u]; eid++, xvi++) {
+			int v = ex.getGraph().edge_dest[eid];
 			// calculate edge weight on v:
 			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
 			ex.r[v]+= (1 - stayProb) * (1 - c.apr.alpha) * (dotP / rowSum) * ru;
@@ -171,39 +171,27 @@ public class DprSRW extends SRW {
 	}
 
 	@Override	
-	protected void regularization(ParamVector params, SgdExample ex, TIntDoubleMap gradient) {
-		for (String f : localFeatures(params, ex.g)) {
+	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {
+		
+		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
 			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
 			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
-			gradient.adjustOrPutValue(ex.getFeatureId(f), ret, ret);
-		}
-	}
-	
-	class AprSgdExample extends SgdExample {
-		public double[] r;
-		public TIntDoubleMap[] dr;
-		public AprSgdExample(PosNegRWExample example) {
-			super(example);
+			gradient.adjustOrPutValue(ex.getGraph().featureLibrary.getId(f), ret, ret);
 		}
 	}
 	
 	@Override
-	protected SgdExample wrapExample(PosNegRWExample example) {
-		return new AprSgdExample(example);
-	}
-	
-	@Override
-	protected void inference(ParamVector params, SgdExample example) {
-		AprSgdExample ex = (AprSgdExample) example;
+	protected void inference(ParamVector params, PosNegRWExample example) {
+		DprExample ex = (DprExample) example;
 		
 		// startNode maps node->weight
-		TIntDoubleMap query = ex.ex.getQueryVec();
+		TIntDoubleMap query = ex.getQueryVec();
 		if (query.size() > 1) throw new UnsupportedOperationException("Can't do multi-node queries");
 		
 		// maps storing the probability and remainder weights of the nodes:
-		ex.p = new double[ex.g.node_hi];
-		ex.r = new double[ex.g.node_hi];
+		ex.p = new double[ex.getGraph().node_hi];
+		ex.r = new double[ex.getGraph().node_hi];
 		
 		// initializing the above maps:
 		Arrays.fill(ex.p, 0.0);
@@ -215,8 +203,8 @@ public class DprSRW extends SRW {
 		}
 		
 		// maps storing the gradients of p and r for each node:
-		ex.dp = new TIntDoubleMap[ex.g.node_hi];
-		ex.dr = new TIntDoubleMap[ex.g.node_hi];
+		ex.dp = new TIntDoubleMap[ex.getGraph().node_hi];
+		ex.dr = new TIntDoubleMap[ex.getGraph().node_hi];
 		
 		// initializing the above maps:
 //		for(int node : example.getGraph().getNodes()) {
@@ -231,12 +219,12 @@ public class DprSRW extends SRW {
 		
 		// APR Algorithm:
 		int completeCount = 0;
-		while(completeCount < ex.g.node_hi) {
+		while(completeCount < ex.getGraph().node_hi) {
 			if (log.isDebugEnabled()) log.debug("Starting pass");
 			completeCount = 0;
-			for(int u = 0; u < ex.g.node_hi; u++) {
+			for(int u = 0; u < ex.getGraph().node_hi; u++) {
 				double ru = ex.r[u];
-				int udeg = ex.g.node_near_hi[u] - ex.g.node_near_lo[u];
+				int udeg = ex.getGraph().node_near_hi[u] - ex.getGraph().node_near_lo[u];
 				if(ru / (double) udeg > c.apr.epsilon)
 					while(ru / udeg > c.apr.epsilon) {
 						this.push(u, params, ex);
@@ -248,12 +236,18 @@ public class DprSRW extends SRW {
 					if (log.isDebugEnabled()) log.debug("Counting "+u);
 				}
 			}
-			if (log.isDebugEnabled()) log.debug(completeCount +" of " + ex.g.node_hi + " completed this pass");
+			if (log.isDebugEnabled()) log.debug(completeCount +" of " + ex.getGraph().node_hi + " completed this pass");
 		}
 		
 //		GradientComponents g = new GradientComponents();
 //		g.p = p;
 //		g.d = dp;
 //		return g;
+	}
+	
+	@Override
+	public PosNegRWExample makeExample(String string, LearningGraph g,
+			TIntDoubleMap queryVec, int[] posList, int[] negList) {
+		return new DprExample(string, g, queryVec, posList, negList);
 	}
 }

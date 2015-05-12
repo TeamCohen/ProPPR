@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr.graph;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,9 @@ import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import gnu.trove.iterator.TIntDoubleIterator;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -29,11 +33,11 @@ public class LightweightStateGraph extends InferenceGraph {
 	private TIntObjectHashMap<TIntArrayList> near = new TIntObjectHashMap<TIntArrayList>();
 	private TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>> edgeFeatureDict = new TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>>();
 	private int edgeCount = 0;
-	
+
 	public LightweightStateGraph() {
 		this.nodeTab = new SymbolTable<State>();
 	}
-	
+
 	public LightweightStateGraph(HashingStrategy<State> nodeHash) {
 		this.nodeTab = new SymbolTable<State>(nodeHash);
 	}
@@ -42,12 +46,12 @@ public class LightweightStateGraph extends InferenceGraph {
 	public State getState(int u) {
 		return nodeTab.getSymbol(u);
 	}
-	
+
 	@Override
 	public State getRoot() {
 		return nodeTab.getSymbol(1);
 	}
-	
+
 	@Override
 	public int getId(State u) {
 		return nodeTab.getId(u);
@@ -136,57 +140,50 @@ public class LightweightStateGraph extends InferenceGraph {
 	 */
 	@Override
 	public String serialize() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(this.nodeSize()) //numNodes
-			.append("\t")
-			.append(this.edgeCount)
-			.append("\t");
-		
+		StringBuilder ret = new StringBuilder().append(this.nodeSize()) //numNodes
+				.append("\t")
+				.append(this.edgeCount)
+				.append("\t"); // waiting for label dependency size
+		int labelDependencies = 0;
+
+		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		
+
 		for (int fi = 1; fi <= this.featureTab.size(); fi++) {
 			if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
 			else first = false;
 			Goal f = this.featureTab.getSymbol(fi);
 			sb.append(f);
 		}
-	
+
 		// foreach src node
-		this.near.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
-			@Override
-			public boolean execute(final int ui, TIntArrayList nearu) {
-				//foreach dst from src
-				nearu.forEach(new TIntProcedure() {
-					@Override
-					public boolean execute(int vi) {
-						sb.append("\t");
-						sb.append(ui).append(LearningGraphBuilder.SRC_DST_DELIM).append(vi);
-						sb.append(LearningGraphBuilder.EDGE_DELIM);
-						//foreach feature on src,dst
-						edgeFeatureDict.get(ui).get(vi).forEachEntry(new TIntDoubleProcedure() {
-							
-							@Override
-							public boolean execute(int fi, double wi) {
-								sb.append(fi).append(LearningGraphBuilder.FEATURE_WEIGHT_DELIM)
-								.append(wi).append(LearningGraphBuilder.EDGE_FEATURE_DELIM);
-								return true;
-							}
-						});
-//						edgeFeatureDict.get(ui).get(vi).forEachKey(new TIntProcedure() {
-//							@Override
-//							public boolean execute(int fi) {
-//								sb.append(fi).append(",");
-//								return true;
-//							}
-//						});
-						// drop last ','
-						sb.deleteCharAt(sb.length()-1);
-						return true;
-					}
-				});
-				return true;
+		for (TIntObjectIterator<TIntArrayList> it = this.near.iterator(); it.hasNext();) {
+			it.advance();
+			int ui=it.key();
+			TIntArrayList nearu = it.value();
+			HashSet<Integer> outgoingFeatures = new HashSet<Integer>();
+			//foreach dst from src
+			for (TIntIterator vit = nearu.iterator(); vit.hasNext();) {
+				int vi = vit.next();
+				sb.append("\t");
+				sb.append(ui).append(LearningGraphBuilder.SRC_DST_DELIM).append(vi);
+				sb.append(LearningGraphBuilder.EDGE_DELIM);
+				//foreach feature on src,dst
+				for (TIntDoubleIterator fit = edgeFeatureDict.get(ui).get(vi).iterator(); fit.hasNext();) {
+					fit.advance();
+					int fi = fit.key();
+					double wi = fit.value();
+					outgoingFeatures.add(fi);
+					sb.append(fi).append(LearningGraphBuilder.FEATURE_WEIGHT_DELIM)
+					.append(wi).append(LearningGraphBuilder.EDGE_FEATURE_DELIM);
+				}
+				// drop last ','
+				sb.deleteCharAt(sb.length()-1);
 			}
-		});
-		return sb.toString();
+			labelDependencies += outgoingFeatures.size() * nearu.size();
+		}
+		
+		ret.append(labelDependencies).append("\t").append(sb);
+		return ret.toString();
 	}
 }

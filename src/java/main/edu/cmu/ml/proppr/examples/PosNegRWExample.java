@@ -12,6 +12,8 @@ import gnu.trove.procedure.TIntProcedure;
 public class PosNegRWExample extends RWExample {
 	protected int[] posList;
 	protected int[] negList;
+	public double[] p;
+	public TIntDoubleMap[] dp;
 
 //	// wwc add, kmm port
 //	public PosNegRWExample<F> posOnly() {
@@ -30,6 +32,7 @@ public class PosNegRWExample extends RWExample {
 
 	private PosNegRWExample(String name, LearningGraph graph, TIntDoubleMap queryVec) {
 		super(name, graph,queryVec);
+		this.allocate();
 	}
 	
 	public PosNegRWExample(LearningGraph graph, TIntDoubleMap queryVec, int[] pos, int[] neg) {
@@ -40,6 +43,11 @@ public class PosNegRWExample extends RWExample {
 		super(name, graph,queryVec);
 		this.posList = pos;
 		this.negList = neg;
+		this.allocate();
+	}
+	protected void allocate() {
+		this.p = new double[graph.node_hi];
+		this.dp = new TIntDoubleMap[graph.node_hi];
 	}
 
 //	public PosNegRWExample(InferenceLearningGraph<T> g, Map<T, Double> queryVec,

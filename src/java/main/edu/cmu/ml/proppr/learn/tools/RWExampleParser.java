@@ -6,21 +6,22 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.graph.GraphFormatException;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.graph.LearningGraph.GraphFormatException;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
+import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.util.FileBackedIterable;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
-public class GroundedExampleParser  {
-	private static final Logger log = Logger.getLogger(GroundedExampleParser.class);
+public class RWExampleParser  {
+	private static final Logger log = Logger.getLogger(RWExampleParser.class);
 	//public static final String MAJOR_DELIM="\t";
 	public static final char MAJOR_DELIM='\t';
 	public static final char MINOR_DELIM = ',';
 	
-	public PosNegRWExample parse(String line, LearningGraphBuilder builder) throws GraphFormatException {
+	public PosNegRWExample parse(String line, LearningGraphBuilder builder, SRW learner) throws GraphFormatException {
 		//String[] parts = line.trim().split(MAJOR_DELIM,5);
 		// first parse the query metadata
 		String[] parts = new String[4];//LearningGraphBuilder.split(line,'\t',4);
@@ -43,7 +44,7 @@ public class GroundedExampleParser  {
 		else negList = new int[0];
 
 		LearningGraph g = builder.deserialize(line.substring(last));
-		return new PosNegRWExample(parts[0],g,queryVec,posList,negList);
+		return learner.makeExample(parts[0],g,queryVec,posList,negList);
 	}
 
 	private int[] parseNodes(String string) {

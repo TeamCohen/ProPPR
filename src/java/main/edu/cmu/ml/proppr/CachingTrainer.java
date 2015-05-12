@@ -11,10 +11,10 @@ import java.util.concurrent.TimeoutException;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.graph.GraphFormatException;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
-import edu.cmu.ml.proppr.graph.LearningGraph.GraphFormatException;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
+import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
@@ -29,12 +29,12 @@ public class CachingTrainer extends Trainer {
 	@Override
 	public ParamVector train(Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ArrayList<PosNegRWExample> examples = new ArrayList<PosNegRWExample>();
-		GroundedExampleParser parser = new GroundedExampleParser();
+		RWExampleParser parser = new RWExampleParser();
 		int id=0;
 		for (String s : exampleFile) {
 			id++;
 			try {
-				examples.add(parser.parse(s, builder.copy()));
+				examples.add(parser.parse(s, builder, learner));
 			} catch (GraphFormatException e) {
 				log.error("Trouble with #"+id,e);
 			}

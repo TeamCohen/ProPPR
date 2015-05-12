@@ -14,10 +14,9 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
+import edu.cmu.ml.proppr.graph.GraphFormatException;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
-import edu.cmu.ml.proppr.graph.LearningGraph.GraphFormatException;
-
-import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
+import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParsedFile;
@@ -26,7 +25,9 @@ import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
 import edu.cmu.ml.proppr.util.ParamVector;
+
 import java.util.concurrent.ConcurrentHashMap;
+
 import edu.cmu.ml.proppr.learn.SRW;
 
 public class Diagnostic {
@@ -73,7 +74,7 @@ public class Diagnostic {
 									//log.debug("Job start "+id);
 									//PosNegRWExample ret = parser.parse(in, b.copy());
 									log.debug("Parsing start "+id);
-									PosNegRWExample ret = new GroundedExampleParser().parse(in, b.copy());
+									PosNegRWExample ret = new RWExampleParser().parse(in, b.copy(), srw);
 									log.debug("Parsing done "+id);
 									//log.debug("Job done "+id);
 									return ret;
@@ -274,6 +275,7 @@ public class Diagnostic {
 		Iterator<String> examples;
 		ParamVector paramVec;
 		LearningGraphBuilder builder;
+		SRW srw;
 		int id=0;
 		public PosNegRWExampleStreamer(Iterable<String> examples, LearningGraphBuilder builder) {
 			this.examples = examples.iterator();
@@ -294,7 +296,7 @@ public class Diagnostic {
 			String example = examples.next(); id++;
 			try {
 			log.debug("Parsing start "+id);
-			PosNegRWExample ret = new GroundedExampleParser().parse(example,builder);
+			PosNegRWExample ret = new RWExampleParser().parse(example,builder,srw);
 			log.debug("Parsing done "+id);
 			return ret;
 			} catch (GraphFormatException e) {

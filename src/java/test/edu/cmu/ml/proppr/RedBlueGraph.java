@@ -17,7 +17,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
@@ -40,7 +40,7 @@ import gnu.trove.procedure.TIntDoubleProcedure;
  *
  */
 public class RedBlueGraph {
-	protected ArrayLearningGraph brGraph;
+	protected LearningGraph brGraph;
 	protected Set<String> reds;
 	protected Set<String> blues;
 	protected SymbolTable<String> nodes = new SymbolTable<String>();
@@ -62,9 +62,9 @@ public class RedBlueGraph {
 //		}
 
 		LearningGraphBuilder lgb = new ArrayLearningGraphBuilder();
-		brGraph = (ArrayLearningGraph) lgb.create();
+		brGraph = (LearningGraph) lgb.create();
 		lgb.index(1);
-		lgb.setGraphSize(brGraph, magicNumber*2, -1);
+		lgb.setGraphSize(brGraph, magicNumber*2, -1, -1);
 
 		//		brSRWs = new ArrayList<SRW>();
 		//		Collections.addAll(brSRWs, new L2SqLossSRW(), new L2SqLossSRW(), new L2SqLossSRW());

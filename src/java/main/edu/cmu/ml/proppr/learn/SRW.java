@@ -16,8 +16,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.examples.PprExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
@@ -78,25 +79,23 @@ public class SRW {
 	 */
 	public void trainOnExample(ParamVector params, PosNegRWExample example) {
 		log.info("Training on "+example);
-		SgdExample sgdex = wrapExample(example);
 
-		initializeFeatures(params, sgdex.g);
-		prepareForExample(params, sgdex.g, params);
-		load(params, sgdex);
-		inference(params, sgdex);
-		sgd(params, sgdex);
+		initializeFeatures(params, example.getGraph());
+		prepareForExample(params, example.getGraph(), params);
+		load(params, example);
+		inference(params, example);
+		sgd(params, example);
 	}
 
 	public void accumulateGradient(ParamVector params, PosNegRWExample example, ParamVector accumulator) {
 		log.info("Gradient calculating on "+example);
-		SgdExample sgdex = wrapExample(example);
 
-		initializeFeatures(params, sgdex.g);
+		initializeFeatures(params, example.getGraph());
 		ParamVector<String,Double> prepare = new SimpleParamVector<String>();
-		prepareForExample(params, sgdex.g, prepare);
-		load(params, sgdex);
-		inference(params, sgdex);
-		TIntDoubleMap gradient = gradient(params,sgdex);
+		prepareForExample(params, example.getGraph(), prepare);
+		load(params, example);
+		inference(params, example);
+		TIntDoubleMap gradient = gradient(params,example);
 		
 		for (Map.Entry<String, Double> e : prepare.entrySet()) {
 			if (trainable(e.getKey())) 
@@ -104,75 +103,72 @@ public class SRW {
 		}
 		for (TIntDoubleIterator it = gradient.iterator(); it.hasNext(); ) {
 			it.advance();
-			String feature = sgdex.g.featureLibrary.getSymbol(it.key());
-			if (trainable(feature)) accumulator.adjustValue(sgdex.g.featureLibrary.getSymbol(it.key()), it.value() / example.length());
+			String feature = example.getGraph().featureLibrary.getSymbol(it.key());
+			if (trainable(feature)) accumulator.adjustValue(example.getGraph().featureLibrary.getSymbol(it.key()), it.value() / example.length());
 		}
-	}
-
-	protected SgdExample wrapExample(PosNegRWExample example) {
-		return new SgdExample(example);
 	}
 
 
 	/** fills M, dM in ex **/
-	protected void load(ParamVector params, SgdExample ex) {
-		ex.M = new double[ex.g.node_hi][];
-		ex.dM_lo = new int[ex.g.node_hi][];
-		ex.dM_hi = new int[ex.g.node_hi][];
+	protected void load(ParamVector params, PosNegRWExample example) {
+		PprExample ex = (PprExample) example;
+		ex.M = new double[ex.getGraph().node_hi][];
+		ex.dM_lo = new int[ex.getGraph().node_hi][];
+		ex.dM_hi = new int[ex.getGraph().node_hi][];
 		// use compact extendible arrays here while we accumulate; convert to primitive array later
 		TIntArrayList dM_features = new TIntArrayList();
 		TDoubleArrayList dM_values = new TDoubleArrayList();
-		for (int uid = 0; uid < ex.g.node_hi; uid++) {
+		for (int uid = 0; uid < ex.getGraph().node_hi; uid++) {
 			// (a); (b): initialization
 			double tu = 0;
 			TIntDoubleMap dtu = new TIntDoubleHashMap();
-			int udeg = ex.g.node_near_hi[uid] - ex.g.node_near_lo[uid];
+			int udeg = ex.getGraph().node_near_hi[uid] - ex.getGraph().node_near_lo[uid];
 			double[] suv = new double[udeg];
 			double[][] dfu = new double[udeg][];
 			// begin (c): for each neighbor v of u,
-			for(int eid = ex.g.node_near_lo[uid], xvi = 0; eid < ex.g.node_near_hi[uid]; eid++, xvi++) {
-				int vid = ex.g.edge_dest[eid];
+			for(int eid = ex.getGraph().node_near_lo[uid], xvi = 0; eid < ex.getGraph().node_near_hi[uid]; eid++, xvi++) {
+				int vid = ex.getGraph().edge_dest[eid];
 				// i. s_{uv} = w * phi_{uv}, a scalar:
 				suv[xvi] = 0;
-				for (int lid = ex.g.edge_labels_lo[eid]; lid < ex.g.edge_labels_hi[eid]; lid++) {
-					suv[xvi] += params.get(ex.g.featureLibrary.getSymbol(ex.g.label_feature_id[lid])) * ex.g.label_feature_weight[lid];
+				for (int lid = ex.getGraph().edge_labels_lo[eid]; lid < ex.getGraph().edge_labels_hi[eid]; lid++) {
+					suv[xvi] += params.get(ex.getGraph().featureLibrary.getSymbol(ex.getGraph().label_feature_id[lid])) * ex.getGraph().label_feature_weight[lid];
 				}
 				// ii. t_u += f(s_{uv}), a scalar:
 				tu += c.weightingScheme.edgeWeight(suv[xvi]);
 				// iii. df_{uv} = f'(s_{uv})* phi_{uv}, a vector, as sparse as phi_{uv}
 				// by looping over features i in phi_{uv}
-				double [] dfuv = new double[ex.g.edge_labels_hi[eid] - ex.g.edge_labels_lo[eid]] ;
+				double [] dfuv = new double[ex.getGraph().edge_labels_hi[eid] - ex.getGraph().edge_labels_lo[eid]] ;
 				double cee = c.weightingScheme.derivEdgeWeight(suv[xvi]);
-				for (int lid = ex.g.edge_labels_lo[eid], dfuvi = 0; lid < ex.g.edge_labels_hi[eid]; lid++, dfuvi++) {
+				for (int lid = ex.getGraph().edge_labels_lo[eid], dfuvi = 0; lid < ex.getGraph().edge_labels_hi[eid]; lid++, dfuvi++) {
 					// iii. again
-					dfuv[dfuvi] = cee * ex.g.label_feature_weight[lid];
+					dfuv[dfuvi] = cee * ex.getGraph().label_feature_weight[lid];
 					// iv. dt_u += df_{uv}, a vector, as sparse as sum_{v'} phi_{uv'}
 					// by looping over features i in df_{uv} 
 					// (identical to features i in phi_{uv}, so we use the same loop)
-					dtu.adjustOrPutValue(ex.g.label_feature_id[lid], dfuv[dfuvi], dfuv[dfuvi]);
+					dtu.adjustOrPutValue(ex.getGraph().label_feature_id[lid], dfuv[dfuvi], dfuv[dfuvi]);
 				}
 				dfu[xvi] = dfuv;
 			}
 			// end (c)
 
-			if (tu==0 && udeg>0) { throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.ex.toString()); }
+			if (tu==0 && udeg>0) { throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); }
 
 			// begin (d): for each neighbor v of u,
 			ex.dM_lo[uid] = new int[udeg];
 			ex.dM_hi[uid] = new int[udeg];
 			ex.M[uid] = new double[udeg];
 			double scale = (1 / (tu*tu));
-			for(int eid = ex.g.node_near_lo[uid], xvi = 0; eid < ex.g.node_near_hi[uid]; eid++, xvi++) {
-				int vid = ex.g.edge_dest[eid];
+			for(int eid = ex.getGraph().node_near_lo[uid], xvi = 0; eid < ex.getGraph().node_near_hi[uid]; eid++, xvi++) {
+				int vid = ex.getGraph().edge_dest[eid];
 				ex.dM_lo[uid][xvi] = dM_features.size();
 				// create the vector dM_{uv} = (1/t^2_u) * (t_u * df_{uv} - f(s_{uv}) * dt_u)
 				// by looping over features i in dt_u
 				
 				// getting the df offset for features in dt_u is awkward, so we'll first iterate over features in df_uv,
 				// then fill in the rest
-				int[] seenFeatures = new int[ex.g.edge_labels_hi[eid] - ex.g.edge_labels_lo[eid]];
-				for (int lid = ex.g.edge_labels_lo[eid], dfuvi = 0; lid < ex.g.edge_labels_hi[eid]; lid++, dfuvi++) {
-					int fid = ex.g.label_feature_id[lid];
+				int[] seenFeatures = new int[ex.getGraph().edge_labels_hi[eid] - ex.getGraph().edge_labels_lo[eid]];
+				for (int lid = ex.getGraph().edge_labels_lo[eid], dfuvi = 0; lid < ex.getGraph().edge_labels_hi[eid]; lid++, dfuvi++) {
+					int fid = ex.getGraph().label_feature_id[lid];
 					dM_features.add(fid);
 					double dMuvi = scale * (tu * dfu[xvi][dfuvi] - c.weightingScheme.edgeWeight(suv[xvi]) * dtu.get(fid));
 					dM_values.add(dMuvi);
@@ -211,12 +207,13 @@ public class SRW {
 
 	/** fills p, dp 
 	 * @param params */
-	protected void inference(ParamVector params, SgdExample ex) {
-		ex.p = new double[ex.g.node_hi];
-		ex.dp = new TIntDoubleMap[ex.g.node_hi];
+	protected void inference(ParamVector params, PosNegRWExample example) {
+		PosNegRWExample ex = (PosNegRWExample) example;
+		ex.p = new double[ex.getGraph().node_hi];
+		ex.dp = new TIntDoubleMap[ex.getGraph().node_hi];
 		Arrays.fill(ex.p,0.0);
 		// copy query into p
-		for (TIntDoubleIterator it = ex.ex.getQueryVec().iterator(); it.hasNext(); ) {
+		for (TIntDoubleIterator it = ex.getQueryVec().iterator(); it.hasNext(); ) {
 			it.advance();
 			ex.p[it.key()] = it.value();
 		}
@@ -225,16 +222,17 @@ public class SRW {
 		}
 
 	}
-	protected void inferenceUpdate(SgdExample ex) {
-		double[] pNext = new double[ex.g.node_hi];
-		TIntDoubleMap[] dNext = new TIntDoubleMap[ex.g.node_hi];
+	protected void inferenceUpdate(PosNegRWExample example) {
+		PprExample ex = (PprExample) example;
+		double[] pNext = new double[ex.getGraph().node_hi];
+		TIntDoubleMap[] dNext = new TIntDoubleMap[ex.getGraph().node_hi];
 		// p: 2. for each node u
-		for (int uid = 0; uid < ex.g.node_hi; uid++) {
+		for (int uid = 0; uid < ex.getGraph().node_hi; uid++) {
 			// p: 2(a) p_u^{t+1} += alpha * s_u
-			pNext[uid] += c.apr.alpha * Dictionary.safeGet(ex.ex.getQueryVec(), uid, 0.0);
+			pNext[uid] += c.apr.alpha * Dictionary.safeGet(ex.getQueryVec(), uid, 0.0);
 			// p: 2(b) for each neighbor v of u:
-			for(int eid = ex.g.node_near_lo[uid], xvi = 0; eid < ex.g.node_near_hi[uid]; eid++, xvi++) {
-				int vid = ex.g.edge_dest[eid];
+			for(int eid = ex.getGraph().node_near_lo[uid], xvi = 0; eid < ex.getGraph().node_near_hi[uid]; eid++, xvi++) {
+				int vid = ex.getGraph().edge_dest[eid];
 				// p: 2(b)i. p_v^{t+1} += (1-alpha) * p_u^t * M_uv
 				pNext[vid] += (1-c.apr.alpha) * ex.p[uid] * ex.M[uid][xvi];
 				// d: i. for each feature i in dM_uv:
@@ -270,19 +268,20 @@ public class SRW {
 	}
 
 	/** edits params */
-	protected void sgd(ParamVector params, SgdExample ex) {
+	protected void sgd(ParamVector params, PosNegRWExample ex) {
 		TIntDoubleMap gradient = gradient(params,ex);
 		// apply gradient to param vector
 		for (TIntDoubleIterator grad = gradient.iterator(); grad.hasNext(); ) {
 			grad.advance();
 			if (grad.value()==0) continue;
-			String feature = ex.g.featureLibrary.getSymbol(grad.key());
+			String feature = ex.getGraph().featureLibrary.getSymbol(grad.key());
 			if (trainable(feature)) params.adjustValue(feature, - learningRate() * grad.value());
 		}
 	}
 
-	protected TIntDoubleMap gradient(ParamVector params, SgdExample ex) {
-		Set<String> features = this.localFeatures(params, ex.g);
+	protected TIntDoubleMap gradient(ParamVector params, PosNegRWExample example) {
+		PosNegRWExample ex = (PosNegRWExample) example;
+		Set<String> features = this.localFeatures(params, ex.getGraph());
 		TIntDoubleMap gradient = new TIntDoubleHashMap(features.size());
 		// add regularization term
 		regularization(params, ex, gradient);
@@ -293,7 +292,7 @@ public class SRW {
 		// add empirical loss gradient term
 		// positive examples
 		double pmax = 0;
-		for (int a : ex.ex.getPosList()) {
+		for (int a : ex.getPosList()) {
 			double pa = clip(ex.p[a]);
 			if(pa > pmax) pmax = pa;
 			for (TIntDoubleIterator da = ex.dp[a].iterator(); da.hasNext(); ) {
@@ -314,7 +313,7 @@ public class SRW {
 		if(c.delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
 
 		// negative examples
-		for (int b : ex.ex.getNegList()) {
+		for (int b : ex.getNegList()) {
 			double pb = clip(ex.p[b]);
 			for (TIntDoubleIterator db = ex.dp[b].iterator(); db.hasNext(); ) {
 				db.advance();
@@ -329,44 +328,13 @@ public class SRW {
 		}
 
 //		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
-		if (nonzero==0) log.warn("0 gradient. Try another weighting scheme? "+ex.ex.toString());
+		if (nonzero==0) log.warn("0 gradient. Try another weighting scheme? "+ex.toString());
 		return gradient;
 	}
 	
 	/** template: update gradient with regularization term */
-	protected void regularization(ParamVector params, SgdExample ex, TIntDoubleMap gradient) {}
+	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {}
 
-
-	static class SgdExample {
-		PosNegRWExample ex;
-		ArrayLearningGraph g;
-
-		// length = sum(nodes i) (degree of i) = #edges
-		double[][] M;
-
-		// length = sum(edges e) (# features on e) = #feature assignments
-		int[] dM_feature_id;
-		double[] dM_value;
-		// length = sum(nodes i) degree of i = #edges
-		int[][] dM_lo;
-		int[][] dM_hi;
-
-		// p[u] = value
-		double[] p;
-		// dp[u].put(fid, value)
-		TIntDoubleMap[] dp;
-
-		public SgdExample(PosNegRWExample example) {
-			this.ex = example;
-			if (! (example.getGraph() instanceof ArrayLearningGraph))
-				throw new IllegalStateException("Revised SRW requires ArrayLearningGraph in streamed examples. Run with --graphClass ArrayLearningGraph.");
-			this.g = (ArrayLearningGraph) example.getGraph();
-		}
-
-		public int getFeatureId(String f) {
-			return g.featureLibrary.getId(f);
-		}
-	}
 
 
 	//////////////////////////// copypasta from SRW.java:
@@ -463,5 +431,9 @@ public class SRW {
 	}
 	public void setMu(double d) {
 		c.mu = d;
+	}
+	public PosNegRWExample makeExample(String string, LearningGraph g,
+			TIntDoubleMap queryVec, int[] posList, int[] negList) {
+		return new PprExample(string, g, queryVec, posList, negList);
 	}
 }

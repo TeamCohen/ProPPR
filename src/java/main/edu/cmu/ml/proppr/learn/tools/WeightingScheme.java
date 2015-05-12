@@ -2,7 +2,7 @@ package edu.cmu.ml.proppr.learn.tools;
 
 import java.util.Map;
 
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
 import gnu.trove.iterator.TObjectDoubleIterator;
@@ -65,7 +65,7 @@ public abstract class WeightingScheme<F> {
 	 * @param features
 	 * @return
 	 */
-	public double edgeWeight(ArrayLearningGraph g, int eid,
+	public double edgeWeight(LearningGraph g, int eid,
 			ParamVector<String, ?> params) {
 		double ret = 0.0;
 		// iterate over the features on the edge
