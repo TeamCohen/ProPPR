@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.RedBlueGraph;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.graph.ArrayLearningGraph;
+import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
@@ -58,7 +58,7 @@ public class SRWTest extends RedBlueGraph {
 		srw.c.apr.maxDepth=10;
 	}
 	
-	public TIntDoubleMap myRWR(TIntDoubleMap startVec, ArrayLearningGraph g, int maxT) {
+	public TIntDoubleMap myRWR(TIntDoubleMap startVec, LearningGraph g, int maxT) {
 		TIntDoubleMap vec = startVec;
 		TIntDoubleMap nextVec = null;
 		for (int t=0; t<maxT; t++) {
@@ -78,7 +78,7 @@ public class SRWTest extends RedBlueGraph {
 		return nextVec;
 	}
 	
-	public TIntDoubleMap myRWR(TIntDoubleMap startVec, ArrayLearningGraph g, int maxT, ParamVector params, WeightingScheme scheme) {
+	public TIntDoubleMap myRWR(TIntDoubleMap startVec, LearningGraph g, int maxT, ParamVector params, WeightingScheme scheme) {
 		TIntDoubleMap vec = startVec;
 		TIntDoubleMap nextVec = null;
 		for (int t=0; t<maxT; t++) {

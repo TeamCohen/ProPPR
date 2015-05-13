@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.learn.SRW.SgdExample;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -31,10 +30,10 @@ public class LocalL2SRW extends L2SRW {
 	}
 	
 	@Override
-	protected TIntDoubleMap gradient(ParamVector params, SgdExample ex) {
+	protected TIntDoubleMap gradient(ParamVector params, PosNegRWExample ex) {
 		TIntDoubleMap ret = super.gradient(params, ex);
 		((MuParamVector)params).count();
-		((MuParamVector)params).setLast(localFeatures(params,ex.g));
+		((MuParamVector)params).setLast(localFeatures(params,ex.getGraph()));
 		return ret;
 	}
 	

@@ -24,10 +24,9 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
-import edu.cmu.ml.proppr.graph.LearningGraph.GraphFormatException;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.GroundedExampleParser;
+import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Configuration;
@@ -308,7 +307,7 @@ public class Trainer {
 		public PosNegRWExample call() throws Exception {
 			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
-			PosNegRWExample ex = new GroundedExampleParser().parse(in, builder.copy());
+			PosNegRWExample ex = new RWExampleParser().parse(in, builder.copy(), learner);
 			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
 			statistics.updateParsingStatistics(System.currentTimeMillis()-start);
 			return ex;

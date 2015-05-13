@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 	static final HashMap<String,ArrayLearningGraphBuilder> copies = new HashMap<String,ArrayLearningGraphBuilder>();
-	ArrayLearningGraph current = null;
+	LearningGraph current = null;
 	public ArrayList<RWOutlink>[] outlinks = null;
 	int labelSize=0;
 	int index=0;
@@ -17,7 +17,7 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 	@Override
 	public LearningGraph create() {
 		if (current != null) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
-		current =  new ArrayLearningGraph(new SymbolTable<String>());
+		current =  new LearningGraph(new SymbolTable<String>());
 		return current;
 	}
 
@@ -29,12 +29,13 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 	}
 	
 	@Override
-	public void setGraphSize(LearningGraph g, int nodeSize, int edgeSize) {
+	public void setGraphSize(LearningGraph g, int nodeSize, int edgeSize, int dependencySize) {
 		if (!current.equals(g)) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
 		nodeSize += index;
 		current.node_hi = nodeSize;
 		current.node_near_hi = new int[nodeSize];
 		current.node_near_lo = new int[nodeSize];
+		current.setLabelDependencies(dependencySize);
 		outlinks = new ArrayList[nodeSize];
 		if (edgeSize < 0) return;
 		initEdges(edgeSize);
@@ -80,7 +81,7 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 					current.edge_dest[edge_cursor] = o.nodeid;
 					current.edge_labels_lo[edge_cursor] = label_cursor;
 					for(Map.Entry<String,Double> it : o.fd.entrySet()) {
-						current.label_feature_id[label_cursor] = ((ArrayLearningGraph) g).featureLibrary.getId(it.getKey());
+						current.label_feature_id[label_cursor] = ((LearningGraph) g).featureLibrary.getId(it.getKey());
 						current.label_feature_weight[label_cursor] = it.getValue();
 						label_cursor++;
 					}

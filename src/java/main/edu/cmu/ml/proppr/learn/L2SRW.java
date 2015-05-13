@@ -4,7 +4,6 @@ package edu.cmu.ml.proppr.learn;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.SRW.SgdExample;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamVector;
@@ -30,13 +29,13 @@ public class L2SRW extends SRW {
 	 * @return
 	 */
 	@Override	
-	protected void regularization(ParamVector params, SgdExample ex, TIntDoubleMap gradient) {
-		for (String f : localFeatures(params, ex.g)) {
+	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {
+		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
 			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
 			if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ret);
 			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
-			gradient.adjustOrPutValue(ex.getFeatureId(f), ret, ret);
+			gradient.adjustOrPutValue(ex.getGraph().featureLibrary.getId(f), ret, ret);
 		}
 	}
 }

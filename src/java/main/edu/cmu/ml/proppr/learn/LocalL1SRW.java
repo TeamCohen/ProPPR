@@ -4,7 +4,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.proppr.learn.SRW.SgdExample;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
@@ -27,9 +26,9 @@ public class LocalL1SRW extends L1SRW {
 	}
 
 	@Override
-	protected void sgd(ParamVector params, SgdExample ex) {
+	protected void sgd(ParamVector params, PosNegRWExample ex) {
 		((MuParamVector)params).count();
-		((MuParamVector)params).setLast(localFeatures(params,ex.g));
+		((MuParamVector)params).setLast(localFeatures(params,ex.getGraph()));
 		super.sgd(params, ex);
 	}
 

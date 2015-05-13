@@ -29,11 +29,12 @@ public class InferenceGraphTest {
 		g.setOutlinks(a, outlinks);
 		String s = g.serialize();
 		String[] parts = s.split("\t");
-		assertEquals(4,parts.length);
+		assertEquals(5,parts.length);
 		assertEquals("2",parts[0]);
 		assertEquals("1",parts[1]);
-		assertEquals("quite",parts[2]);
-		assertEquals("1->2:1@1.0",parts[3]);
+		assertEquals("1",parts[2]);
+		assertEquals("quite",parts[3]);
+		assertEquals("1->2:1@1.0",parts[4]);
 	}
 
 }
