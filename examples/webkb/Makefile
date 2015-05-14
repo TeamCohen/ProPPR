@@ -26,7 +26,7 @@ results.txt: $(addsuffix .results.txt,$(foreach subset,$(SUBSETS),$(addprefix pr
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
 
 train_no_%.data.grounded: train_no_%.data
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} 
 
 pre.%.solutions.txt: train_no_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS}

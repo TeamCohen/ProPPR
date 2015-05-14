@@ -179,6 +179,7 @@ public class Trainer {
 			try {
 				parsePool.awaitTermination(7,TimeUnit.DAYS);
 				// allocate the threads parsePool was using to finishing off training for this epoch
+				//log.info("Reclaiming parser threads...");
 				trainPool.setCorePoolSize(this.nthreads); 
 				// by default ThreadPoolExecutor only creates new threads on submit() calls, so
 				// we must start up our new threads by hand.
