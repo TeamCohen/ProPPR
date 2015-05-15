@@ -1,6 +1,8 @@
 package edu.cmu.ml.proppr;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,7 +51,7 @@ public class CachingTrainer extends Trainer {
 		return trainCached(examples,builder,initialParamVec,numEpochs,traceLosses,total);
 	}
 	
-	public ParamVector trainCached(Iterable<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
+	public ParamVector trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
@@ -73,6 +75,7 @@ public class CachingTrainer extends Trainer {
 
 			// run examples
 			int id=1;
+			Collections.shuffle(examples);
 			for (PosNegRWExample s : examples) {
 				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id));
 				cleanPool.submit(new TraceLosses(trained, id));
