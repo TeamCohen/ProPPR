@@ -130,6 +130,7 @@ public class Configuration {
 				.create());
 		addOptions(options, flags);
 
+		CommandLine line = null;
 		try {
 			PermissiveParser parser = new PermissiveParser(true);
 
@@ -138,7 +139,7 @@ public class Configuration {
 			if(combine) args = combinedArgs(args);
 
 			// parse the command line arguments
-			CommandLine line = parser.parse( options, args );
+			line = parser.parse( options, args );
 			if (parser.hasUnrecognizedOptions()) {
 				System.err.println("WARNING: unrecognized options detected:");
 				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
@@ -150,6 +151,7 @@ public class Configuration {
 			retrieveSettings(line,flags,options);
 
 		} catch( Exception exp ) {
+			if (args[0].equals("--help")) usageOptions(options, flags);
 			StringWriter sw = new StringWriter();
 			exp.printStackTrace(new PrintWriter(sw));
 			usageOptions(options,flags,exp.getMessage()+"\n"+sw.toString());

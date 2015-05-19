@@ -98,10 +98,10 @@ public class ModuleConfiguration extends Configuration {
 					.withArgName("class")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: cached\n"
+					.withDescription("Default: cached:shuff=true\n"
 							+ "Available options:\n"
-							+ "cached    (faster)\n"
-							+ "streaming (large dataset)")
+							+ "cached[:shuff={true|false}] (faster)\n"
+							+ "streaming                   (large dataset)")
 							.create());
 		if (isOn(flags, USE_SRW))
 			options.addOption(
@@ -205,8 +205,16 @@ public class ModuleConfiguration extends Configuration {
 				TRAINERS type = TRAINERS.cached;
 				if (line.hasOption(TRAINER_MODULE_OPTION)) type = TRAINERS.valueOf(line.getOptionValue(TRAINER_MODULE_OPTION));
 				switch(type) {
-				case streaming: this.trainer = new Trainer(this.srw, this.nthreads, this.throttle); break;
-				case cached:    this.trainer = new CachingTrainer(this.srw, this.nthreads, this.throttle); break;
+				case streaming: 
+					this.trainer = new Trainer(this.srw, this.nthreads, this.throttle); 
+					break;
+				case cached:
+					boolean shuff = CachingTrainer.DEFAULT_SHUFFLE;
+					String[] values = line.getOptionValues(TRAINER_MODULE_OPTION);
+					if (values.length>1 && values[1].startsWith("shuff"))
+						shuff = Boolean.parseBoolean(values[1].substring(values[1].indexOf("=")+1));
+					this.trainer = new CachingTrainer(this.srw, this.nthreads, this.throttle, shuff); 
+					break;
 				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));
 				}
 			}

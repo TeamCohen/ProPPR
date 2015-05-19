@@ -23,9 +23,12 @@ import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
 
 public class CachingTrainer extends Trainer {
 	private static final Logger log = Logger.getLogger(CachingTrainer.class);
+	public static final boolean DEFAULT_SHUFFLE = true;
+	private boolean shuffle;
 
-	public CachingTrainer(SRW learner, int nthreads, int throttle) {
+	public CachingTrainer(SRW learner, int nthreads, int throttle, boolean shuffle) {
 		super(learner, nthreads, throttle);
+		this.shuffle = shuffle;
 	}
 
 	@Override
@@ -75,7 +78,7 @@ public class CachingTrainer extends Trainer {
 
 			// run examples
 			int id=1;
-			Collections.shuffle(examples);
+			if (this.shuffle) Collections.shuffle(examples);
 			for (PosNegRWExample s : examples) {
 				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id));
 				cleanPool.submit(new TraceLosses(trained, id));
