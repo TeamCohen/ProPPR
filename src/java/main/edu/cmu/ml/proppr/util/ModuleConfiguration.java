@@ -35,7 +35,7 @@ public class ModuleConfiguration extends Configuration {
 
 	private enum PROVERS { ppr, dpr, pdpr, dfs, tr };
 	private enum WEIGHTINGSCHEMES { linear, sigmoid, tanh, ReLU, exp };
-	private enum TRAINERS { cached, streaming };
+	private enum TRAINERS { cached, caching, streaming };
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -203,16 +203,19 @@ public class ModuleConfiguration extends Configuration {
 			seed(line);
 			if (isOn(flags,USE_TRAINER)) {
 				TRAINERS type = TRAINERS.cached;
-				if (line.hasOption(TRAINER_MODULE_OPTION)) type = TRAINERS.valueOf(line.getOptionValue(TRAINER_MODULE_OPTION));
+				if (line.hasOption(TRAINER_MODULE_OPTION)) type = TRAINERS.valueOf(line.getOptionValues(TRAINER_MODULE_OPTION)[0]);
 				switch(type) {
 				case streaming: 
 					this.trainer = new Trainer(this.srw, this.nthreads, this.throttle); 
 					break;
+				case caching: //fallthrough
 				case cached:
 					boolean shuff = CachingTrainer.DEFAULT_SHUFFLE;
-					String[] values = line.getOptionValues(TRAINER_MODULE_OPTION);
-					if (values.length>1 && values[1].startsWith("shuff"))
-						shuff = Boolean.parseBoolean(values[1].substring(values[1].indexOf("=")+1));
+					if (line.hasOption(TRAINER_MODULE_OPTION)) {
+						for (String val : line.getOptionValues(TRAINER_MODULE_OPTION)) {
+							if (val.startsWith("shuff")) shuff = Boolean.parseBoolean(val.substring(val.indexOf("=")+1));
+						}
+					}
 					this.trainer = new CachingTrainer(this.srw, this.nthreads, this.throttle, shuff); 
 					break;
 				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));
