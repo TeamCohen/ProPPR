@@ -80,7 +80,7 @@ public class CachingTrainer extends Trainer {
 			int id=1;
 			if (this.shuffle) Collections.shuffle(examples);
 			for (PosNegRWExample s : examples) {
-				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id));
+				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id, null));
 				cleanPool.submit(new TraceLosses(trained, id));
 			}
 			try {

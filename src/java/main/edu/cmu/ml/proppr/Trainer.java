@@ -168,11 +168,37 @@ public class Trainer {
 			// run examples
 			int id=1;
 			long start = System.currentTimeMillis();
+			int countdown=-1; Trainer notify = null;
 			for (String s : examples) {
+				if (log.isDebugEnabled()) log.debug("Queue size "+(trainPool.getTaskCount()-trainPool.getCompletedTaskCount()));
 				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
+				if (countdown>0) {
+					if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
+					countdown--;
+				} else if (countdown == 0) {
+					if (log.isDebugEnabled()) log.debug("Countdown "+countdown +"; throttling:");
+					countdown--;
+					notify = null;
+					try {
+						synchronized(this) {
+							if (log.isDebugEnabled()) log.debug("Clearing training queue...");
+							while(trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > this.nthreads)
+								this.wait();
+							if (log.isDebugEnabled()) log.debug("Queue cleared.");
+						}
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else if (trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > 1.5*this.nthreads) {
+					if (log.isDebugEnabled()) log.debug("Starting countdown");
+					countdown=this.nthreads;
+					notify = this;
+				}
 				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = trainPool.submit(new Train(parsed, paramVec, learner, id));
+				Future<Integer> trained = trainPool.submit(new Train(parsed, paramVec, learner, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
+				id++;
 				start = System.currentTimeMillis();
 			}
 			parsePool.shutdown();
@@ -257,9 +283,35 @@ public class Trainer {
 
 		// run examples
 		int id=1;
+		int countdown=-1; Trainer notify = null;
 		for (String s : examples) {
+			long queueSize = (((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount());
+			if (log.isDebugEnabled()) log.debug("Queue size "+queueSize);
+			if (countdown>0) {
+				if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
+				countdown--;
+			} else if (countdown == 0) {
+				if (log.isDebugEnabled()) log.debug("Countdown "+countdown +"; throttling:");
+				countdown--;
+				notify = null;
+				try {
+					synchronized(this) {
+						if (log.isDebugEnabled()) log.debug("Clearing training queue...");
+						while((((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount()) > this.nthreads)
+							this.wait();
+						if (log.isDebugEnabled()) log.debug("Queue cleared.");
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else if (queueSize > 1.5*this.nthreads) {
+				if (log.isDebugEnabled()) log.debug("Starting countdown");
+				countdown=this.nthreads;
+				notify = this;
+			}
 			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id));
+			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
 		}
 		parsePool.shutdown();
@@ -326,15 +378,18 @@ public class Trainer {
 		ParamVector paramVec;
 		SRW learner;
 		int id;
-		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, SRW learner, int id) {
+		Trainer notify;
+		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, SRW learner, int id, Trainer notify) {
 			this.in = parsed;
 			this.id = id;
 			this.learner = learner;
 			this.paramVec = paramVec;
+			this.notify = notify;
 		}
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
+			if (notify != null) synchronized(notify) { notify.notify(); }
 			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
 			learner.trainOnExample(paramVec, ex);
@@ -344,22 +399,16 @@ public class Trainer {
 		}
 	}
 
-	protected class Grad implements Callable<Integer> {
-		Future<PosNegRWExample> in;
-		ParamVector paramVec;
+	protected class Grad extends Train {
 		ParamVector sumGradient;
-		SRW learner;
-		int id;
-		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SRW learner, int id) {
-			this.in = parsed;
-			this.id = id;
-			this.learner = learner;
-			this.paramVec = paramVec;
+		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SRW learner, int id, Trainer notify) {
+			super(parsed, paramVec, learner, id, notify);
 			this.sumGradient = sumGradient;
 		}
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
+			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
 			learner.accumulateGradient(paramVec, ex, sumGradient);
 			if (log.isDebugEnabled()) log.debug("Gradient done "+this.id);
