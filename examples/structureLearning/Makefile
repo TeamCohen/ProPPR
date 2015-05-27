@@ -128,4 +128,4 @@ isg:
 # from e.g. uml_1-train.h22_01.examples.grounded
 # first training for e.g.   01 epochs
 ${NAME}_%.gradient: ${NAME}-train.h22_%.examples.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $< --threads ${THREADS} --apr ${APR} --epochs $* --srw ${SRW} --gradient $@
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $< --threads ${THREADS} --apr ${APR} --epochs $* --srw ${SRW} --gradient $@ --trainer streaming

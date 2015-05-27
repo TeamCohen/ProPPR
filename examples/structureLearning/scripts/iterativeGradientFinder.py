@@ -92,17 +92,17 @@ def gradient2Rules(ruleFile,gradFiles):
 
         print 'feature2rule',feat
         featureParsed = False
-        m = re.match('ifInv\((\w+),(\w+)\)',feat)
+        m = re.match('ifInv\((\S+),(\S+)\)',feat)
         if m:
             #print '---- "ifInv" for',m.group(1),m.group(2),'detected'
             ic = interpreterCall(m.group(2))
             return 'interp0(%s,X,Y) :- %s(%s,Y,X).' % (m.group(1),ic,m.group(2))
-        m = re.match('if\((\w+),(\w+)\)',feat)
+        m = re.match('if\((\S+),(\S+)\)',feat)
         if m:
             #print '---- "if" for',m.group(1),m.group(2),'detected'
             ic = interpreterCall(m.group(2))
             return 'interp0(%s,X,Y) :- %s(%s,X,Y).' % (m.group(1),ic,m.group(2))
-        m = re.match('chain\((\w+),(\w+),(\w+)\)',feat)
+        m = re.match('chain\((\S+),(\S+),(\S+)\)',feat)
         if m: 
             #print '---- "chain" for',m.group(1),m.group(2),m.group(3),'detected'
             ic1 = interpreterCall(m.group(2))
