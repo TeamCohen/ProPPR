@@ -122,6 +122,7 @@ public class ProofGraph {
 	 * @throws LogicProgramException
 	 */
 	public List<Outlink> pgOutlinks(State state, boolean trueLoop) throws LogicProgramException {
+		// wwc: why aren't trueloop, restart objects precomputed and shared?
 		if (!this.graph.outlinksDefined(state)) {
 			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop);
 			Map<Goal,Double> restartFD = new HashMap<Goal,Double>();

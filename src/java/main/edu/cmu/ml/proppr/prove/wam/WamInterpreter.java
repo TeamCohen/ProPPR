@@ -139,7 +139,7 @@ public class WamInterpreter {
 	private void doFeatureFindallDFS(State state, int depth) throws LogicProgramException {
 		if (depth>=MAXDEPTH) throw new IllegalStateException("depth bound "+MAXDEPTH+" exceeded in feature computation");
 		if (!state.isCompleted()) {
-			// wwcmod: replace false with true to that you compute the features as well
+			// wwcmod: replace false with true so that you compute the features as well
 			for (Outlink o : wamOutlinks(state,false)) {
 				doFeatureFindallDFS(o.child, depth+1);
 			}

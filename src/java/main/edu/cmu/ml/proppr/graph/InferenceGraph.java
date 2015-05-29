@@ -21,6 +21,7 @@ public abstract class InferenceGraph {
 	public abstract State getRoot();
 	/** Return the neighbors of node u. */
 	public List<Outlink> getOutlinks(State u) {
+		// why do we need to recompute these each time?
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (State v : near(u)) {
 			Map<Goal,Double> fd = getFeatures(u,v);

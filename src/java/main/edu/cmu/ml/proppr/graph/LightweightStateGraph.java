@@ -91,6 +91,7 @@ public class LightweightStateGraph extends InferenceGraph {
 
 	@Override
 	public void setOutlinks(State u, List<Outlink> outlinks) {
+		// wwc: why are we saving these outlinks as a trove thing? space?
 		int ui = this.nodeTab.getId(u);
 		if (near.containsKey(ui)) {
 			log.warn("Overwriting previous outlinks for state "+u);
