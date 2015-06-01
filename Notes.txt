@@ -1,3 +1,8 @@
+status: 
+ - ippr is working
+ - but proofgraph seems to be generating way too many states on ssl/toy
+
+
 git remote -v
 origin	https://github.com/TeamCohen/ProPPR.git (fetch)
 origin	https://github.com/TeamCohen/ProPPR.git (push)

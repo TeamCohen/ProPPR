@@ -13,53 +13,70 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ConcurrentSymbolTable<T> 
 {
-	protected ConcurrentHashMap<T,Integer> symbol2Id = new ConcurrentHashMap<T,Integer>();
+	static public interface HashingStrategy<T> 
+	{
+		public int computeHashCode(T symbol);
+		public boolean equals(T o1,T o2);
+	}
+	public class DefaultHashingStrategy<T> implements HashingStrategy<T>
+	{
+		public int computeHashCode(T symbol) { return symbol.hashCode(); }
+		public boolean equals(T o1,T o2) { return o1.equals(o2); }
+	}
+
+
+	protected ConcurrentHashMap<Integer,Integer> symbol2Id = new ConcurrentHashMap<Integer,Integer>();
 	protected ConcurrentHashMap<Integer,T> id2symbol  = new ConcurrentHashMap<Integer,T>();
+	protected HashingStrategy hashingStrategy;
 	protected int nextId = 0;
 	
+	public ConcurrentSymbolTable(HashingStrategy<T> strategy) {
+		this.hashingStrategy = strategy==null? new DefaultHashingStrategy<T>() : strategy;
+	}
+	public ConcurrentSymbolTable() {
+		this(null);
+	}
+
 	/**
 	 * Insert a symbol.
 	 * @param s
 	 */
 	public void insert(T symbol) {
-		if (!this.symbol2Id.containsKey(symbol)) {
+		int h = hashingStrategy.computeHashCode(symbol);
+		if (!symbol2Id.containsKey(h)) {
 			int newId = -1;
 			synchronized(this) {
 				newId = ++nextId;
 			}
-			this.symbol2Id.put(symbol,newId);
-			this.id2symbol.put(newId,symbol);
+			symbol2Id.put(h,newId);
+			id2symbol.put(newId,symbol);
 		}
 	}
 	
 	/**
-	 * Get the numeric id, between 1 and N, of a symbol, inserting
-	 * it if needed.
+	 * Get the numeric id, between 1 and N, of a symbol, inserting it if
+	 * needed.
 	 * @param symbol
 	 * @return
 	 */
 	public int getId(T symbol) {
-		this.insert(symbol);
-		return this.symbol2Id.get(symbol);
+		insert(symbol);
+		int h = hashingStrategy.computeHashCode(symbol);
+		return symbol2Id.get(h);
 	}
 
 	
 	/** Test if the symbol has been inserted. 
 	 */
 	public boolean hasId(T symbol) {
-		return this.symbol2Id.containsKey(symbol);
+		int h = hashingStrategy.computeHashCode(symbol);
+		return symbol2Id.containsKey(h);
 	}
 
 	/** Get the symbol for an id.
 	 */
 	public T getSymbol(int id) {
 		return this.id2symbol.get(id);
-	}
-
-	/** Return an iterator over the symbol/id pairs
-	 */
-	public Iterator<Map.Entry<T,Integer> > getSymbolIterator() {
-		return this.symbol2Id.entrySet().iterator();
 	}
 
 	/** Return N, the largest id.
