@@ -1,0 +1,48 @@
+on Mon Feb 3 11:02:03 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+#rank	prec@r	score	example
+111.000000	0.009009	0.006661	interp(i_sister,sophia,alfonso)
+112.000000	0.017857	0.006661	interp(i_brother,alfonso,sophia)
+127.000000	0.023622	0.005193	interp(i_sister,angela,marco)
+128.000000	0.031250	0.005193	interp(i_brother,emilio,lucia)
+131.000000	0.038168	0.005181	interp(i_sister,lucia,emilio)
+132.000000	0.045455	0.005181	interp(i_brother,marco,angela)
+#
+#avgPrecision:  0.027560113916
+#rank	prec@r	score	example
+94.000000	0.010638	0.012393	interp(i_brother,alfonso,sophia)
+97.000000	0.020619	0.012308	interp(i_sister,sophia,alfonso)
+106.000000	0.028302	0.009797	interp(i_sister,angela,marco)
+108.000000	0.037037	0.009669	interp(i_brother,emilio,lucia)
+109.000000	0.045872	0.009546	interp(i_brother,marco,angela)
+111.000000	0.054054	0.009198	interp(i_sister,lucia,emilio)
+#
+#avgPrecision:  0.0327535653483
+#rank	prec@r	score	example
+3.000000	0.333333	0.027105	interp(i_sister,sophia,alfonso)
+4.000000	0.500000	0.027105	interp(i_brother,alfonso,sophia)
+5.000000	0.600000	0.023728	interp(i_sister,angela,marco)
+6.000000	0.666667	0.023728	interp(i_brother,emilio,lucia)
+7.000000	0.714286	0.019602	interp(i_sister,lucia,emilio)
+8.000000	0.750000	0.019602	interp(i_brother,marco,angela)
+#
+#avgPrecision:  0.594047619048
+#rank	prec@r	score	example
+2.000000	0.500000	0.075467	interp(i_brother,alfonso,sophia)
+3.000000	0.666667	0.075350	interp(i_sister,angela,marco)
+5.000000	0.600000	0.075350	interp(i_sister,sophia,alfonso)
+6.000000	0.666667	0.075253	interp(i_brother,emilio,lucia)
+7.000000	0.714286	0.056606	interp(i_sister,lucia,emilio)
+8.000000	0.750000	0.056585	interp(i_brother,marco,angela)
+#
+#avgPrecision:  0.649603174603

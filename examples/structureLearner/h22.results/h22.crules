@@ -1,0 +1,6 @@
+interp,-1,-2,-3 & rel,-4,-2,-3 & abduce_if,-1,-4 # fixedWeight # P,X,Y,R
+interp,-1,-2,-3 & rel,-4,-3,-2 & abduce_ifInv,-1,-4 # fixedWeight # P,X,Y,R
+interp,-1,-2,-3 & rel,-4,-2,-5 & rel,-6,-5,-3 & abduce_chain,-1,-4,-6 # fixedWeight # P,X,Y,R1,Z,R2
+abduce_if,-1,-2 # if,-1,-2 # P,R
+abduce_ifInv,-1,-2 # ifInv,-1,-2 # P,R
+abduce_chain,-1,-2,-3 # chain,-1,-2,-3 # P,R1,R2

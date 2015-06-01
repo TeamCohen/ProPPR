@@ -1,0 +1,48 @@
+on Mon Feb 3 10:57:30 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+#rank	prec@r	score	example
+51.000000	0.019608	0.009246	interp(i_son,marco,pierro)
+52.000000	0.038462	0.009246	interp(i_son,marco,francesca)
+53.000000	0.056604	0.008366	interp(i_son,alfonso,lucia)
+54.000000	0.074074	0.008226	interp(i_son,emilio,roberto)
+55.000000	0.090909	0.008226	interp(i_son,emilio,maria)
+56.000000	0.107143	0.008037	interp(i_son,alfonso,marco)
+#
+#avgPrecision:  0.0644665295516
+#rank	prec@r	score	example
+19.000000	0.052632	0.022636	interp(i_son,marco,pierro)
+20.000000	0.100000	0.022590	interp(i_son,marco,francesca)
+23.000000	0.130435	0.019192	interp(i_son,alfonso,lucia)
+24.000000	0.166667	0.019105	interp(i_son,emilio,roberto)
+25.000000	0.200000	0.019067	interp(i_son,emilio,maria)
+26.000000	0.230769	0.018681	interp(i_son,alfonso,marco)
+#
+#avgPrecision:  0.146750376499
+#rank	prec@r	score	example
+1.000000	1.000000	0.060702	interp(i_son,alfonso,marco)
+2.000000	1.000000	0.060702	interp(i_son,alfonso,lucia)
+3.000000	1.000000	0.059599	interp(i_son,marco,pierro)
+4.000000	1.000000	0.059599	interp(i_son,marco,francesca)
+5.000000	1.000000	0.059599	interp(i_son,emilio,roberto)
+6.000000	1.000000	0.059599	interp(i_son,emilio,maria)
+#
+#avgPrecision:  1.0
+#rank	prec@r	score	example
+1.000000	1.000000	0.143927	interp(i_son,alfonso,marco)
+2.000000	1.000000	0.143800	interp(i_son,alfonso,lucia)
+3.000000	1.000000	0.141879	interp(i_son,marco,pierro)
+4.000000	1.000000	0.141879	interp(i_son,emilio,roberto)
+5.000000	1.000000	0.141814	interp(i_son,marco,francesca)
+6.000000	1.000000	0.141814	interp(i_son,emilio,maria)
+#
+#avgPrecision:  1.0

@@ -1,0 +1,15 @@
+#rank	prec@r	score	example
+1.000000	1.000000	0.184342	interp(i_father,marco,sophia)
+2.000000	1.000000	0.184127	interp(i_mother,lucia,alfonso)
+3.000000	1.000000	0.184123	interp(i_mother,lucia,sophia)
+4.000000	1.000000	0.183872	interp(i_father,marco,alfonso)
+8.000000	0.625000	0.153820	interp(i_father,roberto,lucia)
+9.000000	0.666667	0.153820	interp(i_father,pierro,angela)
+13.000000	0.538462	0.153578	interp(i_mother,maria,emilio)
+14.000000	0.571429	0.153578	interp(i_mother,francesca,marco)
+18.000000	0.500000	0.153572	interp(i_mother,maria,lucia)
+19.000000	0.526316	0.153572	interp(i_mother,francesca,angela)
+23.000000	0.478261	0.153245	interp(i_father,roberto,emilio)
+24.000000	0.500000	0.153245	interp(i_father,pierro,marco)
+#
+#avgPrecision:  0.700511119633

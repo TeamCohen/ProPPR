@@ -95,7 +95,8 @@ public class MultithreadedRRTrainer extends Trainer {
 			    }
 			} catch (ExecutionException e) {
 			    if (++warningCounter<=MAX_WARNINGS) {
-				log.warn("While waiting for example "+k,e);
+				log.warn("In cleanUpExamples() while waiting for example "+k,e.getCause());
+				//e.getCause().printStackTrace();
 				if (warningCounter==MAX_WARNINGS) log.warn("that's your last of those warnings....");
 			    }
 			}

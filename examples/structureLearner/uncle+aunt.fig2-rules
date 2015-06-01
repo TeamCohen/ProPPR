@@ -1,0 +1,29 @@
+#### from gradient file uncle+aunt-00.gradient ####
+#### from gradient file uncle+aunt-01.gradient ####
+interp0(i_aunt,X,Y) :- rel(sister,X,Z),rel(father,Z,Y).
+interp0(i_uncle,X,Y) :- rel(brother,X,Z),rel(mother,Z,Y).
+interp0(i_aunt,X,Y) :- rel(nephew,Y,X).
+interp0(i_aunt,X,Y) :- rel(niece,Y,X).
+interp0(i_uncle,X,Y) :- rel(nephew,Y,X).
+interp0(i_uncle,X,Y) :- rel(niece,Y,X).
+#### from gradient file uncle+aunt-02.gradient ####
+interp0(i_aunt,X,Y) :- rel(wife,X,Z),interp0(i_aunt,Z,Y).
+interp0(i_aunt,X,Y) :- rel(wife,X,Z),interp0(i_uncle,Z,Y).
+interp0(i_uncle,X,Y) :- rel(husband,X,Z),interp0(i_aunt,Z,Y).
+interp0(i_uncle,X,Y) :- rel(husband,X,Z),interp0(i_uncle,Z,Y).
+interp0(i_aunt,X,Y) :- interp0(i_aunt,X,Y).
+interp0(i_aunt,X,Y) :- interp0(i_uncle,X,Y).
+interp0(i_uncle,X,Y) :- interp0(i_aunt,X,Y).
+interp0(i_uncle,X,Y) :- interp0(i_uncle,X,Y).
+#### from gradient file uncle+aunt-03.gradient ####
+#interp0 base case
+interp0(P,X,Y) :- rel(P,X,Y) #fixedWeight.
+#### from h22.rules ####
+interp0(P,X,Y) :- rel(P,X,Y) #fixedWeight.
+
+interp(P,X,Y) :- interp0(R,X,Y), abduce_if(P,R) #fixedWeight.
+interp(P,X,Y) :- interp0(R,Y,X), abduce_ifInv(P,R) #fixedWeight.
+interp(P,X,Y) :- interp0(R1,X,Z), interp0(R2,Z,Y), abduce_chain(P,R1,R2) #fixedWeight.
+abduce_if(P,R) :- # if(P,R).
+abduce_ifInv(P,R) :- # ifInv(P,R).
+abduce_chain(P,R1,R2) :- # chain(P,R1,R2).

@@ -268,7 +268,7 @@ public class MultithreadedQueryAnswerer {
 			@Override
 			public QueryExample next() {
 				String goal = goals.next();
-				return new QueryExample(goal, prover, program, normalize);
+				return new QueryExample(goal, prover.copy(), program, normalize);
 			}
 
 			@Override
@@ -301,7 +301,9 @@ public class MultithreadedQueryAnswerer {
 	            qa.addParams(c.program, new SimpleParamVector(Dictionary.load(file)), c.weightingScheme);
 	            file.check(c);
 	        }
+			long start = System.currentTimeMillis();
 	        qa.findSolutions(c.program, c.prover, c.queryFile, c.outputFile, c.normalize);
+			System.out.println("result= running time "+(System.currentTimeMillis()-start));
 	    }
 	}
 

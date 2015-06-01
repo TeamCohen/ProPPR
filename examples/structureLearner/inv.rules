@@ -1,0 +1,8 @@
+interp(P,X,Y) :- i(R1,X,Z),rel(R2,Z,Y),abduce_chain(P,R1,R2) #fixedWeight.
+interp(P,X,Y) :- rel(R1,X,Z),i(R2,Z,Y), abduce_chain(P,R1,R2) #fixedWeight.
+interp(P,X,Y) :- rel(R1,X,Z), rel(R2,Z,Y), abduce_chain(P,R1,R2) #fixedWeight.
+
+i(P,X,Y) :- invented(P),rel(R,X,Y),abduce_if(P,R) #fixedWeight.
+
+abduce_if(P,R) :- # if(P,R).
+abduce_chain(P,R1,R2) :- # chain(P,R1,R2).

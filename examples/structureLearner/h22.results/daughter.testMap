@@ -1,0 +1,9 @@
+#rank	prec@r	score	example
+17.000000	0.058824	0.023081	interp(i_daughter,lucia,maria)
+18.000000	0.111111	0.023019	interp(i_daughter,lucia,roberto)
+24.000000	0.125000	0.018931	interp(i_daughter,sophia,marco)
+25.000000	0.160000	0.018832	interp(i_daughter,angela,francesca)
+26.000000	0.192308	0.018783	interp(i_daughter,angela,pierro)
+27.000000	0.222222	0.018424	interp(i_daughter,sophia,lucia)
+#
+#avgPrecision:  0.144910759175

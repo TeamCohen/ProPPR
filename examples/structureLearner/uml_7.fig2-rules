@@ -1,0 +1,105 @@
+#### from gradient file uml_7-00.gradient ####
+#### from gradient file uml_7-01.gradient ####
+interp0(i_affects,X,Y) :- rel(analyzes,X,Z),rel(causes,Z,Y).
+interp0(i_affects,X,Y) :- rel(assesses_effect_of,X,Z),rel(causes,Z,Y).
+interp0(i_affects,X,Y) :- rel(associated_with,X,Z),rel(exhibits,Z,Y).
+interp0(i_affects,X,Y) :- rel(associated_with,X,Z),rel(isa,Z,Y).
+interp0(i_affects,X,Y) :- rel(associated_with,X,Z),rel(manifestation_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(associated_with,X,Z),rel(performs,Z,Y).
+interp0(i_affects,X,Y) :- rel(associated_with,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(associated_with,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(associated_with,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(complicates,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(degree_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(disrupts,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(isa,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(location_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(manifestation_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(precedes,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(complicates,X,Z),rel(isa,Z,Y).
+interp0(i_affects,X,Y) :- rel(complicates,X,Z),rel(manifestation_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(complicates,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(complicates,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(degree_of,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(disrupts,X,Z),rel(isa,Z,Y).
+interp0(i_affects,X,Y) :- rel(disrupts,X,Z),rel(location_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(disrupts,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(disrupts,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(indicates,X,Z),rel(isa,Z,Y).
+interp0(i_affects,X,Y) :- rel(ingredient_of,X,Z),rel(causes,Z,Y).
+interp0(i_affects,X,Y) :- rel(interacts_with,X,Z),rel(causes,Z,Y).
+interp0(i_affects,X,Y) :- rel(interacts_with,X,Z),rel(complicates,Z,Y).
+interp0(i_affects,X,Y) :- rel(interacts_with,X,Z),rel(diagnoses,Z,Y).
+interp0(i_affects,X,Y) :- rel(interacts_with,X,Z),rel(disrupts,Z,Y).
+interp0(i_affects,X,Y) :- rel(interacts_with,X,Z),rel(indicates,Z,Y).
+interp0(i_affects,X,Y) :- rel(interacts_with,X,Z),rel(prevents,Z,Y).
+interp0(i_affects,X,Y) :- rel(interacts_with,X,Z),rel(treats,Z,Y).
+interp0(i_affects,X,Y) :- rel(isa,X,Z),rel(causes,Z,Y).
+interp0(i_affects,X,Y) :- rel(isa,X,Z),rel(location_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(isa,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(isa,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(location_of,X,Z),rel(disrupts,Z,Y).
+interp0(i_affects,X,Y) :- rel(location_of,X,Z),rel(manifestation_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(location_of,X,Z),rel(precedes,Z,Y).
+interp0(i_affects,X,Y) :- rel(location_of,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(location_of,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(manifestation_of,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(manifestation_of,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(measures,X,Z),rel(causes,Z,Y).
+interp0(i_affects,X,Y) :- rel(part_of,X,Z),rel(location_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(precedes,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(precedes,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(process_of,X,Z),rel(interacts_with,Z,Y).
+interp0(i_affects,X,Y) :- rel(process_of,X,Z),rel(manifestation_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(process_of,X,Z),rel(precedes,Z,Y).
+interp0(i_affects,X,Y) :- rel(process_of,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(process_of,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(produces,X,Z),rel(causes,Z,Y).
+interp0(i_affects,X,Y) :- rel(produces,X,Z),rel(complicates,Z,Y).
+interp0(i_affects,X,Y) :- rel(produces,X,Z),rel(disrupts,Z,Y).
+interp0(i_affects,X,Y) :- rel(produces,X,Z),rel(indicates,Z,Y).
+interp0(i_affects,X,Y) :- rel(result_of,X,Z),rel(manifestation_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(result_of,X,Z),rel(part_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(result_of,X,Z),rel(process_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(result_of,X,Z),rel(result_of,Z,Y).
+interp0(i_affects,X,Y) :- rel(associated_with,X,Y).
+interp0(i_affects,X,Y) :- rel(causes,X,Y).
+interp0(i_affects,X,Y) :- rel(complicates,X,Y).
+interp0(i_affects,X,Y) :- rel(degree_of,X,Y).
+interp0(i_affects,X,Y) :- rel(diagnoses,X,Y).
+interp0(i_affects,X,Y) :- rel(disrupts,X,Y).
+interp0(i_affects,X,Y) :- rel(isa,X,Y).
+interp0(i_affects,X,Y) :- rel(location_of,X,Y).
+interp0(i_affects,X,Y) :- rel(manifestation_of,X,Y).
+interp0(i_affects,X,Y) :- rel(measures,X,Y).
+interp0(i_affects,X,Y) :- rel(part_of,X,Y).
+interp0(i_affects,X,Y) :- rel(precedes,X,Y).
+interp0(i_affects,X,Y) :- rel(prevents,X,Y).
+interp0(i_affects,X,Y) :- rel(process_of,X,Y).
+interp0(i_affects,X,Y) :- rel(result_of,X,Y).
+interp0(i_affects,X,Y) :- rel(treats,X,Y).
+interp0(i_affects,X,Y) :- rel(isa,Y,X).
+interp0(i_affects,X,Y) :- rel(manifestation_of,Y,X).
+interp0(i_affects,X,Y) :- rel(occurs_in,Y,X).
+interp0(i_affects,X,Y) :- rel(performs,Y,X).
+interp0(i_affects,X,Y) :- rel(precedes,Y,X).
+interp0(i_affects,X,Y) :- rel(process_of,Y,X).
+interp0(i_affects,X,Y) :- rel(produces,Y,X).
+interp0(i_affects,X,Y) :- rel(result_of,Y,X).
+interp0(i_affects,X,Y) :- rel(uses,Y,X).
+#### from gradient file uml_7-02.gradient ####
+interp0(i_affects,X,Y) :- rel(occurs_in,X,Y).
+#### from gradient file uml_7-03.gradient ####
+#interp0 base case
+interp0(P,X,Y) :- rel(P,X,Y) #fixedWeight.
+#### from h22.rules ####
+interp0(P,X,Y) :- rel(P,X,Y) #fixedWeight.
+
+interp(P,X,Y) :- interp0(R,X,Y), abduce_if(P,R) #fixedWeight.
+interp(P,X,Y) :- interp0(R,Y,X), abduce_ifInv(P,R) #fixedWeight.
+interp(P,X,Y) :- interp0(R1,X,Z), interp0(R2,Z,Y), abduce_chain(P,R1,R2) #fixedWeight.
+abduce_if(P,R) :- # if(P,R).
+abduce_ifInv(P,R) :- # ifInv(P,R).
+abduce_chain(P,R1,R2) :- # chain(P,R1,R2).

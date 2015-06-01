@@ -143,6 +143,8 @@ public class QueryAnswerer {
             qa.addParams(c.program, new SimpleParamVector(Dictionary.load(file)), c.weightingScheme);
             file.check(c);
         }
+		long start = System.currentTimeMillis();
         qa.findSolutions(c.program, c.prover, c.queryFile, c.outputFile, c.normalize);
+		System.out.println("result= running time "+(System.currentTimeMillis()-start));
     }
 }

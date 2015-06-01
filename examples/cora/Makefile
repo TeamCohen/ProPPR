@@ -45,8 +45,12 @@ params.wts: ${TRAIN}.examples.cooked
 #%.examples: %.solutions.txt %.queries
 #	${SCRIPTS}/solutions2train.pl $*.queries $< $*.unreachable $@
 
-#%.solutions.txt: %.queries
-#	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.QueryAnswerer --programFiles ${PROGRAM} --queries $< --output $@ --prover ${PROVER}
+pre.%.solutions.txt: %.examples
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.MultithreadedQueryAnswerer --programFiles ${PROGRAM} --queries $< --output $@ --prover ${PROVER} --threads ${THREADS}
+
+post.%.solutions.txt: %.examples params.wts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.MultithreadedQueryAnswerer --programFiles ${PROGRAM} --queries $< --output $@ --prover ${PROVER} --threads ${THREADS} --params params.wts
+
 
 .PRECIOUS: params.wts
 

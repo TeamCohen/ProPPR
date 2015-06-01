@@ -1,0 +1,52 @@
+on Mon Feb 3 11:00:49 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+85.000000	0.058824	0.013232	interp(i_father,roberto,lucia)
+86.000000	0.069767	0.013232	interp(i_father,roberto,emilio)
+87.000000	0.080460	0.013232	interp(i_father,pierro,marco)
+88.000000	0.090909	0.013232	interp(i_father,pierro,angela)
+93.000000	0.096774	0.010907	interp(i_mother,lucia,sophia)
+94.000000	0.106383	0.010907	interp(i_mother,lucia,alfonso)
+95.000000	0.115789	0.010907	interp(i_father,marco,sophia)
+96.000000	0.125000	0.010907	interp(i_father,marco,alfonso)
+#
+#avgPrecision:  0.0720338355916
+22.000000	0.227273	0.029955	interp(i_mother,maria,lucia)
+23.000000	0.260870	0.029955	interp(i_mother,francesca,angela)
+24.000000	0.291667	0.029955	interp(i_mother,maria,emilio)
+25.000000	0.320000	0.029955	interp(i_mother,francesca,marco)
+32.000000	0.281250	0.026446	interp(i_father,marco,alfonso)
+33.000000	0.303030	0.026446	interp(i_father,marco,sophia)
+34.000000	0.323529	0.024363	interp(i_mother,lucia,sophia)
+35.000000	0.342857	0.024363	interp(i_mother,lucia,alfonso)
+#
+#avgPrecision:  0.239858766181
+17.000000	0.294118	0.071448	interp(i_mother,maria,lucia)
+18.000000	0.333333	0.071448	interp(i_mother,maria,emilio)
+19.000000	0.368421	0.071448	interp(i_mother,francesca,marco)
+20.000000	0.400000	0.071448	interp(i_mother,francesca,angela)
+21.000000	0.428571	0.071448	interp(i_father,roberto,lucia)
+22.000000	0.454545	0.071448	interp(i_father,roberto,emilio)
+23.000000	0.478261	0.071448	interp(i_father,pierro,marco)
+24.000000	0.500000	0.071448	interp(i_father,pierro,angela)
+#
+#avgPrecision:  0.604770815475
+8.000000	0.625000	0.153820	interp(i_father,roberto,lucia)
+9.000000	0.666667	0.153820	interp(i_father,pierro,angela)
+13.000000	0.538462	0.153578	interp(i_mother,maria,emilio)
+14.000000	0.571429	0.153578	interp(i_mother,francesca,marco)
+18.000000	0.500000	0.153572	interp(i_mother,maria,lucia)
+19.000000	0.526316	0.153572	interp(i_mother,francesca,angela)
+23.000000	0.478261	0.153245	interp(i_father,roberto,emilio)
+24.000000	0.500000	0.153245	interp(i_father,pierro,marco)
+#
+#avgPrecision:  0.700511119633

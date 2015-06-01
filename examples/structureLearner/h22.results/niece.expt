@@ -1,0 +1,40 @@
+on Mon Feb 3 10:58:57 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+#rank	prec@r	score	example
+53.000000	0.018868	0.009052	interp(i_niece,sophia,emilio)
+54.000000	0.037037	0.009052	interp(i_niece,sophia,angela)
+55.000000	0.054545	0.007625	interp(i_niece,sophia,tomaso)
+56.000000	0.071429	0.007625	interp(i_niece,sophia,gina)
+#
+#avgPrecision:  0.0454697468848
+#rank	prec@r	score	example
+25.000000	0.040000	0.019069	interp(i_niece,sophia,angela)
+26.000000	0.076923	0.019068	interp(i_niece,sophia,emilio)
+32.000000	0.093750	0.017065	interp(i_niece,sophia,tomaso)
+33.000000	0.121212	0.017064	interp(i_niece,sophia,gina)
+#
+#avgPrecision:  0.0829712995338
+#rank	prec@r	score	example
+1.000000	1.000000	0.048275	interp(i_niece,sophia,emilio)
+2.000000	1.000000	0.048275	interp(i_niece,sophia,angela)
+3.000000	1.000000	0.037932	interp(i_niece,sophia,tomaso)
+4.000000	1.000000	0.037932	interp(i_niece,sophia,gina)
+#
+#avgPrecision:  1.0
+#rank	prec@r	score	example
+1.000000	1.000000	0.088079	interp(i_niece,sophia,angela)
+2.000000	1.000000	0.087896	interp(i_niece,sophia,emilio)
+3.000000	1.000000	0.057769	interp(i_niece,sophia,gina)
+4.000000	1.000000	0.057604	interp(i_niece,sophia,tomaso)
+#
+#avgPrecision:  1.0

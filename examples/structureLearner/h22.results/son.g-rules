@@ -1,0 +1,6 @@
+#################### compiled from gradient
+interp(i_son,X,Y) :- rel(brother,X,Z),rel(daughter,Z,Y) #c_chain(i_son,brother,daughter).
+interp(i_son,X,Y) :- rel(nephew,X,Z),rel(brother,Z,Y) #c_chain(i_son,nephew,brother).
+interp(i_son,X,Y) :- rel(nephew,X,Z),rel(sister,Z,Y) #c_chain(i_son,nephew,sister).
+interp(i_son,X,Y) :- rel(father,Y,X) #c_ifInv(i_son,father).
+interp(i_son,X,Y) :- rel(mother,Y,X) #c_ifInv(i_son,mother).

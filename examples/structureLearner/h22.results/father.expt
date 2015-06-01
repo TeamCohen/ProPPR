@@ -1,0 +1,48 @@
+on Mon Feb 3 10:56:09 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+#rank	prec@r	score	example
+28.000000	0.035714	0.017388	interp(i_father,roberto,lucia)
+29.000000	0.068966	0.017388	interp(i_father,roberto,emilio)
+30.000000	0.100000	0.017388	interp(i_father,pierro,marco)
+31.000000	0.129032	0.017388	interp(i_father,pierro,angela)
+50.000000	0.100000	0.010565	interp(i_father,marco,sophia)
+51.000000	0.117647	0.010565	interp(i_father,marco,alfonso)
+#
+#avgPrecision:  0.0918931866406
+#rank	prec@r	score	example
+10.000000	0.100000	0.039651	interp(i_father,roberto,emilio)
+11.000000	0.181818	0.039651	interp(i_father,pierro,marco)
+12.000000	0.250000	0.039648	interp(i_father,roberto,lucia)
+13.000000	0.307692	0.039648	interp(i_father,pierro,angela)
+21.000000	0.238095	0.023612	interp(i_father,marco,alfonso)
+22.000000	0.272727	0.023611	interp(i_father,marco,sophia)
+#
+#avgPrecision:  0.225055500056
+#rank	prec@r	score	example
+1.000000	1.000000	0.078945	interp(i_father,marco,sophia)
+2.000000	1.000000	0.078945	interp(i_father,marco,alfonso)
+3.000000	1.000000	0.069463	interp(i_father,roberto,lucia)
+4.000000	1.000000	0.069463	interp(i_father,roberto,emilio)
+5.000000	1.000000	0.069463	interp(i_father,pierro,marco)
+6.000000	1.000000	0.069463	interp(i_father,pierro,angela)
+#
+#avgPrecision:  1.0
+#rank	prec@r	score	example
+1.000000	1.000000	0.181047	interp(i_father,marco,alfonso)
+2.000000	1.000000	0.180738	interp(i_father,marco,sophia)
+3.000000	1.000000	0.160174	interp(i_father,roberto,emilio)
+4.000000	1.000000	0.160174	interp(i_father,pierro,marco)
+5.000000	1.000000	0.159814	interp(i_father,roberto,lucia)
+6.000000	1.000000	0.159814	interp(i_father,pierro,angela)
+#
+#avgPrecision:  1.0

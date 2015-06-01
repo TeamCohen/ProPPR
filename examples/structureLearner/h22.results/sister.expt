@@ -1,0 +1,36 @@
+on Mon Feb 3 10:57:49 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+#rank	prec@r	score	example
+51.000000	0.019608	0.012479	interp(i_sister,sophia,alfonso)
+52.000000	0.038462	0.012032	interp(i_sister,angela,marco)
+53.000000	0.056604	0.011994	interp(i_sister,lucia,emilio)
+#
+#avgPrecision:  0.0382243850612
+#rank	prec@r	score	example
+25.000000	0.040000	0.024400	interp(i_sister,sophia,alfonso)
+26.000000	0.076923	0.023886	interp(i_sister,angela,marco)
+29.000000	0.103448	0.022990	interp(i_sister,lucia,emilio)
+#
+#avgPrecision:  0.073457117595
+#rank	prec@r	score	example
+1.000000	1.000000	0.051694	interp(i_sister,sophia,alfonso)
+2.000000	1.000000	0.049255	interp(i_sister,angela,marco)
+3.000000	1.000000	0.045433	interp(i_sister,lucia,emilio)
+#
+#avgPrecision:  1.0
+#rank	prec@r	score	example
+1.000000	1.000000	0.126045	interp(i_sister,sophia,alfonso)
+2.000000	1.000000	0.125752	interp(i_sister,angela,marco)
+3.000000	1.000000	0.110191	interp(i_sister,lucia,emilio)
+#
+#avgPrecision:  1.0

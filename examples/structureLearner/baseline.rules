@@ -1,0 +1,12 @@
+interp(i_sister,X,Y) :- rel(sister,X,Y).
+interp(i_daughter,X,Y) :- rel(daughter,X,Y).
+interp(i_wife,X,Y) :- rel(wife,X,Y).
+interp(i_father,X,Y) :- rel(father,X,Y).
+interp(i_brother,X,Y) :- rel(brother,X,Y).
+interp(i_nephew,X,Y) :- rel(nephew,X,Y).
+interp(i_son,X,Y) :- rel(son,X,Y).
+interp(i_uncle,X,Y) :- rel(uncle,X,Y).
+interp(i_niece,X,Y) :- rel(niece,X,Y).
+interp(i_mother,X,Y) :- rel(mother,X,Y).
+interp(i_aunt,X,Y) :- rel(aunt,X,Y).
+interp(i_husband,X,Y) :- rel(husband,X,Y).

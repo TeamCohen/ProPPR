@@ -1,0 +1,52 @@
+on Mon Feb 3 11:01:12 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+135.000000	0.022222	0.004424	interp(i_husband,roberto,maria)
+136.000000	0.029412	0.004424	interp(i_husband,pierro,francesca)
+159.000000	0.031447	0.003424	interp(i_wife,gina,emilio)
+160.000000	0.037500	0.003424	interp(i_husband,tomaso,angela)
+189.000000	0.037037	0.001776	interp(i_wife,lucia,marco)
+190.000000	0.042105	0.001776	interp(i_wife,angela,tomaso)
+191.000000	0.047120	0.001776	interp(i_husband,marco,lucia)
+192.000000	0.052083	0.001776	interp(i_husband,emilio,gina)
+#
+#avgPrecision:  0.0321370750312
+97.000000	0.030928	0.009902	interp(i_wife,francesca,pierro)
+99.000000	0.040404	0.009902	interp(i_wife,maria,roberto)
+108.000000	0.046296	0.008057	interp(i_husband,tomaso,angela)
+112.000000	0.053571	0.007708	interp(i_wife,gina,emilio)
+123.000000	0.056911	0.004396	interp(i_husband,emilio,gina)
+124.000000	0.064516	0.004391	interp(i_husband,marco,lucia)
+131.000000	0.068702	0.004256	interp(i_wife,angela,tomaso)
+136.000000	0.073529	0.004222	interp(i_wife,lucia,marco)
+#
+#avgPrecision:  0.0466663320053
+9.000000	0.333333	0.021721	interp(i_wife,francesca,pierro)
+10.000000	0.400000	0.021721	interp(i_husband,roberto,maria)
+11.000000	0.454545	0.021721	interp(i_husband,pierro,francesca)
+12.000000	0.500000	0.021721	interp(i_husband,marco,lucia)
+25.000000	0.280000	0.014273	interp(i_wife,gina,emilio)
+26.000000	0.307692	0.014273	interp(i_wife,angela,tomaso)
+27.000000	0.333333	0.014273	interp(i_husband,tomaso,angela)
+28.000000	0.357143	0.014273	interp(i_husband,emilio,gina)
+#
+#avgPrecision:  0.33589044289
+6.000000	0.500000	0.070179	interp(i_husband,marco,lucia)
+10.000000	0.400000	0.070131	interp(i_wife,maria,roberto)
+11.000000	0.454545	0.070131	interp(i_wife,lucia,marco)
+12.000000	0.500000	0.070131	interp(i_wife,francesca,pierro)
+19.000000	0.368421	0.035165	interp(i_wife,gina,emilio)
+20.000000	0.400000	0.035165	interp(i_wife,angela,tomaso)
+27.000000	0.333333	0.035162	interp(i_husband,tomaso,angela)
+28.000000	0.357143	0.035162	interp(i_husband,emilio,gina)
+#
+#avgPrecision:  0.396344269765

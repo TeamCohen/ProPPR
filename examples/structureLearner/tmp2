@@ -1,0 +1,412 @@
+FOIL 6.4   [January 1996]
+--------
+
+Relation i_daughter
+
+Relation i_aunt
+
+Relation i_wife
+
+Relation i_father
+
+Relation i_son
+
+Relation i_sister
+
+Relation i_niece
+
+Relation i_husband
+
+Relation i_brother
+
+Relation i_uncle
+
+Relation i_nephew
+
+Relation i_mother
+
+Relation *sister
+
+Relation *daughter
+
+Relation *wife
+
+Relation *father
+
+Relation *brother
+
+Relation *nephew
+
+Relation *son
+
+Relation *aunt
+
+Relation *niece
+
+Relation *mother
+
+Relation *uncle
+
+Relation *husband
+
+----------
+i_daughter:
+
+State (6/56, 33.8 bits available)
+
+Determinate literals
+	i_father(C,A)
+	i_son(C,B) ->i_son(D,B)
+	i_mother(C,A) ->i_mother(E,A)
+	i_sister(A,C) ->i_sister(A,F) F=D (no new vars)
+	i_brother(C,A) ->i_brother(F,A) F=D (no new vars)
+
+State (6/16, 33.8 bits available)
+
+	Save clause ending with i_sister(A,D) (cover 6, accuracy 100%)
+
+Best literal i_sister(A,D) (10.6 bits)
+
+Clause 0: i_daughter(A,B) :- i_son(C,B), i_sister(A,C).
+
+i_daughter(A,B) :- i_son(C,B), i_sister(A,C).
+
+Time 0.0 secs
+
+----------
+i_father:
+
+State (6/56, 33.8 bits available)
+
+	Save clause ending with father(A,B) (cover 5, accuracy 100%)
+
+Best literal father(A,B) (7.6 bits)
+
+Clause 0: i_father(A,B) :- father(A,B).
+
+State (1/51, 12.8 bits available)
+
+Determinate literals
+	i_son(C,A)
+	i_mother(C,B) ->i_mother(D,B)
+	i_wife(B,C) ->i_wife(B,E)
+	i_wife(C,A) ->i_wife(F,A) F=D (no new vars)
+	i_husband(A,C) ->i_husband(A,F) F=D (no new vars)
+	i_husband(C,B) ->i_husband(F,B) F=E (no new vars)
+	i_sister(B,C) ->i_sister(B,F) F=C (no new vars)
+	i_brother(C,B) ->i_brother(F,B) F=C (no new vars)
+	husband(A,C) ->husband(A,F) F=D (no new vars)
+	sister(B,C) ->sister(B,F) F=C (no new vars)
+
+State (1/5, 12.8 bits available)
+
+	Save clause ending with i_wife(D,A) (cover 1, accuracy 100%)
+
+Best literal i_wife(D,A) (10.6 bits)
+
+Clause 1: i_father(A,B) :- i_mother(C,B), i_wife(C,A).
+
+Delete clause
+	i_father(A,B) :- father(A,B).
+
+i_father(A,B) :- i_mother(C,B), i_wife(C,A).
+
+Time 0.0 secs
+
+----------
+i_son:
+
+State (6/56, 33.8 bits available)
+
+	Save clause ending with son(A,B) (cover 4, accuracy 100%)
+
+Determinate literals
+	i_daughter(C,B)
+	i_father(C,A) ->i_father(D,A)
+	i_mother(C,A) ->i_mother(E,A)
+	i_sister(C,A) ->i_sister(F,A) F=C (no new vars)
+	i_brother(A,C) ->i_brother(A,F) F=C (no new vars)
+
+State (6/16, 33.8 bits available)
+
+	Save clause ending with i_sister(C,A) (cover 6, accuracy 100%)
+
+Best literal i_sister(C,A) (10.6 bits)
+
+Clause 0: i_son(A,B) :- i_daughter(C,B), i_sister(C,A).
+
+i_son(A,B) :- i_daughter(C,B), i_sister(C,A).
+
+Time 0.0 secs
+
+----------
+i_mother:
+
+State (6/56, 33.8 bits available)
+
+Determinate literals
+	i_daughter(C,A)
+	i_father(C,B) ->i_father(D,B)
+	i_son(C,A) ->i_son(E,A)
+	i_wife(A,C) ->i_wife(A,F) F=D (no new vars)
+	i_husband(C,A) ->i_husband(F,A) F=D (no new vars)
+
+State (6/16, 33.8 bits available)
+
+	Save clause ending with i_wife(A,D) (cover 6, accuracy 100%)
+
+Best literal i_wife(A,D) (10.6 bits)
+
+Clause 0: i_mother(A,B) :- i_father(C,B), i_wife(A,C).
+
+i_mother(A,B) :- i_father(C,B), i_wife(A,C).
+
+Time 0.0 secs
+
+----------
+i_wife:
+
+State (5/56, 30.4 bits available)
+
+	Save clause ending with i_husband(B,A) (cover 5, accuracy 100%)
+
+Best literal i_husband(B,A) (8.2 bits)
+
+Clause 0: i_wife(A,B) :- i_husband(B,A).
+
+i_wife(A,B) :- i_husband(B,A).
+
+Time 0.0 secs
+
+----------
+i_husband:
+
+State (5/56, 30.4 bits available)
+
+	Save clause ending with i_wife(B,A) (cover 5, accuracy 100%)
+
+Best literal i_wife(B,A) (8.2 bits)
+
+Clause 0: i_husband(A,B) :- i_wife(B,A).
+
+i_husband(A,B) :- i_wife(B,A).
+
+Time 0.0 secs
+
+----------
+i_aunt:
+
+State (4/56, 26.7 bits available)
+
+	Save clause ending with aunt(A,B) (cover 3, accuracy 100%)
+
+Determinate literals
+	i_father(C,B)
+	i_mother(C,B) ->i_mother(D,B)
+	i_wife(A,C) ->i_wife(A,E)
+	i_husband(C,A) ->i_husband(F,A) F=E (no new vars)
+
+State (4/14, 26.7 bits available)
+
+	Save clause ending with i_uncle(E,B) (cover 4, accuracy 100%)
+
+Best literal i_uncle(E,B) (10.6 bits)
+
+Clause 0: i_aunt(A,B) :- i_wife(A,C), i_uncle(C,B).
+
+i_aunt(A,B) :- i_wife(A,C), i_uncle(C,B).
+
+Time 0.0 secs
+
+----------
+i_niece:
+
+State (4/56, 26.7 bits available)
+
+	Save clause ending with niece(A,B) (cover 1, accuracy 100%)
+
+Best literal niece(A,C) (7.6 bits)
+
+State (4/7, 19.1 bits available)
+
+	Save clause ending with i_nephew(D,B) (cover 4, accuracy 100%)
+
+Best literal i_nephew(D,B) (9.2 bits)
+
+Clause 0: i_niece(A,B) :- niece(A,C), i_nephew(D,B).
+
+i_niece(A,B) :- niece(A,C), i_nephew(D,B).
+
+Time 0.0 secs
+
+----------
+i_uncle:
+
+State (4/56, 26.7 bits available)
+
+Determinate literals
+	i_father(C,B)
+	i_mother(C,B) ->i_mother(D,B)
+	i_wife(C,A) ->i_wife(E,A)
+	i_husband(A,C) ->i_husband(A,F) F=E (no new vars)
+	husband(A,C) ->husband(A,F) F=E (no new vars)
+
+State (4/14, 26.7 bits available)
+
+	Save clause ending with i_aunt(E,B) (cover 4, accuracy 100%)
+
+Best literal i_aunt(E,B) (10.6 bits)
+
+Clause 0: i_uncle(A,B) :- i_wife(C,A), i_aunt(C,B).
+
+i_uncle(A,B) :- i_wife(C,A), i_aunt(C,B).
+
+Time 0.0 secs
+
+----------
+i_nephew:
+
+State (4/56, 26.7 bits available)
+
+	Save clause ending with nephew(A,B) (cover 2, accuracy 100%)
+
+Determinate literals
+	i_father(C,A)
+	i_mother(C,A) ->i_mother(D,A)
+	i_sister(C,A) ->i_sister(E,A)
+	i_brother(A,C) ->i_brother(A,F) F=E (no new vars)
+	brother(A,C) ->brother(A,F) F=E (no new vars)
+
+State (4/19, 26.7 bits available)
+
+	Save clause ending with i_niece(E,B) (cover 4, accuracy 100%)
+
+Best literal i_niece(E,B) (10.6 bits)
+
+Clause 0: i_nephew(A,B) :- i_sister(C,A), i_niece(C,B).
+
+i_nephew(A,B) :- i_sister(C,A), i_niece(C,B).
+
+Time 0.0 secs
+
+----------
+i_sister:
+
+State (3/56, 22.6 bits available)
+
+	Save clause ending with i_brother(B,A) (cover 3, accuracy 100%)
+
+Best literal i_brother(B,A) (8.2 bits)
+
+Clause 0: i_sister(A,B) :- i_brother(B,A).
+
+i_sister(A,B) :- i_brother(B,A).
+
+Time 0.0 secs
+
+----------
+i_brother:
+
+State (3/56, 22.6 bits available)
+
+	Save clause ending with i_sister(B,A) (cover 3, accuracy 100%)
+
+Best literal i_sister(B,A) (8.2 bits)
+
+Clause 0: i_brother(A,B) :- i_sister(B,A).
+
+i_brother(A,B) :- i_sister(B,A).
+
+Time 0.0 secs
+
+Test relation i_daughter
+    (+)	lucia,roberto
+    (+)	sophia,lucia
+    (+)	sophia,marco
+    (+)	angela,francesca
+    (+)	angela,pierro
+    (+)	lucia,maria
+Summary: 6 errors in 56 trials
+
+Test relation i_wife
+    (+)	maria,roberto
+    (+)	gina,emilio
+    (+)	lucia,marco
+    (+)	angela,tomaso
+    (+)	francesca,pierro
+Summary: 5 errors in 56 trials
+
+Test relation i_mother
+    (+)	lucia,sophia
+    (+)	lucia,alfonso
+    (+)	maria,lucia
+    (+)	francesca,angela
+    (+)	maria,emilio
+    (+)	francesca,marco
+Summary: 6 errors in 56 trials
+
+Test relation i_father
+    (+)	pierro,marco
+    (+)	roberto,lucia
+    (+)	pierro,angela
+    (+)	marco,sophia
+    (+)	marco,alfonso
+    (+)	roberto,emilio
+Summary: 6 errors in 56 trials
+
+Test relation i_son
+    (+)	alfonso,lucia
+    (+)	emilio,maria
+    (+)	alfonso,marco
+    (+)	marco,francesca
+    (+)	emilio,roberto
+    (+)	marco,pierro
+Summary: 6 errors in 56 trials
+
+Test relation i_sister
+    (+)	angela,marco
+    (+)	lucia,emilio
+    (+)	sophia,alfonso
+Summary: 3 errors in 56 trials
+
+Test relation i_niece
+    (+)	sophia,gina
+    (+)	sophia,emilio
+    (+)	sophia,tomaso
+    (+)	sophia,angela
+Summary: 4 errors in 56 trials
+
+Test relation i_husband
+    (+)	tomaso,angela
+    (+)	marco,lucia
+    (+)	roberto,maria
+    (+)	emilio,gina
+    (+)	pierro,francesca
+Summary: 5 errors in 56 trials
+
+Test relation i_brother
+    (+)	alfonso,sophia
+    (+)	emilio,lucia
+    (+)	marco,angela
+Summary: 3 errors in 56 trials
+
+Test relation i_aunt
+    (+)	angela,sophia
+    (+)	angela,alfonso
+    (+)	gina,sophia
+    (+)	gina,alfonso
+Summary: 4 errors in 56 trials
+
+Test relation i_nephew
+    (+)	alfonso,angela
+    (+)	alfonso,emilio
+    (+)	alfonso,tomaso
+    (+)	alfonso,gina
+Summary: 4 errors in 56 trials
+
+Test relation i_uncle
+    (+)	tomaso,sophia
+    (+)	emilio,sophia
+    (+)	emilio,alfonso
+    (+)	tomaso,alfonso
+Summary: 4 errors in 56 trials

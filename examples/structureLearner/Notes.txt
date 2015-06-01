@@ -1,0 +1,296 @@
+New results:
+
+full data, with % background missing.  baseline is just using the KB.
+
+     baseline	fig	     foil      		mln
+0.05 96.43	97.13	     64.2857142857	 7.14
+0.10 89.29	94.59	     44.6428571429	 8.97
+0.20 82.14	91.86	     21.4285714286	16.09
+0.30 66.07	79.60	     14.2857142857	14.42
+0.40 55.36	82.78	      7.14285714286	19.89
+0.50 50.00	66.53	      0.00		21.77
+
+
+SRW1=l2p:0.00001:20
+SRW2=l2p:0.0001:1
+EPOCHS=100
+PR=dpr:0.0001
+
+			  k=1		     k=0	     k=5	      k=10	     k=i+1		MLN    [one round]
+		      fig-t   fig+t	 fig-t	fig+t	 fig-t	 fig+t	  fig-t	 fig+t    fig-t  fig+t		       1st-t    1st+t
+father+mother         90.75  100.00	 90.75 100.00 	 90.75	100.00	  90.75  100.00   90.75  100.00		42.53  60.48    70.05
+husband+wife          78.30   79.40	 78.30  79.40 	 78.30	 79.40	  78.30   79.40	  78.30   79.40		 3.20  33.59    39.63
+daughter+son         100.00  100.00	100.00 100.00 	100.00	100.00	 100.00  100.00	 100.00  100.00		22.74  60.48 	70.05
+sister+brother        78.85   78.85	 78.85  78.85 	 78.85	 78.85	  78.85   78.85	  78.85   78.85		10.37  59.40 	62.18
+uncle+aunt           100.00  100.00	 91.29  91.29 	100.00	100.00	 100.00  100.00	 100.00  100.00		53.35  72.25 	79.41
+niece+nephew          80.73   78.75	 80.73  80.73 	 80.73	 79.43	  80.73   78.20	  80.73   80.09		28.54  72.25 	72.25
+  average	      88.10   89.50	 86.65  88.38 	 88.10	 89.61	  88.10   89.41	  88.10   89.72		26.79  59.74	65.60
+
+
+MLNs
+father+mother: #avgPrecision:  0.42526133287
+husband+wife: #avgPrecision:   0.0319573729367
+daughter+son: #avgPrecision:   0.227401993278
+sister+brother: #avgPrecision: 0.103734161793
+uncle+aunt: #avgPrecision:     0.533488020981
+niece+nephew: #avgPrecision:   0.285364862179
+
+
+case1:		      80.24   80.24	 learn uncle/aunt/niece/nephew
+case2:		      44.04   44.04	 learn uncle/aunt/niece/nephew/sister/brother
+
+		  2nd-t	 2nd+t	1st-t	1st+t
+father.expt 	  9.19 	 23.08 	100.00 	100.00
+mother.expt 	  9.19 	 19.44 	100.00 	100.00
+husband.expt 	  6.88 	 12.48 	100.00 	100.00
+wife.expt 	  6.88 	 15.27 	100.00 	100.00
+daughter.expt 	  6.45 	 10.95 	100.00 	100.00
+son.expt 	  6.45 	  9.63 	100.00 	100.00
+sister.expt 	  3.82 	  6.19 	100.00 	100.00
+brother.expt 	  3.82 	  6.60 	100.00 	100.00
+uncle.expt 	  5.15 	  9.38 	100.00 	100.00
+aunt.expt 	  5.15 	  9.09 	100.00 	100.00
+niece.expt 	  4.55 	  6.16 	100.00 	100.00
+nephew.expt 	  4.55 	  6.83 	100.00 	100.00
+   average	  6.01	 11.26	100.00	100.00
+
+
+Issues:
+ - not using WW's new delta
+ - for iteratedGradient, and ppr:10 is very slow
+ - for some of the single-expt cases, dpr throws minalpha errors 
+
+Experiment: using 
+
+python bin/prepareJointData.py tmp-train tmp-test 0.9 0.1
+
+to create a data with 90% of examples used for both train and
+background and 10% of background examples discarded that gives a
+baseline testMap of 80 and a .fig testMap of 86.  Or, with 20% of
+background missing, baseline testMap is 0.63 and fig-testMap is
+0.772242160708
+
+  810  python bin/prepareJointData.py tmp-train tmp-test 0.9 0.1
+  811  wc tmp-t*
+  812  make tmp.fig-testMap
+
+#avgPrecision:  0.860086181669
+
+  813  python bin/genBaselinePredictor.py 
+  814  python bin/genBaselinePredictor.py  > baseline.rules
+  815  compile
+  816  make compile
+  817  java edu.cmu.ml.praprolog.QueryAnswerer --programFiles baseline.crules:x.cfacts:tmp-test.cfacts  --prover dpr:0.0001 --queries tmp-test.testData --output tmp.baseline-testAnswers --unnormalized
+
+#avgPrecision:  0.803439326387
+
+  818  python bin/orderAnswers.py tmp.baseline-testAnswers tmp-test.testData | sort -gr | python bin/avgprec.py 
+
+
+------------------------------------------------------------------------------
+updated to version: 
+Last Changed Rev: 2045
+
+Seems about the same - still do get underflow though.  
+
+It might be that the loss for positive and negative examples is not
+balanced - basically there is too much of a penalty for missing
+positive examples, and not enough for false negatives.  (You can see
+this because in the gradient versions, the over-general rules are not
+especially "tuned away" with negative weights).  Pairwise loss?
+
+I could try this by duplicating negative examples manually in the data,
+altho better would be to mess with the loss of
+
+    -ln(p(x))     if x in pos
+    -ln(1 - p(x)) if x in neg
+
+maybe try and push the pos examples up to some threshold, and push the
+negative examples below the threshold?
+
+father.expt 	  9.19 	  0.00 	100.00 	100.00
+mother.expt 	  9.19 	 28.16 	100.00 	100.00
+husband.expt 	  6.88 	 14.92 	100.00 	100.00
+wife.expt 	  6.88 	 12.69 	100.00 	100.00
+daughter.expt 	  6.45 	 10.32 	100.00 	100.00
+son.expt 	  6.45 	  8.99 	100.00 	100.00
+sister.expt 	  3.82 	  6.60 	100.00 	100.00
+brother.expt 	  3.82 	  8.97 	100.00 	100.00
+uncle.expt 	  5.15 	 10.85 	100.00 	100.00
+aunt.expt 	  5.15 	 13.24 	100.00 	100.00
+niece.expt 	  4.55 	  6.79 	100.00 	100.00
+nephew.expt 	  4.55 	  9.09 	100.00 	100.00
+   average	  6.01	 10.88	100.00	100.00
+
+								
+							 k1-r	 v12
+father+mother.expt 	  7.20 	 27.09 	 60.48 	 70.05	70.05  100.00
+husband+wife.expt 	  3.21 	  4.42 	 33.59 	 39.63	79.40   80.00
+daughter+son.expt 	  6.15 	 13.65 	 60.48 	 70.05	70.05  100.00
+sister+brother.expt 	  2.76 	  3.47 	 59.40 	 62.18	91.07   78.85
+uncle+aunt.expt 	  4.60 	 12.07 	 72.25 	 79.41	79.41  100.00
+niece+nephew.expt 	  3.95 	  6.69 	 72.25 	 72.25	72.25   80.73
+   average	  	  4.65	 11.23	 59.74	 65.60	77.04   89.93
+
+
+==============================================================================
+Copy of v10 - my local code copy
+
+
+Note: from Dianhuan, there is noise in the training data here!
+Bug fixed?
+
+After the fix - one gradient round.  Major issue is that I'm getting
+overflow (?) all the time here.  Did a workaround for trove.t trainer
+only.
+
+ 		  2nd-ord +t      grad	+t
+father.expt 	  9.19 	 22.51 	100.00 	100.00
+mother.expt 	  9.19 	 22.51 	100.00 	100.00
+husband.expt 	  6.88 	 13.24 	100.00 	100.00
+wife.expt 	  6.88 	 18.24 	100.00 	100.00
+daughter.expt 	  6.45 	 14.49 	100.00 	100.00
+son.expt 	  6.45 	 14.68 	100.00 	100.00
+sister.expt 	  3.82 	  7.35 	100.00 	100.00
+brother.expt 	  3.82 	 10.93 	100.00 	100.00
+uncle.expt 	  5.15 	  8.84 	100.00 	100.00
+aunt.expt 	  5.15 	 17.25 	100.00 	100.00
+niece.expt 	  4.55 	  8.30 	100.00 	100.00
+nephew.expt 	  4.55 	  6.25 	100.00 	100.00
+   average	  6.01	 13.71	100.00	100.00
+
+   		  	 2nd-ord +t      grad	+t
+father+mother.expt 	  7.20 	 23.32 	 60.48 	 70.05
+husband+wife.expt 	  3.21 	  4.73 	 33.59 	 39.63
+daughter+son.expt 	  6.15 	 11.49 	 60.48 	 70.05
+sister+brother.expt 	  2.76 	  3.29 	 59.40 	 62.18
+uncle+aunt.expt 	  4.60 	 10.41 	 72.25 	 79.41
+niece+nephew.expt 	  3.95 	  6.49 	 72.25 	 72.25
+	   average	  4.65	  9.96	 59.74	 65.60
+	   
+			 1-pass	      iterated gradient theory			         +10% noise
+				  k=0-r  k=5-r	k=10-r   k=0	 k=5	k0/-t	         k0	k0-r
+
+father+mother.expt 	  70.05	  70.05	 70.05	70.05   70.05	70.05	30.73		37.09	55.44
+husband+wife.expt 	  39.63	  79.40	 79.40	79.40   79.40	79.40	18.15		55.20	25.62
+daughter+son.expt 	  70.05	  70.05	 70.05	70.05   70.05	70.05	30.73		48.86	42.70
+sister+brother.expt 	  62.18	  91.07	 91.07	91.07   85.52	91.07	31.94		42.50	80.16
+uncle+aunt.expt 	  79.41	  79.41	 79.41	79.41   79.41	77.43	36.61		44.69	63.64
+niece+nephew.expt 	  72.25	  72.25	 72.25	72.25   77.43	72.25	36.61		46.63	56.57
+												
+	   average	  65.60	  77.04	 77.04	77.04  76.98	76.71	30.80		45.83	54.02
+
+				  -r means drop redundant rules
+
+Exploring noise effects - namely, dropping x% of positive relations
+
+	  	     no noise       10% noise  	  20% noise
+ 		    grad  +t	    grad  +t	  grad  +t	 
+father.expt 	  100.00 100.00	   53.27  96.67	 12.50 	 35.96
+mother.expt 	  100.00 100.00	   92.42 100.00	 20.50 	 50.84
+husband.expt 	  100.00 100.00	   88.75  95.00	 44.44 	 58.89
+wife.expt 	  100.00 100.00	  100.00 100.00	 96.67 	100.00
+daughter.expt 	  100.00 100.00	   73.33  87.67	 73.42 	 71.00
+son.expt 	  100.00 100.00	   74.83 100.00	 27.08 	 60.83
+sister.expt 	  100.00 100.00	  100.00 100.00	 91.67 	100.00
+brother.expt 	  100.00 100.00	   50.00  50.00	100.00 	100.00
+uncle.expt 	  100.00 100.00	   89.29 100.00	 20.83 	 20.83
+aunt.expt 	  100.00 100.00	   69.84  91.67	 27.78 	 46.67
+niece.expt 	  100.00 100.00	  100.00 100.00	100.00 	100.00
+nephew.expt 	  100.00 100.00	   87.50 100.00	 73.21 	100.00
+
+   average	  100.00 100.00	   81.60 93.42 	 57.34	 70.42
+
+
+
+------------------------------------------------------------------------------
+
+Experiments in v10
+
+Baseline - one gradient round:
+
+father+mother.expt 	  7.20 	 39.76 	 60.48 	 70.05
+husband+wife.expt 	  3.21 	  5.10 	 33.59 	 39.63
+daughter+son.expt 	  6.15 	 13.68 	 60.48 	 70.05
+sister+brother.expt 	  2.76 	  3.19 	 59.40 	 62.18
+uncle+aunt.expt 	  4.60 	 23.15 	 72.25 	 79.41
+niece+nephew.expt 	  3.95 	  4.60 	 72.25 	 72.25
+	   average	  4.65	 14.91	 59.74	 65.60
+
+case1 (aunt/un/nei/neph)  0.006	 0.009	 0.5	 0.5
+
+
+------------------------------------------------------------------------------
+no epochs between gradients, no feature filter, 'l2p:0.0001:20',
+
+fig (vs figs, the stratified version) seems to be quite slow.
+
+   	  	  	 1-round figs  	 +5i      -r    -r+5i  -r+10i
+father+mother.expt 	  70.05	 66.37	65.61	70.05 	70.05  70.05
+husband+wife.expt 	  39.63	 68.48	79.40	79.40 	79.40  79.40
+daughter+son.expt 	  70.05	 79.40	65.61	70.05 	70.05  70.05
+sister+brother.expt 	  62.18	 67.36	91.07	91.07 	91.07  91.07
+uncle+aunt.expt 	  79.41	 81.35	75.00	79.41 	79.41  79.41
+niece+nephew.expt 	  72.25	 77.81	72.25	77.43 	72.25  73.12
+	   average	  65.60	 73.46	74.82	77.90 	77.04  77.18
+
+case1	   		  50.00	 *	*	50.00	50.00	*
+
+figs+5i: train for 5 epochs between addition of gradient rules
+figs-r: don't allow redundant rules (aunt(X,Y) :- aunt(X,Y) or 
+aunt(X,Y) :- uncle(X,Y))
+
+
+Seems to be working, and we have some headroom with pairs like wife-husband
+
+Status: seems to consistently like rules such as 
+
+	"husband(X,Y) :- wife(X,Y)" 
+
+maybe I should just stoplist them, based on the stem in gradient2Rules?
+
+Look at iterative gradient construction.
+
+Python script that does:
+  for i = 1,...
+  1) compute gradient using h22-i.crules,x-train.cfacts
+  3) break if there are no new gradient rules
+  2) add gradient rules to h22.crules to get h22-(i+1).crules
+
+Or...a simpler process, for the relation pairs:
+
+  for i = 1,...
+
+  1) add gradient rules for pass i, but add them as interp__i functor
+  rules, i.e, interp_1(P,X,Y), then interp_2(P,X,Y), ...
+
+  2) add h22-rules but modified as follows (plug in correct interp_i -
+  note interp_0 is just rel)
+
+   interp(P,X,Y) :- interp_i(R,X,Y), abduce_if(P,R) #fixedWeight.
+   interp(P,X,Y) :- interp_i(R,Y,X), abduce_ifInv(P,R) #fixedWeight.
+   interp(P,X,Y) :- interp_i(R1,X,Z), interp_i(R2,Z,Y), abduce_chain(P,R1,R2) #fixedWeight.
+   abduce_if(P,R) :- # if(P,R).
+   abduce_ifInv(P,R) :- # ifInv(P,R).
+   abduce_chain(P,R1,R2) :- # chain(P,R1,R2).
+
+  3) construct some new gradient rules and repeat....
+
+  Alternative a)....maybe train for K epochs before computing the gradient, for
+  K = 10*i or something....
+
+  Alternative b)... when you're finished (no new rules?) you make the
+  theory fully recursive and re-train.
+
+------------------------------------------------------------------------------
+Experiments:
+
+Baseline - one gradient round:
+
+father+mother.expt 	  7.20 	 39.76 	 60.48 	 70.05
+husband+wife.expt 	  3.21 	  5.10 	 33.59 	 39.63
+daughter+son.expt 	  6.15 	 13.68 	 60.48 	 70.05
+sister+brother.expt 	  2.76 	  3.19 	 59.40 	 62.18
+uncle+aunt.expt 	  4.60 	 23.15 	 72.25 	 79.41
+niece+nephew.expt 	  3.95 	  4.60 	 72.25 	 72.25
+	   average	  4.65	 14.91	 59.74	 65.60

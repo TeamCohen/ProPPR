@@ -1,0 +1,44 @@
+on Mon Feb 3 10:56:58 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+#rank	prec@r	score	example
+31.000000	0.032258	0.016261	interp(i_wife,maria,roberto)
+32.000000	0.062500	0.016261	interp(i_wife,francesca,pierro)
+37.000000	0.081081	0.015512	interp(i_wife,gina,emilio)
+53.000000	0.075472	0.008730	interp(i_wife,lucia,marco)
+54.000000	0.092593	0.008730	interp(i_wife,angela,tomaso)
+#
+#avgPrecision:  0.0687806872606
+#rank	prec@r	score	example
+12.000000	0.083333	0.036932	interp(i_wife,maria,roberto)
+13.000000	0.153846	0.036932	interp(i_wife,francesca,pierro)
+14.000000	0.214286	0.035057	interp(i_wife,gina,emilio)
+19.000000	0.210526	0.021046	interp(i_wife,lucia,marco)
+20.000000	0.250000	0.020819	interp(i_wife,angela,tomaso)
+#
+#avgPrecision:  0.182398303451
+#rank	prec@r	score	example
+1.000000	1.000000	0.064691	interp(i_wife,maria,roberto)
+2.000000	1.000000	0.064691	interp(i_wife,lucia,marco)
+3.000000	1.000000	0.064691	interp(i_wife,francesca,pierro)
+4.000000	1.000000	0.058143	interp(i_wife,gina,emilio)
+5.000000	1.000000	0.058143	interp(i_wife,angela,tomaso)
+#
+#avgPrecision:  1.0
+#rank	prec@r	score	example
+1.000000	1.000000	0.158614	interp(i_wife,maria,roberto)
+2.000000	1.000000	0.158614	interp(i_wife,lucia,marco)
+3.000000	1.000000	0.158614	interp(i_wife,francesca,pierro)
+4.000000	1.000000	0.132312	interp(i_wife,gina,emilio)
+5.000000	1.000000	0.132312	interp(i_wife,angela,tomaso)
+#
+#avgPrecision:  1.0

@@ -1,0 +1,16 @@
+interp(P,X,Y) :- 
+	      extensionalVersionOf(P,R), 
+	      rel(R,X,Z) #fixedWeight.
+interp(P,X,Y) :- 
+	      rel(R1,X,Z),
+	      relation(R2), interp(R2,Z,Y), 
+	      abduce_chain_ei(P,R1,R2) #fixedWeight.
+interp(P,X,Y) :- 
+	      relation(R1), interp(R1,X,Z), 
+	      rel(R2,Z,Y),
+	      abduce_chain_ie(P,R1,R2) #fixedWeight.
+
+relation(R) :- extensionalVersionOf(R,_) #fixedWeight.
+
+abduce_chain_ei(P,R1,R2) :- # chain_ei(P,R1,R2).
+abduce_chain_ie(P,R1,R2) :- # chain_ie(P,R1,R2).

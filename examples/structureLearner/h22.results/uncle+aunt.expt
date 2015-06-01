@@ -1,0 +1,52 @@
+on Mon Feb 3 11:02:25 EST 2014 summary with P=h22.crules EPOCHS=100 SRW1=l2p:0.00001:20 SRW2=l2p:0.0001:1
+Path: .
+URL: svn+ssh://wcohen@curtis.ml.cmu.edu/svn/Praprolog
+Repository Root: svn+ssh://wcohen@curtis.ml.cmu.edu/svn
+Repository UUID: 69cd4e8c-d0b0-48cc-a92d-41f871e07551
+Revision: 2034
+Node Kind: directory
+Schedule: normal
+Last Changed Author: yww
+Last Changed Rev: 2012
+Last Changed Date: 2014-01-27 12:23:58 -0500 (Mon, 27 Jan 2014)
+
+85.000000	0.011765	0.012995	interp(i_uncle,tomaso,sophia)
+86.000000	0.023256	0.012995	interp(i_uncle,tomaso,alfonso)
+87.000000	0.034483	0.012995	interp(i_aunt,gina,sophia)
+88.000000	0.045455	0.012995	interp(i_aunt,gina,alfonso)
+101.000000	0.049505	0.008341	interp(i_uncle,emilio,sophia)
+102.000000	0.058824	0.008341	interp(i_uncle,emilio,alfonso)
+103.000000	0.067961	0.008341	interp(i_aunt,angela,sophia)
+104.000000	0.076923	0.008341	interp(i_aunt,angela,alfonso)
+#
+#avgPrecision:  0.0460213182237
+31.000000	0.032258	0.032957	interp(i_uncle,tomaso,sophia)
+32.000000	0.062500	0.032957	interp(i_uncle,tomaso,alfonso)
+38.000000	0.078947	0.028801	interp(i_aunt,gina,sophia)
+39.000000	0.102564	0.028799	interp(i_aunt,gina,alfonso)
+41.000000	0.121951	0.021191	interp(i_uncle,emilio,sophia)
+42.000000	0.142857	0.021191	interp(i_uncle,emilio,alfonso)
+45.000000	0.155556	0.018553	interp(i_aunt,angela,sophia)
+46.000000	0.173913	0.018552	interp(i_aunt,angela,alfonso)
+#
+#avgPrecision:  0.108818312113
+1.000000	1.000000	0.083334	interp(i_uncle,emilio,sophia)
+2.000000	1.000000	0.083334	interp(i_uncle,emilio,alfonso)
+3.000000	1.000000	0.083334	interp(i_aunt,angela,sophia)
+4.000000	1.000000	0.083334	interp(i_aunt,angela,alfonso)
+13.000000	0.384615	0.071448	interp(i_uncle,tomaso,sophia)
+14.000000	0.428571	0.071448	interp(i_uncle,tomaso,alfonso)
+15.000000	0.466667	0.071448	interp(i_aunt,gina,sophia)
+16.000000	0.500000	0.071448	interp(i_aunt,gina,alfonso)
+#
+#avgPrecision:  0.722481684982
+1.000000	1.000000	0.180246	interp(i_uncle,emilio,alfonso)
+2.000000	1.000000	0.180150	interp(i_aunt,angela,alfonso)
+3.000000	1.000000	0.179850	interp(i_uncle,emilio,sophia)
+4.000000	1.000000	0.179621	interp(i_aunt,angela,sophia)
+7.000000	0.714286	0.150128	interp(i_uncle,tomaso,alfonso)
+10.000000	0.600000	0.149761	interp(i_aunt,gina,alfonso)
+13.000000	0.538462	0.149648	interp(i_uncle,tomaso,sophia)
+16.000000	0.500000	0.149116	interp(i_aunt,gina,sophia)
+#
+#avgPrecision:  0.794093406593

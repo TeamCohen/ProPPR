@@ -1,0 +1,7 @@
+#rank	prec@r	score	example
+1.000000	1.000000	0.175600	interp(i_uncle,emilio,alfonso)
+2.000000	1.000000	0.174951	interp(i_uncle,emilio,sophia)
+3.000000	1.000000	0.154723	interp(i_uncle,tomaso,alfonso)
+4.000000	1.000000	0.153974	interp(i_uncle,tomaso,sophia)
+#
+#avgPrecision:  1.0

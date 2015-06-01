@@ -1,0 +1,9 @@
+#non-recursive version of H22
+
+interp(P,X,Y) :- rel(R,X,Y), abduce_if(P,R) #fixedWeight.
+interp(P,X,Y) :- rel(R,Y,X), abduce_ifInv(P,R) #fixedWeight.
+interp(P,X,Y) :- rel(R1,X,Z), rel(R2,Z,Y), abduce_chain(P,R1,R2) #fixedWeight.
+
+abduce_if(P,R) :- # if(P,R).
+abduce_ifInv(P,R) :- # ifInv(P,R).
+abduce_chain(P,R1,R2) :- # chain(P,R1,R2).
