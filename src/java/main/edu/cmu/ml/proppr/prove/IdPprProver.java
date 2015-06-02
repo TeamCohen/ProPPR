@@ -85,18 +85,10 @@ public class IdPprProver extends Prover {
 			vec = nextVec;
 			// now use the saved space as buffer next iteration
 			nextVec = tmp;
-			System.out.println("iter "+(i+1)+" size "+vec.size());
+			//System.out.println("ippr iter "+(i+1)+" size "+vec.size());
 		}
 
-		// convert to map
-		Map<State,Double> result = new HashMap<State,Double>();
-		for (int uid=cg.getRootId(); uid<vec.size(); uid++) {
-			double vu = vec.get(uid);
-			if (vu >= 0.0) {
-				result.put( cg.getStateById(uid), vu );
-			}
-		}
-		return result;
+		return cg.asMap(vec);
 	}
 
 	LongDense.FloatVector walkOnce(ProofGraph.CachingIdGraph cg, LongDense.FloatVector vec,LongDense.AbstractFloatVector params,SmoothFunction f) 

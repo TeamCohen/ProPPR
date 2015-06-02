@@ -257,7 +257,7 @@ public class ProofGraph {
 		}
 	}
 	
-	/* ************************** compact version of the proofgraph  *********************** */
+	/* ************************** optimized version of the proofgraph  *********************** */
 
 	public static class CachingIdGraph {
 		private LongDense.ObjVector<SimpleSparse.FloatMatrix> nodeVec;
@@ -312,6 +312,21 @@ public class ProofGraph {
 			}
 			return z;
 		}
+
+		/** Convert a vector indexed by state id's to a map **/
+
+		public Map<State,Double> asMap(LongDense.FloatVector vec) {
+			Map<State,Double> result = new HashMap<State,Double>();
+			for (int uid=getRootId(); uid<vec.size(); uid++) {
+				double vu = vec.get(uid);
+				if (vu >= 0.0) {
+					result.put( getStateById(uid), vu );
+				}
+			}
+			return result;
+		}
+
+		/* produce and cache outlinks if you haven't yet */
 		private void expandIfNeeded(int uid) throws LogicProgramException {
 			if (nodeVec.get(uid)==null) {
 				State u = nodeTab.getSymbol(uid);

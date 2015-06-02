@@ -63,10 +63,21 @@ public class PprProver extends Prover {
 			if (log.isInfoEnabled()) log.info("iteration/descent "+(i-1)+" complete");
 			if(log.isDebugEnabled()) log.debug("after iteration "+(i+1)+" :"+
 					Dictionary.buildString(vec,new StringBuilder(),"\n\t").toString());
+//			System.out.println("ppr iter "+(i+1)+" size "+vec.size());
+/*			
+			for (Map.Entry<State,Double> e : vec.entrySet()) {
+				try {
+					State s = e.getKey();
+					System.out.println(" - "+e.getValue()+"\t"+s.canonicalHash()+"\t"+pg.getInterpreter().canonicalForm(pg.getStartState(),s));
+				} catch (LogicProgramException ex) {
+					throw new IllegalStateException(ex);
+				}
+			}
+*/
 		}
-		
 		return vec;
 	}
+
 	protected Map<State, Double> walkOnce(ProofGraph pg, Map<State, Double> vec) {
 		Map<State, Double> nextVec = new HashMap<State, Double>();
 		int i=1,n=vec.size();
