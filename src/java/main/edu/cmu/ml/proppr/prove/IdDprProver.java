@@ -1,22 +1,15 @@
 package edu.cmu.ml.proppr.prove;
 
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 
-import edu.cmu.ml.proppr.prove.MinAlphaException;
-import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
-import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.util.APROptions;
-import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.LongDense;
 import edu.cmu.ml.proppr.util.SmoothFunction;
 
@@ -35,7 +28,7 @@ public class IdDprProver extends Prover {
 
 	@Override
 	public String toString() { 
-		return String.format("dpr:%.6g:%g", apr.epsilon, apr.alpha);
+		return String.format("idpr:%.6g:%g", apr.epsilon, apr.alpha);
 	}
 
 	public IdDprProver() { this(false); }

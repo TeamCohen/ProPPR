@@ -43,7 +43,7 @@ public class IdPprProver extends Prover {
 	}
 	
 	@Override
-	public String toString() { return "ppr:"+this.apr.maxDepth; }
+	public String toString() { return "ippr:"+this.apr.maxDepth; }
 	
 	public Prover copy() {
 		Prover copy = new IdPprProver(weighter, this.apr, this.trace);
