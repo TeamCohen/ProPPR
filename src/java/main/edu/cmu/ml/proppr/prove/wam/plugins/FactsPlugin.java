@@ -177,6 +177,10 @@ public class FactsPlugin extends WamPlugin {
 			JumpArgKey f = (JumpArgKey) o;
 			return this.jump.equals(f.jump) && this.arg.equals(f.arg);
 		}
+		@Override
+		public String toString() {
+			return jump+":"+arg;
+		}
 	}
 
 	public static class JumpArgArgKey extends JumpArgKey {
