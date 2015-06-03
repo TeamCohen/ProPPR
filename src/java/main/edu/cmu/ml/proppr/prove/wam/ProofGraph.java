@@ -12,12 +12,17 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
+import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.FilterPluginCollection;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.PluginFunction;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSparse;
+import edu.cmu.ml.proppr.util.LongDense;
+import edu.cmu.ml.proppr.util.SmoothFunction;
 import gnu.trove.strategy.HashingStrategy;
+import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 
 /**
  * # Creates the graph defined by a query, a wam program, and a list of
@@ -41,7 +46,7 @@ public class ProofGraph {
 	private int queryStartAddress;
 	private final ImmutableState startState;
 	private int[] variableIds;
-	private LightweightStateGraph graph;
+	private InferenceGraph graph;
 	private Map<Goal,Double> trueLoopFD;
 	private Map<Goal,Double> trueLoopRestartFD;
 	private Goal restartFeature;
@@ -122,6 +127,7 @@ public class ProofGraph {
 	 * @throws LogicProgramException
 	 */
 	public List<Outlink> pgOutlinks(State state, boolean trueLoop) throws LogicProgramException {
+		// wwc: why aren't trueloop, restart objects precomputed and shared?
 		if (!this.graph.outlinksDefined(state)) {
 			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop);
 			Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
@@ -251,10 +257,116 @@ public class ProofGraph {
 		}
 	}
 	
+	/* ************************** optimized version of the proofgraph  *********************** */
+
+	public static class CachingIdGraph {
+		private LongDense.ObjVector<SimpleSparse.FloatMatrix> nodeVec;
+		private ConcurrentSymbolTable<State> nodeTab;
+		private ConcurrentSymbolTable<Goal> featureTab;
+		private ProofGraph pg;
+		
+		public CachingIdGraph(ProofGraph pg) 
+		{
+			nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
+			featureTab = new ConcurrentSymbolTable<Goal>();
+			nodeTab = new ConcurrentSymbolTable<State>(new ConcurrentSymbolTable.HashingStrategy<State>() {
+					@Override
+					public int computeHashCode(State s) {
+						return s.canonicalHash();
+					}
+					@Override
+					public boolean equals(State s1, State s2) {
+						return s1.canonicalHash() == s2.canonicalHash();
+					}});
+			this.pg = pg;
+			this.nodeTab.insert(pg.getStartState());
+		}
+		public State getStateById(int uid) { 
+			return nodeTab.getSymbol(uid); 
+		}
+		public int getRootId() { 
+			return 1; 
+		}
+		public int getId(State u) { 
+			return nodeTab.getId(u); 
+		}
+		public int getDegreeById(int ui) throws LogicProgramException { 
+			expandIfNeeded(ui);
+			return nodeVec.get(ui).index.length; 
+		}
+		public int getIthNeighborById(int ui,int i)  throws LogicProgramException {
+			expandIfNeeded(ui);
+			return nodeVec.get(ui).index[i]; 
+		}
+		public double getIthWeightById(int ui,int i,LongDense.AbstractFloatVector params,SmoothFunction squashingFunction)  throws LogicProgramException {
+			expandIfNeeded(ui);
+			SimpleSparse.FloatVector phi = nodeVec.get(ui).val[i]; 
+			return squashingFunction.compute(phi.dot(params));
+		}
+		public double getTotalWeightOfOutlinks(int ui,LongDense.AbstractFloatVector params,SmoothFunction squashingFunction) throws LogicProgramException {
+			expandIfNeeded(ui);
+			double z = 0.0;
+			int d = getDegreeById(ui);
+			for (int i=0; i<d; i++) {
+				z += getIthWeightById(ui,i,params,squashingFunction);
+			}
+			return z;
+		}
+
+		/** Convert a vector indexed by state id's to a map **/
+
+		public Map<State,Double> asMap(LongDense.FloatVector vec) {
+			Map<State,Double> result = new HashMap<State,Double>();
+			for (int uid=getRootId(); uid<vec.size(); uid++) {
+				double vu = vec.get(uid);
+				if (vu >= 0.0) {
+					result.put( getStateById(uid), vu );
+				}
+			}
+			return result;
+		}
+
+		/* produce and cache outlinks if you haven't yet */
+		private void expandIfNeeded(int uid) throws LogicProgramException {
+			if (nodeVec.get(uid)==null) {
+				State u = nodeTab.getSymbol(uid);
+				if (u!=null) {
+					nodeVec.set(uid, outlinksAsMatrix(pg.pgOutlinks(u,true)));
+				}
+			}
+		}
+
+		public SimpleSparse.FloatMatrix outlinksAsMatrix(List<Outlink> outlinks) {
+			// convert the outlinks to a sparse matrix
+			SimpleSparse.FloatMatrix mat = new SimpleSparse.FloatMatrix(outlinks.size());
+			int i = 0;
+			for (Outlink o : outlinks) {
+				int vi = this.nodeTab.getId(o.child);
+				// convert features for link from u to vi to a SimpleSparse.Vector 
+				int numFeats = o.fd.size();
+				int[] featBuf = new int[numFeats];
+				float[] featVal = new float[numFeats];
+				int j=0;
+				for (Map.Entry<Goal,Double> e : o.fd.entrySet()) {
+					featBuf[j] = featureTab.getId(e.getKey());
+					featVal[j] = (float)e.getValue().doubleValue();
+					j++;
+				}
+				mat.val[i] = new SimpleSparse.FloatVector(featBuf,featVal);
+				mat.index[i] = vi;
+				i++;
+			}
+			mat.sortIndex();
+			return mat;
+		}
+	}
+
 	/* ************************ getters ****************************** */
+
 	public State getStartState() { return this.startState; }
 	public WamInterpreter getInterpreter() { return this.interpreter; }
 	public InferenceExample getExample() {
 		return this.example;
 	}
+
 }

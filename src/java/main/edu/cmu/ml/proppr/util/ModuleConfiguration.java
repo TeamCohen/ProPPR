@@ -19,7 +19,10 @@ import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
+import edu.cmu.ml.proppr.prove.IdDprProver;
+import edu.cmu.ml.proppr.prove.PriorityQueueProver;
 import edu.cmu.ml.proppr.prove.PathDprProver;
+import edu.cmu.ml.proppr.prove.IdPprProver;
 import edu.cmu.ml.proppr.prove.PprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
@@ -33,7 +36,7 @@ public class ModuleConfiguration extends Configuration {
 	private static final String WEIGHTINGSCHEME_MODULE_OPTION = "weightingScheme";
 	private static final String PROVER_MODULE_OPTION = "prover";
 
-	private enum PROVERS { ppr, dpr, pdpr, dfs, tr };
+	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
 	private enum WEIGHTINGSCHEMES { linear, sigmoid, tanh, ReLU, exp };
 	private enum TRAINERS { cached, caching, streaming };
 	public Grounder grounder;
@@ -74,8 +77,11 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: dpr\n"
 							+ "Available options:\n"
+							+ "ippr\n"
 							+ "ppr\n"
 							+ "dpr\n"
+							+ "idpr\n"
+							+ "qpr\n"
 							+ "pdpr\n"
 							+ "dfs\n"
 							+ "tr")
@@ -144,6 +150,7 @@ public class ModuleConfiguration extends Configuration {
 		int flags;
 		// modules
 		flags = modules(allFlags);
+
 		if (isOn(flags,USE_PROVER)) {
 			if (!line.hasOption(PROVER_MODULE_OPTION)) {
 				// default:
@@ -151,13 +158,24 @@ public class ModuleConfiguration extends Configuration {
 			} else {
 				String[] values = line.getOptionValue(PROVER_MODULE_OPTION).split(":");
 				switch (PROVERS.valueOf(values[0])) {
+				case ippr:
+					this.prover = new IdPprProver(apr);
+					break;
 				case ppr:
 					this.prover = new PprProver(apr);
+					break;
 				case dpr:
-						this.prover = new DprProver(apr);
+					this.prover = new DprProver(apr);
+					break;
+				case idpr:
+					this.prover = new IdDprProver(apr);
+					break;
+				case qpr:
+					this.prover = new PriorityQueueProver(apr);
 					break;
 				case pdpr:
 					this.prover = new PathDprProver(apr);
+					break;
 				case dfs:
 					this.prover = new DfsProver(apr);
 					break;
@@ -233,7 +251,7 @@ public class ModuleConfiguration extends Configuration {
 
 		//modules
 		flags = modules(allFlags);
-		if (isOn(flags, USE_PROVER)) syntax.append(" [--").append(PROVER_MODULE_OPTION).append(" ppr | dpr | pdpr | dfs | tr ]");
+		if (isOn(flags, USE_PROVER)) syntax.append(" [--").append(PROVER_MODULE_OPTION).append(" ippr | ppr | dpr | pdpr | dfs | tr ]");
 		if (isOn(flags, USE_WEIGHTINGSCHEME)) 
 			syntax.append(" [--").append(WEIGHTINGSCHEME_MODULE_OPTION).append(" linear | sigmoid | tanh | ReLU | exp]");
 		if (isOn(flags, USE_TRAINER)) syntax.append(" [--").append(TRAINER_MODULE_OPTION).append(" cached|streaming]");

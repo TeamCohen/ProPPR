@@ -64,6 +64,11 @@ public class DprProver extends Prover {
 		return copy;
 	}
 
+	// wwc: might look at using a PriorityQueue together with r to find
+	// just the top things. 
+
+	// wwc:, could we use canonical hashes instead of states somehow, to
+	// make this smaller/faster for lookups?
 
 	public Map<State, Double> prove(ProofGraph pg) {
 		if (this.current != null) throw new IllegalStateException("DprProver not threadsafe -- one instance per thread only, please!");
@@ -76,18 +81,18 @@ public class DprProver extends Prover {
 		backtrace.start();
 		int numPushes = 0;
 		int numIterations = 0;
-		double iterEpsilon = 1;
+		double iterEpsilon = 1.0;
 		for(int pushCounter = 0; ;) {
 			iterEpsilon = Math.max(iterEpsilon/10,apr.epsilon);
 			last = System.currentTimeMillis();
 			if(log.isDebugEnabled()) log.debug("Starting iteration with eps = "+iterEpsilon);
 			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon);
 			numIterations++;
-			if(log.isInfoEnabled()) log.info("Iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
+			if(log.isInfoEnabled()) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
 			if(iterEpsilon == apr.epsilon && pushCounter==0) break;
 			numPushes+=pushCounter;
 		}
-		if(log.isInfoEnabled()) log.info("total iterations "+numIterations+" total pushes "+numPushes);
+		if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
 		
 		//clear state
 		this.current = null;
@@ -159,7 +164,7 @@ public class DprProver extends Prover {
 				}
 				backtrace.pop(u);
 			} else { 
-			    if (log.isDebugEnabled()) log.debug(String.format("Rejecting eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, r.get(u), deg, u));
+				if (log.isDebugEnabled()) log.debug(String.format("Rejecting eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, r.get(u), deg, u));
 			}
 		} catch (LogicProgramException e) {
 			this.backtrace.rethrow(e);
