@@ -5,14 +5,19 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A symbol table mapping strings to/from integers in the range
-    1..N inclusive.
+ * A "symbol table" mapping arbitrary objects (called 'symbols' in a
+ * nod to LISP) to and from 'ids', i.e., integers in the range 1..N
+ * (inclusive.)  This is based on ConcurrentHashMap objects so it will
+ * hopefully be easy to share among different threads.
  *
  * @author wcohen
  *
  */
 public class ConcurrentSymbolTable<T> 
 {
+	/** Analogous to a gnu.trove hashing strategy.  Objects will be
+	 * assigned distinct id's iff they have different hash codes.
+	 **/
 	static public interface HashingStrategy<T> 
 	{
 		public int computeHashCode(T symbol);
@@ -38,8 +43,9 @@ public class ConcurrentSymbolTable<T>
 	}
 
 	/**
-	 * Insert a symbol.
-	 * @param s
+	 * Ensure that a 'symbol' is in the table.
+	 *
+	 * @param symbol
 	 */
 	public void insert(T symbol) {
 		int h = hashingStrategy.computeHashCode(symbol);
@@ -54,10 +60,10 @@ public class ConcurrentSymbolTable<T>
 	}
 	
 	/**
-	 * Get the numeric id, between 1 and N, of a symbol, inserting it if
+	 * Return the numeric id, between 1 and N, of a symbol, inserting it if
 	 * needed.
+	 *
 	 * @param symbol
-	 * @return
 	 */
 	public int getId(T symbol) {
 		insert(symbol);
@@ -66,14 +72,15 @@ public class ConcurrentSymbolTable<T>
 	}
 
 	
-	/** Test if the symbol has been inserted. 
+	/** Test if the symbol has been previously inserted.
 	 */
 	public boolean hasId(T symbol) {
 		int h = hashingStrategy.computeHashCode(symbol);
 		return symbol2Id.containsKey(h);
 	}
 
-	/** Get the symbol for an id.
+	/** Get the symbol that corresponds to an id.  Returns null of the
+	 * symbol has not yet been inserted.
 	 */
 	public T getSymbol(int id) {
 		return this.id2symbol.get(id);
