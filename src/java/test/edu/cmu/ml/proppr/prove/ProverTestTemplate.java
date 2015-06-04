@@ -21,6 +21,7 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.prove.FeatureDictWeighter;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
@@ -61,7 +62,7 @@ public abstract class ProverTestTemplate {
 		w.put(new Goal("milk"),2);
 		prover.setWeighter(w);
 
-		ProofGraph pg = new ProofGraph(Query.parse("isa(elsie,X)"), apr, lpMilk, fMilk);
+		ProofGraph pg = new StateProofGraph(Query.parse("isa(elsie,X)"), apr, lpMilk, fMilk);
 		Map<State,Double> dist = prover.prove(pg);//("isa","elsie","X"));
 
 		for(Map.Entry<State, Double> s : dist.entrySet()) {

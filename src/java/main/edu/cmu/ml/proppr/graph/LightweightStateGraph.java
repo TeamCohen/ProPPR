@@ -24,7 +24,7 @@ import gnu.trove.procedure.TIntObjectProcedure;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.strategy.HashingStrategy;
 
-public class LightweightStateGraph extends InferenceGraph {
+public class LightweightStateGraph implements InferenceGraph {
 	private static final Logger log = Logger.getLogger(LightweightStateGraph.class);
 	private static final Map<Goal,Double> DEFAULT_FD = Collections.emptyMap();
 	private final List<State> DEFAULT_NEAR = Collections.emptyList();
@@ -47,17 +47,14 @@ public class LightweightStateGraph extends InferenceGraph {
 		return nodeTab.getSymbol(u);
 	}
 
-	@Override
 	public State getRoot() {
 		return nodeTab.getSymbol(1);
 	}
 
-	@Override
 	public int getId(State u) {
 		return nodeTab.getId(u);
 	}
 
-	@Override
 	public List<State> near(State u) {
 		int ui = this.nodeTab.getId(u);
 		if (!near.containsKey(ui)) return DEFAULT_NEAR;
@@ -72,7 +69,6 @@ public class LightweightStateGraph extends InferenceGraph {
 		return ret;
 	}
 
-	@Override
 	public Map<Goal, Double> getFeatures(State u, State v) {
 		int ui = this.nodeTab.getId(u), vi = this.nodeTab.getId(v);
 		if (!edgeFeatureDict.containsKey(ui)) return DEFAULT_FD;
@@ -89,7 +85,17 @@ public class LightweightStateGraph extends InferenceGraph {
 		return ret;
 	}
 
-	@Override
+	/** Return the neighbors of node u. */
+	public List<Outlink> getOutlinks(State u) {
+		// why do we need to recompute these each time?
+		List<Outlink> result = new ArrayList<Outlink>();
+		for (State v : near(u)) {
+			Map<Goal,Double> fd = getFeatures(u,v);
+			result.add(new Outlink(fd,v));
+		}
+		return result;
+	}
+	
 	public void setOutlinks(State u, List<Outlink> outlinks) {
 		// wwc: why are we saving these outlinks as a trove thing? space?
 		int ui = this.nodeTab.getId(u);
@@ -113,7 +119,6 @@ public class LightweightStateGraph extends InferenceGraph {
 		}
 	}
 
-	@Override
 	public boolean outlinksDefined(State u) {
 		return near.containsKey(this.nodeTab.getId(u));
 	}
@@ -186,5 +191,9 @@ public class LightweightStateGraph extends InferenceGraph {
 		
 		ret.append(labelDependencies).append("\t").append(sb);
 		return ret.toString();
+	}
+	
+	public String toString() {
+		return this.serialize();
 	}
 }

@@ -5,10 +5,11 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-
+import edu.cmu.ml.proppr.prove.wam.CachingIdProofGraph;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.LongDense;
 import edu.cmu.ml.proppr.util.SmoothFunction;
@@ -18,7 +19,7 @@ import edu.cmu.ml.proppr.util.SmoothFunction;
  * @author wcohen,krivard
  *
  */
-public class IdDprProver extends Prover {
+public class IdDprProver extends Prover<CachingIdProofGraph> {
 	private static final Logger log = Logger.getLogger(IdDprProver.class);
 	public static final double STAYPROB_DEFAULT = 0.0;
 	public static final double STAYPROB_LAZY = 0.5;
@@ -53,43 +54,44 @@ public class IdDprProver extends Prover {
 		copy.setWeighter(weighter);
 		return copy;
 	}
+	@Override
+	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
 
 	// wwc: might look at using a PriorityQueue together with r to find
 	// just the top things. 
 
-	public Map<State, Double> prove(ProofGraph pg) {
+	public Map<State, Double> prove(CachingIdProofGraph pg) {
 		//Map<State,Double> p = new HashMap<State,Double>();
 		//Map<State,Double> r = new HashMap<State,Double>();
 		LongDense.FloatVector p = new LongDense.FloatVector();
 		LongDense.FloatVector r = new LongDense.FloatVector();
-		ProofGraph.CachingIdGraph cg = new ProofGraph.CachingIdGraph(pg);
 		//State state0 = pg.getStartState();
 		//r.put(state0, 1.0);
-		int state0 = cg.getRootId();
+		int state0 = pg.getRootId();
 		r.set( state0, 1.0);
 		int numPushes = 0;
 		int numIterations = 0;
 		double iterEpsilon = 1.0;
 		for (int pushCounter = 0; ;) {
 			iterEpsilon = Math.max(iterEpsilon/10,apr.epsilon);
-			pushCounter = this.proveState(cg,p,r,state0,0,iterEpsilon);
+			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon);
 			numIterations++;
 			if(log.isInfoEnabled()) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
 			if(iterEpsilon == apr.epsilon && pushCounter==0) break;
 			numPushes += pushCounter;
 		}
 		if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
-		return cg.asMap(p);
+		return pg.asMap(p);
 	}
 	
 	
-	protected int proveState(ProofGraph.CachingIdGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
+	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, double iterEpsilon) 
 	{
 		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon);
 	}
 
-	protected int proveState(ProofGraph.CachingIdGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
+	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, int depth, double iterEpsilon)
 	{
 		SmoothFunction f = new SmoothFunction() {

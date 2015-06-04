@@ -6,6 +6,7 @@ import java.util.PriorityQueue;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.prove.wam.CachingIdProofGraph;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
@@ -18,7 +19,7 @@ import edu.cmu.ml.proppr.util.SmoothFunction;
  * @author wcohen,krivard
  *
  */
-public class PriorityQueueProver extends Prover {
+public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 	private static final Logger log = Logger.getLogger(PriorityQueueProver.class);
 	public static final double STAYPROB_DEFAULT = 0.0;
 	public static final double STAYPROB_LAZY = 0.5;
@@ -53,6 +54,8 @@ public class PriorityQueueProver extends Prover {
 		copy.setWeighter(weighter);
 		return copy;
 	}
+	@Override
+	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
 
 	// wwc: might look at using a PriorityQueue together with r to find
 	// just the top things. 
@@ -76,12 +79,11 @@ public class PriorityQueueProver extends Prover {
 	}
 	
 
-	public Map<State, Double> prove(ProofGraph pg) {
+	public Map<State, Double> prove(CachingIdProofGraph cg) {
 		//Map<State,Double> p = new HashMap<State,Double>();
 		//Map<State,Double> r = new HashMap<State,Double>();
 		LongDense.FloatVector p = new LongDense.FloatVector();
 		LongDense.FloatVector r = new LongDense.FloatVector();
-		ProofGraph.CachingIdGraph cg = new ProofGraph.CachingIdGraph(pg);
 		//State state0 = pg.getStartState();
 		//r.put(state0, 1.0);
 		int state0 = cg.getRootId();

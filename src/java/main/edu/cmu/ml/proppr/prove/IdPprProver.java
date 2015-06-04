@@ -5,13 +5,13 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.prove.wam.CachingIdProofGraph;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
-
 import edu.cmu.ml.proppr.util.LongDense;
 import edu.cmu.ml.proppr.util.SmoothFunction;
 
@@ -21,7 +21,7 @@ import edu.cmu.ml.proppr.util.SmoothFunction;
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  *
  */
-public class IdPprProver extends Prover {
+public class IdPprProver extends Prover<CachingIdProofGraph> {
 	private static final double SEED_WEIGHT = 1.0;
 	private static final Logger log = Logger.getLogger(IdPprProver.class);
 	private static final boolean DEFAULT_TRACE=false;
@@ -49,6 +49,8 @@ public class IdPprProver extends Prover {
 		Prover copy = new IdPprProver(weighter, this.apr, this.trace);
 		return copy;
 	}
+	@Override
+	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
 	
 	public void setMaxDepth(int i) {
 		this.apr.maxDepth = i;
@@ -58,10 +60,8 @@ public class IdPprProver extends Prover {
 	}
 
 	@Override
-	public Map<State, Double> prove(ProofGraph pg) 
+	public Map<State, Double> prove(CachingIdProofGraph cg) 
 	{
-
-		ProofGraph.CachingIdGraph cg = new ProofGraph.CachingIdGraph(pg);
 		LongDense.FloatVector startVec = new LongDense.FloatVector();
 		startVec.set( cg.getRootId(), SEED_WEIGHT );
 
@@ -91,7 +91,7 @@ public class IdPprProver extends Prover {
 		return cg.asMap(vec);
 	}
 
-	LongDense.FloatVector walkOnce(ProofGraph.CachingIdGraph cg, LongDense.FloatVector vec,LongDense.AbstractFloatVector params,SmoothFunction f) 
+	LongDense.FloatVector walkOnce(CachingIdProofGraph cg, LongDense.FloatVector vec,LongDense.AbstractFloatVector params,SmoothFunction f) 
 	{
 		LongDense.FloatVector nextVec = new LongDense.FloatVector(vec.size());
 		nextVec.set( cg.getRootId(), apr.alpha * SEED_WEIGHT );
@@ -114,7 +114,7 @@ public class IdPprProver extends Prover {
 		return nextVec;
 	}
 
-	void walkOnceBuffered(ProofGraph.CachingIdGraph cg, 
+	void walkOnceBuffered(CachingIdProofGraph cg, 
 												LongDense.FloatVector vec,LongDense.FloatVector nextVec,
 												LongDense.AbstractFloatVector params,SmoothFunction f) 
 	{

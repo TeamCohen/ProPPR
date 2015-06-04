@@ -195,7 +195,7 @@ public class Grounder {
 
 	public GroundedExample groundExample(Prover p,
 			InferenceExample inferenceExample) throws LogicProgramException {
-		return this.groundExample(p, new ProofGraph(inferenceExample,apr,masterProgram, masterPlugins));
+		return this.groundExample(p, ProofGraph.makeProofGraph(p.getProofGraphClass(),inferenceExample,apr,masterProgram, masterPlugins));
 	}
 
 	protected void reportStatistics(int empty) {
@@ -267,7 +267,7 @@ public class Grounder {
 		}
 		@Override
 		public String call() throws Exception {
-			ProofGraph pg = new ProofGraph(inf,apr,masterProgram,masterPlugins);
+			ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),inf,apr,masterProgram,masterPlugins);
 			GroundedExample gx = groundExample(getProver().copy(), pg);
 			InferenceExample ix = pg.getExample();
 			statistics.updateStatistics(ix,

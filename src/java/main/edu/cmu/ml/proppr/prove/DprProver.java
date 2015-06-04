@@ -8,13 +8,13 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-
 import edu.cmu.ml.proppr.prove.MinAlphaException;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 
@@ -23,7 +23,7 @@ import edu.cmu.ml.proppr.util.Dictionary;
  * @author wcohen,krivard
  *
  */
-public class DprProver extends Prover {
+public class DprProver extends Prover<StateProofGraph> {
 	private static final Logger log = Logger.getLogger(DprProver.class);
 	public static final double STAYPROB_DEFAULT = 0.0;
 	public static final double STAYPROB_LAZY = 0.5;
@@ -63,6 +63,8 @@ public class DprProver extends Prover {
 		copy.setWeighter(weighter);
 		return copy;
 	}
+	@Override
+	public Class<StateProofGraph> getProofGraphClass() { return StateProofGraph.class; }
 
 	// wwc: might look at using a PriorityQueue together with r to find
 	// just the top things. 
@@ -70,7 +72,7 @@ public class DprProver extends Prover {
 	// wwc:, could we use canonical hashes instead of states somehow, to
 	// make this smaller/faster for lookups?
 
-	public Map<State, Double> prove(ProofGraph pg) {
+	public Map<State, Double> prove(StateProofGraph pg) {
 		if (this.current != null) throw new IllegalStateException("DprProver not threadsafe -- one instance per thread only, please!");
 		this.current = pg;
 
@@ -100,11 +102,11 @@ public class DprProver extends Prover {
 	}
 	
 	
-	protected int proveState(ProofGraph pg, Map<State,Double> p, Map<State, Double> r,
+	protected int proveState(StateProofGraph pg, Map<State,Double> p, Map<State, Double> r,
 			State u, int pushCounter, double iterEpsilon) {
 		return proveState(pg, p, r, u, pushCounter, 1, iterEpsilon);
 	}
-	protected int proveState(ProofGraph pg, Map<State,Double> p, Map<State, Double> r,
+	protected int proveState(StateProofGraph pg, Map<State,Double> p, Map<State, Double> r,
 			State u, int pushCounter, int depth, double iterEpsilon) {
 		try {
 			int deg = pg.pgDegree(u);

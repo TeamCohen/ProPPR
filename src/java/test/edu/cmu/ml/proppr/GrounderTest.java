@@ -25,6 +25,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -90,7 +91,7 @@ public class GrounderTest {
 		ix = new InferenceExample(Query.parse("predict(howard,Y)"), 
 				new Query[] {Query.parse("predict(howard,bird)")}, 
 				new Query[] {});
-		ProofGraph pg = new ProofGraph(ix,apr,program,plugins);
+		ProofGraph pg = new StateProofGraph(ix,apr,program,plugins);
 		State pos=null;
 		Map<State,Double> sols = p.prove(pg);
 		System.out.println(pg.serialize(ex));

@@ -11,6 +11,7 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPlugin;
@@ -37,17 +38,17 @@ public class SparseGraphPluginTest {
 	@Test
 	public void testDegree() throws LogicProgramException {
 		Query q = Query.parse("child(pam,X)");
-		ProofGraph pg = new ProofGraph(q,apr,program,plugin);
+		StateProofGraph pg = new StateProofGraph(q,apr,program,plugin);
 		// minus 1 for reset
 		assertEquals(3,pg.pgDegree(pg.getStartState())-1);
 	}
 	
 	@Test
 	public void testRowEnd() throws LogicProgramException {
-		ProofGraph pg = new ProofGraph(Query.parse("sister(yvette,X)"),apr,program,plugin);
+		StateProofGraph pg = new StateProofGraph(Query.parse("sister(yvette,X)"),apr,program,plugin);
 		// minus 1 for reset
 		assertEquals("Yvette should have no sisters\n",0,pg.pgDegree(pg.getStartState())-1);
-		pg = new ProofGraph(Query.parse("sister(theresa,X)"),apr,program,plugin);
+		pg = new StateProofGraph(Query.parse("sister(theresa,X)"),apr,program,plugin);
 		// minus 1 for reset
 		assertEquals("Theresa should have 1 sister\n",1,pg.pgDegree(pg.getStartState())-1);
 	}

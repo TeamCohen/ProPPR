@@ -1,5 +1,6 @@
 package edu.cmu.ml.proppr;
 
+import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
@@ -120,7 +121,8 @@ public class QueryAnswerer {
 	}
 
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
-		ProofGraph pg = new ProofGraph(query, apr, program, plugins);
+		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(), 
+				new InferenceExample(query,null,null), apr, program, plugins);
 		if(log.isInfoEnabled()) log.info("Querying: "+query);
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);

@@ -15,6 +15,7 @@ import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.util.APROptions;
@@ -37,7 +38,7 @@ public class WeightedFeaturesTest {
 		assertTrue(plugins[1].claim("hasWord#/3"));
 
 		Query query = Query.parse("predict(p1,Y)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("predict(p1,pos)")}, 
 				new Query[] {Query.parse("predict(p1,neg)")}),
 				apr,program, plugins);
@@ -56,7 +57,7 @@ public class WeightedFeaturesTest {
 		assertTrue(plugins[1].claim("hasWord#/3"));
 
 		Query query = Query.parse("predict(p1,Y)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("predict(p1,pos)")}, 
 				new Query[] {Query.parse("predict(p1,neg)")}),
 				apr,program, plugins);

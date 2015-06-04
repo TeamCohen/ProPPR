@@ -14,6 +14,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -66,7 +67,7 @@ public class MiscDatasetStudy {
 //		PathDprProver p = new PathDprProver(apr);
 
 		Query query = Query.parse("predict(comp.sys.mac.hardware:51779.txt,Y)");
-		ProofGraph pg = new ProofGraph(query,apr,program,plugins);
+		StateProofGraph pg = new StateProofGraph(query,apr,program,plugins);
 
 		
 		for (Outlink o : pg.pgOutlinks(pg.getStartState(), false)) {

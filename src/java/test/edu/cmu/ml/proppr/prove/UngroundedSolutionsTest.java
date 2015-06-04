@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.prove.UniformWeighter;
 import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
@@ -37,7 +38,7 @@ public class UngroundedSolutionsTest {
 		WamPlugin facts = LightweightGraphPlugin.load(apr,new File(FACTS));
 		Query q = new Query(new Goal("grandparent",new ConstantArgument("X"),new ConstantArgument("Y")));
 //		q.variabilize();
-		ProofGraph pg = new ProofGraph(q,apr,program,facts);
+		StateProofGraph pg = new StateProofGraph(q,apr,program,facts);
 		Prover p = new DfsProver(apr);
 		
 		Map<State,Double> ans = p.prove(pg);

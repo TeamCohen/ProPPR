@@ -19,7 +19,7 @@ public class InferenceGraphTest {
 
 	@Test
 	public void test() {
-		InferenceGraph g = new LightweightStateGraph();
+		LightweightStateGraph g = new LightweightStateGraph();
 		List<Outlink> outlinks = new ArrayList<Outlink>();
 		MutableState a = new MutableState(); a.setJumpTo("foo");
 		MutableState b = new MutableState(); b.setJumpTo("bar");
