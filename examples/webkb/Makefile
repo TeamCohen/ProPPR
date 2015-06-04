@@ -25,9 +25,19 @@ post.%.Tester.log: test_%.data %.params
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Tester --programFiles ${PROGRAM} --prover ${PROVER} --test $< --threads ${THREADS} --params $*.params --tester ${TESTER} --srw $(SRW) | tee post.$*.Tester.log
 
 %.params: train_no_%.data.cooked
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --trainer ${TRAINER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS) --trainer ${TRAINER} 
 
 train_no_%.data.cooked: train_no_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.ExampleCooker --programFiles ${PROGRAM} --data $< --output $@ --prover ${PROVER} --threads ${THREADS}
+
+
+pre.%.solutions.txt: test_%.data
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.MultithreadedQueryAnswerer --programFiles ${PROGRAM} --queries $< --output $@ --prover ${PROVER} --threads ${THREADS}
+
+post.%.solutions.txt: test_%.data %.params
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.praprolog.MultithreadedQueryAnswerer --programFiles ${PROGRAM} --queries $< --output $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)
+
+# edu.cmu.ml.praprolog.Trainer --prover dpr:1e-5:0.01 --train train.examples.cooked --params params.wts --threads 16 --srw l2plocal:mu=0.001:eta=1.0:alpha=0.01 --epochs 20 --trainer trove.mrr
+
 
 .PRECIOUS: train_no_%.data.cooked %.params

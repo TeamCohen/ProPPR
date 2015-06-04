@@ -360,10 +360,18 @@ public class SRW<E extends RWExample> {
 		double rate = learningRate();
 		if (log.isDebugEnabled()) log.debug("rate "+rate);
 		for (Map.Entry<String, Double> f : grad.entrySet()) {
+			if (!trainable(f.getKey())) {
+				if (paramVec.get(f.getKey()) != 1.0) throw new IllegalStateException("Non-unit value @"+f.getKey());
+				continue;
+			}
 			Dictionary.increment(paramVec, f.getKey(), - rate * f.getValue());
-			log.debug(f.getKey()+"->"+paramVec.get(f.getKey()));
+			if(log.isDebugEnabled()) log.debug(f.getKey()+"->"+paramVec.get(f.getKey()));
 		}
-		project2feasible(example.getGraph(), paramVec, example.getQueryVec());
+		try {
+			project2feasible(example.getGraph(), paramVec, example.getQueryVec());
+		} catch (MinAlphaException e) {
+			log.warn(e);
+		}
 	}
 	
 	/**
@@ -421,14 +429,18 @@ public class SRW<E extends RWExample> {
             if (!v.equals(queryNode)) {
                 nonRestartNodeNum ++;
                 for (Feature f : g.phi(u, v)) {
-                    nonRestartFeatureSet.add(f.featureName);
+                    if (trainable(f.featureName)) nonRestartFeatureSet.add(f.featureName);
                 }
             }
         }
         double newValue = c.weightingScheme.projection(rw,c.alpha,nonRestartNodeNum);
         for (String f : nonRestartFeatureSet) {
             if (!f.startsWith("db(")) {
-				throw new MinAlphaException("Minalpha assumption violated: not a fact/db feature (" + f + ")");
+				if (nonRestartFeatureSet.size()>1) {
+					throw new MinAlphaException("Minalpha assumption violated: not a fact/db feature (" + Dictionary.buildString(nonRestartFeatureSet,new StringBuilder(),",").toString() + ")");
+					//log.warn("Minalpha assumption violated: not a fact/db feature (" + Dictionary.buildString(nonRestartFeatureSet,new StringBuilder(),",").toString() + ")");
+					//break;
+				}
             } else {
                 paramVec.put(f, newValue);
             }

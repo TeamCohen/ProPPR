@@ -54,7 +54,7 @@ public class LocalL2PosNegLossTrainedSRW<T> extends L2PosNegLossTrainedSRW<T> {
 	@Override
 	public void prepareGradient(ParamVector paramVec, PosNegRWExample<T> example) {
 		for (String f : localFeatures(paramVec,example)) {
-			prepareFeature(paramVec,f);
+			if (trainable(f)) prepareFeature(paramVec,f);
 		}
 	}
 	

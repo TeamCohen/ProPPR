@@ -54,8 +54,10 @@ public abstract class ParamVector<T> implements Map<String,Double> {
 	public void clear() {
 		getBackingStore().clear();
 	}
+	int k=0;
 	@Override
 	public Double put(String key, Double value) {
+		if (key.equals("fixedWeight") && k++ > 0) throw new IllegalStateException("Modifying fixedWeight!");
 		T nv = this.newValue(value);
 		this.getBackingStore().put(key,nv);
 		return getWeight(nv);

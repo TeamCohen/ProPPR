@@ -48,7 +48,9 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		
 		// compute regularization
 		TObjectDoubleHashMap<String> derivFparamVec = new TObjectDoubleHashMap<String>();
-		for (String f : localFeatures(paramVec,example)) {
+		Set<String> trainableFeatures = trainableFeatures(localFeatures(paramVec,example)); 
+
+		for (String f : trainableFeatures) {
 			derivFparamVec.put(f,derivRegularization(f,paramVec));
 		}
 		
@@ -56,7 +58,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		TIntDoubleMap p = rwrUsingFeatures(example.getGraph(), example.getQueryVec(), paramVec);
 		TIntObjectMap<TObjectDoubleHashMap<String>> d = derivRWRbyParams(example.getGraph(), example.getQueryVec(), paramVec);
 		
-		Set<String> trainableFeatures = trainableFeatures(localFeatures(paramVec,example)); 
+
 		
 		//compute gradient
 		double pmax = 0;
@@ -66,7 +68,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 			double px = p.get(x);
 			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
-				if (Dictionary.safeContains(d,x,f)) {
+				if (Dictionary.safeContains(d,x,f) && dx.get(f) != 0.0) {
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
@@ -82,7 +84,7 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 			TObjectDoubleHashMap<String> dx = d.get(x);
 			double px = p.get(x);
 			for (String f : trainableFeatures) {
-				if (Dictionary.safeContains(d,x,f)) 
+				if (Dictionary.safeContains(d,x,f) && dx.get(f) != 0.0) 
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
 			}
 			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(1.0-px)));

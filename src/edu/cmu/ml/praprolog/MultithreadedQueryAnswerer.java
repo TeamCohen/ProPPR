@@ -104,7 +104,6 @@ public class MultithreadedQueryAnswerer {
 
 	public void findSolutions(LogicProgram program, Prover prover, File queryFile, String outputFile, boolean normalize) throws IOException {
 		ParsedFile reader = new ParsedFile(queryFile);
-		BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
 		List<String> queryStrings = new ArrayList<String>();
 		
 		try {
@@ -130,27 +129,8 @@ public class MultithreadedQueryAnswerer {
 					return new QA(in,id);
 				}
 			}, 
-			new WritingCleanup(writer, log) {
-			//	@Override
-			//	public Runnable cleanup(Future<String> in, int id) {
-			//		return new writeSolutions(in,id);
-			//	}
-			}, 
+			outputFile, 
 			this.throttle);
-		
-		try {
-			int querynum=0;
-			for (String line : reader) {
-				querynum++;
-				String queryString = line.split("\t")[0];
-				queryString = queryString.replaceAll("[(]", ",").replaceAll("\\)","").trim();
-
-
-	        }
-	    } finally {
-	        reader.close();
-	        writer.close();
-	    }
 }
 
 		
@@ -205,37 +185,21 @@ public class MultithreadedQueryAnswerer {
 					log.debug("not normalizing");
 				}
 				List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(solutions);
+				log.info("Writing "+solutionDist.size()+" solutions...");
 				StringBuilder sb = new StringBuilder();
-	            sb.append("# proved ").append("1").append("\t").append(query.toSaveString()).append("\t").append((end - start) + " msec");
-	            sb.append(System.getProperty("line.separator"));
+				String newLine = System.getProperty("line.separator");
+	            sb.append("# proved ").append(this.id).append("\t").append(query.toSaveString()).append("\t").append((end - start) + " msec");
+	            sb.append(newLine);
                 int rank = 0;
                 for (Map.Entry<String, Double> soln : solutionDist) {
                     ++rank;
                     sb.append(rank + "\t").append(soln.getValue().toString()).append("\t").append(soln.getKey());
-    	            sb.append(System.getProperty("line.separator"));
+    	            sb.append(newLine);
                 }				
 				return sb.toString();
 			}
 		}
 		
-		/**
-		 * Write the solutions to disk
-		 * @author William Wang
-		 * ww@cmu.edu
-		 *
-		 */
-		private class writeSolutions implements Runnable {
-			Future<String> in;
-			int id;
-			public writeSolutions(Future<String> in, int id) {
-				this.in = in;
-				this.id = id;
-			}
-			@Override
-			public void run() {
-				log.debug("Writing the solution: "+this.id);
-			}
-		}
 
 		/**
 		 * Builds the streamer of all query inputs from the streamer. 
@@ -295,6 +259,7 @@ public class MultithreadedQueryAnswerer {
 	                Configuration.USE_PARAMS | Configuration.USE_COMPLEX_FEATURES);
 
 	        MultithreadedQueryAnswerer qa = new MultithreadedQueryAnswerer();
+			qa.setThreads(c.nthreads);
 	        log.info("Running queries from " + c.queryFile + "; saving results to " + c.outputFile);
 	        if (c.paramsFile != null) {
 	        	ParamsFile file = new ParamsFile(c.paramsFile);

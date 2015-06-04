@@ -282,6 +282,9 @@ public class Trainer {
 			}
 			cleanUpExamples(i,paramVec);
 			log.info(k+" examples processed");
+			for (String s : learner.untrainedFeatures()) {
+				if (paramVec.get(s) != 1.0) log.warn("Non-unit weight @"+s);
+			}
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
 				for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / numExamplesThisEpoch);

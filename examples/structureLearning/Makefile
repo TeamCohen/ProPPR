@@ -1,5 +1,7 @@
+include ../Makefile.in
+
 DIR=v12
-JM=java -cp .:../bin/:../lib/*:../conf/ edu.cmu.ml.praprolog
+JM=java -cp .:$(PROPPR)/bin/:$(PROPPR)/lib/*:$(PROPPR)/conf/ edu.cmu.ml.praprolog
 PSTEM=h22
 P=$(PSTEM).crules
 #SRW1=l2p:0.00001:20
@@ -20,7 +22,7 @@ rebuild:
 compile: programFiles.arg
 
 programFiles.arg: *.facts *.rules
-	(cd ..; sh scripts/compile.sh $(DIR))
+	(cd $(PROPPR); sh scripts/compile.sh $(DIR))
 
 clean:
 	rm -f *.*params *.*gradient *.*grounded *.*labeledTestAnswers
@@ -94,7 +96,7 @@ clean-expt:
 
 #step 3 - compile the gradient theory
 %.crules: %.g-rules
-	python ../scripts/rulecompiler.py $*.g-rules $*.crules
+	python $(PROPPR)/scripts/rulecompiler.py $*.g-rules $*.crules
 
 #test the gradient-created rules without training (ugr = untrained-gradient-rules)
 #again step 1, the raw answers; step 2, the map
@@ -134,13 +136,13 @@ clean-expt:
 # (fig = final iterated gradient, figs = stratified final iterated gradient)
 
 %.fig-crules: %-train.cfacts %-train.trainData
-	python bin/iterativeGradientFinder.py $*
+	python bin/iterativeGradientFinder.py $* ${PROPPR}
 
 # training the fig rules
 
 %.fig-params %-fig.crules: %-train.trainData %.fig-crules %-train.cfacts
 	cp $*.fig-crules $*-fig.crules
-	$(JM).Experiment --programFiles uml.cfacts:$*-fig.crules --prover $(PR) --epochs $(EPOCHS)  \
+	$(JM).Experiment --programFiles $*-fig.crules:uml.cfacts --prover $(PR) --epochs $(EPOCHS)  \
 				 --train $*-train.trainData  --srw $(SRW2) --test $*-train.trainData \
 				 --output $*.gr-grounded --params $*.fig-params --threads $(TH)
 	cat $*.fig-params
@@ -206,7 +208,7 @@ full-fig-column: full-0.05.fig-testMap full-0.10.fig-testMap full-0.20.fig-testM
 
 %.expt: %.u-testMap %.testMap %.ugr-testMap %.gr-testMap
 	echo on `date` summary with P=$P EPOCHS=$(EPOCHS) SRW1=$(SRW1) SRW2=$(SRW2)> $*.expt
-	(cd ..; svn info >> $(DIR)/$*.expt)
+#	(cd ..; svn info >> $(DIR)/$*.expt)
 	tail $*.u-testMap >> $*.expt
 	tail $*.testMap >> $*.expt
 	tail $*.ugr-testMap >> $*.expt

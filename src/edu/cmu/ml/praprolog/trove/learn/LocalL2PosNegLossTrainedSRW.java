@@ -60,6 +60,7 @@ public class LocalL2PosNegLossTrainedSRW extends L2PosNegLossTrainedSRW {
 	}
 	
 	private void prepareFeature(ParamVector paramVec, String f) {
+		if (!trainable(f)) return;
 		// use last-1 here because superclass will apply regularization for this clock cycle
 		// during the gradient() call
 		int gap = ((MuParamVector)paramVec).getLast(f);

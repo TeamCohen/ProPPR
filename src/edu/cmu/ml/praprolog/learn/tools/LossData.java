@@ -21,6 +21,9 @@ public class LossData {
 			log.warn("decreasing "+type+" loss? "+loss);
 		}
 		Dictionary.increment(this.loss, type, loss);
+		if (Double.isInfinite(this.loss.get(type)) || Double.isInfinite(loss)) {
+			new RuntimeException("Infinite loss?").printStackTrace();
+		}
 	}
 	public void clear() {
 		this.loss.clear();

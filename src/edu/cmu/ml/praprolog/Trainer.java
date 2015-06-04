@@ -186,6 +186,8 @@ public class Trainer<T> {
 		log.info(String.format("flags: 0x%x",flags));
 		ExperimentConfiguration c = new ExperimentConfiguration(args,flags);
 
+		System.out.println(c.toString());
+
 		String cookedFile=c.dataFile.getPath();
 		if (!c.dataFile.getName().endsWith(ExampleCooker.COOKED_SUFFIX)) {
 			// then we have to cook first
