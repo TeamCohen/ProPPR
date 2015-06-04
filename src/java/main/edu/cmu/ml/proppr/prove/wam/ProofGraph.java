@@ -188,7 +188,22 @@ public abstract class ProofGraph {
 		return ret;
 	}
 
-	public abstract GroundedExample makeRWExample(Map<State, Double> ans);
+	public GroundedExample makeRWExample(Map<State,Double> ans)  {
+		List<State> posIds = new ArrayList<State>();
+		List<State> negIds = new ArrayList<State>();
+		for (Map.Entry<State,Double> soln : ans.entrySet()) {
+			if (soln.getKey().isCompleted()) {
+				Query ground = fill(soln.getKey());
+				// FIXME: slow?
+				if (Arrays.binarySearch(this.getExample().getPosSet(), ground) >= 0) posIds.add(soln.getKey());
+				if (Arrays.binarySearch(this.getExample().getNegSet(), ground) >= 0) negIds.add(soln.getKey());
+			}
+		}
+		Map<State,Double> queryVector = new HashMap<State,Double>();
+		queryVector.put(this.getStartState(), 1.0);
+		return new GroundedExample(this._getGraph(), queryVector, posIds, negIds);
+	}
+	protected abstract InferenceGraph _getGraph();
 	
 	/* ************************** de/serialization *********************** */
 	

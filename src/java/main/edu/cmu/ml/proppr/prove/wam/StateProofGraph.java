@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
+import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
@@ -79,19 +80,5 @@ public class StateProofGraph extends ProofGraph {
 		return this.pgOutlinks(state, trueLoop).size();
 	}
 	@Override
-	public GroundedExample makeRWExample(Map<State,Double> ans)  {
-		List<State> posIds = new ArrayList<State>();
-		List<State> negIds = new ArrayList<State>();
-		for (Map.Entry<State,Double> soln : ans.entrySet()) {
-			if (soln.getKey().isCompleted()) {
-				Query ground = fill(soln.getKey());
-				// FIXME: slow?
-				if (Arrays.binarySearch(this.getExample().getPosSet(), ground) >= 0) posIds.add(soln.getKey());
-				if (Arrays.binarySearch(this.getExample().getNegSet(), ground) >= 0) negIds.add(soln.getKey());
-			}
-		}
-		Map<State,Double> queryVector = new HashMap<State,Double>();
-		queryVector.put(this.getStartState(), 1.0);
-		return new GroundedExample(this.graph, queryVector, posIds, negIds);
-	}
+	protected InferenceGraph _getGraph() { return this.graph; }
 }

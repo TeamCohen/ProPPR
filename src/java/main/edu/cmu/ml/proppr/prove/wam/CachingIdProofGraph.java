@@ -1,24 +1,32 @@
 package edu.cmu.ml.proppr.prove.wam;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.graph.InferenceGraph;
+import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 import edu.cmu.ml.proppr.util.LongDense;
 import edu.cmu.ml.proppr.util.SimpleSparse;
 import edu.cmu.ml.proppr.util.SmoothFunction;
+import edu.cmu.ml.proppr.util.SymbolTable;
+import gnu.trove.iterator.TIntDoubleIterator;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.iterator.TIntObjectIterator;
+import gnu.trove.list.array.TIntArrayList;
 
 /* ************************** optimized version of the proofgraph  *********************** */
 public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	private LongDense.ObjVector<SimpleSparse.FloatMatrix> nodeVec;
-	private ConcurrentSymbolTable<State> nodeTab;
-	private ConcurrentSymbolTable<Goal> featureTab;
+	private SymbolTable<State> nodeTab;
+	private SymbolTable<Goal> featureTab;
+	private int edgeCount=0;
 
 	public CachingIdProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException { 
 		super(query, apr, program, plugins);
@@ -89,7 +97,9 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		if (nodeVec.get(uid)==null) {
 			State u = nodeTab.getSymbol(uid);
 			if (u!=null) {
-				nodeVec.set(uid, outlinksAsMatrix(this.computeOutlinks(u,true)));
+				List<Outlink> outlinks = this.computeOutlinks(u,true);
+				edgeCount += outlinks.size();
+				nodeVec.set(uid, outlinksAsMatrix(outlinks));
 			}
 		}
 	}
@@ -118,24 +128,64 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		return mat;
 	}
 	
+
 	@Override
-	public GroundedExample makeRWExample(Map<State, Double> ans) {
-		// TODO Auto-generated method stub
-		return null;
+	protected InferenceGraph _getGraph() { 
+		return this;
 	}
 	@Override
 	public int nodeSize() {
-		// TODO Auto-generated method stub
-		return 0;
+		return nodeTab.size();
 	}
 	@Override
 	public int edgeSize() {
-		// TODO Auto-generated method stub
-		return 0;
+		return edgeCount;
 	}
 	@Override
 	public String serialize() {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder ret = new StringBuilder().append(this.nodeSize()) //numNodes
+				.append("\t")
+				.append(this.edgeCount)
+				.append("\t"); // waiting for label dependency size
+		int labelDependencies = 0;
+
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+
+		for (int fi = 1; fi <= this.featureTab.size(); fi++) {
+			if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
+			else first = false;
+			Goal f = this.featureTab.getSymbol(fi);
+			sb.append(f);
+		}
+
+		// foreach src node
+		for (int u=getRootId(); u<this.nodeSize(); u++) {
+			SimpleSparse.FloatMatrix nearu = this.nodeVec.get(u);
+			HashSet<Integer> outgoingFeatures = new HashSet<Integer>();
+			//foreach dst from src
+			for (int vi=0; vi<nearu.index.length; vi++) {
+				int v = nearu.index[vi];
+				sb.append("\t");
+				sb.append(u).append(LearningGraphBuilder.SRC_DST_DELIM).append(v);
+				sb.append(LearningGraphBuilder.EDGE_DELIM);
+				SimpleSparse.FloatVector uvf = nearu.val[vi];
+				//foreach feature on src,dst
+				for (int fi=0; fi<uvf.index.length; fi++) {
+					int f = uvf.index[fi];
+					double w = uvf.val[fi];
+					outgoingFeatures.add(fi);
+					sb.append(f).append(LearningGraphBuilder.FEATURE_WEIGHT_DELIM)
+					.append(w).append(LearningGraphBuilder.EDGE_FEATURE_DELIM);
+				}
+				// drop last ','
+				sb.deleteCharAt(sb.length()-1);
+			}
+			labelDependencies += outgoingFeatures.size() * nearu.index.length;
+		}
+		
+		ret.append(labelDependencies).append("\t").append(sb);
+		return ret.toString();
+
 	}
 }

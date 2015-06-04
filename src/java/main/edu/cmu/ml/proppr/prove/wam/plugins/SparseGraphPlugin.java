@@ -13,8 +13,9 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.util.APROptions;
-import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.TObjectIntMap;
@@ -29,7 +30,7 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 	private static final long LOGUPDATE_MS = 10000;
 
 	protected String name;
-	protected SymbolTable<String> functors=new SymbolTable<String>();
+	protected SymbolTable<String> functors=new SimpleSymbolTable<String>();
 	protected Map<Goal, Double> featureDict;
 	protected TIntObjectMap<SparseMatrixIndex> index;
 	protected TIntObjectMap<TObjectIntMap<String>> arg1s;

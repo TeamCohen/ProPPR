@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 
 /**
  * Headless version for queries.

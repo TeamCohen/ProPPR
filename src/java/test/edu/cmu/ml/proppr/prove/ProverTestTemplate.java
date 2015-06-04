@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
+import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.prove.FeatureDictWeighter;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
@@ -62,19 +63,27 @@ public abstract class ProverTestTemplate {
 		w.put(new Goal("milk"),2);
 		prover.setWeighter(w);
 
-		ProofGraph pg = new StateProofGraph(Query.parse("isa(elsie,X)"), apr, lpMilk, fMilk);
+		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),
+				new InferenceExample(Query.parse("isa(elsie,X)"),null,null), apr, lpMilk, fMilk);
 		Map<State,Double> dist = prover.prove(pg);//("isa","elsie","X"));
 
+		double query=0.0;
+		double platypus=0.0;
+		double others=0.0;
 		for(Map.Entry<State, Double> s : dist.entrySet()) {
-			System.out.println(pg.fill(s.getKey()));
-//			if (s.getKey().getHeadGoal().getFunctor().equals("givesMilk")) {
-//				assertEquals(proveStateAnswers[0], s.getValue(), 1e-5);
-//			} else if (s.getKey().getHeadGoal().getFunctor().equals("isa")){
-//				assertEquals(proveStateAnswers[2], s.getValue(), 1e-5);
-//			} else {
-//				assertEquals(proveStateAnswers[1], s.getValue(), 1e-5);
-//			} 
+			Query q = pg.fill(s.getKey());
+			String arg2 = q.getRhs()[0].getArg(1).getName();
+			if ("platypus".equals(arg2)) { platypus = Math.max(platypus, s.getValue()); }
+			else if ("X1".equals(arg2)) { query = Math.max(query, s.getValue()); }
+			else { others = Math.max(others, s.getValue()); }
+			System.out.println(q+"\t"+s.getValue());
 		}
+		System.out.println();
+		System.out.println("query    weight: "+query);
+		System.out.println("platypus weight: "+platypus);
+		System.out.println("others   weight: "+others);
+		assertTrue("query should retain most weight",query > Math.max(platypus,others));
+		assertTrue("milk-featured paths should score higher than others",platypus>others);
 	}
 	
 //	@Test

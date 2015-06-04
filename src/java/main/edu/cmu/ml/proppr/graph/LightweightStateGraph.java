@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TIntObjectIterator;
@@ -29,17 +30,17 @@ public class LightweightStateGraph implements InferenceGraph {
 	private static final Map<Goal,Double> DEFAULT_FD = Collections.emptyMap();
 	private final List<State> DEFAULT_NEAR = Collections.emptyList();
 	private SymbolTable<State> nodeTab;
-	private SymbolTable<Goal> featureTab = new SymbolTable<Goal>();
+	private SymbolTable<Goal> featureTab = new SimpleSymbolTable<Goal>();
 	private TIntObjectHashMap<TIntArrayList> near = new TIntObjectHashMap<TIntArrayList>();
 	private TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>> edgeFeatureDict = new TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>>();
 	private int edgeCount = 0;
 
 	public LightweightStateGraph() {
-		this.nodeTab = new SymbolTable<State>();
+		this.nodeTab = new SimpleSymbolTable<State>();
 	}
 
 	public LightweightStateGraph(HashingStrategy<State> nodeHash) {
-		this.nodeTab = new SymbolTable<State>(nodeHash);
+		this.nodeTab = new SimpleSymbolTable<State>(nodeHash);
 	}
 
 	@Override

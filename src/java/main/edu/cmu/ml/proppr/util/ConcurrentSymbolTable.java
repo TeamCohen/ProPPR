@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author wcohen
  *
  */
-public class ConcurrentSymbolTable<T> 
+public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 {
 	/** Analogous to a gnu.trove hashing strategy.  Objects will be
 	 * assigned distinct id's iff they have different hash codes.
@@ -88,7 +88,7 @@ public class ConcurrentSymbolTable<T>
 
 	/** Return N, the largest id.
 	 */
-	public int maxId() {
+	public int size() {
 		return this.symbol2Id.size();
 	}
 
@@ -102,7 +102,7 @@ public class ConcurrentSymbolTable<T>
 			}
 			stab.insert(argv[i]);
 		}
-		for (int i=1; i<=stab.maxId(); i++) {
+		for (int i=1; i<=stab.size(); i++) {
 			System.out.println(i + ":\t" + stab.getSymbol(i));
 		}
 	}

@@ -1,6 +1,6 @@
 package edu.cmu.ml.proppr.graph;
 
-import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import gnu.trove.iterator.TObjectDoubleIterator;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 	@Override
 	public LearningGraph create() {
 		if (current != null) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
-		current =  new LearningGraph(new SymbolTable<String>());
+		current =  new LearningGraph(new SimpleSymbolTable<String>());
 		return current;
 	}
 
