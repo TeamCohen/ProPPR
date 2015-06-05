@@ -19,11 +19,11 @@ import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.FilterPluginCollection;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.PluginFunction;
 import edu.cmu.ml.proppr.util.APROptions;
-import edu.cmu.ml.proppr.util.SimpleSparse;
-import edu.cmu.ml.proppr.util.LongDense;
-import edu.cmu.ml.proppr.util.SmoothFunction;
 import gnu.trove.strategy.HashingStrategy;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
+import edu.cmu.ml.proppr.util.math.LongDense;
+import edu.cmu.ml.proppr.util.math.SimpleSparse;
+import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
 /**
  * # Creates the graph defined by a query, a wam program, and a list of

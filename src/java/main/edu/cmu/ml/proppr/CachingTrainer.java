@@ -18,7 +18,7 @@ import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
-import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
 
 public class CachingTrainer extends Trainer {

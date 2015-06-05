@@ -12,10 +12,11 @@ import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
-import edu.cmu.ml.proppr.util.LongDense;
-import edu.cmu.ml.proppr.util.SimpleSparse;
-import edu.cmu.ml.proppr.util.SmoothFunction;
+import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.math.LongDense;
+import edu.cmu.ml.proppr.util.math.SimpleSparse;
+import edu.cmu.ml.proppr.util.math.SmoothFunction;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TIntObjectIterator;
@@ -117,7 +118,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			int j=0;
 			for (Map.Entry<Goal,Double> e : o.fd.entrySet()) {
 				featBuf[j] = featureTab.getId(e.getKey());
-				featVal[j] = (float)e.getValue().doubleValue();
+				featVal[j] = e.getValue().floatValue();
 				j++;
 			}
 			mat.val[i] = new SimpleSparse.FloatVector(featBuf,featVal);
@@ -126,6 +127,15 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		}
 		mat.sortIndex();
 		return mat;
+	}
+	
+	public LongDense.FloatVector paramsAsVector(Map<Goal,Double> params,double dflt) {
+		int numFeats = featureTab.size();
+		float[] featVal = new float[numFeats+1];
+		for (int j=0;j<featureTab.size();j++) {
+			featVal[j+1] = Dictionary.safeGet(params,featureTab.getSymbol(j+1),dflt).floatValue();
+		}
+		return new LongDense.FloatVector(featVal);
 	}
 	
 

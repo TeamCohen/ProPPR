@@ -11,8 +11,8 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.util.APROptions;
-import edu.cmu.ml.proppr.util.LongDense;
-import edu.cmu.ml.proppr.util.SmoothFunction;
+import edu.cmu.ml.proppr.util.math.LongDense;
+import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
 /**
  * prover using depth-first approximate personalized pagerank

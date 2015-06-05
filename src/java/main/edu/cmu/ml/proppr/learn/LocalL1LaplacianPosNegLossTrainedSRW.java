@@ -6,9 +6,9 @@ import java.util.List;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.MuParamVector;
-import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.math.MuParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TObjectDoubleMap;
 
 public class LocalL1LaplacianPosNegLossTrainedSRW extends LocalL1SRW {

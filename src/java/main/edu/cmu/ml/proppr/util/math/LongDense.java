@@ -1,4 +1,4 @@
-package edu.cmu.ml.proppr.util;
+package edu.cmu.ml.proppr.util.math;
 
 /**
  * Encodes dense vectors V of unknown size, with constant-time access
@@ -31,10 +31,14 @@ public class LongDense
 	 */
 	static public class FloatVector extends AbstractFloatVector {
 		public float[] val;
-		int maxIndex = 0;  // largest index actually used
+		int maxIndex = -1;  // largest index actually used
 
+		public FloatVector(float[] v) {
+			this.val=v;
+			this.maxIndex=this.val.length-1;
+		}
 		public FloatVector(int sizeHint) {
-			val = new float[sizeHint];
+			this(new float[sizeHint]);
 		}
 		public FloatVector() {
 			this(10);

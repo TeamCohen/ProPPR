@@ -6,13 +6,14 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.CachingIdProofGraph;
+import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
-import edu.cmu.ml.proppr.util.LongDense;
-import edu.cmu.ml.proppr.util.SmoothFunction;
+import edu.cmu.ml.proppr.util.math.LongDense;
+import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
 /**
  * prover using depth-first approximate personalized pagerank
@@ -88,18 +89,22 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, double iterEpsilon) 
 	{
-		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon);
+		// ReLU:
+		SmoothFunction f = new SmoothFunction() {
+			@Override public double compute(double x) {
+				return x>=0.0 ? x : 0;
+			} 
+		};
+		LongDense.AbstractFloatVector params = null;
+		if (this.weighter.weights.size()==0) params = new LongDense.UnitVector();
+		else params = cg.paramsAsVector(this.weighter.weights,1.0); // FIXME: default value should depend on f
+		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, f, params);
 	}
 
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
-													 int uid, int pushCounter, int depth, double iterEpsilon)
+													 int uid, int pushCounter, int depth, double iterEpsilon,
+													 SmoothFunction f, LongDense.AbstractFloatVector params)
 	{
-		SmoothFunction f = new SmoothFunction() {
-				@Override public double compute(double x) {
-					return x>=0.0 ? x : 0;
-				}
-			};
-		LongDense.UnitVector params = new LongDense.UnitVector();
 
 		try {
 			int deg = cg.getDegreeById(uid);
@@ -144,7 +149,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 						int vid = cg.getIthNeighborById(uid,i);
 						if (vid!=cg.getRootId()) {
 							//pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
-							pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon);
+							pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon,f,params);
 						}
 					}
 				} catch (LogicProgramException e) {

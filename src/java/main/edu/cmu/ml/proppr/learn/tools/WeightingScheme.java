@@ -4,7 +4,7 @@ import java.util.Map;
 
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TObjectDoubleMap;
 

@@ -23,7 +23,7 @@ import edu.cmu.ml.proppr.util.Dictionary;
 public class InnerProductWeighter extends FeatureDictWeighter {
 	private static final int MAX_UNKNOWN_FEATURE_WARNINGS = 10;
 	private int numUnknownFeatures = 0;
-private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
+	private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
 	protected static final BloomFilter<Goal> unknownFeatures = new BloomFilter<Goal>(.01,100);
 	private static WeightingScheme DEFAULT_WEIGHTING_SCHEME() {
 		return new LinearWeightingScheme();
@@ -33,7 +33,7 @@ private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
 	}
 	public InnerProductWeighter(Map<Goal,Double> weights) {
 		this(DEFAULT_WEIGHTING_SCHEME(), weights);
-		
+
 	}
 	public InnerProductWeighter(WeightingScheme ws, Map<Goal,Double> weights) {
 		super(ws);

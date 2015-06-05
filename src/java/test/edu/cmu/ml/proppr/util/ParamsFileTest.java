@@ -13,6 +13,7 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamsFile;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 
 public class ParamsFileTest {
 	private static final String PARAMSFILE = "src/testcases/paramsFileTest.wts";

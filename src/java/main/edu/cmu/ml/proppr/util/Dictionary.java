@@ -1,5 +1,6 @@
 package edu.cmu.ml.proppr.util;
 
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
