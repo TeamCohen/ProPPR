@@ -198,4 +198,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		return ret.toString();
 
 	}
+	public String toString() {
+		return this.serialize();
+	}
 }
