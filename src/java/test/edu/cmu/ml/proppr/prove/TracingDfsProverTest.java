@@ -17,11 +17,4 @@ public class TracingDfsProverTest extends ProverTestTemplate {
 		TracingDfsProver p = new TracingDfsProver(new APROptions());
 		this.prover = p;
 	}
-	
-	@Override @Test
-	public void testProveState() throws LogicProgramException {
-//		((PprProver)prover).setMaxDepth(1);
-		super.testProveState();
-	}
-
 }

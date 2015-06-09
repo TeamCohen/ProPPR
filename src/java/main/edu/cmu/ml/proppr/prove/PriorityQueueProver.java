@@ -98,11 +98,6 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 			throw new IllegalStateException(ex);
 		}
 
-		SmoothFunction f = new SmoothFunction() {
-				@Override public double compute(double x) {
-					return x>=0.0 ? x : 0;
-				}
-			};
 		LongDense.UnitVector params = new LongDense.UnitVector();
 
 		int maxIterations = (int) (1.0/apr.epsilon+0.5);
@@ -114,7 +109,7 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 				try {
 					int uid = head.id;
 					deg = cg.getDegreeById(uid);
-					double z = cg.getTotalWeightOfOutlinks(uid, params, f);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
 					// record states with scores to update
 					children = new int[deg+1];
 					children[0] = uid;
@@ -132,7 +127,7 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 						for (int i=0; i<deg; i++) {
 							// r[v] += (1-alpha) * move? * Muv * ru
 							//Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
-							double wuv = cg.getIthWeightById(uid,i,params,f);
+							double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
 							int vid = cg.getIthNeighborById(uid,i);
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 						}

@@ -9,6 +9,7 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
@@ -65,12 +66,12 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		expandIfNeeded(ui);
 		return nodeVec.get(ui).index[i]; 
 	}
-	public double getIthWeightById(int ui,int i,LongDense.AbstractFloatVector params,SmoothFunction squashingFunction)  throws LogicProgramException {
+	public double getIthWeightById(int ui,int i,LongDense.AbstractFloatVector params,SquashingFunction squashingFunction)  throws LogicProgramException {
 		expandIfNeeded(ui);
 		SimpleSparse.FloatVector phi = nodeVec.get(ui).val[i]; 
 		return squashingFunction.compute(phi.dot(params));
 	}
-	public double getTotalWeightOfOutlinks(int ui,LongDense.AbstractFloatVector params,SmoothFunction squashingFunction) throws LogicProgramException {
+	public double getTotalWeightOfOutlinks(int ui,LongDense.AbstractFloatVector params,SquashingFunction squashingFunction) throws LogicProgramException {
 		expandIfNeeded(ui);
 		double z = 0.0;
 		int d = getDegreeById(ui);

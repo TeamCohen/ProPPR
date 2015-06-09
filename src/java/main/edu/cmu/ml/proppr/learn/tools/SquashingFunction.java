@@ -8,16 +8,11 @@ import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TObjectDoubleMap;
 
-public abstract class WeightingScheme<F> {
-	public static final int WEIGHT_SIGMOID=0;
-	public static final int WEIGHT_TANH=1;
-	public static final int WEIGHT_LINEAR = 2;
+public abstract class SquashingFunction<F> {
 	/** Wrapper functions must deliver a value >= 0 */
-	public abstract double edgeWeightFunction(double sum);
-	public abstract double derivEdgeWeight(double weight);
-	public abstract double defaultWeight();
-	public abstract double inverseEdgeWeightFunction(double x);
-//	public abstract double projection(double rw, double alpha, int nonRestartNodeNum);
+	public abstract double compute(double x);
+	public abstract double computeDerivative(double weight);
+	public abstract double defaultValue();
 	
 	/** Support method for proving
 	 * 
@@ -28,27 +23,12 @@ public abstract class WeightingScheme<F> {
 	public double edgeWeight(Map<F,Double> params, Map<F,Double> features) {
 		double ret = 0.0;
 		for (Map.Entry<F,Double> f : features.entrySet()) {
-			ret += Dictionary.safeGet(params, f.getKey(), this.defaultWeight()) * f.getValue();
+			ret += Dictionary.safeGet(params, f.getKey(), this.defaultValue()) * f.getValue();
 		}
-		ret = edgeWeightFunction(ret);
+		ret = compute(ret);
 		if (Double.isInfinite(ret)) return Double.MAX_VALUE;
 		return Math.max(0, ret);
 	}
-	
-//	/** Support method for tests
-//	 * 
-//	 * @param params
-//	 * @param features
-//	 * @return
-//	 */
-//	public double edgeWeight(Map<F,Double> params, TObjectDoubleMap<F> features) {
-//		double sum = 0.0;
-//		for (TObjectDoubleIterator<F> f = features.iterator(); f.hasNext();) {
-//			f.advance();
-//			sum += Dictionary.safeGet(params, f.key(), this.defaultWeight()) * f.value();
-//		}
-//		return Math.max(0, edgeWeightFunction(sum));
-//	}
 	
 	/** Support method for learning
 	 * 
@@ -56,7 +36,7 @@ public abstract class WeightingScheme<F> {
 	 * @return
 	 */
 	public double edgeWeight(double sum) {
-		return Math.max(0,edgeWeightFunction(sum));
+		return Math.max(0,compute(sum));
 	}
 	
 	/** Support method for learning
@@ -72,9 +52,9 @@ public abstract class WeightingScheme<F> {
 		for(int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
 			ret += Dictionary.safeGet(params, 
 					g.featureLibrary.getSymbol(g.label_feature_id[fid]), 
-					this.defaultWeight()) * g.label_feature_weight[fid];
+					this.defaultValue()) * g.label_feature_weight[fid];
 		}
-		ret = edgeWeightFunction(ret);
+		ret = compute(ret);
 		if (Double.isInfinite(ret)) return Double.MAX_VALUE;
 		return Math.max(0, ret);
 	}

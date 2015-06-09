@@ -76,7 +76,7 @@ public class Configuration {
 
 	/* set class for module */
 	/** module. */
-	public static final int USE_WEIGHTINGSCHEME = 0x1;
+	public static final int USE_SQUASHFUNCTION = 0x1;
 	public static final int USE_GROUNDER = 0x2;
 	public static final int USE_SRW = 0x4;
 	public static final int USE_TRAINER = 0x8;

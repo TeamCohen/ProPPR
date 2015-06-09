@@ -49,7 +49,7 @@ public class Diagnostic {
 			final ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
 			final SRW srw = c.srw;
 			final ParamVector params = srw.setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(16,(float) 0.75,24)));
-			for (String f : srw.untrainedFeatures()) params.put(f,srw.getWeightingScheme().defaultWeight());
+			for (String f : srw.untrainedFeatures()) params.put(f,srw.getSquashingFunction().defaultValue());
 			srw.setEpoch(1);
 			srw.clearLoss();
 			srw.untrainedFeatures().add("id(restart)");

@@ -178,7 +178,7 @@ public class PathDprProver extends DprProver {
 		CustomConfiguration c = new CustomConfiguration(args,
 				Configuration.USE_PARAMS, //input
 				0, //output
-				Configuration.USE_WAM|Configuration.USE_WEIGHTINGSCHEME, //constants
+				Configuration.USE_WAM|Configuration.USE_SQUASHFUNCTION, //constants
 				0 //modules
 				) {
 			String query;

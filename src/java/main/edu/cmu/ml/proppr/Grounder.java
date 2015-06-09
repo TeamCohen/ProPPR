@@ -21,7 +21,7 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.examples.InferenceExampleStreamer;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Goal;
@@ -75,8 +75,8 @@ public class Grounder {
 		this.throttle = throttle;
 	}
 
-	public void addParams(ParamVector<String,?> params, WeightingScheme<Goal> wScheme) {
-		this.prover.setWeighter(InnerProductWeighter.fromParamVec(params, wScheme));
+	public void addParams(ParamVector<String,?> params, SquashingFunction<Goal> f) {
+		this.prover.setWeighter(InnerProductWeighter.fromParamVec(params, f));
 	}
 
 	public class GroundingStatistics {
@@ -291,7 +291,7 @@ public class Grounder {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GROUNDED;
 			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
-			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
+			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_SQUASHFUNCTION;
 
 			ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);
 			System.out.println(c.toString());
@@ -299,7 +299,7 @@ public class Grounder {
 			if (c.getCustomSetting("graphKey") != null) c.grounder.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
-				c.grounder.addParams(new SimpleParamVector<String>(Dictionary.load(file)), c.weightingScheme);
+				c.grounder.addParams(new SimpleParamVector<String>(Dictionary.load(file)), c.squashingFunction);
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();

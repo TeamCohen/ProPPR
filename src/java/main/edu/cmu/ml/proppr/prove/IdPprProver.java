@@ -64,12 +64,6 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	{
 		LongDense.FloatVector startVec = new LongDense.FloatVector();
 		startVec.set( cg.getRootId(), SEED_WEIGHT );
-
-		SmoothFunction f = new SmoothFunction() {
-				@Override public double compute(double x) {
-					return x>=0.0 ? x : 0;
-				}
-			};
 		LongDense.UnitVector params = new LongDense.UnitVector();
 		LongDense.FloatVector vec = startVec;
 
@@ -78,7 +72,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 
 		for (int i=0; i<this.apr.maxDepth; i++) {
 			// vec = walkOnce(cg,vec,params,f);
-			walkOnceBuffered(cg,vec,nextVec,params,f);
+			walkOnceBuffered(cg,vec,nextVec,params);
 			// save vec as the next buffer, then point vec at the new result
 			tmp = vec;
 			tmp.clear();
@@ -91,7 +85,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 		return cg.asMap(vec);
 	}
 
-	LongDense.FloatVector walkOnce(CachingIdProofGraph cg, LongDense.FloatVector vec,LongDense.AbstractFloatVector params,SmoothFunction f) 
+	LongDense.FloatVector walkOnce(CachingIdProofGraph cg, LongDense.FloatVector vec,LongDense.AbstractFloatVector params) 
 	{
 		LongDense.FloatVector nextVec = new LongDense.FloatVector(vec.size());
 		nextVec.set( cg.getRootId(), apr.alpha * SEED_WEIGHT );
@@ -99,10 +93,10 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 			for (int uid=cg.getRootId(); uid<vec.size(); uid++) {
 				double vu = vec.get(uid);
 				if (vu >= 0.0) {
-					double z = cg.getTotalWeightOfOutlinks(uid, params, f);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
 					int d = cg.getDegreeById(uid);
 					for (int i=0; i<d; i++) {
-						double wuv = cg.getIthWeightById(uid,i,params,f);
+						double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
 						int vid = cg.getIthNeighborById(uid,i);
 						nextVec.inc(vid, vu*(1.0-apr.alpha)*(wuv/z));
 					}
@@ -116,7 +110,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 
 	void walkOnceBuffered(CachingIdProofGraph cg, 
 												LongDense.FloatVector vec,LongDense.FloatVector nextVec,
-												LongDense.AbstractFloatVector params,SmoothFunction f) 
+												LongDense.AbstractFloatVector params) 
 	{
 		nextVec.clear();
 		nextVec.set( cg.getRootId(), apr.alpha * SEED_WEIGHT );
@@ -124,10 +118,10 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 			for (int uid=cg.getRootId(); uid<vec.size(); uid++) {
 				double vu = vec.get(uid);
 				if (vu >= 0.0) {
-					double z = cg.getTotalWeightOfOutlinks(uid, params, f);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
 					int d = cg.getDegreeById(uid);
 					for (int i=0; i<d; i++) {
-						double wuv = cg.getIthWeightById(uid,i,params,f);
+						double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
 						int vid = cg.getIthNeighborById(uid,i);
 						nextVec.inc(vid, vu*(1.0-apr.alpha)*(wuv/z));
 					}

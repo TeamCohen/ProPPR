@@ -11,7 +11,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
@@ -35,7 +35,7 @@ public class TrainerTest extends RedBlueGraph {
 	public void setup() {
 		super.setup();
 		this.srw = new L2SRW();
-		this.srw.setWeightingScheme(new ReLUWeightingScheme<String>());
+		this.srw.setSquashingFunction(new ReLU<String>());
 		this.initTrainer();
 		
 		query = new TIntDoubleHashMap();
@@ -60,8 +60,8 @@ public class TrainerTest extends RedBlueGraph {
 		System.err.println(Dictionary.buildString(params,new StringBuilder(),"\n"));
 		for (Object o : params.keySet()) {
 			String f = (String) o;
-			if (f.equals("tob")) assertTrue("tob "+f,params.get(o) >= this.srw.getWeightingScheme().defaultWeight());
-			if (f.equals("tor")) assertTrue("tor "+f,params.get(o) <= this.srw.getWeightingScheme().defaultWeight());
+			if (f.equals("tob")) assertTrue("tob "+f,params.get(o) >= this.srw.getSquashingFunction().defaultValue());
+			if (f.equals("tor")) assertTrue("tor "+f,params.get(o) <= this.srw.getSquashingFunction().defaultValue());
 		}
 	}
 

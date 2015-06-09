@@ -3,7 +3,7 @@ package edu.cmu.ml.proppr;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.*;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
@@ -116,8 +116,8 @@ public class QueryAnswerer {
 	public Map<State,Double> getSolutions(Prover prover, ProofGraph pg) throws LogicProgramException {
 		return prover.prove(pg);
 	}
-	public void addParams(Prover prover, ParamVector<String,?> params, WeightingScheme<Goal> wScheme) {
-		prover.setWeighter(InnerProductWeighter.fromParamVec(params, wScheme));
+	public void addParams(Prover prover, ParamVector<String,?> params, SquashingFunction<Goal> f) {
+		prover.setWeighter(InnerProductWeighter.fromParamVec(params, f));
 	}
 
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
@@ -228,7 +228,7 @@ public class QueryAnswerer {
 		try {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_ANSWERS;
-			int modules = Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
+			int modules = Configuration.USE_PROVER | Configuration.USE_SQUASHFUNCTION;
 			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
 			QueryAnswererConfiguration c = new QueryAnswererConfiguration(
 					args,
@@ -238,7 +238,7 @@ public class QueryAnswerer {
 			if(log.isInfoEnabled()) log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
-				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.weightingScheme);
+				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.squashingFunction);
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();

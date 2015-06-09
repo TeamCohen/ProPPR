@@ -107,7 +107,9 @@ public class DfsProver extends Prover<StateProofGraph> {
 		backtrace.start();
 		try {
 			for (Entry e : dfs(pg,pg.getStartState(),0)) {
-				vec.put(e.state, 1.0/(i+1));
+				/// wtf was this for? -katie
+//				vec.put(e.state, 1.0/(i+1));
+				vec.put(e.state, e.w);
 				i++;
 			}
 		} catch (LogicProgramException e) {

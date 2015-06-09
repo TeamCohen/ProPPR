@@ -2,8 +2,8 @@ package edu.cmu.ml.proppr.prove;
 
 import java.util.Map;
 
-import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.Linear;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 
 /**
@@ -12,16 +12,16 @@ import edu.cmu.ml.proppr.prove.wam.Goal;
  *
  */
 public class UniformWeighter extends FeatureDictWeighter {
-	public UniformWeighter(WeightingScheme wScheme) {
-		super(wScheme);
+	public UniformWeighter(SquashingFunction f) {
+		super(f);
 	}
 	public UniformWeighter() {
-		this(new LinearWeightingScheme());
+		this(new Linear());
 	}
 
 	@Override
 	public double w(Map<Goal, Double> featureDict) {
-		return this.weightingScheme.edgeWeight(this.weights,featureDict);
+		return this.squashingFunction.edgeWeight(this.weights,featureDict);
 	}
 
 }

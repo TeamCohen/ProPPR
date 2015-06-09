@@ -89,21 +89,15 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, double iterEpsilon) 
 	{
-		// ReLU:
-		SmoothFunction f = new SmoothFunction() {
-			@Override public double compute(double x) {
-				return x>=0.0 ? x : 0;
-			} 
-		};
 		LongDense.AbstractFloatVector params = null;
 		if (this.weighter.weights.size()==0) params = new LongDense.UnitVector();
 		else params = cg.paramsAsVector(this.weighter.weights,1.0); // FIXME: default value should depend on f
-		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, f, params);
+		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, params);
 	}
 
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, int depth, double iterEpsilon,
-													 SmoothFunction f, LongDense.AbstractFloatVector params)
+													 LongDense.AbstractFloatVector params)
 	{
 
 		try {
@@ -111,7 +105,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 			if (r.get(uid) / deg > iterEpsilon) {
 				pushCounter += 1;
 				try {
-					double z = cg.getTotalWeightOfOutlinks(uid, params, f);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
 					// push this state as far as you can
 					while( r.get(uid)/deg > iterEpsilon ) {
 						double ru = r.get(uid);
@@ -123,7 +117,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 						for (int i=0; i<deg; i++) {
 							// r[v] += (1-alpha) * move? * Muv * ru
 							//Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
-							double wuv = cg.getIthWeightById(uid,i,params,f);
+							double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
 							int vid = cg.getIthNeighborById(uid,i);
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 						}
@@ -149,7 +143,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 						int vid = cg.getIthNeighborById(uid,i);
 						if (vid!=cg.getRootId()) {
 							//pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
-							pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon,f,params);
+							pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon,params);
 						}
 					}
 				} catch (LogicProgramException e) {

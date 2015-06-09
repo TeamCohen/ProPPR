@@ -5,7 +5,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
@@ -37,7 +37,7 @@ public class GradientFinderTest extends RedBlueGraph {
 	public void setup() {
 		super.setup();
 		this.srw = new L2SRW();
-		this.srw.setWeightingScheme(new ReLUWeightingScheme<String>());
+		this.srw.setSquashingFunction(new ReLU<String>());
 		this.initTrainer();
 		
 		query = new TIntDoubleHashMap();

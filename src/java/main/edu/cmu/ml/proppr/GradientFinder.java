@@ -30,7 +30,7 @@ public class GradientFinder {
 		try {
 			int inputFiles = Configuration.USE_GROUNDED | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GRADIENT;
-			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
+			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
 			int constants = Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_EPOCHS | Configuration.USE_FORCE;
 			ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
 				@Override

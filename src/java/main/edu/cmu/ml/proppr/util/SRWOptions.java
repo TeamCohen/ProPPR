@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.ReLU;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.DprProver;
 
 public class SRWOptions {
@@ -15,7 +15,7 @@ public class SRWOptions {
 	public static final double DEFAULT_DELTA=0.5;
 	public static final double DEFAULT_ZETA=0;
 	public static final File DEFAULT_AFFGRAPH=null;
-	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
+	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ReLU(); }
 
 	
 	private enum names {
@@ -24,7 +24,7 @@ public class SRWOptions {
 		delta,
 		zeta,
 		affinityFile,
-		weightingScheme,
+		squashingFunction,
 		apr
 	}
 	
@@ -48,7 +48,7 @@ public class SRWOptions {
 	/** local L1 group lasso / laplacian */
 	public Map<String,Integer> diagonalDegree;
 	/** wrapper function */
-	public WeightingScheme weightingScheme;
+	public SquashingFunction squashingFunction;
 	/** minalpha projection */
 	public APROptions apr;
 	
@@ -57,7 +57,7 @@ public class SRWOptions {
 		this(
 				DEFAULT_MU, 
 				DEFAULT_ETA, 
-				DEFAULT_WEIGHTING_SCHEME(), 
+				DEFAULT_SQUASHING_FUNCTION(), 
 				DEFAULT_DELTA, 
 				DEFAULT_AFFGRAPH, 
 				DEFAULT_ZETA, 
@@ -67,7 +67,7 @@ public class SRWOptions {
 		this(
 				DEFAULT_MU, 
 				DEFAULT_ETA, 
-				DEFAULT_WEIGHTING_SCHEME(), 
+				DEFAULT_SQUASHING_FUNCTION(), 
 				DEFAULT_DELTA, 
 				DEFAULT_AFFGRAPH, 
 				DEFAULT_ZETA, 
@@ -76,7 +76,7 @@ public class SRWOptions {
 	public SRWOptions(
 			double mu, 
 			double eta, 
-			WeightingScheme wScheme, 
+			SquashingFunction f, 
 			double delta, 
 			File affgraph, 
 			double zeta,
@@ -85,7 +85,7 @@ public class SRWOptions {
 		this.eta = eta;
 		this.delta = delta;
 		this.zeta = zeta;
-		this.weightingScheme = wScheme;
+		this.squashingFunction = f;
 		this.apr = options;
 		this.affinityFile = affgraph;
 	}
@@ -111,7 +111,6 @@ public class SRWOptions {
 			this.affinityFile = value; 
 			return;
 		case apr: this.apr.set(new String[] { setting[1], setting[2] });
-//		case alpha: this.alpha = Double.parseDouble(setting[1]); return;
 		}
 	}
 }
