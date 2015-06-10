@@ -32,6 +32,7 @@ import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.CustomConfiguration;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -65,7 +66,7 @@ public class Grounder {
 	protected int nthreads=1;
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
-	protected SymbolTable<Goal> featureTable = new SimpleSymbolTable<Goal>();
+	protected SymbolTable<Goal> featureTable = new ConcurrentSymbolTable<Goal>();
 
 	public Grounder(APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {
 		this.apr = apr;

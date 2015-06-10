@@ -93,7 +93,9 @@ public class LocalL2SRW extends L2SRW {
 		double weightDecay = value * (powerTerm - 1);
 		//FIXME: opportunity for out-of-date `value`; probably ought to convert to a try loop
 		if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ -weightDecay);
-		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.pow(value, 2));
+		double loss = gap * c.mu * Math.pow(value, 2);
+//		if (loss<0 && log.isInfoEnabled()) log.info("gap: "+gap+" mu: "+c.mu+" value: "+value+" value**2: "+Math.pow(value, 2));
+		this.cumloss.add(LOSS.REGULARIZATION, loss);
 		apply.adjustValue(f, weightDecay);
 	}
 }

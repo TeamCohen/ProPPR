@@ -16,7 +16,7 @@ import edu.cmu.ml.proppr.util.TimestampedWeight;
  */
 public class MuParamVector<F> extends ParamVector<F,TimestampedWeight> {
 	private ConcurrentHashMap<F,TimestampedWeight> backingStore;
-	private int count=0;
+	private long count=0;
 	
 	public MuParamVector() {
 		this.backingStore = new ConcurrentHashMap<F,TimestampedWeight>();
@@ -54,7 +54,7 @@ public class MuParamVector<F> extends ParamVector<F,TimestampedWeight> {
 	public int getLast(F key) {
 		if (!this.backingStore.containsKey(key)) 
 			return 0;
-		return this.count - this.backingStore.get(key).k;
+		return (int) -(this.backingStore.get(key).k - count);
 	}
 	
 	public void setLast(Set<F> keys) {
