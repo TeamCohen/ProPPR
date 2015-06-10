@@ -30,17 +30,26 @@ public class LightweightStateGraph implements InferenceGraph {
 	private static final Map<Goal,Double> DEFAULT_FD = Collections.emptyMap();
 	private final List<State> DEFAULT_NEAR = Collections.emptyList();
 	private SymbolTable<State> nodeTab;
-	private SymbolTable<Goal> featureTab = new SimpleSymbolTable<Goal>();
+	private SymbolTable<Goal> featureTab;
 	private TIntObjectHashMap<TIntArrayList> near = new TIntObjectHashMap<TIntArrayList>();
 	private TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>> edgeFeatureDict = new TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>>();
 	private int edgeCount = 0;
 
 	public LightweightStateGraph() {
-		this.nodeTab = new SimpleSymbolTable<State>();
+		this(new SimpleSymbolTable<State>(), new SimpleSymbolTable<Goal>());
 	}
 
 	public LightweightStateGraph(HashingStrategy<State> nodeHash) {
-		this.nodeTab = new SimpleSymbolTable<State>(nodeHash);
+		this(new SimpleSymbolTable<State>(nodeHash), new SimpleSymbolTable<Goal>());
+	}
+	
+	public LightweightStateGraph(HashingStrategy<State> nodeHash, SymbolTable<Goal> ftab) {
+		this(new SimpleSymbolTable<State>(nodeHash), ftab);
+	}
+	
+	public LightweightStateGraph(SymbolTable<State> ntab, SymbolTable<Goal> ftab) {
+		this.nodeTab = ntab;
+		this.featureTab = ftab;
 	}
 
 	@Override
@@ -147,6 +156,10 @@ public class LightweightStateGraph implements InferenceGraph {
 	 */
 	@Override
 	public String serialize() {
+		return serialize(false);
+	}
+
+	public String serialize(boolean featureIndex) {
 		StringBuilder ret = new StringBuilder().append(this.nodeSize()) //numNodes
 				.append("\t")
 				.append(this.edgeCount)
@@ -156,11 +169,14 @@ public class LightweightStateGraph implements InferenceGraph {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 
-		for (int fi = 1; fi <= this.featureTab.size(); fi++) {
-			if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
-			else first = false;
-			Goal f = this.featureTab.getSymbol(fi);
-			sb.append(f);
+		if (featureIndex) {
+			sb.append("\t");
+			for (int fi = 1; fi <= this.featureTab.size(); fi++) {
+				if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
+				else first = false;
+				Goal f = this.featureTab.getSymbol(fi);
+				sb.append(f);
+			}
 		}
 
 		// foreach src node
@@ -190,11 +206,11 @@ public class LightweightStateGraph implements InferenceGraph {
 			labelDependencies += outgoingFeatures.size() * nearu.size();
 		}
 		
-		ret.append(labelDependencies).append("\t").append(sb);
+		ret.append(labelDependencies).append(sb);
 		return ret.toString();
 	}
 	
 	public String toString() {
-		return this.serialize();
+		return this.serialize(true);
 	}
 }

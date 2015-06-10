@@ -16,16 +16,17 @@ import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 import gnu.trove.strategy.HashingStrategy;
 
 public class StateProofGraph extends ProofGraph {
 	private static final Logger log = Logger.getLogger(ProofGraph.class);
-
 	private LightweightStateGraph graph;
 	public StateProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException { 
-		this(new InferenceExample(query,null,null), apr, program, plugins);
+		this(new InferenceExample(query,null,null), apr, new SimpleSymbolTable<Goal>(), program, plugins);
 	}
-	public StateProofGraph(InferenceExample ex, APROptions apr, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
+	public StateProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Goal> featureTab, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
 		super(ex, apr, program, plugins);
 		this.graph = new LightweightStateGraph(new HashingStrategy<State>() {
 			@Override
@@ -36,7 +37,8 @@ public class StateProofGraph extends ProofGraph {
 			@Override
 			public boolean equals(State s1, State s2) {
 				return s1.canonicalHash() == s2.canonicalHash();
-			}});
+			}},
+			featureTab);
 	}
 	@Override
 	public int getId(State s) {

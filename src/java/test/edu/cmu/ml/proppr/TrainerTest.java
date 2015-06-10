@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
@@ -51,7 +52,7 @@ public class TrainerTest extends RedBlueGraph {
 	}
 	
 	public ParamVector train() {
-		return this.trainer.train(examples, new ArrayLearningGraphBuilder(), 5, true);
+		return this.trainer.train(new SimpleSymbolTable<String>(),examples, new ArrayLearningGraphBuilder(), 5, true);
 	}
 
 	@Test

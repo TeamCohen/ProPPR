@@ -33,8 +33,8 @@ public class SimpleSymbolTable<T> implements SymbolTable<T> {
 	 */
 	@Override
 	public void insert(T symbol) {
-		if (!this.idDict.containsKey(symbol)) {
-			synchronized(this) {
+		synchronized(this) {
+			if (!this.idDict.containsKey(symbol)) {
 				this.nextId += 1;
 				this.idDict.put(symbol,this.nextId);
 				this.symbolList.add(symbol);

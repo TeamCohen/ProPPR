@@ -33,10 +33,10 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	public CachingIdProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException { 
 		super(query, apr, program, plugins);
 	}
-	public CachingIdProofGraph(InferenceExample ex, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+	public CachingIdProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Goal> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		super(ex, apr, program, plugins);
 		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
-		featureTab = new ConcurrentSymbolTable<Goal>();
+		this.featureTab = featureTab;
 		nodeTab = new ConcurrentSymbolTable<State>(new ConcurrentSymbolTable.HashingStrategy<State>() {
 			@Override
 			public int computeHashCode(State s) {
@@ -154,6 +154,9 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	}
 	@Override
 	public String serialize() {
+		return serialize(false);
+	}
+	public String serialize(boolean featureIndex) {
 		StringBuilder ret = new StringBuilder().append(this.nodeSize()) //numNodes
 				.append("\t")
 				.append(this.edgeCount)
@@ -163,11 +166,13 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 
-		for (int fi = 1; fi <= this.featureTab.size(); fi++) {
-			if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
-			else first = false;
-			Goal f = this.featureTab.getSymbol(fi);
-			sb.append(f);
+		if (featureIndex) {
+			for (int fi = 1; fi <= this.featureTab.size(); fi++) {
+				if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
+				else first = false;
+				Goal f = this.featureTab.getSymbol(fi);
+				sb.append(f);
+			}
 		}
 
 		// foreach src node
@@ -200,6 +205,6 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 
 	}
 	public String toString() {
-		return this.serialize();
+		return this.serialize(true);
 	}
 }

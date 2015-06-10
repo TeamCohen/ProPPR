@@ -63,7 +63,7 @@ public class RedBlueGraph {
 //		}
 
 		LearningGraphBuilder lgb = new ArrayLearningGraphBuilder();
-		brGraph = (LearningGraph) lgb.create();
+		brGraph = (LearningGraph) lgb.create(new SimpleSymbolTable<String>());
 		lgb.index(1);
 		lgb.setGraphSize(brGraph, magicNumber*2, -1, -1);
 

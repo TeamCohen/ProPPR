@@ -19,6 +19,8 @@ import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.FilterPluginCollection;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.PluginFunction;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 import gnu.trove.strategy.HashingStrategy;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 import edu.cmu.ml.proppr.util.math.LongDense;
@@ -52,7 +54,7 @@ public abstract class ProofGraph {
 	private Goal restartFeature;
 	private Goal restartBoosterFeature;
 	private APROptions apr;
-//	private InferenceGraph graph;
+
 	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this(new InferenceExample(query,null,null),apr,program,plugins);
 	}
@@ -109,13 +111,16 @@ public abstract class ProofGraph {
 	}
 	
 	/* **************** factory ****************** */
-	
 	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		return makeProofGraph(p, ex, apr, new SimpleSymbolTable<Goal>(), program, plugins);
+	}
+		
+	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, SymbolTable<Goal> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		// is there a better way to do this, without pushing it all the way through java.reflect? :(
 		if (p.equals(CachingIdProofGraph.class)) {
-			return new CachingIdProofGraph(ex, apr, program, plugins);
+			return new CachingIdProofGraph(ex, apr, featureTab, program, plugins);
 		} else if (p.equals(StateProofGraph.class)) {
-			return new StateProofGraph(ex, apr, program, plugins);
+			return new StateProofGraph(ex, apr, featureTab, program, plugins);
 		} else {
 			throw new IllegalArgumentException ("Invalid proof graph class "+p.getName());
 		}
@@ -217,7 +222,7 @@ public abstract class ProofGraph {
 		line.append("\t");
 		appendNodes(x.getNegList(), line);
 		line.append("\t")
-		.append(x.getGraph().toString())
+		.append(x.getGraph().serialize())
 		.append("\n");
 		return line.toString();
 	}
