@@ -60,11 +60,14 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec) {
 		return fromParamVec(paramVec, DEFAULT_SQUASHING_FUNCTION());
 	}
-	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec, SquashingFunction f) {
+	public static InnerProductWeighter fromParamVec(Map<String, Double> paramVec, SquashingFunction f) {
 		Map<Goal,Double> weights = new HashMap<Goal,Double>();
 		for (Map.Entry<String,Double> s : paramVec.entrySet()) {
 			weights.put(Query.parseGoal(s.getKey()), s.getValue());
 		}
 		return new InnerProductWeighter(f, weights);
+	}
+	public Map<Goal,Double> getWeights() {
+		return this.weights;
 	}
 }

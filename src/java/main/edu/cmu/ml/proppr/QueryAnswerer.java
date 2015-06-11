@@ -15,11 +15,13 @@ import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamQueryProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
@@ -65,6 +67,7 @@ public class QueryAnswerer {
 	protected boolean normalize;
 	protected int nthreads;
 	protected int numSolutions;
+	protected SymbolTable<Goal> featureTable = new ConcurrentSymbolTable<Goal>();
 	public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads, int topk) {
 		this.apr = apr;
 		this.program = program;
@@ -117,12 +120,14 @@ public class QueryAnswerer {
 		return prover.prove(pg);
 	}
 	public void addParams(Prover prover, ParamVector<String,?> params, SquashingFunction<Goal> f) {
-		prover.setWeighter(InnerProductWeighter.fromParamVec(params, f));
+		InnerProductWeighter w = InnerProductWeighter.fromParamVec(params, f); 
+		prover.setWeighter(w);
+		for (Goal g : w.getWeights().keySet()) this.featureTable.insert(g);
 	}
 
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
 		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(), 
-				new InferenceExample(query,null,null), apr, program, plugins);
+				new InferenceExample(query,null,null), apr, featureTable, program, plugins);
 		if(log.isInfoEnabled()) log.info("Querying: "+query);
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);

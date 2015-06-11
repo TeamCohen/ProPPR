@@ -90,8 +90,10 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 													 int uid, int pushCounter, double iterEpsilon) 
 	{
 		LongDense.AbstractFloatVector params = null;
-		if (this.weighter.weights.size()==0) params = new LongDense.UnitVector();
-		else params = cg.paramsAsVector(this.weighter.weights,1.0); // FIXME: default value should depend on f
+		if (this.weighter.weights.size()==0) 
+			params = new LongDense.UnitVector();
+		else 
+			params = cg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
 		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, params);
 	}
 
@@ -117,9 +119,11 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 						for (int i=0; i<deg; i++) {
 							// r[v] += (1-alpha) * move? * Muv * ru
 							//Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
-							double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
+							double wuv = cg.getIthWeightById(uid,i,params,this.weighter.squashingFunction);
+							if (wuv==0) continue;
 							int vid = cg.getIthNeighborById(uid,i);
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
+							if (Double.isNaN(r.get(vid))) log.debug("NaN in r at v="+vid+" wuv="+wuv+" z="+z+" ru="+ru);
 						}
 /*
 						if (log.isDebugEnabled()) {

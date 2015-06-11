@@ -87,8 +87,9 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		Map<State,Double> result = new HashMap<State,Double>();
 		for (int uid=getRootId(); uid<vec.size(); uid++) {
 			double vu = vec.get(uid);
-			if (vu >= 0.0) {
-				result.put( getState(uid), vu );
+			State s = getState(uid);
+			if (s != null && vu >= 0.0) {
+				result.put(s, vu );
 			}
 		}
 		return result;
@@ -167,6 +168,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		boolean first = true;
 
 		if (featureIndex) {
+			sb.append("\t");
 			for (int fi = 1; fi <= this.featureTab.size(); fi++) {
 				if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
 				else first = false;
@@ -200,7 +202,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			labelDependencies += outgoingFeatures.size() * nearu.index.length;
 		}
 		
-		ret.append(labelDependencies).append("\t").append(sb);
+		ret.append(labelDependencies).append(sb);
 		return ret.toString();
 
 	}
