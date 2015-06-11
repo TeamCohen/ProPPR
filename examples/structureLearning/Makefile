@@ -21,7 +21,7 @@ rebuild:
 #program files is used as marker to make sure compilation is up-to-date
 compile: programFiles.arg
 
-programFiles.arg: *.facts *.rules
+programFiles.arg: *.rules
 	(cd $(PROPPR); sh scripts/compile.sh $(DIR))
 
 clean:
