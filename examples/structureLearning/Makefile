@@ -1,6 +1,6 @@
 include ../Makefile.in
 
-DIR=v12
+DIR=$(shell pwd)
 JM=java -cp .:$(PROPPR)/bin/:$(PROPPR)/lib/*:$(PROPPR)/conf/ edu.cmu.ml.praprolog
 PSTEM=h22
 P=$(PSTEM).crules
@@ -54,7 +54,7 @@ clean-expt:
 
 %.grounded %.params: %-train.trainData %-train.cfacts
 	echo now creating .grounded and .params for $*
-	$(JM).Experiment --programFiles  $P:x.cfacts:$*-train.cfacts --prover $(PR) --epochs $(EPOCHS) --strict \
+	$(JM).Experiment --programFiles  $P:x.cfacts:$*.cfacts --prover $(PR) --epochs $(EPOCHS) --strict \
 			 --train $*-train.trainData  --test $*-train.trainData  --srw $(SRW1) \
 			 --output $*.grounded --params $*.params --threads 3
 	perl bin/view-params.pl $*.params
@@ -62,7 +62,7 @@ clean-expt:
 #test the learned second-order theory parameters - step 1, the raw answers; step 2, the map
 
 %.testAnswers: %.params %-test.testData
-	$(JM).QueryAnswerer --programFiles $P:x.cfacts:$*-test.cfacts  --threads 3 --prover $(PR) --queries $*-test.testData --params $*.params --output $*.testAnswers --unnormalized
+	$(JM).QueryAnswerer --programFiles $P:x.cfacts:$*.cfacts  --threads 3 --prover $(PR) --queries $*-test.testData --params $*.params --output $*.testAnswers --unnormalized --force
 
 %.testMap: %-test.testData %.testAnswers 
 	python bin/orderAnswers.py $*.testAnswers $*-test.testData | sort -gr > $*.labeledTestAnswers
@@ -73,7 +73,7 @@ clean-expt:
 # baseline for full-data only
 
 %.baseline-testAnswers: programFiles.arg %-test.testData %-test.cfacts
-	java edu.cmu.ml.praprolog.QueryAnswerer --programFiles baseline.crules:x.cfacts:$*-test.cfacts --threads 3 --prover dpr:0.0001 \
+	java edu.cmu.ml.praprolog.QueryAnswerer --programFiles baseline.crules:x.cfacts:$*.cfacts --threads 3 --prover dpr:0.0001 \
 	       --queries $*-test.testData --output $*.baseline-testAnswers --unnormalized
 
 %.baseline-testMap: %-test.testData %.baseline-testAnswers 
@@ -102,7 +102,7 @@ clean-expt:
 #again step 1, the raw answers; step 2, the map
 
 %.ugr-testAnswers: %-test.testData %.crules
-	$(JM).QueryAnswerer --programFiles $*.crules:$*-test.cfacts --threads 3 --prover $(PR) --queries $*-test.testData --output $*.ugr-testAnswers --unnormalized
+	$(JM).QueryAnswerer --programFiles $*.crules:$*.cfacts --threads 3 --prover $(PR) --queries $*-test.testData --output $*.ugr-testAnswers --unnormalized
 
 %.ugr-testMap: %.ugr-testAnswers %-test.testData
 	python bin/orderAnswers.py $*.ugr-testAnswers $*-test.testData | sort -gr > $*.ugr-labeledTestAnswers
@@ -112,7 +112,7 @@ clean-expt:
 #step 4 - retrain the gradient theory
 
 %.gr-grounded %.gr-params: %-train.trainData %.crules %-train.cfacts
-	$(JM).Experiment --programFiles uml.cfacts:$*.crules --prover $(PR) --epochs $(EPOCHS) \
+	$(JM).Experiment --programFiles $*.crules:$*.cfacts --prover $(PR) --epochs $(EPOCHS) \
 			 --train $*-train.trainData  --srw $(SRW2) --test $*-train.trainData \
 			 --output $*.gr-grounded --params $*.gr-params --threads 3
 	cat $*.gr-params
@@ -121,8 +121,8 @@ clean-expt:
 #again step 1, the raw answers; step 2, the map
 
 %.gr-testAnswers: %.gr-params %-test.testData %.crules
-	$(JM).QueryAnswerer --programFiles $*.crules:uml.cfacts --threads 3 --prover $(PR) --queries $*-test.testData --output $*.gr-testAnswers \
-	--params $*.gr-params --unnormalized 
+	$(JM).QueryAnswerer --programFiles $*.crules:$*.cfacts --threads 3 --prover $(PR) --queries $*-test.testData --output $*.gr-testAnswers \
+	--params $*.gr-params --unnormalized --force
 
 %.gr-testMap: %.gr-testAnswers %-test.testData
 	python bin/orderAnswers.py $*.gr-testAnswers $*-test.testData | sort -gr > $*.gr-labeledTestAnswers
@@ -142,7 +142,7 @@ clean-expt:
 
 %.fig-params %-fig.crules: %-train.trainData %.fig-crules %-train.cfacts
 	cp $*.fig-crules $*-fig.crules
-	$(JM).Experiment --programFiles $*-fig.crules:uml.cfacts --prover $(PR) --epochs $(EPOCHS)  \
+	$(JM).Experiment --programFiles $*-fig.crules:$*.cfacts --prover $(PR) --epochs $(EPOCHS)  \
 				 --train $*-train.trainData  --srw $(SRW2) --test $*-train.trainData \
 				 --output $*.gr-grounded --params $*.fig-params --threads $(TH)
 	cat $*.fig-params
@@ -150,7 +150,7 @@ clean-expt:
 # testing the fig rules
 
 %.fig-testAnswers: %.fig-params %-test.testData %-fig.crules
-	$(JM).QueryAnswerer --programFiles $*-fig.crules:uml.cfacts --strict off --threads $(TH) --prover $(PR) --tester mt:$(TH) --queries $*-test.testData --params $*.fig-params --output $*.fig-testAnswers --unnormalized --weightingScheme tanh
+	$(JM).QueryAnswerer --programFiles $*-fig.crules:$*.cfacts --strict off --threads $(TH) --prover $(PR) --tester mt:$(TH) --queries $*-test.testData --params $*.fig-params --output $*.fig-testAnswers --unnormalized --weightingScheme tanh --force
 
 %.fig-testMap: %-test.testData %.fig-testAnswers 
 	python bin/orderAnswers.py $*.fig-testAnswers $*-test.testData | sort -gr > $*.fig-labeledTestAnswers
@@ -158,7 +158,7 @@ clean-expt:
 	tail $*.fig-testMap
 
 %.ufig-testAnswers: %-test.testData %-fig.crules
-	$(JM).QueryAnswerer --programFiles $*-fig.crules:x.cfacts:$*-test.cfacts --threads 3 --prover $(PR) --queries $*-test.testData --output $*.ufig-testAnswers --unnormalized
+	$(JM).QueryAnswerer --programFiles $*-fig.crules:x.cfacts:$*.cfacts --threads 3 --prover $(PR) --queries $*-test.testData --output $*.ufig-testAnswers --unnormalized
 
 %.ufig-testMap: %-test.testData %.ufig-testAnswers 
 	python bin/orderAnswers.py $*.ufig-testAnswers $*-test.testData | sort -gr > $*.ufig-labeledTestAnswers

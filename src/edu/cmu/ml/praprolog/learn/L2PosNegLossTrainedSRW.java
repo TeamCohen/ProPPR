@@ -63,7 +63,7 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
 				if (Dictionary.safeContains(d,x,f)) {
-					if (log.isDebugEnabled()) log.debug(String.format(" - delta %s is - %f * %f", f,dx.get(f),1.0/px));
+					if (log.isDebugEnabled()) log.debug(String.format(" + delta %s is - %f / %f", f,dx.get(f),px));
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
@@ -79,8 +79,10 @@ public class L2PosNegLossTrainedSRW<T> extends SRW<PosNegRWExample<T>> {
 			Map<String,Double> dx = Dictionary.safeGet(d, x, Collections.EMPTY_MAP);//d.get(x);
 			double px = Dictionary.safeGet(p,x,c.weightingScheme.defaultWeight());//p.get(x);
 			for (String f : trainableFeatures) {
-				if (Dictionary.safeContains(d,x,f)) 
+				if (Dictionary.safeContains(d,x,f)) {
+					if (log.isDebugEnabled()) log.debug(String.format(" - delta %s is %f * %f / (1-%f)", f,beta,dx.get(f),px));
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/clip(1-px));
+				}
 			}
 			this.cumloss.add(LOSS.LOG, -Math.log(clip(1.0-px)));
 		}

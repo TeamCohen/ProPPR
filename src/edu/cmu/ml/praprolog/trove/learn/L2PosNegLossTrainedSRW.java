@@ -62,13 +62,15 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 		
 		//compute gradient
 		double pmax = 0;
+		if (log.isDebugEnabled()) log.debug("example "+example.toString());
 
 		for (int x : example.getPosList()) {
 			TObjectDoubleHashMap<String> dx = d.get(x);
 			double px = p.get(x);
 			if(px > pmax) pmax = px;
 			for (String f : trainableFeatures) {
-				if (Dictionary.safeContains(d,x,f) && dx.get(f) != 0.0) {
+				if (Dictionary.safeContains(d,x,f) && dx.get(f) != 0.0) {	
+					if (log.isDebugEnabled()) log.debug(String.format(" + delta %s is - %f / %f", f,dx.get(f),px));
 					Dictionary.increment(derivFparamVec, f, -dx.get(f)/px);
 				}
 			}
@@ -84,8 +86,10 @@ public class L2PosNegLossTrainedSRW extends SRW<PosNegRWExample> {
 			TObjectDoubleHashMap<String> dx = d.get(x);
 			double px = p.get(x);
 			for (String f : trainableFeatures) {
-				if (Dictionary.safeContains(d,x,f) && dx.get(f) != 0.0) 
+				if (Dictionary.safeContains(d,x,f) && dx.get(f) != 0.0) {
+					if (log.isDebugEnabled()) log.debug(String.format(" - delta %s is %f * %f / (1-%f)", f,beta,dx.get(f),px));
 					Dictionary.increment(derivFparamVec, f, beta*dx.get(f)/(1-px));
+				}
 			}
 			this.cumloss.add(LOSS.LOG, -Math.log(checkProb(1.0-px)));
 		}

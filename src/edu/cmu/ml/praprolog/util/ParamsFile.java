@@ -129,10 +129,19 @@ public class ParamsFile extends ParsedFile {
 		if (this.getProperty("programFiles") != null) {
 			if (c.programFiles == null) {
 				failCheck("programFiles",this.getProperty("programFiles"),"null",c.force);
+				return;
 			} else {
 				int i=0;
-				for (String p : this.getProperty("programFiles").split(":")) {
-					if (!p.equals(c.programFiles[i])) failCheck("programFiles:"+i,p,c.programFiles[i], c.force);
+				String[] params = this.getProperty("programFiles").split(":");
+				if (params.length != c.programFiles.length) {
+					failCheck("programFiles:length",String.valueOf(params.length),String.valueOf(c.programFiles.length),c.force);
+					return;
+				}
+				for (String p : params) {
+					if (!p.equals(c.programFiles[i])) {
+						failCheck("programFiles:"+i,p,c.programFiles[i], c.force);
+						return;
+					}
 					i++;
 				}
 			}
