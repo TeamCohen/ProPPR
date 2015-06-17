@@ -3,23 +3,23 @@ import re
 from subprocess import call
 
 CALL_REL_DIRECTLY_FOR_BACKGROUND_PREDICATES = True
-#MAX_ITERS = 10
-MAX_ITERS = 1
+MAX_ITERS = 10
+#MAX_ITERS = 1
 
 RULES_EXT = ".ppr"
 WAM_EXT = ".wam"
-#COMPILER = "/src/scripts/compiler.py"
+
 
 #################### main algorithm
 
 def iterativeGradientFinder(stem,iters=MAX_ITERS):
 
     # create an empty gradient file
-    gradientFile0 = ithFileName(stem,0,'.gradient')
-    fp0 = open(gradientFile0,'w')
-    fp0.close()
+    #gradientFile0 = ithFileName(stem,0,'.gradient')
+    #fp0 = open(gradientFile0,'w')
+    #fp0.close()
     
-    gradientFiles = [gradientFile0]
+    gradientFiles = []#[gradientFile0]
     gradientFeatureSet = set()
 
     #iteratively find new gradient rules to add
@@ -29,7 +29,7 @@ def iterativeGradientFinder(stem,iters=MAX_ITERS):
         print '- starting pass ',i,'now'
 
         #accumulate all the gradient features into a new 2nd-order ruleset
-        (ruleFile,newGradientFeatureSet) = rulesFromGradient(i+1,stem,gradientFiles)
+        (ruleFile,newGradientFeatureSet) = rulesFromGradient(i,stem,gradientFiles)
         catfile(ruleFile,('- generated rules for pass %d' % i))
 
         #check convergence
@@ -40,8 +40,8 @@ def iterativeGradientFinder(stem,iters=MAX_ITERS):
         else:
             gradientFeatureSet = newGradientFeatureSet
         
-        nextGradientFile = ithFileName(stem,i+1,'.gradient')
-        print '- gradient computed after ',i+1,'epochs'
+        nextGradientFile = ithFileName(stem,i,'.gradient')
+        print '- gradient computed after ',i,'epochs'
         tcall(['make',nextGradientFile])
         gradientFiles += [nextGradientFile]
 
