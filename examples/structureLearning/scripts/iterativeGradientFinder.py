@@ -96,18 +96,18 @@ def gradient2Rules(ruleFile,gradFiles):
         if m:
             #print '---- "ifInv" for',m.group(1),m.group(2),'detected'
             ic = interpreterCall(m.group(2))
-            return 'interp0(%s,X,Y) :- %s(%s,Y,X).' % (m.group(1),ic,m.group(2))
+            return 'interp0(%(con)s,X,Y) :- %(ic)s(%(ant)s,Y,X) {f(%(con)s,ifInv,%(ant)s)}.' % {'con':m.group(1),'ic':ic,'ant':m.group(2)}
         m = re.match('if\((\S+),(\S+)\)',feat)
         if m:
             #print '---- "if" for',m.group(1),m.group(2),'detected'
             ic = interpreterCall(m.group(2))
-            return 'interp0(%s,X,Y) :- %s(%s,X,Y).' % (m.group(1),ic,m.group(2))
+            return 'interp0(%(con)s,X,Y) :- %(ic)s(%(ant)s,X,Y) {f(%(con)s,if,%(ant)s)}.' % {'con':m.group(1),'ic':ic,'ant':m.group(2)}
         m = re.match('chain\((\S+),(\S+),(\S+)\)',feat)
         if m: 
             #print '---- "chain" for',m.group(1),m.group(2),m.group(3),'detected'
             ic1 = interpreterCall(m.group(2))
             ic2 = interpreterCall(m.group(3))
-            return 'interp0(%s,X,Y) :- %s(%s,X,Z),%s(%s,Z,Y).' % (m.group(1),ic1,m.group(2),ic2,m.group(3))
+            return 'interp0(%(con)s,X,Y) :- %(ic1)s(%(p1)s,X,Z),%(ic2)s(%(p2)s,Z,Y) {f(%(con)s,chain,%(p1)s,%(p2)s)}.' % {'con':m.group(1),'ic1':ic1,'p1':m.group(2),'ic2':ic2,'p2':m.group(3)}
         return None
 
     for (gfile) in gradFiles:

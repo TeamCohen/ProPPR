@@ -4,7 +4,7 @@ version         holdout   baseline   .ufig testMap   .fig testMap    version det
 1.0-Notes.txt	90%-10%   0.80	     x.xx   	     0.86
 1.0-trunk	90%-10%   0.90	     0.91	     0.93	     5fa898c
 1.0-delivered	90%-10%   0.90	     x.xx	     0.60	     /remote/curtis/yww/projects/joint_IE_inference/Praprolog_working/deepLogic June 2015
-2.0		90%-10%   0.84	     0.71	     0.75	     5cfd4f0
+2.0		90%-10%   0.90	     0.71	     0.75	     5cfd4f0
 
 == ProPPR 1.0 results from YWW ==
 
