@@ -121,9 +121,6 @@ results.txt:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(su
 pre.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-test.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
 
-pre.${NAME}-test.baseline.solutions.txt: ${NAME}-test.examples baseline.wam
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-test.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
-
 # make e.g. post.uml_1-test.h22_01.solutions.txt
 # from e.g.      uml_1-test.examples
 #                uml_1_h22_01.wam
@@ -135,9 +132,6 @@ post.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam params.%.
 # from e.g.     uml_1-train.examples
 #               uml_1_h22_01.wam
 pre.${NAME}-train.%.solutions.txt: ${NAME}-train.examples ${NAME}_%.wam
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-train.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
-
-pre.${NAME}-train.baseline.solutions.txt: ${NAME}-train.examples baseline.wam
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-train.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
 
 # make e.g. post.uml_1-train.h22_01.solutions.txt
