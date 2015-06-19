@@ -67,11 +67,16 @@ class Labels(object):
     def show(self):
         for q in self.queries:
             print '%s\t' % q,
-            if self.pos[q]:
-                print '\t'.join(map(lambda s: ('+%s'%s), list(self.pos[q]))),
-            if self.neg[q]:
-                print '\t'.join(map(lambda s: ('-%s'%s), list(self.neg[q]))),
-            print "\t",len(self.pos[q]),"pos",len(self.neg[q]),"neg label"
+            self.showQuery(q)
+    
+    def showQuery(self,q):
+        print "\t",len(self.pos[q]),"pos",len(self.neg[q]),"neg label",
+        if self.pos[q]:
+            print '\t'.join(map(lambda s: ('+%s'%s), list(self.pos[q]))),
+        if self.neg[q]:
+            print '\t'.join(map(lambda s: ('-%s'%s), list(self.neg[q]))),
+        print
+
 
 def adversariallyOrdered(answerList):
     def adverseKey(a): return (1.0-a.score,a.isPos,a.rank)
@@ -118,7 +123,7 @@ class Answers(object):
     def __init__(self,answerFile,labels=None,defaultNeg=False):
         """Parse an answer file - if labels are not given, then
         the isPos/isNeg flags will be set to None."""
-        print "defaultNeg:",defaultNeg
+        #print "defaultNeg:",defaultNeg
         self.answerFile = answerFile
         self.answers = collections.defaultdict(list)
         self.solutions = collections.defaultdict(set)
@@ -176,11 +181,15 @@ class Answers(object):
         return result
 
     def show(self,summary=False):
-        for query,answerList in self.answers.items():
+        for query in self.answers.keys():
             print '#',query,'proved in',self.queryTime[query],'msec'
-            for a in answerList:
-                if (not summary) or (a.isPos or a.isNeg):
-                    print a.asFields()
+            self.showQuery(query,summary)
+    
+    def showQuery(self,query,summary=False):
+        answerList = self.answers[query]
+        for a in answerList:
+            if (not summary) or (a.isPos or a.isNeg):
+                print a.asFields()
 
 
 #################### abstract metric class
@@ -278,15 +287,26 @@ class AreaUnderROC(Metric):
     def explanation(self):
         return '(AUC): The probability of a positive example scoring higher than a negative example; or the area under the ROC curve'
     def computeFromList(self,answerList,solutionSet,posSet):
+        # Modified 27 May by katie to handle the following instances:
+        # - where no negative labels are available
+        # - where some positive labels were not retrieved
         npos = len(posSet)
-        nneg = len(answerList) - npos
-        npairs = npos * nneg
-        optimumRankSum = (npos/2.0) * (npos+1.0) #=sum from 1 to npos
+        N = len(answerList)
+        if N == 0: return 0.0
+        if npos == 0: return 0.0
+        
+        # for each positive result compute
+        # how many negative results rank lower
+        nneg = 0
         rankSum = 0.0
         for a in answerList:
             if a.isPos:
-                rankSum += a.rank
-        return 1.0 - (rankSum - optimumRankSum)/npairs
+                rankSum += N-nneg
+            else:
+                nneg += 1
+        # convert to a probability (out of N)
+        # then average over the npos positive labels
+        return rankSum / (N*npos)
         
 class Accuracy(Metric):
     
@@ -378,10 +398,14 @@ if __name__ == "__main__":
     answers = Answers(option['--answers'],labels,'--defaultNeg' in option)
 
     if '--debug' in option:
-        print 'labels:'
-        labels.show()
-        print 'answers:'
-        answers.show(summary=False)
+        for query in labels.queries:
+            print "#",query
+            labels.showQuery(query)
+            answers.showQuery(query)
+        #print 'labels:'
+        #labels.show()
+        #print 'answers:'
+        #answers.show(summary=False)
 
     if ('--echo' in option):
         print 'labeled answers: rank score solution isPos isNeg'
