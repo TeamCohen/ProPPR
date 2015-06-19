@@ -17,6 +17,7 @@ TSRW=l2p:mu=0.0001:eta=1.0
 EPOCHS=100
 PROVER=dpr
 APR=eps=0.0001:alph=0.001
+UNNORMALIZED=--unnormalized --weightingScheme tanh
 
 ifeq ($(strip $(ITERS)),)
 ITERS=10
@@ -69,6 +70,12 @@ clean:
 # performance of the final iteration (aka fig).
 
 structureLearning: $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.solutions.txt,$(subst _delta,-test.alone,$(it))),pre. post.))
+
+yww.pre:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.yww,$(subst _delta,-test.alone,$(it))),pre.))
+
+yww.post:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.yww,$(subst _delta,-test.alone,$(it))),post.))
+
+yww: yww.pre yww.post
 
 results.txt:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.results.txt,$(subst _delta,-test.alone,$(it))),pre. post.))
 	echo phase.subset.iteration uR mR uMRR mMRR uMAP mMAP > $@
