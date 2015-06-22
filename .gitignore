@@ -16,3 +16,7 @@ bin
 test-results
 out
 kbp_prototype
+.classpath
+.pydevproject
+.settings
+.Rhistory

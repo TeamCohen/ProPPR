@@ -151,7 +151,9 @@ public class SRW {
 			}
 			// end (c)
 
-			if (tu==0 && udeg>0) { throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); }
+//			if (tu==0 && udeg>0) { 
+//				throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); 
+//			}
 
 			// begin (d): for each neighbor v of u,
 			ex.dM_lo[uid] = new int[udeg];
@@ -170,7 +172,11 @@ public class SRW {
 				for (int lid = ex.getGraph().edge_labels_lo[eid], dfuvi = 0; lid < ex.getGraph().edge_labels_hi[eid]; lid++, dfuvi++) {
 					int fid = ex.getGraph().label_feature_id[lid];
 					dM_features.add(fid);
-					double dMuvi = scale * (tu * dfu[xvi][dfuvi] - c.weightingScheme.edgeWeight(suv[xvi]) * dtu.get(fid));
+					double dMuvi = (tu * dfu[xvi][dfuvi] - c.weightingScheme.edgeWeight(suv[xvi]) * dtu.get(fid));
+					if (tu == 0) { 
+						if (dMuvi != 0)
+							throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); 
+					} else dMuvi *= scale; 
 					dM_values.add(dMuvi);
 					seenFeatures[dfuvi] = fid; //save this feature so we can skip it later
 				}
@@ -187,7 +193,10 @@ public class SRW {
 				}
 				ex.dM_hi[uid][xvi] = dM_features.size();
 				// also create the scalar M_{uv} = f(s_{uv}) / t_u
-				ex.M[uid][xvi] = (c.weightingScheme.edgeWeight(suv[xvi]) / tu);
+				ex.M[uid][xvi] = c.weightingScheme.edgeWeight(suv[xvi]);
+				if (tu==0) {
+					if (ex.M[uid][xvi] != 0) throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString());
+				} else ex.M[uid][xvi] /= tu;
 			}
 		}
 		// discard extendible version in favor of primitive array

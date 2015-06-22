@@ -140,7 +140,7 @@ public class WamInterpreter {
 		if (depth>=MAXDEPTH) throw new IllegalStateException("depth bound "+MAXDEPTH+" exceeded in feature computation");
 		if (!state.isCompleted()) {
 			// wwcmod: replace false with true to that you compute the features as well
-			for (Outlink o : wamOutlinks(state,false)) {
+			for (Outlink o : wamOutlinks(state,true)) {
 				doFeatureFindallDFS(o.child, depth+1);
 			}
 		}
@@ -353,7 +353,8 @@ public class WamInterpreter {
 				reportFeature(g,1.0);
 			}
 		}
-		if (this.featureStack.isEmpty()) reportFeature(new Goal("_no_features_"),1.0);
+		if (this.featureStack.isEmpty()) 
+			reportFeature(new Goal("_no_features_"),1.0);
 		this.state.incrementProgramCounter();
 	}
 	public void ffindall(int address) throws LogicProgramException {

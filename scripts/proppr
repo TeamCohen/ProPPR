@@ -12,75 +12,80 @@ logging.basicConfig(level=logging.INFO)
 
 def doMain():
    logging.info('ProPPR v2')
+   opts = {'dryRun':False}
    com = getArg(0)
+   if com == "-n":
+       opts['dryRun'] = True
+       sys.argv = sys.argv[1:]
+       com = getArg(0)
    if com == "help":
-      doHelp()
+      doHelp(opts)
    elif com == "set":
-      doSet()
+      doSet(opts)
    elif com == "settings":
-      doSettings()
+      doSettings(opts)
    elif com == "compile":
-      doCompile()
+      doCompile(opts)
    elif com == "answer":
-      doAnswer()
+      doAnswer(opts)
    elif com == "ground":
-      doGround()
+      doGround(opts)
    elif com == "eval":
-      doEval()
+      doEval(opts)
    elif com == "train":
-      doTrain()
+      doTrain(opts)
    else:
-      doHelp()
+      doHelp(opts)
       
 # subcommands
 
-def doSet():
+def doSet(o):
    opts = loadOptionDict()  #also load command-line options
    saveOptionDict(opts)
 shortHelpMsg['set'] = ' OPTION VALUE: store a default setting in proppr.settings, where OPTION starts with --'
 
-def doSettings():
+def doSettings(o):
    for key,val in loadOptionDict().items():
       print key,val
 shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 
-def doAnswer():
+def doAnswer(o):
    stem,examples = stemExt(getArg(1),'.examples')
    solutions = getArg(2,stem+'.solutions.txt')
-   invokeMain('QueryAnswerer','--queries',examples,'--solutions',solutions)
+   invokeMain(o,'QueryAnswerer','--queries',examples,'--solutions',solutions)
    logging.info('answers in '+solutions)
 shortHelpMsg['answer'] = ' INPUT.examples [OUTPUT.solutions.txt]: answer queries from file and write solutions'
 
-def doGround():
+def doGround(o):
    stem,examples = stemExt(getArg(1),'.examples')
    grounded = getArg(2,stem+'.examples.grounded')
-   invokeMain('Grounder','--queries',examples,'--grounded',grounded)
+   invokeMain(o,'Grounder','--queries',examples,'--grounded',grounded)
    logging.info('grounded to '+grounded)
 shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from file and write graphs'
-def doEval():
+
+def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
    solutions = getArg(2, stem+'.solutions.txt')
    opts = getArgvOptions() or ['--metric','map']
    root = getRoot()
-   callProcess(['python',root+'/scripts/answermetrics.py','--data',examples,'--answers',solutions] + opts)
+   callProcess(o,['python',root+'/scripts/answermetrics.py','--data',examples,'--answers',solutions] + opts)
 shortHelpMsg['eval'] = ' INPUT.examples INPUT.solutions.txt [--metric mrr|recall|ap] [--echo]: evaluate proposed solutions' 
 
-def doCompile():
+def doCompile(o):
    stem,src = stemExt(getArg(1),'.ppr')
    dst = getArg(2,stem+".wam")
    root = getRoot()
-   callProcess(['python',root+'/src/scripts/compiler.py','serialize',src],stdout=open(dst,'w'))
+   callProcess(o,['python',root+'/src/scripts/compiler.py','serialize',src],stdout=open(dst,'w'))
    logging.info('compiled '+ src + ' to ' + dst)
 shortHelpMsg['compile'] = ' INPUT.ppr [OUTPUT.wam]: compile a ProPPR program to abstract machine'
 
-def doTrain():
+def doTrain(o):
    stem,src = stemExt(getArg(1),'.examples.grounded')
    dst = getArg(2,stem+'.params')
-   invokeMain('Trainer','--train',src,'--params',dst)
+   invokeMain(o,'Trainer','--train',src,'--params',dst)
 shortHelpMsg['train'] = ' INPUT.examples.grounded [OUTPUT.params]: learn parameters for the prover'
 
-shortHelpMsg['help'] = ': this help message'
-def doHelp():
+def doHelp(o):
    print 'ProPPR v2: commands are:'
    for com in shortHelpMsg:
       print '  proppr '+ com + shortHelpMsg[com]
@@ -89,6 +94,7 @@ def doHelp():
    print '      e.g. "proppr answer test.examples --prover tr"'
    print '  (2) for all commands that invoke Java mains, appending "--help" will give help'
    print '      on available additional options'
+shortHelpMsg['help'] = ': this help message'
 
 ## helpers
 
@@ -102,7 +108,7 @@ def stemExt(fileName,expectedExtension):
    else:
       return (fileName,fileName+expectedExtension)
 
-def invokeMain(main,*mainProgArgs):
+def invokeMain(o,main,*mainProgArgs):
    """Invoke a main program, supplying options from the settings file
    and/or the command-line options."""
    root = getRoot()
@@ -112,12 +118,13 @@ def invokeMain(main,*mainProgArgs):
    for (key,val) in loadOptionDict().items():
       optArgs.append(key)
       optArgs.append(val)
-   callProcess(['java','-cp',classPath,mainClass] + list(mainProgArgs) + optArgs)
+   callProcess(o,['java','-cp',classPath,mainClass] + list(mainProgArgs) + optArgs)
 
-def callProcess(args,**kw):
+def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""
    if kw: logging.info('subprocess call options: '+ str(kw))
    logging.info('calling: ' + ' '.join(args))
+   if o['dryRun']: return
    subprocess.call(args,**kw)
 
 def getRoot():
