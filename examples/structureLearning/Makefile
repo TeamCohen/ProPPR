@@ -17,7 +17,8 @@ TSRW=l2p:mu=0.0001:eta=1.0
 EPOCHS=100
 PROVER=dpr
 APR=eps=0.0001:alph=0.001
-UNNORMALIZED=--unnormalized --weightingScheme tanh
+WEIGHTINGSCHEME=--weightingScheme tanh
+UNNORMALIZED=--unnormalized $(WEIGHTINGSCHEME)
 
 ifeq ($(strip $(ITERS)),)
 ITERS=10
@@ -133,7 +134,7 @@ pre.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam
 #                uml_1_h22_01.wam
 #               params.h22_01.wts
 post.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam params.%.wts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-test.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
 
 # make e.g. pre.uml_1-train.h22_01.solutions.txt
 # from e.g.     uml_1-train.examples
@@ -146,19 +147,19 @@ pre.${NAME}-train.%.solutions.txt: ${NAME}-train.examples ${NAME}_%.wam
 #                uml_1_h22_01.wam
 #               params.h22_01.wts
 post.${NAME}-train.%.solutions.txt: ${NAME}-train.examples ${NAME}_%.wam params.%.wts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}-train.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${NAME}.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
 
 
 # make e.g.      params.alone_01.wts
 # from e.g. uml_1-train.alone_01.examples.grounded
 params.%.wts: ${TRAIN}.%.examples.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${TSRW} --epochs ${EPOCHS} --apr ${APR}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${TSRW} --epochs ${EPOCHS} --apr ${APR} ${WEIGHTINGSCHEME}
 
 # make e.g. uml_1-train.h22_01.examples.grounded
 # from e.g. uml_1-train.examples
 #           uml_1_h22_01.wam
 ${NAME}-train.%.examples.grounded: ${NAME}-train.examples ${NAME}_%.wam
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${NAME}-train.cfacts:$(word 2,$^) --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${NAME}.cfacts:$(word 2,$^) --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${WEIGHTINGSCHEME}
 
 ## Additional targets for building an executable program from gradient-generated rules:
 
