@@ -29,6 +29,7 @@ import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
+import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
@@ -55,6 +56,7 @@ public class Trainer {
 	protected int epoch;
 	LossData lossLastEpoch;
 	TrainingStatistics statistics=new TrainingStatistics();
+
 
 	public Trainer(SRW learner, int nthreads, int throttle) {
 		this.learner = learner;
@@ -125,11 +127,18 @@ public class Trainer {
 		this.learner.trainOnExample(paramVec, x);
 	}
 
-	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, int numEpochs, boolean traceLosses) {
+	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
+		ParamVector initParams = null;
+		if (initialParamVecFile != null) {
+			log.info("loading initial params from "+initialParamVecFile);
+			initParams = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(initialParamVecFile), new ConcurrentHashMap<String,Double>()));
+		} else {
+			initParams = createParamVector();
+		}
 		return train(
 				examples,
 				builder,
-				createParamVector(),
+				initParams,
 				numEpochs,
 				traceLosses
 				);
@@ -145,8 +154,10 @@ public class Trainer {
 		ThreadPoolExecutor parsePool, trainPool;
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
-		// loop over epochs
-		for (int i=0; i<numEpochs; i++) {
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+
+		// repeat until ready to stop
+		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
 			this.learner.setEpoch(epoch);
@@ -221,12 +232,17 @@ public class Trainer {
 			// finish any trailing updates for this epoch
 			this.learner.cleanupParams(paramVec,paramVec);
 
-			// loss status
+			// loss status and signalling the stopper
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
+				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
+				if (epoch>1) {
+					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
+				}
 				lossLastEpoch = lossThisEpoch;
 			}
+			stopper.recordEpoch();
 			statistics.checkStatistics();
 			total.updateReadingStatistics(statistics.readTime);
 			total.updateParsingStatistics(statistics.parseTime);
@@ -238,7 +254,6 @@ public class Trainer {
 
 
 	protected void printLossOutput(LossData lossThisEpoch) {
-		for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / statistics.numExamplesThisEpoch);
 		System.out.print("avg training loss " + lossThisEpoch.total()
 				+ " on "+ statistics.numExamplesThisEpoch +" examples");
 		System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
@@ -247,8 +262,11 @@ public class Trainer {
 			LossData diff = lossLastEpoch.diff(lossThisEpoch);
 			System.out.println(" improved by " + diff.total()
 					+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
-			if (diff.total() < 0.0) {
-				System.out.println("WARNING: loss INCREASED by " + 
+			double percentImprovement = 100 * diff.total()/lossThisEpoch.total();
+			System.out.println("pct reduction in training loss "+percentImprovement);
+			// warn if there is a more than 1/2 of 1 percent increase in loss
+			if (percentImprovement < -0.5) { 
+				System.out.println("WARNING: loss INCREASED by " + percentImprovement +" pct, i.e. total of "+
 						(-diff.total()) + " - what's THAT about?");
 			}
 		} else 
@@ -449,7 +467,7 @@ public class Trainer {
 
 	public static void main(String[] args) {
 		try {
-			int inputFiles = Configuration.USE_TRAIN;
+			int inputFiles = Configuration.USE_TRAIN | Configuration.USE_INIT_PARAMS;
 			int outputFiles = Configuration.USE_PARAMS;
 			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
@@ -465,6 +483,7 @@ public class Trainer {
 			ParamVector params = c.trainer.train(
 					new ParsedFile(groundedFile), 
 					new ArrayLearningGraphBuilder(), 
+					c.initParamsFile,
 					c.epochs, 
 					c.traceLosses);
 			System.out.println("Training time: "+(System.currentTimeMillis()-start));

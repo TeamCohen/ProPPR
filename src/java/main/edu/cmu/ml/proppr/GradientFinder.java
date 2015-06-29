@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
@@ -51,10 +52,12 @@ public class GradientFinder {
 			System.out.println(c.toString());
 
 			ParamVector params = null;
+			File nullFile = null;
 			if (c.epochs > 0) {
 				params = c.trainer.train(
 						new ParsedFile(c.groundedFile), 
 						new ArrayLearningGraphBuilder(), 
+						nullFile, // create a parameter vector
 						c.epochs, 
 						c.traceLosses);
 			} else if (c.paramsFile != null) {
