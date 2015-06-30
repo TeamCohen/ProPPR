@@ -1,32 +1,54 @@
 include ../Makefile.in
 
-### DATASET
+### Paths ###
+
+WD=$(shell pwd)
+
+# DIR: for .cfacts, .examples
 ifeq ($(strip $(DIR)),)
 DIR=.
 endif
+
+# NAME: filename stem
 ifeq ($(strip $(NAME)),)
 NAME=uml_1
 ifeq ($(strip $(JOPTS)),-Xmx10G)
 JOPTS=-Xmx30G
 endif
 endif
+
+# SL: Structure learning ruleset
 ifeq ($(strip $(SL)),)
-SL=h22.ppr
+SL=$(WD)/h22.ppr
 endif
+
+# INTERP: Standalone ruleset
 ifeq ($(strip $(INTERP)),)
-INTERP=interp.ppr
+INTERP=$(WD)/interp.ppr
 endif
 
 TRAIN=${NAME}-train
 TEST=${NAME}-test
 
+### Settings ##
+
+ifeq ($(strip $(MU)),)
+MU=0.0001
+endif
+ifeq ($(strip $(EPSILON)),)
+EPSILON=.0001
+endif
+ifeq ($(strip $(ALPHA)),)
+ALPHA=.001
+endif
+
 # for measuring gradient
-GSRW=l2p:mu=0.0001:eta=5.0
+GSRW=l2p:mu=$(MU):eta=5.0
 # for training final model
-TSRW=l2p:mu=0.0001:eta=1.0
+TSRW=l2p:mu=$(MU):eta=1.0
 EPOCHS=100
 PROVER=dpr
-APR=eps=0.0001:alph=0.001
+APR=eps=$(EPSILON):alph=$(ALPHA)
 WEIGHTINGSCHEME=--weightingScheme tanh
 UNNORMALIZED=--unnormalized $(WEIGHTINGSCHEME)
 
@@ -34,6 +56,8 @@ ifeq ($(strip $(ITERS)),)
 ITERS=10
 endif
 
+vpath %.examples $(DIR)
+vpath %.cfacts $(DIR)
 
 ### TARGETS
 # To run fully, do
@@ -80,15 +104,15 @@ clean:
 # gradient until no new rules are added. The performance of ISG is the
 # performance of the final iteration (aka fig).
 
-structureLearning: $(foreach it,$(wildcard ${DIR}/${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.solutions.txt,$(subst _delta,-test.alone,$(subst $(DIR)/,,$(it)))),pre. post.))
+structureLearning: $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.solutions.txt,$(subst _delta,-test.alone,$(it))),pre. post.))
 
-yww.pre:       $(foreach it,$(wildcard ${DIR}/${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.yww,$(subst _delta,-test.alone,$(subst $(DIR)/,,$(it)))),pre.))
+yww.pre:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.yww,$(subst _delta,-test.alone,$(it))),pre.))
 
-yww.post:       $(foreach it,$(wildcard ${DIR}/${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.yww,$(subst _delta,-test.alone,$(subst $(DIR)/,,$(it)))),post.))
+yww.post:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.yww,$(subst _delta,-test.alone,$(it))),post.))
 
 yww: yww.pre yww.post
 
-results.txt:       $(foreach it,$(wildcard ${DIR}/${NAME}_delta_*.ppr),$(addprefix $(DIR)/,$(addsuffix $(subst .ppr,.results.txt,$(subst _delta,-test.alone,$(subst $(DIR)/,,$(it)))),pre. post.)))
+results.txt:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(subst .ppr,.results.txt,$(subst _delta,-test.alone,$(it))),pre. post.))
 	echo phase.subset.iteration uR mR uMRR mMRR uMAP mMAP > $@
 	cat $^ >> $@
 
@@ -137,58 +161,59 @@ results.txt:       $(foreach it,$(wildcard ${DIR}/${NAME}_delta_*.ppr),$(addpref
 # make e.g. pre.uml_1-test.SL_01.solutions.txt
 # from e.g.     uml_1-test.examples
 #               uml_1_SL_01.wam
-${DIR}/pre.${NAME}-test.%.solutions.txt: ${DIR}/${NAME}-test.examples ${DIR}/${NAME}_%.wam
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${DIR}/${NAME}-test.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
+pre.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam ${NAME}-test.cfacts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 3,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
 
 # make e.g. post.uml_1-test.SL_01.solutions.txt
 # from e.g.      uml_1-test.examples
 #                uml_1_SL_01.wam
 #               params.SL_01.wts
-${DIR}/post.${NAME}-test.%.solutions.txt: ${DIR}/${NAME}-test.examples ${DIR}/${NAME}_%.wam params.%.wts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${DIR}/${NAME}.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
+post.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam params.%.wts ${NAME}-test.cfacts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 4,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
 
 # make e.g. pre.uml_1-train.SL_01.solutions.txt
 # from e.g.     uml_1-train.examples
 #               uml_1_SL_01.wam
-${DIR}/pre.${NAME}-train.%.solutions.txt: ${DIR}/${NAME}-train.examples ${DIR}/${NAME}_%.wam
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${DIR}/${NAME}-train.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
+pre.${NAME}-train.%.solutions.txt: ${NAME}-train.examples ${NAME}_%.wam ${NAME}-train.cfacts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 3,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
 
 # make e.g. post.uml_1-train.SL_01.solutions.txt
 # from e.g.      uml_1-train.examples
 #                uml_1_SL_01.wam
 #               params.SL_01.wts
-${DIR}/post.${NAME}-train.%.solutions.txt: ${DIR}/${NAME}-train.examples ${DIR}/${NAME}_%.wam params.%.wts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${DIR}/${NAME}.cfacts:$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
+post.${NAME}-train.%.solutions.txt: ${NAME}-train.examples ${NAME}_%.wam params.%.wts ${NAME}-train.cfacts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 4,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
 
 
 # make e.g.      params.alone_01.wts
 # from e.g. uml_1-train.alone_01.examples.grounded
-params.%.wts: ${DIR}/${TRAIN}.%.examples.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${TSRW} --epochs ${EPOCHS} --apr ${APR} ${WEIGHTINGSCHEME}
+params.%.wts: ${TRAIN}.%.examples.grounded
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params tmp --threads ${THREADS} --srw ${TSRW} --epochs ${EPOCHS} --apr ${APR} ${WEIGHTINGSCHEME}
+	awk 'BEGIN{FS=OFS="\t"} /FactsPlugin.*train.cfacts/ {foo=$$0;sub("train","test",foo);print foo}{print}' tmp > $@
 
 # make e.g. uml_1-train.SL_01.examples.grounded
 # from e.g. uml_1-train.examples
 #           uml_1_SL_01.wam
-${DIR}/${NAME}-train.%.examples.grounded: ${DIR}/${NAME}-train.examples ${DIR}/${NAME}_%.wam
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${DIR}/${NAME}.cfacts:$(word 2,$^) --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${WEIGHTINGSCHEME}
+${NAME}-train.%.examples.grounded: ${NAME}-train.examples ${NAME}_%.wam ${NAME}-train.cfacts
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles $(word 3,$^):$(word 2,$^) --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${WEIGHTINGSCHEME}
 
 ## Additional targets for building an executable program from gradient-generated rules:
 
 # uml_1_delta_01.ppr + h22.ppr = uml_1_SL_01.ppr
-${DIR}/${NAME}_SL_%.ppr: ${DIR}/${NAME}_delta_%.ppr ${SL}
+${NAME}_SL_%.ppr: ${NAME}_delta_%.ppr ${SL}
 	cat $^ > $@
 
 # uml_1_delta_01.ppr + interp.ppr = uml_1_alone_01.ppr
-${DIR}/${NAME}_alone_%.ppr: ${DIR}/${NAME}_delta_%.ppr ${INTERP}
+${NAME}_alone_%.ppr: ${NAME}_delta_%.ppr ${INTERP}
 	cat $^ > $@
 
 # Actually run the iterated structural gradient procedure, and supporting target:
 
 isg:
-	python scripts/iterativeGradientFinder.py ${DIR}/${NAME} ${ITERS}
+	python scripts/iterativeGradientFinder.py ${NAME} ${ITERS}
 
 # make e.g.           uml_1_01.gradient
 # from e.g. uml_1-train.SL_01.examples.grounded
 # first training for e.g.   01 epochs
-${DIR}/${NAME}_%.gradient: ${DIR}/${NAME}-train.SL_%.examples.grounded
+${NAME}_%.gradient: ${NAME}-train.SL_%.examples.grounded
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $< --threads ${THREADS} --apr ${APR} --epochs $* --srw ${GSRW} --gradient $@ --trainer streaming

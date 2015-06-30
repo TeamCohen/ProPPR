@@ -1,6 +1,6 @@
 import sys
 import re
-from subprocess import call
+from subprocess import check_call
 
 CALL_REL_DIRECTLY_FOR_BACKGROUND_PREDICATES = True
 MAX_ITERS = 10
@@ -121,11 +121,11 @@ def ithFileName(stem,i,extension):
 def tcall(xs,so=None): 
     """Call command in list xs, with a trace."""
     print '--calling',xs
-    call(xs,stdout=so)
+    check_call(xs,stdout=so)
 
 
 if __name__ == "__main__":
-    (stem) = sys.argv[1]
+    stem = sys.argv[1]
     if len(sys.argv) > 2:
         iterativeGradientFinder(stem,int(sys.argv[2]))
     else:
