@@ -25,6 +25,12 @@ public class LossData {
 	public void clear() {
 		this.loss.clear();
 	}
+	public void convertCumulativesToAverage(int numExamples) {
+		// normalize losses by number of examples to get avg loss
+		for(Map.Entry<LOSS,Double> e : loss.entrySet()) {
+			e.setValue(e.getValue() / numExamples);
+		}
+	}
 	public double total() {
 		double total=0;
 		for(Double d : loss.values()) total += d;
