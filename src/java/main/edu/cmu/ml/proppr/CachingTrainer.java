@@ -18,6 +18,7 @@ import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
+import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
@@ -63,8 +64,9 @@ public class CachingTrainer extends Trainer {
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 
-		// loop over epochs
-		for (int i=0; i<numEpochs; i++) {
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		// repeat until ready to stop
+		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
 			this.learner.setEpoch(epoch);
@@ -97,12 +99,17 @@ public class CachingTrainer extends Trainer {
 			// finish any trailing updates for this epoch
 			this.learner.cleanupParams(paramVec,paramVec);
 
-			// loss status
+			// update loss status and signal the stopper
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
+				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
+				if (epoch>1) {
+					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
+				}
 				lossLastEpoch = lossThisEpoch;
 			}
+			stopper.recordEpoch();
 
 			total.updateTrainingStatistics(statistics.trainTime);
 		}

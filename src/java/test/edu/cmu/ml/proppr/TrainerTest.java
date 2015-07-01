@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.io.File;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +53,8 @@ public class TrainerTest extends RedBlueGraph {
 	}
 	
 	public ParamVector train() {
-		return this.trainer.train(new SimpleSymbolTable<String>(),examples, new ArrayLearningGraphBuilder(), 5, true);
+		File nullFile = null;
+		return this.trainer.train(new SimpleSymbolTable<String>(), examples, new ArrayLearningGraphBuilder(), nullFile, 5, true);
 	}
 
 	@Test

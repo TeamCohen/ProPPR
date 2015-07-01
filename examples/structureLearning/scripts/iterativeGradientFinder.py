@@ -3,23 +3,23 @@ import re
 from subprocess import call
 
 CALL_REL_DIRECTLY_FOR_BACKGROUND_PREDICATES = True
-#MAX_ITERS = 10
-MAX_ITERS = 1
+MAX_ITERS = 10
+#MAX_ITERS = 1
 
 RULES_EXT = ".ppr"
 WAM_EXT = ".wam"
-#COMPILER = "/src/scripts/compiler.py"
+
 
 #################### main algorithm
 
 def iterativeGradientFinder(stem,iters=MAX_ITERS):
 
     # create an empty gradient file
-    gradientFile0 = ithFileName(stem,0,'.gradient')
-    fp0 = open(gradientFile0,'w')
-    fp0.close()
+    #gradientFile0 = ithFileName(stem,0,'.gradient')
+    #fp0 = open(gradientFile0,'w')
+    #fp0.close()
     
-    gradientFiles = [gradientFile0]
+    gradientFiles = []#[gradientFile0]
     gradientFeatureSet = set()
 
     #iteratively find new gradient rules to add
@@ -29,7 +29,7 @@ def iterativeGradientFinder(stem,iters=MAX_ITERS):
         print '- starting pass ',i,'now'
 
         #accumulate all the gradient features into a new 2nd-order ruleset
-        (ruleFile,newGradientFeatureSet) = rulesFromGradient(i+1,stem,gradientFiles)
+        (ruleFile,newGradientFeatureSet) = rulesFromGradient(i,stem,gradientFiles)
         catfile(ruleFile,('- generated rules for pass %d' % i))
 
         #check convergence
@@ -40,8 +40,8 @@ def iterativeGradientFinder(stem,iters=MAX_ITERS):
         else:
             gradientFeatureSet = newGradientFeatureSet
         
-        nextGradientFile = ithFileName(stem,i+1,'.gradient')
-        print '- gradient computed after ',i+1,'epochs'
+        nextGradientFile = ithFileName(stem,i,'.gradient')
+        print '- gradient computed after ',i,'epochs'
         tcall(['make',nextGradientFile])
         gradientFiles += [nextGradientFile]
 
@@ -92,22 +92,22 @@ def gradient2Rules(ruleFile,gradFiles):
 
         print 'feature2rule',feat
         featureParsed = False
-        m = re.match('ifInv\((\w+),(\w+)\)',feat)
+        m = re.match('ifInv\((\S+),(\S+)\)',feat)
         if m:
             #print '---- "ifInv" for',m.group(1),m.group(2),'detected'
             ic = interpreterCall(m.group(2))
-            return 'interp0(%s,X,Y) :- %s(%s,Y,X).' % (m.group(1),ic,m.group(2))
-        m = re.match('if\((\w+),(\w+)\)',feat)
+            return 'interp0(%(con)s,X,Y) :- %(ic)s(%(ant)s,Y,X) {f(%(con)s,ifInv,%(ant)s)}.' % {'con':m.group(1),'ic':ic,'ant':m.group(2)}
+        m = re.match('if\((\S+),(\S+)\)',feat)
         if m:
             #print '---- "if" for',m.group(1),m.group(2),'detected'
             ic = interpreterCall(m.group(2))
-            return 'interp0(%s,X,Y) :- %s(%s,X,Y).' % (m.group(1),ic,m.group(2))
-        m = re.match('chain\((\w+),(\w+),(\w+)\)',feat)
+            return 'interp0(%(con)s,X,Y) :- %(ic)s(%(ant)s,X,Y) {f(%(con)s,if,%(ant)s)}.' % {'con':m.group(1),'ic':ic,'ant':m.group(2)}
+        m = re.match('chain\((\S+),(\S+),(\S+)\)',feat)
         if m: 
             #print '---- "chain" for',m.group(1),m.group(2),m.group(3),'detected'
             ic1 = interpreterCall(m.group(2))
             ic2 = interpreterCall(m.group(3))
-            return 'interp0(%s,X,Y) :- %s(%s,X,Z),%s(%s,Z,Y).' % (m.group(1),ic1,m.group(2),ic2,m.group(3))
+            return 'interp0(%(con)s,X,Y) :- %(ic1)s(%(p1)s,X,Z),%(ic2)s(%(p2)s,Z,Y) {f(%(con)s,chain,%(p1)s,%(p2)s)}.' % {'con':m.group(1),'ic1':ic1,'p1':m.group(2),'ic2':ic2,'p2':m.group(3)}
         return None
 
     for (gfile) in gradFiles:

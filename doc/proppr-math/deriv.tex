@@ -36,7 +36,7 @@ PPR, and $\vek{d}^t$ is the partial derivative of $\vek{p}^t$ wrt the
 parameters $\vek{w}$.
 
 \begin{eqnarray}
-\vek{p}^{t+1} & \equiv & \alpha \vek{s} + (1-\alpha) \M \vek{p}^t \\
+\vek{p}^{t+1} & \equiv & \alpha \vek{s} + (1-\alpha) \M^\top \vek{p}^t \\
 \vek{d}^t & \equiv &  \ddw \vek{p}^t
 \end{eqnarray}
 
@@ -62,10 +62,10 @@ We can define $\vek{d}^t$ recursively:
 
 \begin{eqnarray}
 \vek{d}^{t+1}  & =  &  \ddw \vek{p}^{t+1} \\
-               & =  &  \ddw \left( \alpha \vek{s} + (1-\alpha) \M \vek{p}^t \right) \\
-               & =  &  (1-\alpha) \ddw \M \vek{p}^t \\
-               & =  &  (1-\alpha) \left( (\ddw \M) \vek{p}^t  + \M \ddw\vek{p}^t \right) \\
-               & =  &  (1-\alpha) \left( (\ddw \M) \vek{p}^t  + \M \vek{d}^t \right)
+               & =  &  \ddw \left( \alpha \vek{s} + (1-\alpha) \M^\top \vek{p}^t \right) \\
+               & =  &  (1-\alpha) \ddw \M^\top \vek{p}^t \\
+               & =  &  (1-\alpha) \left( (\ddw \M^\top) \vek{p}^t  + \M^\top \ddw\vek{p}^t \right) \\
+               & =  &  (1-\alpha) \left( (\ddw \M^\top) \vek{p}^t  + \M^\top \vek{d}^t \right)
 \end{eqnarray}
 
 Now let's look at $\ddw\M$, which I'll denote $\dM$ below.  Note that
@@ -166,8 +166,8 @@ Computing $M$ and $\dM$ is one pass over the graph, shown in Table
 Then you can start with $\vek{p}^0 = \vek{d}^0 = \vek{0}$ and iterate
 
 \begin{eqnarray}
-\vek{p}^{t+1}  & =  & \alpha \vek{s} + (1-\alpha) \M \vek{p}^t \\
-\vek{d}^{t+1}  & =  & (1-\alpha) \left( \dM \vek{p}^t  + \M \vek{d}^t \right)
+\vek{p}^{t+1}  & =  & \alpha \vek{s} + (1-\alpha) \M^\top \vek{p}^t \\
+\vek{d}^{t+1}  & =  & (1-\alpha) \left( \dM^\top \vek{p}^t  + \M^\top \vek{d}^t \right)
 \end{eqnarray}
 
 In more detail, the iteration for the updates on $\vek{p}$ are shown
@@ -197,7 +197,7 @@ Updating $\vek{d}$:
   \begin{enumerate}
   \item For each neighbor $v$ of $u$
     \begin{enumerate}
-      \item For each $i$ in $\dM_{uv}$
+      \item For each $i$ in $\dM_{vu}$
 
       \[ \vek{d}^{t+1}_{v,i} +\!\!= (1-\alpha) \vek{p}^t_u \dM_{uv,i} \]
       \item For each $i$ in $\vek{d}^t_{v}$
@@ -335,14 +335,14 @@ initial values of $\vek{p}$ and $\vek{r}$ but then called a recursive
 routine \texttt{proveState}$(u_0)$, where $u_0$ is the initial query
 node (aka the initial state of the proof graph).
 
-William's got a new version which calls this iteratively with smaller
-and smaller $\epsilon$'s, which seems to work faster.  That suggests
-that it's helpful to do pushes on the nodes with larger $\vek{r}$
-values first.  With that in mind, another thing we could consider
-would be storing $u$'s in a heap/priority queue, ordered by $\vek{r}$
-values.  I know this idea has been used in the past but I don't know
-how much it helps.  Obviously there's an overhead for the heap but my
-guess is that's not going to dominate.
+William Wang's got a new version which calls this iteratively with
+smaller and smaller $\epsilon$'s, which seems to work faster.  That
+suggests that it's helpful to do pushes on the nodes with larger
+$\vek{r}$ values first.  With that in mind, another thing we could
+consider would be storing $u$'s in a heap/priority queue, ordered by
+$\vek{r}$ values.  I know this idea has been used in the past but I
+don't know how much it helps.  Obviously there's an overhead for the
+heap but my guess is that's not going to dominate.
 
 \bigskip
 

@@ -42,12 +42,14 @@ public class Configuration {
 	public static final int USE_TEST = 0x10;
 	public static final int USE_PARAMS = 0x20;
 	public static final int USE_GRADIENT = 0x40;
+	public static final int USE_INIT_PARAMS = 0x80;
 	public static final String QUERIES_FILE_OPTION = "queries";
 	public static final String GROUNDED_FILE_OPTION = "grounded";
 	public static final String SOLUTIONS_FILE_OPTION = "solutions";
 	public static final String TRAIN_FILE_OPTION = "train";
 	public static final String TEST_FILE_OPTION = "test";
 	public static final String PARAMS_FILE_OPTION = "params";
+	public static final String INIT_PARAMS_FILE_OPTION = "initParams";
 	public static final String GRADIENT_FILE_OPTION = "gradient";
 	public static final String EXAMPLES_FORMAT = "f(A1,A2)\\t{+|-}f(a1,a2)\\t...";
 
@@ -91,6 +93,7 @@ public class Configuration {
 	public File testFile = null;
 	public File groundedFile = null;
 	public File paramsFile = null;
+	public File initParamsFile = null;
 	public File solutionsFile = null;
 	public File gradientFile = null;
 
@@ -169,23 +172,24 @@ public class Configuration {
 
 		// input files: must exist already
 		flags = inputFiles(allFlags);
-		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))   this.queryFile = getExistingFile(line.getOptionValue(QUERIES_FILE_OPTION));
-		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION)) this.groundedFile = getExistingFile(line.getOptionValue(GROUNDED_FILE_OPTION));
-		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION)) this.solutionsFile = getExistingFile(line.getOptionValue(SOLUTIONS_FILE_OPTION));
-		if (isOn(flags,USE_TEST) && line.hasOption(TEST_FILE_OPTION))         this.testFile = getExistingFile(line.getOptionValue(TEST_FILE_OPTION));
-		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))       this.queryFile = getExistingFile(line.getOptionValue(TRAIN_FILE_OPTION));
-		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))     this.paramsFile = getExistingFile(line.getOptionValue(PARAMS_FILE_OPTION));
-		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION)) this.gradientFile = getExistingFile(line.getOptionValue(GRADIENT_FILE_OPTION));
+		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))         this.queryFile = getExistingFile(line.getOptionValue(QUERIES_FILE_OPTION));
+		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION))       this.groundedFile = getExistingFile(line.getOptionValue(GROUNDED_FILE_OPTION));
+		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION))       this.solutionsFile = getExistingFile(line.getOptionValue(SOLUTIONS_FILE_OPTION));
+		if (isOn(flags,USE_TEST) && line.hasOption(TEST_FILE_OPTION))               this.testFile = getExistingFile(line.getOptionValue(TEST_FILE_OPTION));
+		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))             this.queryFile = getExistingFile(line.getOptionValue(TRAIN_FILE_OPTION));
+		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))           this.paramsFile = getExistingFile(line.getOptionValue(PARAMS_FILE_OPTION));
+		if (isOn(flags,USE_INIT_PARAMS) && line.hasOption(INIT_PARAMS_FILE_OPTION)) this.initParamsFile = getExistingFile(line.getOptionValue(INIT_PARAMS_FILE_OPTION));
+		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION))       this.gradientFile = getExistingFile(line.getOptionValue(GRADIENT_FILE_OPTION));
 		
 		// output & intermediate files: may not exist yet
 		flags = outputFiles(allFlags);
-		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))   this.queryFile = new File(line.getOptionValue(QUERIES_FILE_OPTION));
-		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION)) this.groundedFile = new File(line.getOptionValue(GROUNDED_FILE_OPTION));
-		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION)) this.solutionsFile = new File(line.getOptionValue(SOLUTIONS_FILE_OPTION));
-		if (isOn(flags,USE_TEST) && line.hasOption(TEST_FILE_OPTION))         this.testFile = new File(line.getOptionValue(TEST_FILE_OPTION));
-		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))       this.queryFile = new File(line.getOptionValue(TRAIN_FILE_OPTION));
-		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))     this.paramsFile = new File(line.getOptionValue(PARAMS_FILE_OPTION));
-		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION)) this.gradientFile = new File(line.getOptionValue(GRADIENT_FILE_OPTION));
+		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))         this.queryFile = new File(line.getOptionValue(QUERIES_FILE_OPTION));
+		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION))       this.groundedFile = new File(line.getOptionValue(GROUNDED_FILE_OPTION));
+		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION))       this.solutionsFile = new File(line.getOptionValue(SOLUTIONS_FILE_OPTION));
+		if (isOn(flags,USE_TEST) && line.hasOption(TEST_FILE_OPTION))               this.testFile = new File(line.getOptionValue(TEST_FILE_OPTION));
+		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))             this.queryFile = new File(line.getOptionValue(TRAIN_FILE_OPTION));
+		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))           this.paramsFile = new File(line.getOptionValue(PARAMS_FILE_OPTION));
+		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION))       this.gradientFile = new File(line.getOptionValue(GRADIENT_FILE_OPTION));
 
 		// constants
 		flags = constants(allFlags);
@@ -323,6 +327,14 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Learned walker parameters. Format: feature\\t0.000000")
 					.create());
+		if (isOn(flags, USE_INIT_PARAMS))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(INIT_PARAMS_FILE_OPTION)
+					.withArgName("file")
+					.hasArg()
+					.withDescription("Learned walker parameters. Same format as --params, but used to warm-start a learner.")
+					.create());
 
 		// output files
 		flags = outputFiles(allFlags);
@@ -377,7 +389,7 @@ public class Configuration {
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
-					.withDescription("Ouput testing examples.")
+					.withDescription("Output testing examples.")
 					.create());
 		if (isOn(flags, USE_PARAMS))
 			options.addOption(
@@ -500,7 +512,8 @@ public class Configuration {
 		if (isOn(flags, USE_TRAIN)) syntax.append(" --").append(TRAIN_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" inputFile");
 		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" params.wts");
-		
+		if (isOn(flags, USE_INIT_PARAMS)) syntax.append(" --").append(INIT_PARAMS_FILE_OPTION).append(" initParams.wts");
+
 		//output files
 		flags = outputFiles(allFlags);
 		if (isOn(flags, USE_QUERIES)) syntax.append(" --").append(QUERIES_FILE_OPTION).append(" outputFile");
@@ -574,6 +587,7 @@ public class Configuration {
 		displayFile(sb, QUERIES_FILE_OPTION, queryFile);
 		displayFile(sb, TEST_FILE_OPTION, testFile);
 		displayFile(sb, GROUNDED_FILE_OPTION, groundedFile);
+		displayFile(sb, INIT_PARAMS_FILE_OPTION, initParamsFile);
 		displayFile(sb, PARAMS_FILE_OPTION, paramsFile);
 		displayFile(sb, SOLUTIONS_FILE_OPTION, solutionsFile);
 		displayFile(sb, GRADIENT_FILE_OPTION, gradientFile);
