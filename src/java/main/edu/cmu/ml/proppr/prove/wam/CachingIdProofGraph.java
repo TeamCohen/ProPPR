@@ -134,7 +134,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	public LongDense.FloatVector paramsAsVector(Map<Goal,Double> params,double dflt) {
 		int numFeats = featureTab.size();
 		float[] featVal = new float[numFeats+1];
-		for (int j=0;j<featureTab.size();j++) {
+		for (int j=0;j<numFeats;j++) {
 			featVal[j+1] = Dictionary.safeGet(params,featureTab.getSymbol(j+1),dflt).floatValue();
 		}
 		return new LongDense.FloatVector(featVal);
