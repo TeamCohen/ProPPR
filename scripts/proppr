@@ -125,7 +125,10 @@ def callProcess(o,args,**kw):
    if kw: logging.info('subprocess call options: '+ str(kw))
    logging.info('calling: ' + ' '.join(args))
    if o['dryRun']: return
-   subprocess.call(args,**kw)
+   stat = subprocess.call(args,**kw)
+   if stat:
+      logging.info(('call failed (status %d): ' % stat) + ' '.join(args))
+      sys.exit(stat) #propagate failure
 
 def getRoot():
    """Get the root dir for the ProPPR codebase."""
