@@ -1,6 +1,6 @@
 import sys
 import re
-from subprocess import call
+from subprocess import check_call
 
 CALL_REL_DIRECTLY_FOR_BACKGROUND_PREDICATES = True
 MAX_ITERS = 10
@@ -13,11 +13,6 @@ WAM_EXT = ".wam"
 #################### main algorithm
 
 def iterativeGradientFinder(stem,iters=MAX_ITERS):
-
-    # create an empty gradient file
-    #gradientFile0 = ithFileName(stem,0,'.gradient')
-    #fp0 = open(gradientFile0,'w')
-    #fp0.close()
     
     gradientFiles = []#[gradientFile0]
     gradientFeatureSet = set()
@@ -52,17 +47,6 @@ def iterativeGradientFinder(stem,iters=MAX_ITERS):
     gradient2Rules(final,gradientFiles)
     catfile(final,'final iterated gradient')
 
-    #create some 'final' iterated gradient (fig) rule files
-    #gradient2Rules(stem+'.fig-'+RULES_EXT,gradientFiles,addSecondOrderRules=False)
-    #catfile(stem+'.fig-'+RULES_EXT,'final iterated gradient with out 2nd-order rules')
-    #with file(stem+'.f ig-'+WAM_EXT,'w') as f:
-    #    tcall(['python',proppr+COMPILER,'serialize',stem+'.fig-'+RULES_EXT],f)
-
-    #gradient2Rules(stem+'.fig2-'+RULES_EXT,gradientFiles,addSecondOrderRules=True)
-    #catfile(stem+'.fig2-'+RULES_EXT,'final iterated gradient with 2nd-order rules')
-    #with file(stem+'.fig2-'+WAM_EXT,'w') as f:
-    #    tcall(['python',proppr+COMPILER,'serialize',stem+'.fig2-'+RULES_EXT],f)
-    
 def rulesFromGradient(i,stem,gradientFiles):
     ruleFile = ithFileName(stem+"_delta",i,RULES_EXT)
     featureSet = gradient2Rules(ruleFile,gradientFiles)
@@ -126,11 +110,6 @@ def gradient2Rules(ruleFile,gradFiles):
                         featureSet.add(feat)
                     else:
                         print '---?? unparsed feature',feat
-
-                        
-    #bug - are there two copies of interp0 base case?
-    fp.write('#interp0 base case\n')
-    fp.write('interp0(P,X,Y) :- rel(P,X,Y) {fixedWeight}.\n')
     return featureSet
 
 
@@ -142,11 +121,11 @@ def ithFileName(stem,i,extension):
 def tcall(xs,so=None): 
     """Call command in list xs, with a trace."""
     print '--calling',xs
-    call(xs,stdout=so)
+    check_call(xs,stdout=so)
 
 
 if __name__ == "__main__":
-    (stem) = sys.argv[1]
+    stem = sys.argv[1]
     if len(sys.argv) > 2:
         iterativeGradientFinder(stem,int(sys.argv[2]))
     else:
