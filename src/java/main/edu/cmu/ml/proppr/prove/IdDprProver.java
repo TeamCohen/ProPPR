@@ -58,14 +58,17 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	@Override
 	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
 
-	// wwc: might look at using a PriorityQueue together with r to find
-	// just the top things. 
-
 	public Map<State, Double> prove(CachingIdProofGraph pg) {
 		//Map<State,Double> p = new HashMap<State,Double>();
 		//Map<State,Double> r = new HashMap<State,Double>();
 		LongDense.FloatVector p = new LongDense.FloatVector();
 		LongDense.FloatVector r = new LongDense.FloatVector();
+		LongDense.AbstractFloatVector params = null;
+		// wwc: moved this up from proveState for efficiency
+		if (this.weighter.weights.size()==0) 
+			params = new LongDense.UnitVector();
+		else 
+			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
 		//State state0 = pg.getStartState();
 		//r.put(state0, 1.0);
 		int state0 = pg.getRootId();
@@ -75,7 +78,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		double iterEpsilon = 1.0;
 		for (int pushCounter = 0; ;) {
 			iterEpsilon = Math.max(iterEpsilon/10,apr.epsilon);
-			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon);
+			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon,params);
 			numIterations++;
 			if(log.isInfoEnabled()) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
 			if(iterEpsilon == apr.epsilon && pushCounter==0) break;
@@ -87,13 +90,8 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	
 	
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
-													 int uid, int pushCounter, double iterEpsilon) 
+													 int uid, int pushCounter, double iterEpsilon,LongDense.AbstractFloatVector params) 
 	{
-		LongDense.AbstractFloatVector params = null;
-		if (this.weighter.weights.size()==0) 
-			params = new LongDense.UnitVector();
-		else 
-			params = cg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
 		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, params);
 	}
 

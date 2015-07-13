@@ -128,7 +128,7 @@ public class QueryAnswerer {
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
 		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(), 
 				new InferenceExample(query,null,null), apr, featureTable, program, plugins);
-		if(log.isInfoEnabled()) log.info("Querying: "+query);
+		if(log.isDebugEnabled()) log.debug("Querying: "+query);
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);
 		long end = System.currentTimeMillis();
@@ -146,7 +146,7 @@ public class QueryAnswerer {
 		}
 		List<Map.Entry<Query,Double>> solutionDist = Dictionary.sort(solutions);
 		//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
-		if(log.isInfoEnabled()) log.info("Writing "+solutionDist.size()+" solutions...");
+		if(log.isDebugEnabled()) log.debug("Writing "+solutionDist.size()+" solutions...");
 		StringBuilder sb = new StringBuilder("# proved ").append(String.valueOf(id)).append("\t").append(query.toString())
 				.append("\t").append((end - start) + " msec\n");
 		int rank = 0;
@@ -162,7 +162,9 @@ public class QueryAnswerer {
 		return sb.toString();
 	}
 
-	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException {
+	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException 
+	{
+		System.out.println("called findSolutions");
 		Multithreading<Query,String> m = new Multithreading<Query,String>(log, maintainOrder);
 		m.executeJob(
 				this.nthreads, 
@@ -247,6 +249,7 @@ public class QueryAnswerer {
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();
+			System.out.println("calling findSolutions");
 			qa.findSolutions(c.queryFile, c.solutionsFile, c.maintainOrder);
 			System.out.println("Query-answering time: "+(System.currentTimeMillis()-start));
 
