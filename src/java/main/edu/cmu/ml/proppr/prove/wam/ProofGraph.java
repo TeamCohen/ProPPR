@@ -12,12 +12,20 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
+import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
+import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.FilterPluginCollection;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.PluginFunction;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 import gnu.trove.strategy.HashingStrategy;
+import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
+import edu.cmu.ml.proppr.util.math.LongDense;
+import edu.cmu.ml.proppr.util.math.SimpleSparse;
+import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
 /**
  * # Creates the graph defined by a query, a wam program, and a list of
@@ -26,7 +34,7 @@ import gnu.trove.strategy.HashingStrategy;
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  *
  */
-public class ProofGraph {
+public abstract class ProofGraph {
 	private static final Logger log = Logger.getLogger(ProofGraph.class);
 	public static final boolean DEFAULT_RESTART = false;
 	public static final boolean DEFAULT_TRUELOOP = true;
@@ -41,12 +49,12 @@ public class ProofGraph {
 	private int queryStartAddress;
 	private final ImmutableState startState;
 	private int[] variableIds;
-	private LightweightStateGraph graph;
 	private Map<Goal,Double> trueLoopFD;
 	private Map<Goal,Double> trueLoopRestartFD;
 	private Goal restartFeature;
 	private Goal restartBoosterFeature;
 	private APROptions apr;
+
 	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this(new InferenceExample(query,null,null),apr,program,plugins);
 	}
@@ -62,16 +70,6 @@ public class ProofGraph {
 		this.trueLoopRestartFD = new HashMap<Goal,Double>(); this.trueLoopRestartFD.put(TRUELOOP_RESTART,1.0);
 		this.restartFeature = RESTART;
 		this.restartBoosterFeature = ALPHABOOSTER;
-		this.graph = new LightweightStateGraph(new HashingStrategy<State>() {
-			@Override
-			public int computeHashCode(State s) {
-				return s.canonicalHash();
-			}
-
-			@Override
-			public boolean equals(State s1, State s2) {
-				return s1.canonicalHash() == s2.canonicalHash();
-			}});
 	}
 	private ImmutableState createStartState() throws LogicProgramException {
 		// execute to the first call
@@ -112,35 +110,26 @@ public class ProofGraph {
 		return result;
 	}
 	
+	/* **************** factory ****************** */
+	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		return makeProofGraph(p, ex, apr, new SimpleSymbolTable<Goal>(), program, plugins);
+	}
+		
+	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, SymbolTable<Goal> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		// is there a better way to do this, without pushing it all the way through java.reflect? :(
+		if (p.equals(CachingIdProofGraph.class)) {
+			return new CachingIdProofGraph(ex, apr, featureTab, program, plugins);
+		} else if (p.equals(StateProofGraph.class)) {
+			return new StateProofGraph(ex, apr, featureTab, program, plugins);
+		} else {
+			throw new IllegalArgumentException ("Invalid proof graph class "+p.getName());
+		}
+	}
+	
 	/* **************** proving ****************** */
 	
-	/**
-	 * Return the list of outlinks from the provided state, including a reset outlink back to the query.
-	 * @param state
-	 * @param trueLoop
-	 * @return
-	 * @throws LogicProgramException
-	 */
-	public List<Outlink> pgOutlinks(State state, boolean trueLoop) throws LogicProgramException {
-		if (!this.graph.outlinksDefined(state)) {
-			List<Outlink> outlinks = this.computeOutlinks(state,trueLoop);
-			Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
-			restartFD.put(this.restartFeature,1.0);
-			outlinks.add(new Outlink(restartFD, this.startState));
-			if (log.isDebugEnabled()) {
-				// check for duplicate hashes
-				Set<Integer> canons = new TreeSet<Integer>();
-				for (Outlink o : outlinks) {
-					if (canons.contains(o.child.canon)) log.warn("Duplicate canonical hash found in outlinks of state "+state);
-					canons.add(o.child.canon);
-				}
-			}
-			this.graph.setOutlinks(state,outlinks);
-			return outlinks;
-		}
-		return this.graph.getOutlinks(state);
-	}
-	private List<Outlink> computeOutlinks(State state, boolean trueLoop) throws LogicProgramException {
+
+	protected List<Outlink> computeOutlinks(State state, boolean trueLoop) throws LogicProgramException {
 		List<Outlink> result = new ArrayList<Outlink>();
 		if (state.isCompleted()) {
 			if (trueLoop) {
@@ -150,27 +139,21 @@ public class ProofGraph {
 			result = this.interpreter.wamOutlinks(state);
 		}
 		
+		// add restart
+		Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
+		restartFD.put(this.restartFeature,1.0);
+		result.add(new Outlink(restartFD, this.startState));
+		
 		// generate canonical versions of each state
 		for (Outlink o : result) {
 			o.child.setCanonicalHash(this.interpreter, this.startState);
 		}
 		return result;
 	}
-	/** The number of outlinks for a state, including the reset outlink back to the query. 
-	 * @throws LogicProgramException */
-	public int pgDegree(State state) throws LogicProgramException {
-		return this.pgDegree(state, true);
-	}
-	
-	public int pgDegree(State state, boolean trueLoop) throws LogicProgramException {
-		return this.pgOutlinks(state, trueLoop).size();
-	}
 	
 	/* ***************************** grounding ******************* */
 	
-	public int asId(State s) {
-		return this.graph.getId(s);
-	}
+	public abstract int getId(State s);
 
 	public Map<Argument,String> asDict(State s) {
 		Map<Argument,String> result = new HashMap<Argument,String>();
@@ -210,21 +193,23 @@ public class ProofGraph {
 		return ret;
 	}
 
-	public GroundedExample makeRWExample(Map<State, Double> ans) {
+	public GroundedExample makeRWExample(Map<State,Double> ans)  {
 		List<State> posIds = new ArrayList<State>();
 		List<State> negIds = new ArrayList<State>();
 		for (Map.Entry<State,Double> soln : ans.entrySet()) {
 			if (soln.getKey().isCompleted()) {
 				Query ground = fill(soln.getKey());
 				// FIXME: slow?
-				if (Arrays.binarySearch(example.getPosSet(), ground) >= 0) posIds.add(soln.getKey());
-				if (Arrays.binarySearch(example.getNegSet(), ground) >= 0) negIds.add(soln.getKey());
+				if (Arrays.binarySearch(this.getExample().getPosSet(), ground) >= 0) posIds.add(soln.getKey());
+				if (Arrays.binarySearch(this.getExample().getNegSet(), ground) >= 0) negIds.add(soln.getKey());
 			}
 		}
 		Map<State,Double> queryVector = new HashMap<State,Double>();
-		queryVector.put(this.startState, 1.0);
-		return new GroundedExample(this.graph, queryVector, posIds, negIds);
+		queryVector.put(this.getStartState(), 1.0);
+		return new GroundedExample(this._getGraph(), queryVector, posIds, negIds);
 	}
+	protected abstract InferenceGraph _getGraph();
+	
 	/* ************************** de/serialization *********************** */
 	
 	public String serialize(GroundedExample x) {
@@ -237,7 +222,7 @@ public class ProofGraph {
 		line.append("\t");
 		appendNodes(x.getNegList(), line);
 		line.append("\t")
-		.append(x.getGraph().toString())
+		.append(x.getGraph().serialize())
 		.append("\n");
 		return line.toString();
 	}
@@ -247,14 +232,17 @@ public class ProofGraph {
 		for (State q : group) {
 			if (first) first=false;
 			else line.append(",");
-			line.append(this.graph.getId(q));
+			line.append(this.getId(q));
 		}
 	}
 	
+
 	/* ************************ getters ****************************** */
+
 	public State getStartState() { return this.startState; }
 	public WamInterpreter getInterpreter() { return this.interpreter; }
 	public InferenceExample getExample() {
 		return this.example;
 	}
+
 }

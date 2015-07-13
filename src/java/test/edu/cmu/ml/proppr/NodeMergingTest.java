@@ -11,16 +11,19 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 
 /** 
 
@@ -59,10 +62,11 @@ public class NodeMergingTest {
 		Grounder grounder = new Grounder(apr, p, program, plugins);
 
 		Query query = Query.parse("p(a,P)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
-				new Query[] {Query.parse("p(a,d)")}, 
-				new Query[] {}),
-				apr,program, plugins);
+		ProofGraph pg = new StateProofGraph(
+				new InferenceExample(query, 
+						new Query[] {Query.parse("p(a,d)")}, 
+						new Query[] {}),
+				apr,new SimpleSymbolTable<Goal>(), program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		assertEquals("improper node duplication",8,ex.getGraph().nodeSize());
@@ -87,10 +91,10 @@ public class NodeMergingTest {
 		Grounder grounder = new Grounder(apr, p, program, plugins);
 
 		Query query = Query.parse("p(a,P)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("p(a,d)")}, 
 				new Query[] {}),
-				apr,program, plugins);
+				apr,new SimpleSymbolTable<Goal>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		assertEquals("improper node duplication",4,ex.getGraph().nodeSize());
@@ -106,10 +110,10 @@ public class NodeMergingTest {
 		Grounder grounder = new Grounder(apr, p, program, plugins);
 
 		Query query = Query.parse("p(a,P)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("p(a,d)")}, 
 				new Query[] {}),
-				apr,program, plugins);
+				apr,new SimpleSymbolTable<Goal>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		assertEquals("improper node duplication",7,ex.getGraph().nodeSize());
@@ -125,10 +129,10 @@ public class NodeMergingTest {
 		Grounder grounder = new Grounder(apr, p, program, plugins);
 
 		Query query = Query.parse("p(a,P)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("p(a,d)")}, 
 				new Query[] {}),
-				apr,program, plugins);
+				apr,new SimpleSymbolTable<Goal>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		assertEquals("improper node duplication",4,ex.getGraph().nodeSize());
@@ -144,12 +148,12 @@ public class NodeMergingTest {
 		Grounder grounder = new Grounder(apr, p, program, plugins);
 		// predict(pos,X)  +predict(pos,seed1)     +predict(pos,other)
 		Query query = Query.parse("predict(pos,X)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("predict(pos,seed1)"),
 				Query.parse("predict(pos,f1)"),
 				Query.parse("predict(pos,other)")}, 
 				new Query[] {}),
-				apr,program, plugins);
+				apr,new SimpleSymbolTable<Goal>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		assertEquals("improper # solutions found",3, ex.getPosList().size());

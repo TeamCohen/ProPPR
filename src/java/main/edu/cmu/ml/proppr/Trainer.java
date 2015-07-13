@@ -34,10 +34,12 @@ import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.FileBackedIterable;
-import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
@@ -127,7 +129,7 @@ public class Trainer {
 		this.learner.trainOnExample(paramVec, x);
 	}
 
-	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
+	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
 		ParamVector initParams = null;
 		if (initialParamVecFile != null) {
 			log.info("loading initial params from "+initialParamVecFile);
@@ -136,6 +138,7 @@ public class Trainer {
 			initParams = createParamVector();
 		}
 		return train(
+				masterFeatures,
 				examples,
 				builder,
 				initParams,
@@ -144,10 +147,11 @@ public class Trainer {
 				);
 	}
 
-	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
+			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
+		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		int poolSize = Math.max(this.nthreads/2, 1);
@@ -470,7 +474,7 @@ public class Trainer {
 			int inputFiles = Configuration.USE_TRAIN | Configuration.USE_INIT_PARAMS;
 			int outputFiles = Configuration.USE_PARAMS;
 			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
-			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
+			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
 			ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
 			log.info(c.toString());
 
@@ -478,9 +482,18 @@ public class Trainer {
 			if (!c.queryFile.getName().endsWith(Grounder.GROUNDED_SUFFIX)) {
 				throw new IllegalStateException("Run Grounder on "+c.queryFile.getName()+" first. Ground+Train in one go is not supported yet.");
 			}
+			SymbolTable<String> masterFeatures = new SimpleSymbolTable<String>();
+			File featureIndex = new File(groundedFile+Grounder.FEATURE_INDEX_EXTENSION);
+			if (featureIndex.exists()) {
+				log.info("Reading feature index from "+featureIndex.getName()+"...");
+				for (String line : new ParsedFile(featureIndex)) {
+					masterFeatures.insert(line.trim());
+				}
+			}
 			log.info("Training model parameters on "+groundedFile+"...");
 			long start = System.currentTimeMillis();
 			ParamVector params = c.trainer.train(
+					masterFeatures,
 					new ParsedFile(groundedFile), 
 					new ArrayLearningGraphBuilder(), 
 					c.initParamsFile,

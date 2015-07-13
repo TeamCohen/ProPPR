@@ -8,12 +8,12 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.MuParamVector;
-import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.math.MuParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
 
@@ -93,7 +93,9 @@ public class LocalL2SRW extends L2SRW {
 		double weightDecay = value * (powerTerm - 1);
 		//FIXME: opportunity for out-of-date `value`; probably ought to convert to a try loop
 		if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ -weightDecay);
-		this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.pow(value, 2));
+		double loss = gap * c.mu * Math.pow(value, 2);
+//		if (loss<0 && log.isInfoEnabled()) log.info("gap: "+gap+" mu: "+c.mu+" value: "+value+" value**2: "+Math.pow(value, 2));
+		this.cumloss.add(LOSS.REGULARIZATION, loss);
 		apply.adjustValue(f, weightDecay);
 	}
 }

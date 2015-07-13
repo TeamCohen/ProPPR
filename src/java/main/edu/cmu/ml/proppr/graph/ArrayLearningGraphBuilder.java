@@ -1,7 +1,6 @@
 package edu.cmu.ml.proppr.graph;
 
 import edu.cmu.ml.proppr.util.SymbolTable;
-import gnu.trove.iterator.TObjectDoubleIterator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,9 +15,9 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 	int index=0;
 	
 	@Override
-	public LearningGraph create() {
+	public LearningGraph create(SymbolTable<String> features) {
 		if (current != null) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
-		current =  new LearningGraph(new SymbolTable<String>());
+		current =  new LearningGraph(features);
 		return current;
 	}
 

@@ -12,12 +12,15 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 
 public class WeightedFeaturesTest {
 	public static final File DIR = new File("src/testcases/weighted");
@@ -37,10 +40,10 @@ public class WeightedFeaturesTest {
 		assertTrue(plugins[1].claim("hasWord#/3"));
 
 		Query query = Query.parse("predict(p1,Y)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("predict(p1,pos)")}, 
 				new Query[] {Query.parse("predict(p1,neg)")}),
-				apr,program, plugins);
+				apr,new SimpleSymbolTable<Goal>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		
@@ -56,10 +59,10 @@ public class WeightedFeaturesTest {
 		assertTrue(plugins[1].claim("hasWord#/3"));
 
 		Query query = Query.parse("predict(p1,Y)");
-		ProofGraph pg = new ProofGraph(new InferenceExample(query, 
+		ProofGraph pg = new StateProofGraph(new InferenceExample(query, 
 				new Query[] {Query.parse("predict(p1,pos)")}, 
 				new Query[] {Query.parse("predict(p1,neg)")}),
-				apr,program, plugins);
+				apr,new SimpleSymbolTable<Goal>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
 		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
 		

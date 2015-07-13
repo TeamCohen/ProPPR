@@ -1,0 +1,1 @@
+make r8-all: 414,969ms query-answering 7m2.023s total acc1 0.859753312015 (knn-10 is 0.8524)

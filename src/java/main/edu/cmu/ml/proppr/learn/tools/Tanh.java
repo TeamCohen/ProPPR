@@ -1,20 +1,20 @@
 package edu.cmu.ml.proppr.learn.tools;
 
-public class TanhWeightingScheme extends WeightingScheme {
+public class Tanh extends SquashingFunction {
 
 	@Override
-	public double edgeWeightFunction(double sum) {
+	public double compute(double sum) {
 		// kmm & th 30 july 2014 to make return >=0
 		return Math.max(0,Math.tanh(sum));
 	}
 
 	@Override
-	public double derivEdgeWeight(double weight) {
-		return (1 - edgeWeightFunction(weight) * edgeWeightFunction(weight));
+	public double computeDerivative(double weight) {
+		return (1 - compute(weight) * compute(weight));
 	}
 
 	@Override
-	public double defaultWeight() {
+	public double defaultValue() {
 		return 0.0;
 	}
 
@@ -28,10 +28,5 @@ public class TanhWeightingScheme extends WeightingScheme {
 	private double arcTanh (double z) {
 		if (z>1 || z<-1) return -Double.MAX_VALUE;
 		return 0.5 * (Math.log(1.0 + z) - Math.log(1.0 - z));
-	}
-
-	@Override
-	public double inverseEdgeWeightFunction(double x) {
-		return arcTanh(x);
 	}
 }

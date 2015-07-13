@@ -21,7 +21,7 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.examples.InferenceExampleStreamer;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Goal;
@@ -32,12 +32,15 @@ import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.CustomConfiguration;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
 
@@ -48,6 +51,7 @@ import edu.cmu.ml.proppr.util.multithreading.Transformer;
  *
  */
 public class Grounder {
+	public static final String FEATURE_INDEX_EXTENSION = ".features";
 	private static final Logger log = Logger.getLogger(Grounder.class);
 	private static final int LOGUPDATE_MS = 5000;
 	public static final String GROUNDED_SUFFIX = ".grounded";
@@ -62,6 +66,7 @@ public class Grounder {
 	protected int nthreads=1;
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
+	protected SymbolTable<Goal> featureTable = new ConcurrentSymbolTable<Goal>();
 
 	public Grounder(APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {
 		this.apr = apr;
@@ -75,8 +80,8 @@ public class Grounder {
 		this.throttle = throttle;
 	}
 
-	public void addParams(ParamVector<String,?> params, WeightingScheme<Goal> wScheme) {
-		this.prover.setWeighter(InnerProductWeighter.fromParamVec(params, wScheme));
+	public void addParams(ParamVector<String,?> params, SquashingFunction<Goal> f) {
+		this.prover.setWeighter(InnerProductWeighter.fromParamVec(params, f));
 	}
 
 	public class GroundingStatistics {
@@ -130,10 +135,12 @@ public class Grounder {
 						}}, 
 						groundedFile, 
 						this.throttle);
-//			if (empty>0) log.info("Skipped "+empty+" of "+this.statistics.count+" examples due to empty graphs");
 
 			log.info("Grounded all "+statistics.count+" examples");
 			reportStatistics(empty);
+			
+			File indexFile = new File(groundedFile.getParent(), groundedFile.getName()+FEATURE_INDEX_EXTENSION);
+			serializeFeatures(indexFile, featureTable);
 
 			if (this.graphKeyFile != null) this.graphKeyWriter.close();
 		} catch (IOException e) {
@@ -172,6 +179,15 @@ public class Grounder {
 			}
 		}
 	}
+	
+	protected void serializeFeatures(File indexFile, SymbolTable<Goal> featureTable) throws IOException {
+		Writer w = new BufferedWriter(new FileWriter(indexFile));
+		for (int i=1; i<=featureTable.size(); i++) {
+			w.write(featureTable.getSymbol(i).toString());
+			w.write("\n");
+		}
+		w.close();
+	}
 
 	protected Prover getProver() {
 		return this.prover;
@@ -195,7 +211,7 @@ public class Grounder {
 
 	public GroundedExample groundExample(Prover p,
 			InferenceExample inferenceExample) throws LogicProgramException {
-		return this.groundExample(p, new ProofGraph(inferenceExample,apr,masterProgram, masterPlugins));
+		return this.groundExample(p, ProofGraph.makeProofGraph(p.getProofGraphClass(),inferenceExample,apr,featureTable,masterProgram, masterPlugins));
 	}
 
 	protected void reportStatistics(int empty) {
@@ -267,7 +283,7 @@ public class Grounder {
 		}
 		@Override
 		public String call() throws Exception {
-			ProofGraph pg = new ProofGraph(inf,apr,masterProgram,masterPlugins);
+			ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),inf,apr,featureTable,masterProgram,masterPlugins);
 			GroundedExample gx = groundExample(getProver().copy(), pg);
 			InferenceExample ix = pg.getExample();
 			statistics.updateStatistics(ix,
@@ -291,7 +307,7 @@ public class Grounder {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GROUNDED;
 			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
-			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
+			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_SQUASHFUNCTION;
 
 			ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);
 			System.out.println(c.toString());
@@ -299,7 +315,7 @@ public class Grounder {
 			if (c.getCustomSetting("graphKey") != null) c.grounder.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
-				c.grounder.addParams(new SimpleParamVector<String>(Dictionary.load(file)), c.weightingScheme);
+				c.grounder.addParams(new SimpleParamVector<String>(Dictionary.load(file)), c.squashingFunction);
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();

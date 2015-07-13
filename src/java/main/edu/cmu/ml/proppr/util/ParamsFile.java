@@ -67,8 +67,9 @@ public class ParamsFile extends ParsedFile {
 	}
 	private static void saveHeader(Writer writer, ModuleConfiguration config) throws IOException {
 		writer.write(HEADER_PREFIX);
-		writer.write("weightingScheme=");
-		writer.write(config.weightingScheme.toString());
+		writer.write(ModuleConfiguration.SQUASHFUNCTION_MODULE_OPTION);
+		writer.write("=");
+		writer.write(config.squashingFunction.toString());
 		writer.write("\n");
 		
 		if (config.programFiles != null) {
@@ -143,8 +144,8 @@ public class ParamsFile extends ParsedFile {
 	 * @param c
 	 */
 	public void check(ModuleConfiguration c) {
-		if (!this.getProperty("weightingScheme").equals(c.weightingScheme.toString())) 
-			failCheck("weightingScheme",this.getProperty("weightingScheme"), c.weightingScheme.toString(), c.force);
+		if (!this.getProperty(ModuleConfiguration.SQUASHFUNCTION_MODULE_OPTION).equals(c.squashingFunction.toString())) 
+			failCheck(ModuleConfiguration.SQUASHFUNCTION_MODULE_OPTION,this.getProperty(ModuleConfiguration.SQUASHFUNCTION_MODULE_OPTION), c.squashingFunction.toString(), c.force);
 		
 		if (this.getProperty("programFiles") != null) {
 			if (c.programFiles == null) {

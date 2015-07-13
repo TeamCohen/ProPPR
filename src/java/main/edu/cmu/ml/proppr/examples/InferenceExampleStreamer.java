@@ -13,7 +13,7 @@ import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.util.ParsedFile;
-import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 
 /**
  * Yields an InferenceExample for each line in a file. The format for each line is:

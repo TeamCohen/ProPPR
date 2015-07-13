@@ -14,6 +14,7 @@ import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -34,7 +35,7 @@ public class PathDprProverTest {
 		PathDprProver p = new PathDprProver(apr);
 		
 		Query query = Query.parse("kids(bette,Y)");
-		ProofGraph pg = new ProofGraph(query,apr,program,plugins);
+		StateProofGraph pg = new StateProofGraph(query,apr,program,plugins);
 		p.prove(pg);
 	}
 	

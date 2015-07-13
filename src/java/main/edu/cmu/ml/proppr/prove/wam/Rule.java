@@ -4,6 +4,7 @@ import java.util.List;
 
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 
 /**
  * A prolog rule.  The lhs is a goal, the rhs a list of goals, so the
@@ -57,14 +58,14 @@ public class Rule {
 	}
 
 	public SymbolTable<Argument> variabilize() {
-		return variabilize(new SymbolTable<Argument>());
+		return variabilize(new SimpleSymbolTable<Argument>());
 	}
 	/**
 	 * Convert the variables to integer indices, -1,-2, ... and save their
 	 * original names in "variableList", and the number of distinct
 	 * variables in 'nvars'.
 	 */
-	public SymbolTable<Argument> variabilize(SymbolTable<Argument> varTab) {
+	public SymbolTable<Argument> variabilize(SimpleSymbolTable<Argument> varTab) {
 		if (this.nvars > 0) throw new IllegalStateException("Rule already variabilized! "+this.toString());
 		int before = varTab.getSymbolList().size();
 		if (this.lhs != null) {

@@ -19,7 +19,8 @@ import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
-import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
 
 public class CachingTrainer extends Trainer {
@@ -33,9 +34,10 @@ public class CachingTrainer extends Trainer {
 	}
 
 	@Override
-	public ParamVector train(Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ArrayList<PosNegRWExample> examples = new ArrayList<PosNegRWExample>();
 		RWExampleParser parser = new RWExampleParser();
+		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		int id=0;
 		long start = System.currentTimeMillis();
 		TrainingStatistics total = new TrainingStatistics();
@@ -44,7 +46,7 @@ public class CachingTrainer extends Trainer {
 			id++;
 			try {
 				long before = System.currentTimeMillis();
-				PosNegRWExample ex = parser.parse(s, builder.copy(),learner);
+				PosNegRWExample ex = parser.parse(s, builder, learner);
 				total.updateParsingStatistics(System.currentTimeMillis()-before);
 				examples.add(ex);
 			} catch (GraphFormatException e) {
@@ -58,7 +60,7 @@ public class CachingTrainer extends Trainer {
 	public ParamVector trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
+			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 

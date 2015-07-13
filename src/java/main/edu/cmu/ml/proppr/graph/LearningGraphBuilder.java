@@ -4,6 +4,9 @@ package edu.cmu.ml.proppr.graph;
 
 import java.util.HashMap;
 
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
+
 public abstract class LearningGraphBuilder {
 	public static final char TAB = '\t';
 	public static final char FEATURE_INDEX_DELIM = ':';
@@ -13,18 +16,28 @@ public abstract class LearningGraphBuilder {
 	public static final char FEATURE_WEIGHT_DELIM = '@';
 
 	public abstract LearningGraphBuilder copy();
-	public abstract LearningGraph create();
+	public abstract LearningGraph create(SymbolTable<String> features);
 	public abstract void setGraphSize(LearningGraph g, int nodeSize, int edgeSize, int labelDependencySize);
 	public abstract void addOutlink(LearningGraph g, int u, RWOutlink rwOutlink);
 	public abstract void freeze(LearningGraph g);
 	public abstract void index(int i0);
+	
+	static SymbolTable<String> masterFeatures;
+	public static void setFeatures(SymbolTable<String> features) {
+		masterFeatures = features;
+	}
+	public static SymbolTable<String> getFeatures() {
+		return masterFeatures;
+	}
 	public LearningGraph deserialize(String string) throws GraphFormatException {
 		// first parse the graph metadata
 		String[] parts = new String[4];
 		int last = 0,i=0;
 		for (int next = last; i<parts.length; last=next+1,i++) {
-			if (next == -1) 
+			if (next == -1) { 
+				if (i>3 && parts[3].indexOf(SRC_DST_DELIM)>0) break;
 				throw new GraphFormatException("Need 5 distinct tsv fields in the graph:"+string);
+			}
 			next=string.indexOf(TAB,last);
 			parts[i] = next<0?string.substring(last):string.substring(last,next);
 		}
@@ -38,12 +51,23 @@ public abstract class LearningGraphBuilder {
 		int edgeSize = Integer.parseInt(parts[1]);
 		int dependencySize = Integer.parseInt(parts[2]);
 		ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
-		LearningGraph g = b.create();
-		b.index(1);
-		b.setGraphSize(g,nodeSize,edgeSize,dependencySize);
 
 		// now parse the feature library
-		String[] features = split(parts[3],EDGE_DELIM);
+		SymbolTable<String> features = null;
+		if (parts[3].indexOf(SRC_DST_DELIM)<0) {
+			// no '->' means this is the feature index
+			features = new SimpleSymbolTable<String>();
+			for (String s : split(parts[3],EDGE_DELIM)) {
+				features.insert(s);
+			}
+		} else {
+			// use the master index
+			features = getFeatures();
+			last = last - parts[3].length() - 1; // (plus the delim char)
+		}
+		LearningGraph g = b.create(features);
+		b.index(1);
+		b.setGraphSize(g,nodeSize,edgeSize,dependencySize);
 
 		// now parse out each edge
 		int[] nodes = {-1,-1};
@@ -62,7 +86,7 @@ public abstract class LearningGraphBuilder {
 				int wtDelim = f.indexOf(FEATURE_WEIGHT_DELIM);
 				int featureId = Integer.parseInt(wtDelim<0?f:f.substring(0,wtDelim));
 				double featureWt = wtDelim<0?1.0:Double.parseDouble(f.substring(wtDelim+1));
-				fd.put(features[featureId-1],featureWt);
+				fd.put(features.getSymbol(featureId),featureWt);
 			}
 			b.addOutlink(g,nodes[0],new RWOutlink(fd,nodes[1]));
 		}

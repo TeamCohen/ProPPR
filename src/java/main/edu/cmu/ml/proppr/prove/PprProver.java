@@ -1,6 +1,7 @@
 package edu.cmu.ml.proppr.prove;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -9,6 +10,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 /**
@@ -17,12 +19,13 @@ import edu.cmu.ml.proppr.util.Dictionary;
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
  *
  */
-public class PprProver extends Prover {
+public class PprProver extends Prover<StateProofGraph> {
 	private static final double SEED_WEIGHT = 1.0;
 	private static final Logger log = Logger.getLogger(PprProver.class);
 	private static final boolean DEFAULT_TRACE=false;
 	private static final boolean RESTART = true;
 	private static final boolean TRUELOOP = true;
+	private static final boolean NORMLX_TRUELOOP = true;
 	protected boolean trace;
 	
 	public PprProver() { this(DEFAULT_TRACE); }
@@ -39,6 +42,9 @@ public class PprProver extends Prover {
 	}
 	
 	@Override
+	public Class<StateProofGraph> getProofGraphClass() { return StateProofGraph.class; }
+	
+	@Override
 	public String toString() { return "ppr:"+this.apr.maxDepth; }
 	
 	public Prover copy() {
@@ -53,7 +59,7 @@ public class PprProver extends Prover {
 		this.trace = b;
 	}
 	@Override
-	public Map<State, Double> prove(ProofGraph pg) {
+	public Map<State, Double> prove(StateProofGraph pg) {
 		Map<State,Double> startVec = new HashMap<State,Double>();
 		startVec.put(pg.getStartState(),SEED_WEIGHT);
 		Map<State,Double> vec = startVec;
@@ -63,11 +69,22 @@ public class PprProver extends Prover {
 			if (log.isInfoEnabled()) log.info("iteration/descent "+(i-1)+" complete");
 			if(log.isDebugEnabled()) log.debug("after iteration "+(i+1)+" :"+
 					Dictionary.buildString(vec,new StringBuilder(),"\n\t").toString());
+//			System.out.println("ppr iter "+(i+1)+" size "+vec.size());
+/*			
+			for (Map.Entry<State,Double> e : vec.entrySet()) {
+				try {
+					State s = e.getKey();
+					System.out.println(" - "+e.getValue()+"\t"+s.canonicalHash()+"\t"+pg.getInterpreter().canonicalForm(pg.getStartState(),s));
+				} catch (LogicProgramException ex) {
+					throw new IllegalStateException(ex);
+				}
+			}
+*/
 		}
-		
 		return vec;
 	}
-	protected Map<State, Double> walkOnce(ProofGraph pg, Map<State, Double> vec) {
+
+	protected Map<State, Double> walkOnce(StateProofGraph pg, Map<State, Double> vec) {
 		Map<State, Double> nextVec = new HashMap<State, Double>();
 		int i=1,n=vec.size();
 		// p[u in s] += alpha * s[u]
@@ -87,4 +104,20 @@ public class PprProver extends Prover {
 		return nextVec;
 	}
 
+	protected Map<State,Double> normalizedOutlinks(StateProofGraph pg, State s) throws LogicProgramException {
+		List<Outlink> outlinks = pg.pgOutlinks(s,NORMLX_TRUELOOP);
+		Map<State,Double> weightedOutlinks = new HashMap<State,Double>();
+		double z = 0;
+		for (Outlink o : outlinks) {
+			o.wt = this.weighter.w(o.fd);
+			weightedOutlinks.put(o.child, o.wt);
+			z += o.wt;
+		}
+		
+		for (Map.Entry<State,Double>e : weightedOutlinks.entrySet()) {
+			e.setValue(e.getValue()/z);
+		}
+		return weightedOutlinks;
+	}
+	
 }

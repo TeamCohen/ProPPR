@@ -14,6 +14,7 @@ import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
@@ -32,7 +33,7 @@ public class SimpleProgramProofGraphTest {
 	public void test() throws LogicProgramException, IOException {
 		WamProgram program = WamBaseProgram.load(new File(SimpleProgramProverTest.PROGRAM));
 		Query q = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
-		ProofGraph pg = new ProofGraph(q,new APROptions(), program);
+		StateProofGraph pg = new StateProofGraph(q,new APROptions(), program);
 		
 		HashMap<String,Integer> solutions = new HashMap<String,Integer>();
 		solutions.put("steve", 0);

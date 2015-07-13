@@ -11,7 +11,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
-import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 
 
 /* wwcmod: how can { f(W,Y) : hasWord(X,W) } do something for weighted features?
@@ -46,7 +46,7 @@ public class WamInterpreter {
 	private static final Logger log = Logger.getLogger(WamInterpreter.class);
 	private static final int MAXDEPTH = 3;
 	private MutableState state;
-	private SymbolTable<String> constantTable;
+	private SimpleSymbolTable<String> constantTable;
 	private List<Feature> featureStack;
 	private Map<Goal,Double> reportedFeatures;
 	private WamProgram program;
@@ -54,9 +54,9 @@ public class WamInterpreter {
 	public static final String WEIGHTED_JUMPTO_DELIMITER="#/";
 	public static final String JUMPTO_DELIMITER = "/";
 	public WamInterpreter(WamProgram program, WamPlugin[] plugins) {
-		this(new SymbolTable<String>(), program, plugins);
+		this(new SimpleSymbolTable<String>(), program, plugins);
 	}
-	public WamInterpreter(SymbolTable<String> ct, WamProgram program, WamPlugin[] plugins) {
+	public WamInterpreter(SimpleSymbolTable<String> ct, WamProgram program, WamPlugin[] plugins) {
 		this.constantTable = ct;
 		this.featureStack = new ArrayList<Feature>();
 		this.program = program;
@@ -192,10 +192,10 @@ public class WamInterpreter {
 	public void setState(MutableState child) {
 		this.state = child;
 	}
-	public SymbolTable<String> getConstantTable() {
+	public SimpleSymbolTable<String> getConstantTable() {
 		return constantTable;
 	}
-	public void setConstantTable(SymbolTable<String> ct) {
+	public void setConstantTable(SimpleSymbolTable<String> ct) {
 		this.constantTable = ct;
 	}
 	public List<Feature> getFeatureStack() {
