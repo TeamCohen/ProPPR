@@ -38,10 +38,10 @@ public abstract class ProofGraph {
 	private static final Logger log = Logger.getLogger(ProofGraph.class);
 	public static final boolean DEFAULT_RESTART = false;
 	public static final boolean DEFAULT_TRUELOOP = true;
-	public static final Goal TRUELOOP = new Goal("id",new ConstantArgument("trueLoop"));
-	public static final Goal TRUELOOP_RESTART = new Goal("id",new ConstantArgument("trueLoopRestart"));
-	public static final Goal RESTART = new Goal("id",new ConstantArgument("restart"));
-	public static final Goal ALPHABOOSTER = new Goal("id",new ConstantArgument("alphaBooster"));
+	public static final Feature TRUELOOP = new Feature("id(trueLoop)");
+	public static final Feature TRUELOOP_RESTART = new Feature("id(trueLoopRestart)");
+	public static final Feature RESTART = new Feature("id(restart)");
+	public static final Feature ALPHABOOSTER = new Feature("id(alphaBooster)");
 	
 	private InferenceExample example;
 	private WamProgram program;
@@ -49,16 +49,18 @@ public abstract class ProofGraph {
 	private int queryStartAddress;
 	private final ImmutableState startState;
 	private int[] variableIds;
-	private Map<Goal,Double> trueLoopFD;
-	private Map<Goal,Double> trueLoopRestartFD;
-	private Goal restartFeature;
-	private Goal restartBoosterFeature;
+	private Map<Feature,Double> trueLoopFD;
+	private Map<Feature,Double> trueLoopRestartFD;
+	private Feature restartFeature;
+	private Feature restartBoosterFeature;
 	private APROptions apr;
-
 	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		this(new InferenceExample(query,null,null),apr,program,plugins);
+		this(query,apr,new SimpleSymbolTable<Feature>(),program,plugins);
 	}
-	public ProofGraph(InferenceExample ex, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+	public ProofGraph(Query query, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		this(new InferenceExample(query,null,null),apr,featureTab,program,plugins);
+	}
+	public ProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this.example = ex; 
 		this.apr = apr;
 		this.program = new WamQueryProgram(program);
@@ -66,8 +68,8 @@ public abstract class ProofGraph {
 		this.interpreter = new WamInterpreter(this.program, fullPluginList);
 		this.startState = this.createStartState();
 		
-		this.trueLoopFD = new HashMap<Goal,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
-		this.trueLoopRestartFD = new HashMap<Goal,Double>(); this.trueLoopRestartFD.put(TRUELOOP_RESTART,1.0);
+		this.trueLoopFD = new HashMap<Feature,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
+		this.trueLoopRestartFD = new HashMap<Feature,Double>(); this.trueLoopRestartFD.put(TRUELOOP_RESTART,1.0);
 		this.restartFeature = RESTART;
 		this.restartBoosterFeature = ALPHABOOSTER;
 	}
@@ -80,8 +82,8 @@ public abstract class ProofGraph {
 		// add the query on to the end of the program
 		this.program.append(this.example.getQuery());
 		// execute querycode to get start state
-		Map<Goal,Double> features = this.interpreter.executeWithoutBranching(queryStartAddress);
-		if (!features.isEmpty()) throw new LogicProgramException("should be a call");
+		Map<Feature,Double> features = this.interpreter.executeWithoutBranching(queryStartAddress);
+		if (!features.isEmpty()) throw new LogicProgramException("query should be a call (no features allowed)");
 		if (interpreter.getState().isFailed()) throw new LogicProgramException("query shouldn't have failed");
 		// remember variable IDs
 		State s = interpreter.saveState();
@@ -112,11 +114,11 @@ public abstract class ProofGraph {
 	
 	/* **************** factory ****************** */
 	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		return makeProofGraph(p, ex, apr, new SimpleSymbolTable<Goal>(), program, plugins);
+		return makeProofGraph(p, ex, apr, new SimpleSymbolTable<Feature>(), program, plugins);
 	}
 		
-	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, SymbolTable<Goal> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		// is there a better way to do this, without pushing it all the way through java.reflect? :(
+	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		// is there a better way to do this, without pushing it all the way through java.reflect? :( [-kmm]
 		if (p.equals(CachingIdProofGraph.class)) {
 			return new CachingIdProofGraph(ex, apr, featureTab, program, plugins);
 		} else if (p.equals(StateProofGraph.class)) {
@@ -140,7 +142,7 @@ public abstract class ProofGraph {
 		}
 		
 		// add restart
-		Map<Goal,Double> restartFD = new HashMap<Goal,Double>();
+		Map<Feature,Double> restartFD = new HashMap<Feature,Double>();
 		restartFD.put(this.restartFeature,1.0);
 		result.add(new Outlink(restartFD, this.startState));
 		
@@ -157,10 +159,15 @@ public abstract class ProofGraph {
 
 	public Map<Argument,String> asDict(State s) {
 		Map<Argument,String> result = new HashMap<Argument,String>();
-		List<String> constants = this.interpreter.getConstantTable().getSymbolList();
+//		List<String> constants = this.interpreter.getConstantTable().getSymbolList();
 		for (int k : s.getRegisters()) {
 			int j = s.dereference(k);
-			if (s.hasConstantAt(j)) result.put(new VariableArgument(j<this.variableIds.length ? this.variableIds[j] : k), constants.get(s.getIdOfConstantAt(j)-1));
+			if (s.hasConstantAt(j)) {
+				int varid = k;
+				if (j<this.variableIds.length) varid=this.variableIds[j];
+				result.put(new VariableArgument(varid), 
+						this.interpreter.getConstantTable().getSymbol(s.getIdOfConstantAt(j)));
+			}
 			else result.put(new VariableArgument(-k), "X"+j);
 		}
 		return result;

@@ -24,10 +24,13 @@ public class StateProofGraph extends ProofGraph {
 	private static final Logger log = Logger.getLogger(ProofGraph.class);
 	private LightweightStateGraph graph;
 	public StateProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException { 
-		this(new InferenceExample(query,null,null), apr, new SimpleSymbolTable<Goal>(), program, plugins);
+		this(new InferenceExample(query,null,null), apr, program, plugins);
 	}
-	public StateProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Goal> featureTab, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
-		super(ex, apr, program, plugins);
+	public StateProofGraph(InferenceExample ex, APROptions apr, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
+		this(ex, apr, new SimpleSymbolTable<Feature>(), program, plugins);
+	}
+	public StateProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
+		super(ex, apr, featureTab, program, plugins);
 		this.graph = new LightweightStateGraph(new HashingStrategy<State>() {
 			@Override
 			public int computeHashCode(State s) {

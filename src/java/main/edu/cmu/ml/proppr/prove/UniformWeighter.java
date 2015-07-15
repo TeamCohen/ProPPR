@@ -4,6 +4,7 @@ import java.util.Map;
 
 import edu.cmu.ml.proppr.learn.tools.Linear;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 
 /**
@@ -20,7 +21,7 @@ public class UniformWeighter extends FeatureDictWeighter {
 	}
 
 	@Override
-	public double w(Map<Goal, Double> featureDict) {
+	public double w(Map<Feature, Double> featureDict) {
 		return this.squashingFunction.edgeWeight(this.weights,featureDict);
 	}
 

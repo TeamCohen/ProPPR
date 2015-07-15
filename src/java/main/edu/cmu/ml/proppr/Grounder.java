@@ -24,6 +24,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
@@ -66,7 +67,8 @@ public class Grounder {
 	protected int nthreads=1;
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
-	protected SymbolTable<Goal> featureTable = new ConcurrentSymbolTable<Goal>();
+	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>();
+
 
 	public Grounder(APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {
 		this.apr = apr;
@@ -180,7 +182,7 @@ public class Grounder {
 		}
 	}
 	
-	protected void serializeFeatures(File indexFile, SymbolTable<Goal> featureTable) throws IOException {
+	protected void serializeFeatures(File indexFile, SymbolTable<Feature> featureTable) throws IOException {
 		Writer w = new BufferedWriter(new FileWriter(indexFile));
 		for (int i=1; i<=featureTable.size(); i++) {
 			w.write(featureTable.getSymbol(i).toString());
@@ -194,6 +196,10 @@ public class Grounder {
 	}
 
 
+
+	public GroundedExample groundExample(ProofGraph pg) throws LogicProgramException {
+		return this.groundExample(this.prover.copy(),pg);
+	}
 	/**
 	 * Run the prover to produce a proof of an example
 	 * @param rawX

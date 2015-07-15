@@ -11,6 +11,7 @@ import org.apache.commons.cli.Options;
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
@@ -133,7 +134,7 @@ public class PathDprProver extends DprProver {
 			for (int i=1; i<path.length; i++) {
 				sb.append(g.getState(path[i-1]).getJumpTo());
 				sb.append(" ->");
-				for (Goal phi : g.getFeatures(g.getState(path[i-1]), g.getState(path[i])).keySet()) {
+				for (Feature phi : g.getFeatures(g.getState(path[i-1]), g.getState(path[i])).keySet()) {
 					sb.append(phi).append(",");
 				}
 				sb.deleteCharAt(sb.length()-1);

@@ -10,6 +10,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.wam.Argument;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.MutableState;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
@@ -22,8 +23,8 @@ public class InferenceGraphTest {
 		List<Outlink> outlinks = new ArrayList<Outlink>();
 		MutableState a = new MutableState(); a.setJumpTo("foo");
 		MutableState b = new MutableState(); b.setJumpTo("bar");
-		Map<Goal,Double> fd = new HashMap<Goal,Double>();
-		fd.put(new Goal("quite",new Argument[0]),1.0);
+		Map<Feature,Double> fd = new HashMap<Feature,Double>();
+		fd.put(new Feature("quite"),1.0);
 		outlinks.add(new Outlink(fd, b));
 		g.setOutlinks(a, outlinks);
 		{

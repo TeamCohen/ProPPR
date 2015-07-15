@@ -13,6 +13,7 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
@@ -110,7 +111,7 @@ public class SimpleProgramProofGraphTest {
 		double total = 0;
 		for (Outlink o : outlinks) {
 			double wt = 0;
-			for (Map.Entry<Goal, Double>e : o.fd.entrySet()) { wt+=e.getValue(); }
+			for (Map.Entry<Feature, Double>e : o.fd.entrySet()) { wt+=e.getValue(); }
 			normalized.put(o.child, wt);
 			total += wt;
 		}

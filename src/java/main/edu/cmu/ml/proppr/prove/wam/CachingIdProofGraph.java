@@ -27,14 +27,14 @@ import gnu.trove.list.array.TIntArrayList;
 public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	private LongDense.ObjVector<SimpleSparse.FloatMatrix> nodeVec;
 	private SymbolTable<State> nodeTab;
-	private SymbolTable<Goal> featureTab;
+	private SymbolTable<Feature> featureTab;
 	private int edgeCount=0;
 
 	public CachingIdProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException { 
 		super(query, apr, program, plugins);
 	}
-	public CachingIdProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Goal> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		super(ex, apr, program, plugins);
+	public CachingIdProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		super(ex, apr, featureTab, program, plugins);
 		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
 		this.featureTab = featureTab;
 		nodeTab = new ConcurrentSymbolTable<State>(new ConcurrentSymbolTable.HashingStrategy<State>() {
@@ -118,7 +118,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			int[] featBuf = new int[numFeats];
 			float[] featVal = new float[numFeats];
 			int j=0;
-			for (Map.Entry<Goal,Double> e : o.fd.entrySet()) {
+			for (Map.Entry<Feature,Double> e : o.fd.entrySet()) {
 				featBuf[j] = featureTab.getId(e.getKey());
 				featVal[j] = e.getValue().floatValue();
 				j++;
@@ -131,11 +131,11 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		return mat;
 	}
 	
-	public LongDense.FloatVector paramsAsVector(Map<Goal,Double> params,double dflt) {
+	public LongDense.FloatVector paramsAsVector(Map<Feature, Double> weights,double dflt) {
 		int numFeats = featureTab.size();
 		float[] featVal = new float[numFeats+1];
 		for (int j=0;j<numFeats;j++) {
-			featVal[j+1] = Dictionary.safeGet(params,featureTab.getSymbol(j+1),dflt).floatValue();
+			featVal[j+1] = Dictionary.safeGet(weights,featureTab.getSymbol(j+1),dflt).floatValue();
 		}
 		return new LongDense.FloatVector(featVal);
 	}
@@ -172,7 +172,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			for (int fi = 1; fi <= this.featureTab.size(); fi++) {
 				if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
 				else first = false;
-				Goal f = this.featureTab.getSymbol(fi);
+				Feature f = this.featureTab.getSymbol(fi);
 				sb.append(f);
 			}
 		}

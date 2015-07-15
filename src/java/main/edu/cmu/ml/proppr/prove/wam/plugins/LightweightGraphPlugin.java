@@ -12,6 +12,7 @@ import com.skjegstad.utils.BloomFilter;
 
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -36,7 +37,7 @@ import gnu.trove.map.TObjectDoubleMap;
 public class LightweightGraphPlugin extends GraphlikePlugin {
 	private static final Logger log = Logger.getLogger(LightweightGraphPlugin.class);
 	protected Map<String,Map<String,TObjectDoubleMap<String>>> graph = new HashMap<String,Map<String,TObjectDoubleMap<String>>>();
-	protected Map<Goal,Double> fd=new HashMap<Goal,Double>();
+	protected Map<Feature,Double> fd=new HashMap<Feature,Double>();
 	protected String name;
 	public LightweightGraphPlugin(APROptions apr, String name) {
 		super(apr);
@@ -70,7 +71,7 @@ public class LightweightGraphPlugin extends GraphlikePlugin {
 	}
 
 	@Override
-	protected Map<Goal, Double> getFD() {
+	protected Map<Feature, Double> getFD() {
 		return this.fd;
 	}
 

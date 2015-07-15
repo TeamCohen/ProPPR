@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
@@ -27,27 +28,27 @@ import gnu.trove.strategy.HashingStrategy;
 
 public class LightweightStateGraph implements InferenceGraph {
 	private static final Logger log = Logger.getLogger(LightweightStateGraph.class);
-	private static final Map<Goal,Double> DEFAULT_FD = Collections.emptyMap();
+	private static final Map<Feature,Double> DEFAULT_FD = Collections.emptyMap();
 	private final List<State> DEFAULT_NEAR = Collections.emptyList();
 	private SymbolTable<State> nodeTab;
-	private SymbolTable<Goal> featureTab;
+	private SymbolTable<Feature> featureTab;
 	private TIntObjectHashMap<TIntArrayList> near = new TIntObjectHashMap<TIntArrayList>();
 	private TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>> edgeFeatureDict = new TIntObjectHashMap<TIntObjectHashMap<TIntDoubleHashMap>>();
 	private int edgeCount = 0;
 
 	public LightweightStateGraph() {
-		this(new SimpleSymbolTable<State>(), new SimpleSymbolTable<Goal>());
+		this(new SimpleSymbolTable<State>(), new SimpleSymbolTable<Feature>());
 	}
 
 	public LightweightStateGraph(HashingStrategy<State> nodeHash) {
-		this(new SimpleSymbolTable<State>(nodeHash), new SimpleSymbolTable<Goal>());
+		this(new SimpleSymbolTable<State>(nodeHash), new SimpleSymbolTable<Feature>());
 	}
 	
-	public LightweightStateGraph(HashingStrategy<State> nodeHash, SymbolTable<Goal> ftab) {
+	public LightweightStateGraph(HashingStrategy<State> nodeHash, SymbolTable<Feature> ftab) {
 		this(new SimpleSymbolTable<State>(nodeHash), ftab);
 	}
 	
-	public LightweightStateGraph(SymbolTable<State> ntab, SymbolTable<Goal> ftab) {
+	public LightweightStateGraph(SymbolTable<State> ntab, SymbolTable<Feature> ftab) {
 		this.nodeTab = ntab;
 		this.featureTab = ftab;
 	}
@@ -79,13 +80,13 @@ public class LightweightStateGraph implements InferenceGraph {
 		return ret;
 	}
 
-	public Map<Goal, Double> getFeatures(State u, State v) {
+	public Map<Feature, Double> getFeatures(State u, State v) {
 		int ui = this.nodeTab.getId(u), vi = this.nodeTab.getId(v);
 		if (!edgeFeatureDict.containsKey(ui)) return DEFAULT_FD;
 		TIntObjectHashMap<TIntDoubleHashMap> fu = edgeFeatureDict.get(ui);
 		if (!fu.containsKey(vi)) return DEFAULT_FD;
 		TIntDoubleHashMap fuvi = fu.get(vi); 
-		final HashMap<Goal,Double> ret = new HashMap<Goal,Double>();
+		final HashMap<Feature,Double> ret = new HashMap<Feature,Double>();
 		fuvi.forEachEntry(new TIntDoubleProcedure(){
 			@Override
 			public boolean execute(int fi, double wt) {
@@ -100,7 +101,7 @@ public class LightweightStateGraph implements InferenceGraph {
 		// why do we need to recompute these each time?
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (State v : near(u)) {
-			Map<Goal,Double> fd = getFeatures(u,v);
+			Map<Feature,Double> fd = getFeatures(u,v);
 			result.add(new Outlink(fd,v));
 		}
 		return result;
@@ -122,7 +123,7 @@ public class LightweightStateGraph implements InferenceGraph {
 			nearui.add(vi);
 			edgeCount++;
 			TIntDoubleHashMap fvui = new TIntDoubleHashMap(o.fd.size());
-			for (Map.Entry<Goal,Double> e : o.fd.entrySet()) {
+			for (Map.Entry<Feature,Double> e : o.fd.entrySet()) {
 				fvui.put(this.featureTab.getId(e.getKey()), e.getValue());
 			}
 			fui.put(vi, fvui);
@@ -174,7 +175,7 @@ public class LightweightStateGraph implements InferenceGraph {
 			for (int fi = 1; fi <= this.featureTab.size(); fi++) {
 				if (!first) sb.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
 				else first = false;
-				Goal f = this.featureTab.getSymbol(fi);
+				Feature f = this.featureTab.getSymbol(fi);
 				sb.append(f);
 			}
 		}

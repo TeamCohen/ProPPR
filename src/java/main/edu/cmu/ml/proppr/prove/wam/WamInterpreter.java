@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 
 
 /* wwcmod: how can { f(W,Y) : hasWord(X,W) } do something for weighted features?
@@ -46,9 +47,9 @@ public class WamInterpreter {
 	private static final Logger log = Logger.getLogger(WamInterpreter.class);
 	private static final int MAXDEPTH = 3;
 	private MutableState state;
-	private SimpleSymbolTable<String> constantTable;
-	private List<Feature> featureStack;
-	private Map<Goal,Double> reportedFeatures;
+	private SymbolTable<String> constantTable;
+	private List<FeatureBuilder> featureStack;
+	private Map<Feature,Double> reportedFeatures;
 	private WamProgram program;
 	private WamPlugin[] plugins;
 	public static final String WEIGHTED_JUMPTO_DELIMITER="#/";
@@ -56,9 +57,9 @@ public class WamInterpreter {
 	public WamInterpreter(WamProgram program, WamPlugin[] plugins) {
 		this(new SimpleSymbolTable<String>(), program, plugins);
 	}
-	public WamInterpreter(SimpleSymbolTable<String> ct, WamProgram program, WamPlugin[] plugins) {
+	public WamInterpreter(SymbolTable<String> ct, WamProgram program, WamPlugin[] plugins) {
 		this.constantTable = ct;
-		this.featureStack = new ArrayList<Feature>();
+		this.featureStack = new ArrayList<FeatureBuilder>();
 		this.program = program;
 		this.state = new MutableState();
 		this.plugins = plugins;
@@ -75,9 +76,9 @@ public class WamInterpreter {
 		this.state = s.mutableVersion();
 	}
 
-	public Map<Goal,Double> executeWithoutBranching() { return executeWithoutBranching(-1); }
-	public Map<Goal,Double> executeWithoutBranching(boolean computeFeatures) { return executeWithoutBranching(-1, computeFeatures); }
-	public Map<Goal,Double> executeWithoutBranching(int startAddress) { return executeWithoutBranching(startAddress, true); }
+	public Map<Feature,Double> executeWithoutBranching() { return executeWithoutBranching(-1); }
+	public Map<Feature,Double> executeWithoutBranching(boolean computeFeatures) { return executeWithoutBranching(-1, computeFeatures); }
+	public Map<Feature, Double> executeWithoutBranching(int startAddress) { return executeWithoutBranching(startAddress, true); }
 	/**
 	 * Execute instructions until a conditional opcode fails, the
         top-level program return, or a 'callp' or 'freport'
@@ -91,11 +92,11 @@ public class WamInterpreter {
 	 * @param startAddress
 	 * @param computeFeatures
 	 */
-	public Map<Goal,Double> executeWithoutBranching(int startAddress, boolean computeFeatures) {
+	public Map<Feature,Double> executeWithoutBranching(int startAddress, boolean computeFeatures) {
 		if (startAddress>=0) state.setProgramCounter(startAddress);
 		state.setFailed(false);
 		state.setCompleted(false);
-		this.reportedFeatures = new HashMap<Goal,Double>();
+		this.reportedFeatures = new HashMap<Feature,Double>();
 
 		//execute opcodes until we fail, the program completes, or we hit a callp opcode (indicated by setting pc=-1)
 		// or we hit a freport opcode (indicated by setting reportedFeatures to a non-empty set)
@@ -172,7 +173,7 @@ public class WamInterpreter {
 			this.restoreState(s);
 			if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
 			if (computeFeatures) {
-				Map<Goal,Double> features = this.executeWithoutBranching(address);
+				Map<Feature,Double> features = this.executeWithoutBranching(address);
 				if (!features.isEmpty() && !this.state.isFailed()) {
 					this.executeWithoutBranching();
 					if (!this.state.isFailed()) {
@@ -192,19 +193,19 @@ public class WamInterpreter {
 	public void setState(MutableState child) {
 		this.state = child;
 	}
-	public SimpleSymbolTable<String> getConstantTable() {
+	public SymbolTable<String> getConstantTable() {
 		return constantTable;
 	}
 	public void setConstantTable(SimpleSymbolTable<String> ct) {
 		this.constantTable = ct;
 	}
-	public List<Feature> getFeatureStack() {
+	public List<FeatureBuilder> getFeatureStack() {
 		return featureStack;
 	}
-	public Feature getFeaturePeek() {
+	public FeatureBuilder getFeaturePeek() {
 		return featureStack.get(featureStack.size()-1);
 	}
-	public void reportFeature(Goal g,double wt) {
+	public void reportFeature(Feature g,double wt) {
 		this.reportedFeatures.put(g,wt);
 	}
 
@@ -317,11 +318,11 @@ public class WamInterpreter {
 		this.state.incrementProgramCounter();
 	}
 	public void fpushstart(String functor, int arity) {
-		this.featureStack.add(new Feature(functor,arity));
+		this.featureStack.add(new FeatureBuilder(functor,arity));
 		this.state.incrementProgramCounter();
 	}
 	public void fpushconst(String a) {
-		getFeaturePeek().append(new ConstantArgument(a));
+		getFeaturePeek().append(getConstantTable().getId(a));
 		this.state.incrementProgramCounter();
 	}
 	public void fpushboundvar(int a) throws LogicProgramException {
@@ -329,32 +330,16 @@ public class WamInterpreter {
 		int ra = state.dereference(state.getRegister(a));
 		if (!state.hasConstantAt(ra)) throw new LogicProgramException("variable in feature not bound to a constant");
 		int cid = state.getIdOfConstantAt(ra);
-		getFeaturePeek().append(new ConstantArgument(getConstantTable().getSymbol(cid)));
+		getFeaturePeek().append(cid);
 		state.incrementProgramCounter();
 	}
 
 	public void freport() throws LogicProgramException {
-		for (Feature f : this.featureStack) {
-			if (f.functor.endsWith(WamPlugin.WEIGHTED_SUFFIX)) {
-				// convert foo#(X,Y,W) to foo(X,Y) with weight of W 
-				String fun = f.functor.substring(0,f.functor.length()-WamPlugin.WEIGHTED_SUFFIX.length());
-				Argument[] args = new Argument[2];
-				args[0] = f.args[0];
-				args[1] = f.args[1];
-				try {
-					double weight = Double.parseDouble(f.args[2].getName());
-					Goal g = new Goal(fun,args);
-					reportFeature(g,weight);
-				} catch (NumberFormatException e) {
-					throw new LogicProgramException("illegal weight of "+f.args[2]+" for "+f.functor+", should be a double");
-				}
-			} else {
-				Goal g = new Goal(f.functor,f.args);
-				reportFeature(g,1.0);
-			}
+		for (FeatureBuilder f : this.featureStack) {
+			reportFeature(new Feature(f,this.getConstantTable()),f.wt);
 		}
 		if (this.featureStack.isEmpty()) 
-			reportFeature(new Goal("_no_features_"),1.0);
+			reportFeature(new Feature("_no_features_"),1.0);
 		this.state.incrementProgramCounter();
 	}
 	public void ffindall(int address) throws LogicProgramException {
@@ -407,6 +392,19 @@ public class WamInterpreter {
 		state.collapsePointers(j, rj);
 		if (log.isDebugEnabled()) log.debug("at _: state "+state);
 	}
+	/** Special accessor to the current state: set the weight associated
+    with the i-th argument, starting at 1, of a arity-k predicate. 
+	 * @throws LogicProgramException */
+	public void setWt(int k, int i, double value) throws LogicProgramException {
+		int j = getHeapwiseIndex(k, i);
+		int rj = state.dereference(j);
+		if (!state.hasFreeAt(rj)) throw new LogicProgramException("var "+rj+" is not free in setArg("+k+","+i+","+value+"):\n"+state.toString());
+		if (log.isDebugEnabled()) log.debug("setArg("+k+","+i+","+value+")");
+		// use 1 as a placeholder in the heap
+		state.setHeap(rj, state.createConstantCell(1));
+		state.collapsePointers(j, rj);
+		if (log.isDebugEnabled()) log.debug("at _: state "+state);
+	}
 
 	/* ************************** trace access ************************* */
 	/** Special accessor to the current state: get the value associated
@@ -429,7 +427,6 @@ public class WamInterpreter {
 	public int canonicalHash(State root, State from) throws LogicProgramException {
 		int hash = 0;
 		// first get binding information for vars in the root state
-		List<String> constants = this.getConstantTable().getSymbolList();
 		for (int k : root.getRegisters()) {
 			int j = from.dereference(k);
 			if (hash>0) hash = hash << 1;
@@ -462,13 +459,14 @@ public class WamInterpreter {
 		// buffer to hold canonical version of the state
 		StringBuilder sb = new StringBuilder();
 		// first get binding information for vars in the root state
-		List<String> constants = this.getConstantTable().getSymbolList();
 		for (int k : root.getRegisters()) {
 			int j = from.dereference(k);
 			if (sb.length()>0) sb.append(",");
 			sb.append("X").append(k).append("=");
+			int cid = from.getIdOfConstantAt(j);
+			if (cid>this.getConstantTable().size()) throw new IllegalStateException ("No value for constant id "+cid);
 			if (from.hasConstantAt(j)) 
-				sb.append(constants.get(from.getIdOfConstantAt(j)-1));
+				sb.append(this.getConstantTable().getSymbol(cid));
 			else sb.append("X").append(j);
 		}
 		// next get pending goal information

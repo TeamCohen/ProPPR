@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import com.skjegstad.utils.BloomFilter;
 
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
@@ -23,7 +24,7 @@ public class FactsPlugin extends WamPlugin {
 	private static final Logger log = Logger.getLogger(FactsPlugin.class);
 	public static final String FILE_EXTENSION="facts";
 	public static final boolean DEFAULT_INDICES=false;
-	protected Map<Goal,Double> fd = new HashMap<Goal,Double>();
+	protected Map<Feature,Double> fd = new HashMap<Feature,Double>();
 	protected Map<String,List<WeightedArgs>> indexJ = new HashMap<String,List<WeightedArgs>>();
 	protected Map<JumpArgKey,List<WeightedArgs>> indexJA1 = new HashMap<JumpArgKey,List<WeightedArgs>>();
 	protected Map<JumpArgKey,List<WeightedArgs>> indexJA2 = new HashMap<JumpArgKey,List<WeightedArgs>>();
@@ -131,7 +132,7 @@ public class FactsPlugin extends WamPlugin {
 					if (i<val.args.length) {
 						wamInterp.setArg(arity,i+1,val.args[i]);
 					} else if (returnWeights) {
-						wamInterp.setArg(arity, i+1, Double.toString(val.wt));
+						wamInterp.setWt(arity, i+1, val.wt);
 					}
 				}
 			}

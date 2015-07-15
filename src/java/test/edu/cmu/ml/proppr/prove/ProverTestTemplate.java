@@ -22,6 +22,7 @@ import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.prove.FeatureDictWeighter;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
@@ -60,7 +61,7 @@ public abstract class ProverTestTemplate {
 	public void testProveState() throws LogicProgramException {
 		log.info("testProveState");
 		FeatureDictWeighter w = new InnerProductWeighter();
-		w.put(new Goal("milk"),2);
+		w.put(new Feature("milk"),2);
 		prover.setWeighter(w);
 
 		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),

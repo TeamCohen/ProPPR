@@ -5,6 +5,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.*;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
@@ -67,8 +68,8 @@ public class QueryAnswerer {
 	protected boolean normalize;
 	protected int nthreads;
 	protected int numSolutions;
-	protected SymbolTable<Goal> featureTable = new ConcurrentSymbolTable<Goal>();
-	public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads, int topk) {
+	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>();
+public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads, int topk) {
 		this.apr = apr;
 		this.program = program;
 		this.plugins = plugins;
@@ -122,7 +123,7 @@ public class QueryAnswerer {
 	public void addParams(Prover prover, ParamVector<String,?> params, SquashingFunction<Goal> f) {
 		InnerProductWeighter w = InnerProductWeighter.fromParamVec(params, f); 
 		prover.setWeighter(w);
-		for (Goal g : w.getWeights().keySet()) this.featureTable.insert(g);
+		for (Feature g : w.getWeights().keySet()) this.featureTable.insert(g);
 	}
 
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {

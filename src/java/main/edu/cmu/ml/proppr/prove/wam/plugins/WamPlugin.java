@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
@@ -24,8 +25,8 @@ public abstract class WamPlugin {
 	public static final String FACTS_FUNCTOR = "db(";
 	protected static final double DEFAULT_DSTWEIGHT = 1.0;
 	public static final String WEIGHTED_SUFFIX = "#";
-	public static Goal pluginFeature(WamPlugin plugin, String identifier) {
-		return new Goal("db",new ConstantArgument(plugin.getClass().getSimpleName()),new ConstantArgument(identifier));
+	public static Feature pluginFeature(WamPlugin plugin, String identifier) {
+		return new Feature("db("+plugin.getClass().getSimpleName()+","+identifier+")");
 	}
 
 	/** Convert from a string like "foo#/3" to "foo/2" **/
@@ -88,11 +89,11 @@ public abstract class WamPlugin {
 		return this.about();
 	}
 
-	protected Map<Goal,Double> scaleFD(Map<Goal,Double> fd, double wt) {
+	protected Map<Feature,Double> scaleFD(Map<Feature, Double> fd, double wt) {
 		if (wt == 1.0) return fd;
-		Map<Goal,Double> ret = new HashMap<Goal,Double>();
+		Map<Feature,Double> ret = new HashMap<Feature,Double>();
 		ret.putAll(fd);
-		for (Map.Entry<Goal, Double> val : ret.entrySet()) {
+		for (Map.Entry<Feature, Double> val : ret.entrySet()) {
 			val.setValue(val.getValue() * wt);
 		}
 		return ret;

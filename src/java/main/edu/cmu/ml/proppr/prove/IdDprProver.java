@@ -93,7 +93,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		if (this.weighter.weights.size()==0) 
 			params = new LongDense.UnitVector();
 		else 
-			params = cg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
+			params = cg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue());
 		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, params);
 	}
 
