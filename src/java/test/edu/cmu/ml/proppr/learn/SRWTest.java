@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.RedBlueGraph;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
+import edu.cmu.ml.proppr.learn.ExampleFactory.PprExampleFactory;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
@@ -33,10 +34,12 @@ public class SRWTest extends RedBlueGraph {
 	protected SRW srw;
 	protected ParamVector uniformParams;
 	protected TIntDoubleMap startVec;
+	protected ExampleFactory factory;
 	
 	
 	@Override
 	public void moreSetup(LearningGraphBuilder lgb) {
+		factory = new PprExampleFactory();
 		initSrw();
 		defaultSrwSettings();
 		uniformParams = makeParams(new ConcurrentHashMap<String,Double>());
@@ -141,7 +144,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	public ParamVector makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		ParamVector grad = new SimpleParamVector<String>();
-		srw.accumulateGradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg), grad);
+		srw.accumulateGradient(paramVec, factory.makeExample("gradient",brGraph, query, pos,neg), grad);
 		return grad;
 	}
 	
@@ -167,7 +170,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		srw.clearLoss();
-		srw.accumulateGradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg), new SimpleParamVector<String>());
+		srw.accumulateGradient(paramVec, factory.makeExample("loss",brGraph, query, pos,neg), new SimpleParamVector<String>());
 		return srw.cumulativeLoss().total();
 	}
 	public double makeLoss(ParamVector paramVec, PosNegRWExample example) {
@@ -211,32 +214,6 @@ public class SRWTest extends RedBlueGraph {
 		assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 				baselineLoss > biasedLoss);
 
-		double perturb_epsilon = 1e-10;
-		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
-			
-			ParamVector pert = uniformParams.copy();
-			pert.put(feature, pert.get(feature)+perturb_epsilon);
-			
-			srw.clearLoss();
-			ParamVector epsGrad = makeGradient(srw, pert, startVec, pos, neg);
-			double newLoss = srw.cumulativeLoss().total();
-			
-
-			double truediff = (newLoss-baselineLoss);
-			double approxdiff = (perturb_epsilon*baselineGrad.get(feature));
-			double percdiff = (truediff) != 0 ? Math.abs(((approxdiff) / (truediff))-1)*100 : 0;
-			System.err.println(String.format("%5s  true: %+1.8e  approx: %+1.8e  %%diff: %3.2f%%",
-					feature,
-					truediff,
-					approxdiff, 
-					percdiff));
-			
-			assertEquals("first order approximation on "+feature,
-					0,
-					percdiff,
-					10);
-		}
-		
 		double eps = .0001;
 		ParamVector nearlyUniformWeightVec = uniformParams.copy();
 //		TObjectDoubleMap<String> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg);
@@ -260,7 +237,7 @@ public class SRWTest extends RedBlueGraph {
 		query.put(nodes.getId("r0"), 1.0);
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
-		PosNegRWExample example = new PosNegRWExample(brGraph, query, pos, neg);
+		PosNegRWExample example = factory.makeExample("learn1",brGraph, query, pos, neg);
 		
 //		ParamVector weightVec = new SimpleParamVector();
 //		weightVec.put("fromb",1.01);

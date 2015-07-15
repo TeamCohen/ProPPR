@@ -169,6 +169,9 @@ public class DprSRW extends SRW {
 			ex.r[v]+= (1 - stayProb) * (1 - c.apr.alpha) * (dotP / rowSum) * ru;
 		}
 	}
+	
+	@Override
+	protected void load(ParamVector params, PosNegRWExample example) {}
 
 	@Override	
 	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {

@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.DprSRW;
+import edu.cmu.ml.proppr.learn.ExampleFactory.DprExampleFactory;
 import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.Linear;
 import edu.cmu.ml.proppr.learn.tools.Sigmoid;
@@ -23,6 +24,7 @@ public class DprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
 		srw = new DprSRW();
+		factory = new DprExampleFactory();
 	}
 	
 	@Override
