@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
@@ -14,7 +16,7 @@ public class IdDprProverTest extends ProverTestTemplate {
 	public void setup() throws IOException {
 		super.setup();
 		this.prover = new IdDprProver(new APROptions(new String[] {"eps=.00001","alph=.03"}));
-//		Logger.getLogger(DprProver.class).setLevel(Level.DEBUG);
+//		Logger.getLogger(IdDprProver.class).setLevel(Level.DEBUG);
 	}
 	
 	@Override @Test

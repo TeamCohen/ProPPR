@@ -69,7 +69,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	public double getIthWeightById(int ui,int i,LongDense.AbstractFloatVector params,SquashingFunction squashingFunction)  throws LogicProgramException {
 		expandIfNeeded(ui);
 		SimpleSparse.FloatVector phi = nodeVec.get(ui).val[i]; 
-		return squashingFunction.compute(phi.dot(params));
+		return Math.max(0,squashingFunction.compute(phi.dot(params)));
 	}
 	public double getTotalWeightOfOutlinks(int ui,LongDense.AbstractFloatVector params,SquashingFunction squashingFunction) throws LogicProgramException {
 		expandIfNeeded(ui);
@@ -131,13 +131,13 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		return mat;
 	}
 	
-	public LongDense.FloatVector paramsAsVector(Map<Feature, Double> weights,double dflt) {
+	public LongDense.FloatVector paramsAsVector(Map<Feature, Double> weights,Double dflt) {
 		int numFeats = featureTab.size();
 		float[] featVal = new float[numFeats+1];
 		for (int j=0;j<numFeats;j++) {
 			featVal[j+1] = Dictionary.safeGet(weights,featureTab.getSymbol(j+1),dflt).floatValue();
 		}
-		return new LongDense.FloatVector(featVal);
+		return new LongDense.FloatVector(featVal,dflt.floatValue());
 	}
 	
 

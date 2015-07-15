@@ -70,7 +70,8 @@ public class DfsProver extends Prover<StateProofGraph> {
 	 * @throws LogicProgramException */
 	protected void dfs(StateProofGraph pg, State s, int depth, double incomingEdgeWeight, List<Entry> tail) throws LogicProgramException {
 		beforeDfs(s, pg, depth);
-		tail.add(new Entry(s,incomingEdgeWeight));
+		Entry e = new Entry(s,incomingEdgeWeight);
+		tail.add(e);
 		if (!s.isCompleted() && depth < this.apr.maxDepth) {
 			backtrace.push(s);
 			List<Outlink> outlinks = pg.pgOutlinks(s, trueLoop);
@@ -84,7 +85,9 @@ public class DfsProver extends Prover<StateProofGraph> {
 			for (Outlink o : outlinks) {
 				//skip resets
 				if (o.child.equals(pg.getStartState())) continue;
+				
 				//recurse into non-resets
+				e.w -= o.wt / z;
 				dfs(pg, o.child, depth+1, o.wt / z, tail);
 			}
 			backtrace.pop(s);

@@ -109,8 +109,12 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 					// push this state as far as you can
 					while( r.get(uid)/deg > iterEpsilon ) {
 						double ru = r.get(uid);
+						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, uid));
+						
+						// p[u] += alpha * ru
 						//addToP(p,u,ru);
-						p.inc(uid,ru);
+						p.inc(uid,apr.alpha * ru);
+						// r[u] *= (1-alpha) * stay?
 						//r.put(u, (1.0-apr.alpha) * stayProbability * ru);
 						r.set(uid, (1.0-apr.alpha) * stayProbability * ru);
 						// for each v near u
@@ -123,18 +127,18 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 							if (Double.isNaN(r.get(vid))) log.debug("NaN in r at v="+vid+" wuv="+wuv+" z="+z+" ru="+ru);
 						}
-/*
+///*
 						if (log.isDebugEnabled()) {
 							// sanity-check r:
 							double sumr = 0;
-							for (Double d : r.values()) { sumr += d; }
+							for (int i=0;i<r.size();i++) { sumr += r.get(i); }
 							double sump = 0;
-							for (Double d : p.values()) { sump += d; }
+							for (int i=0;i<p.size();i++) { sump += p.get(i); }
 							if (Math.abs(sump + sumr - 1.0) > apr.epsilon) {
 								log.debug("Should be 1.0 but isn't: after push sum p + r = "+sump+" + "+sumr+" = "+(sump+sumr));
 							}
 						}
-*/
+//*/
 					}
 
 					// for each v near u:

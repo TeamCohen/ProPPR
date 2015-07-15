@@ -1,5 +1,7 @@
 package edu.cmu.ml.proppr.util.math;
 
+import java.util.Arrays;
+
 import edu.cmu.ml.proppr.util.Dictionary;
 
 /**
@@ -36,10 +38,15 @@ public class LongDense
 	static public class FloatVector extends AbstractFloatVector {
 		public float[] val;
 		int maxIndex = -1;  // largest index actually used
+		float dflt; // when asked for a value out of bounds
 
-		public FloatVector(float[] v) {
+		public FloatVector(float[] v, float dflt) {
 			this.val=v;
 			this.maxIndex=this.val.length-1;
+			this.dflt=dflt;
+		}
+		public FloatVector(float[] v) {
+			this(v,0.0f);
 		}
 		public FloatVector(int sizeHint) {
 			this(new float[sizeHint]);
@@ -90,6 +97,7 @@ public class LongDense
 				int n = Math.max(2*val.length, k+1);
 				float[] tmp = new float[n];
 				System.arraycopy(val,0, tmp,0, maxIndex+1);
+				Arrays.fill(tmp, maxIndex+1, n, this.dflt);
 				val = tmp;
 			}
 		}
