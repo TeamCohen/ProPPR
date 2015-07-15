@@ -60,11 +60,16 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	}
 
 	@Override
-	public Map<State, Double> prove(CachingIdProofGraph cg) 
+	public Map<State, Double> prove(CachingIdProofGraph pg) 
 	{
 		LongDense.FloatVector startVec = new LongDense.FloatVector();
-		startVec.set( cg.getRootId(), SEED_WEIGHT );
-		LongDense.UnitVector params = new LongDense.UnitVector();
+		startVec.set( pg.getRootId(), SEED_WEIGHT );
+		LongDense.AbstractFloatVector params = null;
+		if (this.weighter.weights.size()==0) 
+			params = new LongDense.UnitVector();
+		else 
+			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
+		
 		LongDense.FloatVector vec = startVec;
 
 		LongDense.FloatVector nextVec = new LongDense.FloatVector();
@@ -72,7 +77,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 
 		for (int i=0; i<this.apr.maxDepth; i++) {
 			// vec = walkOnce(cg,vec,params,f);
-			walkOnceBuffered(cg,vec,nextVec,params);
+			walkOnceBuffered(pg,vec,nextVec,params);
 			// save vec as the next buffer, then point vec at the new result
 			tmp = vec;
 			tmp.clear();
@@ -82,7 +87,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 			//System.out.println("ippr iter "+(i+1)+" size "+vec.size());
 		}
 
-		return cg.asMap(vec);
+		return pg.asMap(vec);
 	}
 
 	LongDense.FloatVector walkOnce(CachingIdProofGraph cg, LongDense.FloatVector vec,LongDense.AbstractFloatVector params) 
