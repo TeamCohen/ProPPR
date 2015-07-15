@@ -538,7 +538,7 @@ public class Configuration {
 	}
 	
 	/**
-	 * Calls System.exit(0)
+	 * Calls System.exit()
 	 */
 	protected void usageOptions(Options options, int inputFile, int outputFile, int constants, int modules, String msg) {
 		usageOptions(options,new int[] {inputFile, outputFile, constants, modules},msg);
@@ -546,14 +546,14 @@ public class Configuration {
 	
 
 	/**
-	 * Calls System.exit(0)
+	 * Calls System.exit()
 	 */
 	protected void usageOptions(Options options, int[] flags) {
 		usageOptions(options,flags,null);
 	}
 
 	/**
-	 * Calls System.exit(0)
+	 * Calls System.exit()
 	 */
 	protected void usageOptions(Options options, int[] flags, String msg) {
 		HelpFormatter formatter = new HelpFormatter();
@@ -578,7 +578,8 @@ public class Configuration {
 		pw.write("\n");
 		pw.flush();
 		pw.close();
-		System.exit(0);
+		int stat = msg!=null ? 1 : 0;
+		System.exit(stat);
 	}
 
 	@Override
