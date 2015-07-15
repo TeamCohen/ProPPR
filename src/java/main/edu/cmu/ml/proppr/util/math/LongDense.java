@@ -1,5 +1,7 @@
 package edu.cmu.ml.proppr.util.math;
 
+import edu.cmu.ml.proppr.util.Dictionary;
+
 /**
  * Encodes dense vectors V of unknown size, with constant-time access
  * to the components V[k].  Unlike an array, the maximum dimension
@@ -18,6 +20,7 @@ public class LongDense
 		 * I.e., v.get(k) conceptually returns V[k]
 		 */
 		abstract public float get(int k); 
+		abstract public String toString();
 	}
 
 	static public class UnitVector extends AbstractFloatVector {
@@ -25,6 +28,7 @@ public class LongDense
 		 * todo: should probably be called Ones, not UnitVector
 		 */
 		public float get(int k) { return 1.0f; } 
+		public String toString() { return "1.0..."; }
 	}
 
 	/** A float vector in which arbitrary floats can be stored.
@@ -88,6 +92,9 @@ public class LongDense
 				System.arraycopy(val,0, tmp,0, maxIndex+1);
 				val = tmp;
 			}
+		}
+		public String toString() {
+			return Dictionary.buildString(this.val, new StringBuilder(), "\n", true).toString();
 		}
 	}
 

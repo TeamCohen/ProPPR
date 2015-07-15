@@ -33,6 +33,8 @@ import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 
 public abstract class ProverTestTemplate {
 	private static final Logger log = Logger.getLogger(ProverTestTemplate.class);
@@ -61,11 +63,13 @@ public abstract class ProverTestTemplate {
 	public void testProveState() throws LogicProgramException {
 		log.info("testProveState");
 		FeatureDictWeighter w = new InnerProductWeighter();
-		w.put(new Feature("milk"),2);
+		SymbolTable<Feature> featureTab = new SimpleSymbolTable<Feature>();
+		int milk = featureTab.getId(new Feature("milk"));
+		w.put(featureTab.getSymbol(milk),2);
 		prover.setWeighter(w);
 
 		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),
-				new InferenceExample(Query.parse("isa(elsie,X)"),null,null), apr, lpMilk, fMilk);
+				new InferenceExample(Query.parse("isa(elsie,X)"),null,null), apr, featureTab, lpMilk, fMilk);
 		Map<State,Double> dist = prover.prove(pg);//("isa","elsie","X"));
 
 		double query=0.0;
