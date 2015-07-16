@@ -39,9 +39,7 @@ public abstract class ProofGraph {
 	public static final boolean DEFAULT_RESTART = false;
 	public static final boolean DEFAULT_TRUELOOP = true;
 	public static final Feature TRUELOOP = new Feature("id(trueLoop)");
-	public static final Feature TRUELOOP_RESTART = new Feature("id(trueLoopRestart)");
 	public static final Feature RESTART = new Feature("id(restart)");
-	public static final Feature ALPHABOOSTER = new Feature("id(alphaBooster)");
 	
 	private InferenceExample example;
 	private WamProgram program;
@@ -50,9 +48,7 @@ public abstract class ProofGraph {
 	private final ImmutableState startState;
 	private int[] variableIds;
 	private Map<Feature,Double> trueLoopFD;
-	private Map<Feature,Double> trueLoopRestartFD;
 	private Feature restartFeature;
-	private Feature restartBoosterFeature;
 	private APROptions apr;
 	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this(query,apr,new SimpleSymbolTable<Feature>(),program,plugins);
@@ -69,9 +65,7 @@ public abstract class ProofGraph {
 		this.startState = this.createStartState();
 		
 		this.trueLoopFD = new HashMap<Feature,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
-		this.trueLoopRestartFD = new HashMap<Feature,Double>(); this.trueLoopRestartFD.put(TRUELOOP_RESTART,1.0);
 		this.restartFeature = RESTART;
-		this.restartBoosterFeature = ALPHABOOSTER;
 	}
 	private ImmutableState createStartState() throws LogicProgramException {
 		// execute to the first call

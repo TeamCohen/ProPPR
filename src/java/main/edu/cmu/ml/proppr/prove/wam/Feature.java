@@ -7,13 +7,15 @@ public class Feature implements Comparable<Feature> {
 	public final String name;
 	public Feature(FeatureBuilder f, SymbolTable<String> constants) {
 		StringBuilder sb = new StringBuilder();
+		boolean isWeighted = false;
 		if (f.functor.endsWith(WamPlugin.WEIGHTED_SUFFIX)) {
 			sb.append(f.functor.substring(0,f.functor.length()-WamPlugin.WEIGHTED_SUFFIX.length()));
+			isWeighted = true;
 		} else sb.append(f.functor);
 		if (f.arity>0) {
 			sb.append("(");
-			for (int i : f.args) {
-				sb.append(constants.getSymbol(i)).append(",");
+			for (int i=0; i<f.arity - (isWeighted?1:0); i++) {
+				sb.append(constants.getSymbol(f.args[i])).append(",");
 			}
 			sb.setCharAt(sb.length()-1, ')');
 		}
