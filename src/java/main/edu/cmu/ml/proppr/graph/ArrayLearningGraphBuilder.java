@@ -92,7 +92,7 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 					current.edge_labels_hi[edge_cursor] = label_cursor;
 					edge_cursor++;
 				}
-				if (current.labelDependencySize() < 0) label_deps += outgoingFeatures.size();
+				if (current.labelDependencySize() < 0) label_deps += outgoingFeatures.size() * outlinks[u].size();
 			}
 			current.node_near_hi[u]=edge_cursor;
 		}
