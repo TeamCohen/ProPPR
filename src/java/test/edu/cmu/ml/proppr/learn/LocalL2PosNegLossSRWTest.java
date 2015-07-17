@@ -7,9 +7,9 @@ import java.util.Map;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.learn.LocalL2SRW;
-import edu.cmu.ml.proppr.util.MuParamVector;
-import edu.cmu.ml.proppr.util.ParamVector;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.math.MuParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 
 public class LocalL2PosNegLossSRWTest extends SRWTest {
 	@Override

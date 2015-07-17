@@ -23,6 +23,7 @@ import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.RWOutlink;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
@@ -43,7 +44,7 @@ public class RedBlueGraph {
 	protected LearningGraph brGraph;
 	protected Set<String> reds;
 	protected Set<String> blues;
-	protected SymbolTable<String> nodes = new SymbolTable<String>();
+	protected SymbolTable<String> nodes = new SimpleSymbolTable<String>();
 	protected int magicNumber;
 
 	public RedBlueGraph() {
@@ -62,7 +63,7 @@ public class RedBlueGraph {
 //		}
 
 		LearningGraphBuilder lgb = new ArrayLearningGraphBuilder();
-		brGraph = (LearningGraph) lgb.create();
+		brGraph = (LearningGraph) lgb.create(new SimpleSymbolTable<String>());
 		lgb.index(1);
 		lgb.setGraphSize(brGraph, magicNumber*2, -1, -1);
 

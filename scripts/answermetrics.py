@@ -67,11 +67,27 @@ class Labels(object):
     def show(self):
         for q in self.queries:
             print '%s\t' % q,
-            if self.pos[q]:
-                print '\t'.join(map(lambda s: ('+%s'%s), list(self.pos[q]))),
-            if self.neg[q]:
-                print '\t'.join(map(lambda s: ('-%s'%s), list(self.neg[q]))),
-            print "\t",len(self.pos[q]),"pos",len(self.neg[q]),"neg label"
+            self.showQuery(q)
+    
+    def showQuery(self,q):
+        print "\t",len(self.pos[q]),"pos",len(self.neg[q]),"neg label",
+        if self.pos[q]:
+            print '\t'.join(map(lambda s: ('+%s'%s), list(self.pos[q]))),
+        if self.neg[q]:
+            print '\t'.join(map(lambda s: ('-%s'%s), list(self.neg[q]))),
+        print
+
+
+def adversariallyOrdered(answerList):
+    def adverseKey(a): return (1.0-a.score,a.isPos,a.rank)
+    resorted = sorted([(adverseKey(a),a) for a in answerList])
+    for i in range(len(resorted)):
+        (keyOfA,a) = resorted[i]
+        resorted[i] = copy.copy(a)
+        resorted[i].rank = i+1
+    #print '%3d |%s\t|\t%s' % (i,answerList[i].asFields(" "),resorted[i].asFields(" "))
+    return resorted
+
 
 class Answer(object):
     """Encodes a single answer proposed by ProPPR for a query."""
@@ -83,7 +99,7 @@ class Answer(object):
         self.isNeg = None
 
     def asFields(self,sep="\t"):
-        return sep.join(map(str,[self.rank,self.score,self.solution,self.isPos,self.isNeg]))        
+        return sep.join(map(str,[self.rank,self.score,self.solution,"+=",self.isPos,"-=",self.isNeg]))        
 
     def __repr__(self):
         return 'Answer(rank=%d,score=%f,isPos=%s,isNeg=%s,solution=%s)' \
@@ -100,12 +116,14 @@ class Answers(object):
       q
 
     Any answers that are not either isPos or isNeg - ie, unknown truth
-    values - are discarded.
+    values - are discarded by default. To automatically label unknown 
+    solutions negative, run with --defaultNeg
 """
     
-    def __init__(self,answerFile,labels=None):
+    def __init__(self,answerFile,labels=None,defaultNeg=False):
         """Parse an answer file - if labels are not given, then
         the isPos/isNeg flags will be set to None."""
+        #print "defaultNeg:",defaultNeg
         self.answerFile = answerFile
         self.answers = collections.defaultdict(list)
         self.solutions = collections.defaultdict(set)
@@ -116,10 +134,16 @@ class Answers(object):
         totLabeledAnswers = 0
         for line in open(self.answerFile):        
             if line.startswith('#'):
+                totQueries += 1
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
                 intVarQuery = answerWithIntVars(intVarQuery[:(intVarQuery.index("#")-2)])
                 self.queryTime[intVarQuery] = int(timeStr.split(" ")[0])
+                #print line
+                #print intVarQuery
+                #print "+",labels.pos[intVarQuery]
+                #print "-",labels.neg[intVarQuery]
             else:
+                totAnswers += 1
                 (rankStr,scoreStr,solution) = line.strip().split("\t")
                 score = float(scoreStr)
                 rank = int(rankStr)
@@ -129,25 +153,19 @@ class Answers(object):
                 a = Answer(rank,score,solution)
                 if labels:
                     a.isPos = solution in labels.pos[intVarQuery]
-                    a.isNeg = solution in labels.neg[intVarQuery]
+                    a.isNeg = (defaultNeg and not a.isPos) or solution in labels.neg[intVarQuery]
                     #print 'solution',solution,'intVarQuery',intVarQuery,'pos',labels.pos[intVarQuery],'neg',labels.pos[intVarQuery]
                 if a.isPos or a.isNeg:
                     totLabeledAnswers += 1
                     self.answers[intVarQuery].append(a)
                     self.solutions[intVarQuery].add(solution)
+                    #print line.strip(),a.isPos,a.isNeg
+                #else:
+                #    print line.strip()
         for q in self.answers:
-            self.answers[q] = self.adversariallyOrdered(self.answers[q])
+            self.answers[q] = adversariallyOrdered(self.answers[q])
         print 'queries',totQueries,'answers',totAnswers,'labeled answers',totLabeledAnswers
 
-    def adversariallyOrdered(self,answerList):
-        def adverseKey(a): return (1.0-a.score,a.isPos,a.rank)
-        resorted = sorted([(adverseKey(a),a) for a in answerList])
-        for i in range(len(resorted)):
-            (keyOfA,a) = resorted[i]
-            resorted[i] = copy.copy(a)
-            resorted[i].rank = i+1
-            #print '%3d |%s\t|\t%s' % (i,answerList[i].asFields(" "),resorted[i].asFields(" "))
-        return resorted
 
     def asDict(self,thetaStr):
         result = {}
@@ -163,11 +181,15 @@ class Answers(object):
         return result
 
     def show(self,summary=False):
-        for query,answerList in self.answers.items():
+        for query in self.answers.keys():
             print '#',query,'proved in',self.queryTime[query],'msec'
-            for a in answerList:
-                if (not summary) or (a.isPos or a.isNeg):
-                    print a.asFields()
+            self.showQuery(query,summary)
+    
+    def showQuery(self,query,summary=False):
+        answerList = self.answers[query]
+        for a in answerList:
+            if (not summary) or (a.isPos or a.isNeg):
+                print a.asFields()
 
 
 #################### abstract metric class
@@ -250,26 +272,41 @@ class MeanAvgPrecision(Metric):
         numPosRetrieved = 0.0
         numRetrieved = 0.0
         ap = 0.0
-        for a in sorted(answerList, key=lambda a: -a.score):
+        foo = adversariallyOrdered(answerList)
+        #print "Query:"
+        for a in foo:
             numRetrieved += 1.0
             if a.isPos:
                 numPosRetrieved += 1.0
                 ap += (numPosRetrieved / numRetrieved)
+                #print ap,a.asFields()
+        #print ap,"/",n,"=",ap/n
         return ap/n
 
 class AreaUnderROC(Metric):
     def explanation(self):
         return '(AUC): The probability of a positive example scoring higher than a negative example; or the area under the ROC curve'
     def computeFromList(self,answerList,solutionSet,posSet):
+        # Modified 27 May by katie to handle the following instances:
+        # - where no negative labels are available
+        # - where some positive labels were not retrieved
         npos = len(posSet)
-        nneg = len(answerList) - npos
-        npairs = npos * nneg
-        optimumRankSum = (npos/2.0) * (npos+1.0) #=sum from 1 to npos
+        N = len(answerList)
+        if N == 0: return 0.0
+        if npos == 0: return 0.0
+        
+        # for each positive result compute
+        # how many negative results rank lower
+        nneg = 0
         rankSum = 0.0
         for a in answerList:
             if a.isPos:
-                rankSum += a.rank
-        return 1.0 - (rankSum - optimumRankSum)/npairs
+                rankSum += N-nneg
+            else:
+                nneg += 1
+        # convert to a probability (out of N)
+        # then average over the npos positive labels
+        return rankSum / (N*npos)
         
 class Accuracy(Metric):
     
@@ -346,7 +383,7 @@ if __name__ == "__main__":
     metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 
                'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
 
-    argspec = ["data=", "answers=", "metric=", "help", "debug", "echo", "details"]
+    argspec = ["data=", "answers=", "metric=", "defaultNeg", "help", "debug", "echo", "details"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
     option = dict(optlist)
     if ('--data' not in option) or ('--answers' not in option) or ('--help' in option):
@@ -356,15 +393,19 @@ if __name__ == "__main__":
         print
         print '  --echo will print a representation of the raw information from which metrics are computed'
         sys.exit(-1)
-
+        
     labels = Labels(option['--data'])
-    answers = Answers(option['--answers'],labels)
+    answers = Answers(option['--answers'],labels,'--defaultNeg' in option)
 
     if '--debug' in option:
-        print 'labels:'
-        labels.show()
-        print 'answers:'
-        answers.show(summary=False)
+        for query in labels.queries:
+            print "#",query
+            labels.showQuery(query)
+            answers.showQuery(query)
+        #print 'labels:'
+        #labels.show()
+        #print 'answers:'
+        #answers.show(summary=False)
 
     if ('--echo' in option):
         print 'labeled answers: rank score solution isPos isNeg'

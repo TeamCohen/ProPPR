@@ -7,8 +7,9 @@ import org.apache.log4j.Logger;
 
 import com.skjegstad.utils.BloomFilter;
 
-import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.Linear;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.util.Dictionary;
@@ -23,26 +24,26 @@ import edu.cmu.ml.proppr.util.Dictionary;
 public class InnerProductWeighter extends FeatureDictWeighter {
 	private static final int MAX_UNKNOWN_FEATURE_WARNINGS = 10;
 	private int numUnknownFeatures = 0;
-private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
-	protected static final BloomFilter<Goal> unknownFeatures = new BloomFilter<Goal>(.01,100);
-	private static WeightingScheme DEFAULT_WEIGHTING_SCHEME() {
-		return new LinearWeightingScheme();
+	private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
+	protected static final BloomFilter<Feature> unknownFeatures = new BloomFilter<Feature>(.01,100);
+	private static SquashingFunction DEFAULT_SQUASHING_FUNCTION() {
+		return new Linear();
 	}
 	public InnerProductWeighter() {
-		this(new HashMap<Goal,Double>());
+		this(new HashMap<Feature,Double>());
 	}
-	public InnerProductWeighter(Map<Goal,Double> weights) {
-		this(DEFAULT_WEIGHTING_SCHEME(), weights);
-		
+	public InnerProductWeighter(Map<Feature,Double> weights) {
+		this(DEFAULT_SQUASHING_FUNCTION(), weights);
+
 	}
-	public InnerProductWeighter(WeightingScheme ws, Map<Goal,Double> weights) {
-		super(ws);
+	public InnerProductWeighter(SquashingFunction f, Map<Feature,Double> weights) {
+		super(f);
 		this.weights = weights;
 	}
 	@Override
-	public double w(Map<Goal, Double> featureDict) {
+	public double w(Map<Feature, Double> featureDict) {
 		// check for unknown features
-		for (Goal g : featureDict.keySet()) {
+		for (Feature g : featureDict.keySet()) {
 			if (!this.weights.containsKey(g)) {
 				if (!unknownFeatures.contains(g)) {
 					if (numUnknownFeatures<MAX_UNKNOWN_FEATURE_WARNINGS) {
@@ -55,16 +56,19 @@ private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
 				}
 			}
 		}
-		return this.weightingScheme.edgeWeight(this.weights, featureDict);
+		return this.squashingFunction.edgeWeight(this.weights, featureDict);
 	}
 	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec) {
-		return fromParamVec(paramVec, DEFAULT_WEIGHTING_SCHEME());
+		return fromParamVec(paramVec, DEFAULT_SQUASHING_FUNCTION());
 	}
-	public static FeatureDictWeighter fromParamVec(Map<String, Double> paramVec, WeightingScheme wScheme) {
-		Map<Goal,Double> weights = new HashMap<Goal,Double>();
+	public static InnerProductWeighter fromParamVec(Map<String, Double> paramVec, SquashingFunction f) {
+		Map<Feature,Double> weights = new HashMap<Feature,Double>();
 		for (Map.Entry<String,Double> s : paramVec.entrySet()) {
-			weights.put(Query.parseGoal(s.getKey()), s.getValue());
+			weights.put(new Feature(s.getKey()), s.getValue());
 		}
-		return new InnerProductWeighter(wScheme, weights);
+		return new InnerProductWeighter(f, weights);
+	}
+	public Map<Feature,Double> getWeights() {
+		return this.weights;
 	}
 }

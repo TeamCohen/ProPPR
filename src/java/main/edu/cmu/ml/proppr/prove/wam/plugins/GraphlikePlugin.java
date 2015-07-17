@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
@@ -42,7 +43,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 	protected abstract Collection<String> indexGet(String label);
 	protected abstract void indexAdd(String label, String src, String dst);
 	protected abstract void indexAdd(String label, String src, String dst,double weight);
-	protected abstract Map<Goal,Double> getFD();
+	protected abstract Map<Feature,Double> getFD();
 
 	public GraphlikePlugin(APROptions apr) {
 		super(apr);
@@ -110,11 +111,11 @@ public abstract class GraphlikePlugin extends WamPlugin {
 					@Override
 					public boolean execute(String val, double wt) {
 						try {
-							String weightString = returnWeights ? Double.toString(wt) : null;
+//							String weightString = returnWeights ? Double.toString(wt) : null;
 							if (dstConst != null && val==dstConst) {
 								wamInterp.restoreState(state);
 								if (returnWeights) {
-									wamInterp.setArg(arity,3,weightString);
+									wamInterp.setWt(arity,3,wt);
 								}
 								wamInterp.returnp();
 								wamInterp.executeWithoutBranching();
@@ -122,7 +123,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 								wamInterp.restoreState(state);
 								wamInterp.setArg(arity,2,val);
 								if (returnWeights) {							
-									wamInterp.setArg(arity,3,weightString);
+									wamInterp.setWt(arity,3,wt);
 								}
 								wamInterp.returnp();
 								wamInterp.executeWithoutBranching();

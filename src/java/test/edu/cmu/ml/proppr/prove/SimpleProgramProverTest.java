@@ -14,6 +14,7 @@ import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.UniformWeighter;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
@@ -33,7 +34,7 @@ public class SimpleProgramProverTest {
 		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
 		Query q = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
 		System.out.println("Query: "+q.toString());
-		ProofGraph p = new ProofGraph(q,apr,program);
+		ProofGraph p = new StateProofGraph(q,apr,program);
 		Prover prover = new DfsProver(apr);
 		Map<String,Double> sols = prover.solutions(p);
 		assertEquals(2,sols.size());
@@ -58,7 +59,7 @@ public class SimpleProgramProverTest {
 		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
 		Query q = new Query(new Goal("coworker",new ConstantArgument("steve"),new ConstantArgument("X")));
 		System.out.println("Query: "+q.toString());
-		ProofGraph p = new ProofGraph(q,apr,program);
+		ProofGraph p = new StateProofGraph(q,apr,program);
 		Prover prover = new DfsProver(apr);
 		Map<State,Double> sols = prover.prove(p);
 //		assertEquals(2,sols.size());

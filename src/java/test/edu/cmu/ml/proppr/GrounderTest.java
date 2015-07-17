@@ -18,6 +18,8 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.prove.DprProver;
+import edu.cmu.ml.proppr.prove.IdDprProver;
+import edu.cmu.ml.proppr.prove.IdPprProver;
 import edu.cmu.ml.proppr.prove.PprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Goal;
@@ -25,6 +27,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -51,6 +54,20 @@ public class GrounderTest {
 				"8",//neg
 				APROptions.MINALPH_DEFAULT); 
 		doGroundExampleTest("ppr: ",new PprProver(),
+				10, //nodes
+				23, //edges
+				1.0,//value
+				"9",  //pos
+				"10",//neg
+				APROptions.MINALPH_DEFAULT); 
+		doGroundExampleTest("dpr: ",new IdDprProver(),
+				10, //nodes
+				23, //edges
+				1.0,//value
+				"7",  //pos
+				"8",//neg
+				APROptions.MINALPH_DEFAULT); 
+		doGroundExampleTest("ppr: ",new IdPprProver(),
 				10, //nodes
 				23, //edges
 				1.0,//value
@@ -90,7 +107,7 @@ public class GrounderTest {
 		ix = new InferenceExample(Query.parse("predict(howard,Y)"), 
 				new Query[] {Query.parse("predict(howard,bird)")}, 
 				new Query[] {});
-		ProofGraph pg = new ProofGraph(ix,apr,program,plugins);
+		ProofGraph pg = ProofGraph.makeProofGraph(p.getProofGraphClass(),ix,apr,program,plugins);
 		State pos=null;
 		Map<State,Double> sols = p.prove(pg);
 		System.out.println(pg.serialize(ex));

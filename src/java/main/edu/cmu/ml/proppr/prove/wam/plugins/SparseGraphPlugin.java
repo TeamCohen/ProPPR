@@ -11,10 +11,12 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.util.APROptions;
-import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.TObjectIntMap;
@@ -29,8 +31,8 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 	private static final long LOGUPDATE_MS = 10000;
 
 	protected String name;
-	protected SymbolTable<String> functors=new SymbolTable<String>();
-	protected Map<Goal, Double> featureDict;
+	protected SymbolTable<String> functors=new SimpleSymbolTable<String>();
+	protected Map<Feature,Double> featureDict;
 	protected TIntObjectMap<SparseMatrixIndex> index;
 	protected TIntObjectMap<TObjectIntMap<String>> arg1s;
 	protected TIntObjectMap<String[]> arg2s;
@@ -73,7 +75,7 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 				throw new RuntimeException(e);
 			}
 		}
-		this.featureDict = new HashMap<Goal,Double>();
+		this.featureDict = new HashMap<Feature,Double>();
 		this.featureDict.put(WamPlugin.pluginFeature(this, matrixDir.getName()),1.0);
 		this.featureDict = Collections.unmodifiableMap(this.featureDict);
 		
@@ -120,7 +122,7 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 	}
 
 	@Override
-	protected Map<Goal, Double> getFD() {
+	protected Map<Feature, Double> getFD() {
 		return this.featureDict;
 	}
 

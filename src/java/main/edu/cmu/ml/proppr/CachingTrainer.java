@@ -18,7 +18,9 @@ import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
-import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
+import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
 
 public class CachingTrainer extends Trainer {
@@ -32,9 +34,10 @@ public class CachingTrainer extends Trainer {
 	}
 
 	@Override
-	public ParamVector train(Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ArrayList<PosNegRWExample> examples = new ArrayList<PosNegRWExample>();
 		RWExampleParser parser = new RWExampleParser();
+		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		int id=0;
 		long start = System.currentTimeMillis();
 		TrainingStatistics total = new TrainingStatistics();
@@ -43,7 +46,7 @@ public class CachingTrainer extends Trainer {
 			id++;
 			try {
 				long before = System.currentTimeMillis();
-				PosNegRWExample ex = parser.parse(s, builder.copy(),learner);
+				PosNegRWExample ex = parser.parse(s, builder, learner);
 				total.updateParsingStatistics(System.currentTimeMillis()-before);
 				examples.add(ex);
 			} catch (GraphFormatException e) {
@@ -57,12 +60,13 @@ public class CachingTrainer extends Trainer {
 	public ParamVector trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
 		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
+			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 
-		// loop over epochs
-		for (int i=0; i<numEpochs; i++) {
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		// repeat until ready to stop
+		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
 			this.learner.setEpoch(epoch);
@@ -80,7 +84,7 @@ public class CachingTrainer extends Trainer {
 			int id=1;
 			if (this.shuffle) Collections.shuffle(examples);
 			for (PosNegRWExample s : examples) {
-				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id));
+				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id, null));
 				cleanPool.submit(new TraceLosses(trained, id));
 			}
 			try {
@@ -95,12 +99,17 @@ public class CachingTrainer extends Trainer {
 			// finish any trailing updates for this epoch
 			this.learner.cleanupParams(paramVec,paramVec);
 
-			// loss status
+			// update loss status and signal the stopper
 			if(traceLosses) {
 				LossData lossThisEpoch = this.learner.cumulativeLoss();
+				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
+				if (epoch>1) {
+					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
+				}
 				lossLastEpoch = lossThisEpoch;
 			}
+			stopper.recordEpoch();
 
 			total.updateTrainingStatistics(statistics.trainTime);
 		}

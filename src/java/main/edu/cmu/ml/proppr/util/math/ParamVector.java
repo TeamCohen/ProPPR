@@ -1,4 +1,4 @@
-package edu.cmu.ml.proppr.util;
+package edu.cmu.ml.proppr.util.math;
 
 import java.util.ArrayList;
 import java.util.Collection;

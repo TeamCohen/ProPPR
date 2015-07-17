@@ -22,13 +22,13 @@ import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.ReLU;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
-import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -59,7 +59,7 @@ public class SRW {
 	protected static final double BOUND = 1.0e-15; //Prevent infinite log loss.
 	protected static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
-	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
+	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ReLU(); }
 	protected Set<String> untrainedFeatures;
 	protected int epoch;
 	protected SRWOptions c;
@@ -137,11 +137,11 @@ public class SRW {
 					suv[xvi] += params.get(ex.getGraph().featureLibrary.getSymbol(ex.getGraph().label_feature_id[lid])) * ex.getGraph().label_feature_weight[lid];
 				}
 				// ii. t_u += f(s_{uv}), a scalar:
-				tu += c.weightingScheme.edgeWeight(suv[xvi]);
+				tu += c.squashingFunction.edgeWeight(suv[xvi]);
 				// iii. df_{uv} = f'(s_{uv})* phi_{uv}, a vector, as sparse as phi_{uv}
 				// by looping over features i in phi_{uv}
 				double [] dfuv = new double[ex.getGraph().edge_labels_hi[eid] - ex.getGraph().edge_labels_lo[eid]] ;
-				double cee = c.weightingScheme.derivEdgeWeight(suv[xvi]);
+				double cee = c.squashingFunction.computeDerivative(suv[xvi]);
 				for (int lid = ex.getGraph().edge_labels_lo[eid], dfuvi = 0; lid < ex.getGraph().edge_labels_hi[eid]; lid++, dfuvi++) {
 					// iii. again
 					dfuv[dfuvi] = cee * ex.getGraph().label_feature_weight[lid];
@@ -154,7 +154,9 @@ public class SRW {
 			}
 			// end (c)
 
-			if (tu==0 && udeg>0) { throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); }
+//			if (tu==0 && udeg>0) { 
+//				throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); 
+//			}
 
 			// begin (d): for each neighbor v of u,
 			ex.dM_lo[uid] = new int[udeg];
@@ -173,7 +175,11 @@ public class SRW {
 				for (int lid = ex.getGraph().edge_labels_lo[eid], dfuvi = 0; lid < ex.getGraph().edge_labels_hi[eid]; lid++, dfuvi++) {
 					int fid = ex.getGraph().label_feature_id[lid];
 					dM_features.add(fid);
-					double dMuvi = scale * (tu * dfu[xvi][dfuvi] - c.weightingScheme.edgeWeight(suv[xvi]) * dtu.get(fid));
+					double dMuvi = (tu * dfu[xvi][dfuvi] - c.squashingFunction.edgeWeight(suv[xvi]) * dtu.get(fid));
+					if (tu == 0) { 
+						if (dMuvi != 0)
+							throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); 
+					} else dMuvi *= scale; 
 					dM_values.add(dMuvi);
 					seenFeatures[dfuvi] = fid; //save this feature so we can skip it later
 				}
@@ -185,12 +191,15 @@ public class SRW {
 					if (Arrays.binarySearch(seenFeatures, it.key())>=0) continue;
 					dM_features.add(it.key());
 					// zero the first term, since df_uv doesn't cover this feature
-					double dMuvi = scale * ( - c.weightingScheme.edgeWeight(suv[xvi]) * it.value());
+					double dMuvi = scale * ( - c.squashingFunction.edgeWeight(suv[xvi]) * it.value());
 					dM_values.add(dMuvi);
 				}
 				ex.dM_hi[uid][xvi] = dM_features.size();
 				// also create the scalar M_{uv} = f(s_{uv}) / t_u
-				ex.M[uid][xvi] = (c.weightingScheme.edgeWeight(suv[xvi]) / tu);
+				ex.M[uid][xvi] = c.squashingFunction.edgeWeight(suv[xvi]);
+				if (tu==0) {
+					if (ex.M[uid][xvi] != 0) throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString());
+				} else ex.M[uid][xvi] /= tu;
 			}
 		}
 		// discard extendible version in favor of primitive array
@@ -202,11 +211,7 @@ public class SRW {
 	public void initializeFeatures(ParamVector params, LearningGraph graph) {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
-				params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
-				//rosecatherinek	checking with no random perturb
-//				params.put(f,c.weightingScheme.defaultWeight());
-				
-//				params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*ThreadLocalRandom.current().nextDouble() : 0));
+				params.put(f,c.squashingFunction.defaultValue()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
 			}
 		}
 	}
@@ -338,7 +343,7 @@ public class SRW {
 		}
 
 //		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
-		if (nonzero==0) log.warn("0 gradient. Try another weighting scheme? "+ex.toString());
+		if (nonzero==0) log.warn("0 gradient. Try a different squashing function? "+ex.toString());
 		return gradient;
 	}
 	
@@ -418,8 +423,8 @@ public class SRW {
 
 
 	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
-	public WeightingScheme getWeightingScheme() {
-		return c.weightingScheme;
+	public SquashingFunction getSquashingFunction() {
+		return c.squashingFunction;
 	}
 	public void setEpoch(int e) {
 		this.epoch = e;
@@ -430,8 +435,8 @@ public class SRW {
 	public LossData cumulativeLoss() {
 		return this.cumloss.copy();
 	}
-	public void setWeightingScheme(WeightingScheme newWeightingScheme) {
-		c.weightingScheme = newWeightingScheme;
+	public void setSquashingFunction(SquashingFunction f) {
+		c.squashingFunction = f;
 	}
 	public SRWOptions getOptions() {
 		return c;

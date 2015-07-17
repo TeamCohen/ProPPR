@@ -1,6 +1,5 @@
 package edu.cmu.ml.proppr.prove.wam;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 

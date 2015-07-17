@@ -1,10 +1,10 @@
 package edu.cmu.ml.proppr.graph;
 
 import edu.cmu.ml.proppr.util.SymbolTable;
-import gnu.trove.iterator.TObjectDoubleIterator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
@@ -15,9 +15,9 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 	int index=0;
 	
 	@Override
-	public LearningGraph create() {
+	public LearningGraph create(SymbolTable<String> features) {
 		if (current != null) throw new IllegalStateException("ArrayLearningGraphBuilder not threadsafe");
-		current =  new LearningGraph(new SymbolTable<String>());
+		current =  new LearningGraph(features);
 		return current;
 	}
 
@@ -74,8 +74,11 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 		}
 		int edge_cursor=0;
 		int label_cursor=0;
+		int label_deps=0;
+		HashSet<Integer> outgoingFeatures = null;
 		for (int u=0; u<current.node_hi; u++) {
 			current.node_near_lo[u]=edge_cursor;
+			if (current.labelDependencySize() < 0) outgoingFeatures = new HashSet<Integer>();
 			if (outlinks[u] != null) {
 				for (RWOutlink o : outlinks[u]) {
 					current.edge_dest[edge_cursor] = o.nodeid;
@@ -83,14 +86,17 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 					for(Map.Entry<String,Double> it : o.fd.entrySet()) {
 						current.label_feature_id[label_cursor] = ((LearningGraph) g).featureLibrary.getId(it.getKey());
 						current.label_feature_weight[label_cursor] = it.getValue();
+						if (current.labelDependencySize() < 0) outgoingFeatures.add(current.label_feature_id[label_cursor]);
 						label_cursor++;
 					}
 					current.edge_labels_hi[edge_cursor] = label_cursor;
 					edge_cursor++;
 				}
+				if (current.labelDependencySize() < 0) label_deps += outgoingFeatures.size();
 			}
 			current.node_near_hi[u]=edge_cursor;
 		}
+		if (current.labelDependencySize() < 0) current.setLabelDependencies(label_deps);
 		init();
 	}
 	

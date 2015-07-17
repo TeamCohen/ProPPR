@@ -10,11 +10,14 @@ import org.apache.commons.cli.Options;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.graph.InferenceGraph;
+import edu.cmu.ml.proppr.graph.LightweightStateGraph;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.CustomConfiguration;
@@ -98,7 +101,7 @@ public class PathDprProver extends DprProver {
 		for (State s : b.backtrace) {
 			if (i<path.length && s.getJumpTo() == null)
 				return null;
-			path[--i] = current.asId(s);
+			path[--i] = current.getId(s);
 		}
 		return path;
 	}
@@ -124,14 +127,14 @@ public class PathDprProver extends DprProver {
 			return Double.compare(w.wt, this.wt);
 		}
 		/** Convert the array of state IDs to a string representation of state jumpto, feature, state jumpto, feature, etc **/
-		public String humanReadable(ProofGraph pg, Map<State,Double> ans) {
-			GroundedExample ex = pg.makeRWExample(ans);
-			InferenceGraph g = ex.getGraph();
+		public String humanReadable(StateProofGraph pg, Map<State,Double> ans) {
+//			GroundedExample ex = pg.makeRWExample(ans);
+			LightweightStateGraph g = pg.getGraph();
 			StringBuilder sb = new StringBuilder(String.format("%+1.8f ",this.wt)).append(this.path.length).append(" ");
 			for (int i=1; i<path.length; i++) {
 				sb.append(g.getState(path[i-1]).getJumpTo());
 				sb.append(" ->");
-				for (Goal phi : g.getFeatures(g.getState(path[i-1]), g.getState(path[i])).keySet()) {
+				for (Feature phi : g.getFeatures(g.getState(path[i-1]), g.getState(path[i])).keySet()) {
 					sb.append(phi).append(",");
 				}
 				sb.deleteCharAt(sb.length()-1);
@@ -156,7 +159,7 @@ public class PathDprProver extends DprProver {
 	}
 
 	@Override
-	public Map<State, Double> prove(ProofGraph pg) {
+	public Map<State, Double> prove(StateProofGraph pg) {
 		Map<State,Double> ret = super.prove(pg);
 		
 		//after proving, print top paths for each solution
@@ -176,7 +179,7 @@ public class PathDprProver extends DprProver {
 		CustomConfiguration c = new CustomConfiguration(args,
 				Configuration.USE_PARAMS, //input
 				0, //output
-				Configuration.USE_WAM|Configuration.USE_WEIGHTINGSCHEME, //constants
+				Configuration.USE_WAM|Configuration.USE_SQUASHFUNCTION, //constants
 				0 //modules
 				) {
 			String query;
@@ -205,7 +208,7 @@ public class PathDprProver extends DprProver {
 		PathDprProver p = new PathDprProver(c.apr);
 
 		Query query = Query.parse((String) c.getCustomSetting(null));
-		ProofGraph pg = new ProofGraph(query,c.apr,c.program,c.plugins);
+		StateProofGraph pg = new StateProofGraph(query,c.apr,c.program,c.plugins);
 		p.prove(pg);
 	}
 }

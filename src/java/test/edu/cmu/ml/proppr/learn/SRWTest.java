@@ -12,13 +12,14 @@ import edu.cmu.ml.proppr.RedBlueGraph;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
+import edu.cmu.ml.proppr.learn.ExampleFactory.PprExampleFactory;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.Exp;
+import edu.cmu.ml.proppr.learn.tools.ReLU;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ParamVector;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
@@ -33,14 +34,16 @@ public class SRWTest extends RedBlueGraph {
 	protected SRW srw;
 	protected ParamVector uniformParams;
 	protected TIntDoubleMap startVec;
+	protected ExampleFactory factory;
 	
 	
 	@Override
 	public void moreSetup(LearningGraphBuilder lgb) {
+		factory = new PprExampleFactory();
 		initSrw();
 		defaultSrwSettings();
 		uniformParams = makeParams(new ConcurrentHashMap<String,Double>());
-		for (String n : new String[] {"fromb","tob","fromr","tor"}) uniformParams.put(n,srw.getWeightingScheme().defaultWeight());
+		for (String n : new String[] {"fromb","tob","fromr","tor"}) uniformParams.put(n,srw.getSquashingFunction().defaultValue());
 		startVec = new TIntDoubleHashMap();
 		startVec.put(nodes.getId("r0"),1.0);
 	}
@@ -50,7 +53,7 @@ public class SRWTest extends RedBlueGraph {
 		srw.getOptions().set("apr","alpha","0.1");
 //		srw.setWeightingScheme(new LinearWeightingScheme());
 //		srw.setWeightingScheme(new ReLUWeightingScheme());
-		srw.setWeightingScheme(new ExpWeightingScheme());
+		srw.setSquashingFunction(new Exp());
 	}
 	
 	public void initSrw() { 
@@ -78,7 +81,7 @@ public class SRWTest extends RedBlueGraph {
 		return nextVec;
 	}
 	
-	public TIntDoubleMap myRWR(TIntDoubleMap startVec, LearningGraph g, int maxT, ParamVector params, WeightingScheme scheme) {
+	public TIntDoubleMap myRWR(TIntDoubleMap startVec, LearningGraph g, int maxT, ParamVector params, SquashingFunction scheme) {
 		TIntDoubleMap vec = startVec;
 		TIntDoubleMap nextVec = null;
 		for (int t=0; t<maxT; t++) {
@@ -91,7 +94,7 @@ public class SRWTest extends RedBlueGraph {
 					int v = g.edge_dest[eid];
 					double suv = 0.0;
 					for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
-						suv += Dictionary.safeGet(params, (g.featureLibrary.getSymbol(g.label_feature_id[fid])), scheme.defaultWeight()) * g.label_feature_weight[fid];
+						suv += Dictionary.safeGet(params, (g.featureLibrary.getSymbol(g.label_feature_id[fid])), scheme.defaultValue()) * g.label_feature_weight[fid];
 					}
 					double ew = scheme.edgeWeight(suv);
 					z+=ew;
@@ -101,7 +104,7 @@ public class SRWTest extends RedBlueGraph {
 					int v = g.edge_dest[eid];
 					double suv = 0.0;
 					for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
-						suv += Dictionary.safeGet(params, (g.featureLibrary.getSymbol(g.label_feature_id[fid])), scheme.defaultWeight()) * g.label_feature_weight[fid];
+						suv += Dictionary.safeGet(params, (g.featureLibrary.getSymbol(g.label_feature_id[fid])), scheme.defaultValue()) * g.label_feature_weight[fid];
 					}
 					double ew = scheme.edgeWeight(suv);
 					double inc = vec.get(u) * ew / z;
@@ -141,7 +144,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	public ParamVector makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		ParamVector grad = new SimpleParamVector<String>();
-		srw.accumulateGradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg), grad);
+		srw.accumulateGradient(paramVec, factory.makeExample("gradient",brGraph, query, pos,neg), grad);
 		return grad;
 	}
 	
@@ -167,7 +170,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		srw.clearLoss();
-		srw.accumulateGradient(paramVec, new PosNegRWExample(brGraph, query, pos,neg), new SimpleParamVector<String>());
+		srw.accumulateGradient(paramVec, factory.makeExample("loss",brGraph, query, pos,neg), new SimpleParamVector<String>());
 		return srw.cumulativeLoss().total();
 	}
 	public double makeLoss(ParamVector paramVec, PosNegRWExample example) {
@@ -211,32 +214,6 @@ public class SRWTest extends RedBlueGraph {
 		assertTrue(String.format("baselineLoss %f should be > than biasedLoss %f",baselineLoss,biasedLoss),
 				baselineLoss > biasedLoss);
 
-		double perturb_epsilon = 1e-10;
-		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
-			
-			ParamVector pert = uniformParams.copy();
-			pert.put(feature, pert.get(feature)+perturb_epsilon);
-			
-			srw.clearLoss();
-			ParamVector epsGrad = makeGradient(srw, pert, startVec, pos, neg);
-			double newLoss = srw.cumulativeLoss().total();
-			
-
-			double truediff = (newLoss-baselineLoss);
-			double approxdiff = (perturb_epsilon*baselineGrad.get(feature));
-			double percdiff = (truediff) != 0 ? Math.abs(((approxdiff) / (truediff))-1)*100 : 0;
-			System.err.println(String.format("%5s  true: %+1.8e  approx: %+1.8e  %%diff: %3.2f%%",
-					feature,
-					truediff,
-					approxdiff, 
-					percdiff));
-			
-			assertEquals("first order approximation on "+feature,
-					0,
-					percdiff,
-					10);
-		}
-		
 		double eps = .0001;
 		ParamVector nearlyUniformWeightVec = uniformParams.copy();
 //		TObjectDoubleMap<String> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg);
@@ -260,7 +237,7 @@ public class SRWTest extends RedBlueGraph {
 		query.put(nodes.getId("r0"), 1.0);
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
-		PosNegRWExample example = new PosNegRWExample(brGraph, query, pos, neg);
+		PosNegRWExample example = factory.makeExample("learn1",brGraph, query, pos, neg);
 		
 //		ParamVector weightVec = new SimpleParamVector();
 //		weightVec.put("fromb",1.01);

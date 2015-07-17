@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
@@ -27,7 +28,7 @@ public class EqualityTest {
 	public void test() throws LogicProgramException, IOException {
 		WamProgram program = WamBaseProgram.load(new File(EQUALITY_PROGRAM));
 		Prover prover = new DprProver();
-		ProofGraph moral = new ProofGraph(Query.parse("moral(X)"),new APROptions(), program);
+		ProofGraph moral = new StateProofGraph(Query.parse("moral(X)"),new APROptions(), program);
 		Collection<Query> bobs = prover.solvedQueries(moral).keySet();
 //		Map<State,Double> ans = prover.prove(moral);
 //		ArrayList<Query> bobs = new ArrayList<Query>();

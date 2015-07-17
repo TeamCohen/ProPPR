@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
@@ -29,7 +30,7 @@ public class DuplicateSignatureRuleTest {
 	public void test2() throws LogicProgramException, IOException {
 		APROptions apr = new APROptions("depth=10");
 		WamProgram program = WamBaseProgram.load(new File(PROGRAM));
-		ProofGraph pg = new ProofGraph(Query.parse("canExit(steve,X)"),apr,program);
+		ProofGraph pg = new StateProofGraph(Query.parse("canExit(steve,X)"),apr,program);
 		
 		Prover p = new TracingDfsProver(apr);
 		Map<Query,Double> result = p.solvedQueries(pg);

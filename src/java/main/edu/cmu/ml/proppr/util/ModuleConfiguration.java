@@ -11,15 +11,18 @@ import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.learn.DprSRW;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.SigmoidWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.Exp;
+import edu.cmu.ml.proppr.learn.tools.Linear;
+import edu.cmu.ml.proppr.learn.tools.ReLU;
+import edu.cmu.ml.proppr.learn.tools.Sigmoid;
+import edu.cmu.ml.proppr.learn.tools.Tanh;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
+import edu.cmu.ml.proppr.prove.IdDprProver;
+import edu.cmu.ml.proppr.prove.PriorityQueueProver;
 import edu.cmu.ml.proppr.prove.PathDprProver;
+import edu.cmu.ml.proppr.prove.IdPprProver;
 import edu.cmu.ml.proppr.prove.PprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
@@ -30,16 +33,17 @@ public class ModuleConfiguration extends Configuration {
 	private static final String SRW_MODULE_OPTION = "srw";
 	private static final String TRAINER_MODULE_OPTION = "trainer";
 	private static final String GROUNDER_MODULE_OPTION = "grounder";
-	private static final String WEIGHTINGSCHEME_MODULE_OPTION = "weightingScheme";
+	public  static final String SQUASHFUNCTION_MODULE_OPTION = "squashingFunction";
+	private static final String OLD_SQUASHFUNCTION_MODULE_OPTION = "weightingScheme";
 	private static final String PROVER_MODULE_OPTION = "prover";
 
-	private enum PROVERS { ppr, dpr, pdpr, dfs, tr };
-	private enum WEIGHTINGSCHEMES { linear, sigmoid, tanh, ReLU, exp };
+	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
+	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
 	private enum TRAINERS { cached, caching, streaming };
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
-	public WeightingScheme weightingScheme;
+	public SquashingFunction squashingFunction;
 	public Prover prover;
 	public ModuleConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		super(args,  inputFiles,  outputFiles,  constants,  modules);
@@ -52,10 +56,11 @@ public class ModuleConfiguration extends Configuration {
 
 		//modules
 		flags = modules(allFlags);
-		if(isOn(flags, USE_WEIGHTINGSCHEME))
+		if(isOn(flags, USE_SQUASHFUNCTION))
 			options.addOption(
 					OptionBuilder
-					.withLongOpt(WEIGHTINGSCHEME_MODULE_OPTION)
+					.withLongOpt(SQUASHFUNCTION_MODULE_OPTION)
+					.withLongOpt(OLD_SQUASHFUNCTION_MODULE_OPTION)
 					.withArgName("w")
 					.hasArg()
 					.withDescription("Default: ReLU\n"
@@ -74,8 +79,11 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: dpr\n"
 							+ "Available options:\n"
+							+ "ippr\n"
 							+ "ppr\n"
 							+ "dpr\n"
+							+ "idpr\n"
+							+ "qpr\n"
 							+ "pdpr\n"
 							+ "dfs\n"
 							+ "tr")
@@ -144,6 +152,7 @@ public class ModuleConfiguration extends Configuration {
 		int flags;
 		// modules
 		flags = modules(allFlags);
+
 		if (isOn(flags,USE_PROVER)) {
 			if (!line.hasOption(PROVER_MODULE_OPTION)) {
 				// default:
@@ -151,13 +160,24 @@ public class ModuleConfiguration extends Configuration {
 			} else {
 				String[] values = line.getOptionValue(PROVER_MODULE_OPTION).split(":");
 				switch (PROVERS.valueOf(values[0])) {
+				case ippr:
+					this.prover = new IdPprProver(apr);
+					break;
 				case ppr:
 					this.prover = new PprProver(apr);
+					break;
 				case dpr:
-						this.prover = new DprProver(apr);
+					this.prover = new DprProver(apr);
+					break;
+				case idpr:
+					this.prover = new IdDprProver(apr);
+					break;
+				case qpr:
+					this.prover = new PriorityQueueProver(apr);
 					break;
 				case pdpr:
 					this.prover = new PathDprProver(apr);
+					break;
 				case dfs:
 					this.prover = new DfsProver(apr);
 					break;
@@ -170,18 +190,18 @@ public class ModuleConfiguration extends Configuration {
 			}
 		}
 
-		if (anyOn(flags, USE_WEIGHTINGSCHEME | USE_PROVER | USE_SRW)) {
-			if (!line.hasOption(WEIGHTINGSCHEME_MODULE_OPTION)) {
+		if (anyOn(flags, USE_SQUASHFUNCTION | USE_PROVER | USE_SRW)) {
+			if (!line.hasOption(SQUASHFUNCTION_MODULE_OPTION)) {
 				// default:
-				this.weightingScheme = SRW.DEFAULT_WEIGHTING_SCHEME();
+				this.squashingFunction = SRW.DEFAULT_SQUASHING_FUNCTION();
 			} else {
-				switch(WEIGHTINGSCHEMES.valueOf(line.getOptionValue(WEIGHTINGSCHEME_MODULE_OPTION))) {
-				case linear: weightingScheme = new LinearWeightingScheme(); break;
-				case sigmoid: weightingScheme = new SigmoidWeightingScheme(); break;
-				case tanh: weightingScheme = new TanhWeightingScheme(); break;
-				case ReLU: weightingScheme = new ReLUWeightingScheme(); break;
-				case exp: weightingScheme = new ExpWeightingScheme(); break;
-				default: this.usageOptions(options, allFlags, "Unrecognized weighting scheme " + line.getOptionValue(WEIGHTINGSCHEME_MODULE_OPTION));
+				switch(SQUASHFUNCTIONS.valueOf(line.getOptionValue(SQUASHFUNCTION_MODULE_OPTION))) {
+				case linear: squashingFunction = new Linear(); break;
+				case sigmoid: squashingFunction = new Sigmoid(); break;
+				case tanh: squashingFunction = new Tanh(); break;
+				case ReLU: squashingFunction = new ReLU(); break;
+				case exp: squashingFunction = new Exp(); break;
+				default: this.usageOptions(options, allFlags, "Unrecognized squashing function " + line.getOptionValue(SQUASHFUNCTION_MODULE_OPTION));
 				}
 			}
 		}
@@ -233,9 +253,9 @@ public class ModuleConfiguration extends Configuration {
 
 		//modules
 		flags = modules(allFlags);
-		if (isOn(flags, USE_PROVER)) syntax.append(" [--").append(PROVER_MODULE_OPTION).append(" ppr | dpr | pdpr | dfs | tr ]");
-		if (isOn(flags, USE_WEIGHTINGSCHEME)) 
-			syntax.append(" [--").append(WEIGHTINGSCHEME_MODULE_OPTION).append(" linear | sigmoid | tanh | ReLU | exp]");
+		if (isOn(flags, USE_PROVER)) syntax.append(" [--").append(PROVER_MODULE_OPTION).append(" ippr | ppr | dpr | pdpr | dfs | tr ]");
+		if (isOn(flags, USE_SQUASHFUNCTION)) 
+			syntax.append(" [--").append(SQUASHFUNCTION_MODULE_OPTION).append(" linear | sigmoid | tanh | ReLU | exp]");
 		if (isOn(flags, USE_TRAINER)) syntax.append(" [--").append(TRAINER_MODULE_OPTION).append(" cached|streaming]");
 	}
 
@@ -304,8 +324,8 @@ public class ModuleConfiguration extends Configuration {
 			sb.append(String.format(FORMAT_STRING, "Prover")).append(": ").append(prover.getClass().getCanonicalName()).append("\n");
 		if (srw != null)
 			sb.append(String.format(FORMAT_STRING, "Walker")).append(": ").append(srw.getClass().getCanonicalName()).append("\n");
-		if (weightingScheme != null)
-			sb.append(String.format(FORMAT_STRING, "Weighting Scheme")).append(": ").append(weightingScheme.getClass().getCanonicalName()).append("\n");
+		if (squashingFunction != null)
+			sb.append(String.format(FORMAT_STRING, "Squashing function")).append(": ").append(squashingFunction.getClass().getCanonicalName()).append("\n");
 		sb.append(String.format(FORMAT_STRING, "APR Alpha")).append(": ").append(apr.alpha).append("\n");
 		sb.append(String.format(FORMAT_STRING, "APR Epsilon")).append(": ").append(apr.epsilon).append("\n");
 		sb.append(String.format(FORMAT_STRING, "APR Depth")).append(": ").append(apr.maxDepth).append("\n");

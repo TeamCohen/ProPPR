@@ -22,6 +22,9 @@ public class Multithreading<In,Out> {
 	public static final int DEFAULT_THROTTLE=NO_THROTTLE;
 	public static final boolean ORDER_MAINTAIN=true;
 	public static final boolean DEFAULT_ORDER=ORDER_MAINTAIN;
+	/** Note this log is NOT static to the class, but is 
+	 * passed in by the caller. 
+	 */
 	public Logger log;
 	private boolean maintainOrder;
 	
@@ -63,7 +66,8 @@ public class Multithreading<In,Out> {
 	 * @throws IOException 
 	 */
 	@SuppressWarnings("unchecked")
-	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,File outputFile, int throttle) throws IOException {
+	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,File outputFile, int throttle) throws IOException 
+	{
 		Writer w = new BufferedWriter(new FileWriter(outputFile));
 		executeJob(nThreads, streamer, transformer, (Cleanup<Out>) new WritingCleanup(w, this.log), throttle);
 		w.close();
@@ -77,7 +81,12 @@ public class Multithreading<In,Out> {
 	 * @param cleanup
 	 * @param throttle
 	 */
-	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,Cleanup<Out> cleanup,int throttle) {
+	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,Cleanup<Out> cleanup,int throttle) 
+	{
+		log.info("executeJob: threads "+nThreads
+						 +" streamer: "+streamer.getClass().getCanonicalName()
+						 +" transformer: "+transformer.getClass().getCanonicalName()
+						 +" throttle: "+throttle);
 		ExecutorService transformerPool = Executors.newFixedThreadPool(nThreads, new ThreadFactory() {
 			int next=1;
 			@Override

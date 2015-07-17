@@ -15,8 +15,8 @@ import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
@@ -71,7 +71,7 @@ public class DprSRW extends SRW {
 	public double totalEdgeProbWeight(LearningGraph g, int uid,  ParamVector p) {
 		double sum = 0.0;
 		for(int eid = g.node_near_lo[uid]; eid < g.node_near_hi[uid]; eid++) {
-			double ew = c.weightingScheme.edgeWeight(g,eid,p); 
+			double ew = c.squashingFunction.edgeWeight(g,eid,p); 
 			sum+=ew;
 		}
 		if (Double.isInfinite(sum)) return Double.MAX_VALUE;
@@ -131,7 +131,7 @@ public class DprSRW extends SRW {
 			for(int eid = ex.getGraph().node_near_lo[u], xvi = 0; eid < ex.getGraph().node_near_hi[u]; eid++, xvi++) {
 				int v = ex.getGraph().edge_dest[eid];
 				if(hasFeature(ex.getGraph(),eid,flid)) { //g.getFeatures(u, v).containsKey(feature)) {
-					drowSum += c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
+					drowSum += c.squashingFunction.computeDerivative(unwrappedDotP.get(v));
 				}
 			}
 			drowSums.put(flid, drowSum);
@@ -144,8 +144,8 @@ public class DprSRW extends SRW {
 		// update dr for other vertices:
 		for(int eid = ex.getGraph().node_near_lo[u], xvi = 0; eid < ex.getGraph().node_near_hi[u]; eid++, xvi++) {
 			int v = ex.getGraph().edge_dest[eid];
-			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
-			double ddotP = c.weightingScheme.derivEdgeWeight(unwrappedDotP.get(v));
+			double dotP = c.squashingFunction.edgeWeight(unwrappedDotP.get(v));
+			double ddotP = c.squashingFunction.computeDerivative(unwrappedDotP.get(v));
 			for(String feature : exampleFeatures) {
 				int flid = ex.getGraph().featureLibrary.getId(feature);
 				int contained = hasFeature(ex.getGraph(),eid,flid) ? 1 : 0;
@@ -165,10 +165,13 @@ public class DprSRW extends SRW {
 		for(int eid = ex.getGraph().node_near_lo[u], xvi = 0; eid < ex.getGraph().node_near_hi[u]; eid++, xvi++) {
 			int v = ex.getGraph().edge_dest[eid];
 			// calculate edge weight on v:
-			double dotP = c.weightingScheme.edgeWeight(unwrappedDotP.get(v));
+			double dotP = c.squashingFunction.edgeWeight(unwrappedDotP.get(v));
 			ex.r[v]+= (1 - stayProb) * (1 - c.apr.alpha) * (dotP / rowSum) * ru;
 		}
 	}
+	
+	@Override
+	protected void load(ParamVector params, PosNegRWExample example) {}
 
 	@Override	
 	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {

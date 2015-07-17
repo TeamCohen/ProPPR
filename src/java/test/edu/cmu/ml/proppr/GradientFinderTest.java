@@ -5,14 +5,15 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.ReLUWeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.ParamVector;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class GradientFinderTest extends RedBlueGraph {
 	public void setup() {
 		super.setup();
 		this.srw = new L2SRW();
-		this.srw.setWeightingScheme(new ReLUWeightingScheme<String>());
+		this.srw.setSquashingFunction(new ReLU<String>());
 		this.initTrainer();
 		
 		query = new TIntDoubleHashMap();
@@ -50,22 +51,27 @@ public class GradientFinderTest extends RedBlueGraph {
 				.append("\t").append(nodes.getId("r"+p)) //neg
 				.append("\t").append(brGraph.nodeSize()) // nodes
 				.append("\t").append(brGraph.edgeSize()) //edges
-				.append("\t");
+				.append("\t"); // waiting for .append(-1) // label dependencies
+				int labelDependencies = 0;
+				StringBuilder sb = new StringBuilder();
 				for (int i = 0; i<brGraph.getFeatureSet().size(); i++) {
-					if (i>0) serialized.append(":");
-					serialized.append(brGraph.featureLibrary.getSymbol(i+1));
+					if (i>0) sb.append(":");
+					sb.append(brGraph.featureLibrary.getSymbol(i+1));
 				}
 				for (int u=0; u<brGraph.node_hi; u++) {
+					HashSet<Integer> outgoingFeatures = new HashSet<Integer>();
 					for (int ec=brGraph.node_near_lo[u]; ec<brGraph.node_near_hi[u]; ec++) {
 						int v = brGraph.edge_dest[ec];
-						serialized.append("\t").append(u).append("->").append(v).append(":");
+						sb.append("\t").append(u).append("->").append(v).append(":");
 						for (int lc = brGraph.edge_labels_lo[ec]; lc < brGraph.edge_labels_hi[ec]; lc++) {
-							if (lc > brGraph.edge_labels_lo[ec]) serialized.append(",");
-							serialized.append(brGraph.label_feature_id[lc]).append("@").append(brGraph.label_feature_weight[lc]);
+							outgoingFeatures.add(brGraph.label_feature_id[lc]);
+							if (lc > brGraph.edge_labels_lo[ec]) sb.append(",");
+							sb.append(brGraph.label_feature_id[lc]).append("@").append(brGraph.label_feature_weight[lc]);
 						}
 					}
+					labelDependencies += outgoingFeatures.size() * (brGraph.node_near_hi[u]-brGraph.node_near_lo[u]);
 				}
-				
+				serialized.append(labelDependencies).append("\t").append(sb);
 				examples.add(serialized.toString());
 			}
 		}

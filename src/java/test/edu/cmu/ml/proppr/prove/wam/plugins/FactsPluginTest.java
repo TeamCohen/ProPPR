@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
@@ -27,7 +28,7 @@ public class FactsPluginTest {
 		FactsPlugin p = FactsPlugin.load(apr, new File(GrounderTest.FACTS), false);
 		WamProgram program = new WamBaseProgram();
 		Query q = Query.parse("validClass(X)");
-		ProofGraph pg = new ProofGraph(q,apr,program,p);
+		StateProofGraph pg = new StateProofGraph(q,apr,program,p);
 		Prover prover = new DprProver();
 		Map<String,Double> sols = prover.solutions(pg);
 		assertEquals(2,sols.size());

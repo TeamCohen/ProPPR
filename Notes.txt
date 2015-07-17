@@ -1,0 +1,59 @@
+status: 
+ - ippr is working
+ - but proofgraph seems to be generating way too many states on ssl/toy
+
+
+git remote -v
+origin	https://github.com/TeamCohen/ProPPR.git (fetch)
+origin	https://github.com/TeamCohen/ProPPR.git (push)
+wcohen@glosa:~/shared-home/code/ProPPR$ git push origin srw2.0
+
+http://ndpsoftware.com/git-cheatsheet.html
+
+textcat problem building code:
+ ~/code/prep-proppr/
+
+monitoring performance:
+ - jstack `ps -x | grep 'java' | head -1 | cut -d' ' -f1` | more
+
+
+thoughts:
+ I should write some code for accessing sparse vectors/matrices/tensors.
+ This plus two symtabs should be good for an inferenceGraph
+
+ sparseVec: int[] index; float[] value;
+ sparseMat: int[] index; sparseVec[] value;
+ sparseTens: int[] index; sparseMat[] value;
+ 
+ for (i=0; i<tens.index.length; i++) {
+   uid = tens.index[i];
+   mat = tens.value[i];
+   for (j=0; j<mat.index.length; j++) {
+      vid = mat.index[j];
+      vec = mat.value[j];
+      for (k=0; k.vec.index.length; k++) {
+        fid = vec.index[k];
+	fval = vec.value[k];
+      }
+   }
+
+ }
+
+also: for param vectors I should write LongDense with interface Vector
+and subclasses ArrayObjectVector<T>, ArrayFloatVector, and UnitVector.
+
+should also have a LongUnitVector which also implements a LongVector interface
+
+LongDenseVector {
+   // float[] val, 
+   // track virtualLength;
+   public inc(k,delta) {
+      growIfNeeded(k);
+      val[k] += delta;
+   }
+   public float get(k) { return val[k]; }
+}
+
+question - should I also use this for the nodeMap part of the CompactInferenceGraph? should I include that in the proof graph?
+
+for EdgeWeighter should include LongDenseVector + WeightingScheme

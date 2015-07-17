@@ -6,7 +6,7 @@ import java.util.Collections;
 
 import org.junit.Test;
 
-import edu.cmu.ml.proppr.util.MuParamVector;
+import edu.cmu.ml.proppr.util.math.MuParamVector;
 
 public class MuParamVectorTest {
 	private static final double EPS=1e-6;

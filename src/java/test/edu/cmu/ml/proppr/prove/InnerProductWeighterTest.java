@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 
 public class InnerProductWeighterTest {
@@ -18,18 +19,18 @@ public class InnerProductWeighterTest {
 	@Test
 	public void test() {
 		BasicConfigurator.configure(); Logger.getRootLogger().setLevel(Level.INFO);
-		HashMap<Goal,Double> weights = new HashMap<Goal,Double>();
-		weights.put(new Goal("feathers"), 0.5);
-		weights.put(new Goal("scales"), 0.3);
-		weights.put(new Goal("fur"), 0.7);
+		HashMap<Feature,Double> weights = new HashMap<Feature,Double>();
+		weights.put(new Feature("feathers"), 0.5);
+		weights.put(new Feature("scales"), 0.3);
+		weights.put(new Feature("fur"), 0.7);
 		InnerProductWeighter w = new InnerProductWeighter(weights);
-		Goal ng = new Goal("hair");
-		HashMap<Goal,Double> featureDict = new HashMap<Goal,Double>();
+		Feature ng = new Feature("hair");
+		HashMap<Feature,Double> featureDict = new HashMap<Feature,Double>();
 		featureDict.put(ng, 0.9);
 		featureDict.putAll(weights);
 		
 		assertFalse("Should start empty!",InnerProductWeighter.unknownFeatures.contains(ng));
-		for (Map.Entry<Goal,Double> e : featureDict.entrySet()) {
+		for (Map.Entry<Feature,Double> e : featureDict.entrySet()) {
 			e.setValue(e.getValue()-Math.random()/10);
 		}
 		w.w(featureDict);

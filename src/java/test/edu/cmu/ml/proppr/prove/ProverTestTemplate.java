@@ -18,9 +18,12 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
+import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.prove.FeatureDictWeighter;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.Feature;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
@@ -30,6 +33,8 @@ import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 
 public abstract class ProverTestTemplate {
 	private static final Logger log = Logger.getLogger(ProverTestTemplate.class);
@@ -58,22 +63,35 @@ public abstract class ProverTestTemplate {
 	public void testProveState() throws LogicProgramException {
 		log.info("testProveState");
 		FeatureDictWeighter w = new InnerProductWeighter();
-		w.put(new Goal("milk"),2);
+		SymbolTable<Feature> featureTab = new SimpleSymbolTable<Feature>();
+		int milk = featureTab.getId(new Feature("milk"));
+		w.put(featureTab.getSymbol(milk),2);
 		prover.setWeighter(w);
 
-		ProofGraph pg = new ProofGraph(Query.parse("isa(elsie,X)"), apr, lpMilk, fMilk);
+		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),
+				new InferenceExample(Query.parse("isa(elsie,X)"),null,null), apr, featureTab, lpMilk, fMilk);
 		Map<State,Double> dist = prover.prove(pg);//("isa","elsie","X"));
 
+		double query=0.0;
+		double platypus=0.0;
+		double others=0.0;
+		double all=0.0;
 		for(Map.Entry<State, Double> s : dist.entrySet()) {
-			System.out.println(pg.fill(s.getKey()));
-//			if (s.getKey().getHeadGoal().getFunctor().equals("givesMilk")) {
-//				assertEquals(proveStateAnswers[0], s.getValue(), 1e-5);
-//			} else if (s.getKey().getHeadGoal().getFunctor().equals("isa")){
-//				assertEquals(proveStateAnswers[2], s.getValue(), 1e-5);
-//			} else {
-//				assertEquals(proveStateAnswers[1], s.getValue(), 1e-5);
-//			} 
+			Query q = pg.fill(s.getKey());
+			String arg2 = q.getRhs()[0].getArg(1).getName();
+			if ("platypus".equals(arg2)) { platypus = Math.max(platypus, s.getValue()); }
+			else if ("X1".equals(arg2)) { query = Math.max(query, s.getValue()); }
+			else { others = Math.max(others, s.getValue()); }
+			System.out.println(q+"\t"+s.getValue());
+			all += s.getValue();
 		}
+		System.out.println();
+		System.out.println("query    weight: "+query);
+		System.out.println("platypus weight: "+platypus);
+		System.out.println("others   weight: "+others);
+//		assertTrue("query should retain most weight",query > Math.max(platypus,others));
+		assertTrue("milk-featured paths should score higher than others",platypus>others);
+		assertEquals("Total weight of all states should be around 1.0",1.0,all,10*this.apr.epsilon);
 	}
 	
 //	@Test

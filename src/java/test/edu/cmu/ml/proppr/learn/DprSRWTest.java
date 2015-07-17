@@ -10,19 +10,21 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.DprSRW;
-import edu.cmu.ml.proppr.learn.tools.ExpWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.LinearWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.SigmoidWeightingScheme;
-import edu.cmu.ml.proppr.learn.tools.TanhWeightingScheme;
+import edu.cmu.ml.proppr.learn.ExampleFactory.DprExampleFactory;
+import edu.cmu.ml.proppr.learn.tools.Exp;
+import edu.cmu.ml.proppr.learn.tools.Linear;
+import edu.cmu.ml.proppr.learn.tools.Sigmoid;
+import edu.cmu.ml.proppr.learn.tools.Tanh;
 import edu.cmu.ml.proppr.util.Dictionary;
-import edu.cmu.ml.proppr.util.MuParamVector;
-import edu.cmu.ml.proppr.util.ParamVector;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.math.MuParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 
 public class DprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
 		srw = new DprSRW();
+		factory = new DprExampleFactory();
 	}
 	
 	@Override

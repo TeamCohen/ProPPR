@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.prove.wam.ConstantArgument;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Outlink;
@@ -42,22 +43,22 @@ public class WamInterpreterTest {
 		int queryStartAddr = program.size();
 		query.variabilize();
 		program.append(query);
-		Map<Goal,Double> features = wamInterp.executeWithoutBranching(queryStartAddr);
+		Map<Feature,Double> features = wamInterp.executeWithoutBranching(queryStartAddr);
 		assertEquals(0,features.size());
-		List<State> result = allSolutionsDFS(wamInterp, makeFeatures(new Goal("root")));
+		List<State> result = allSolutionsDFS(wamInterp, makeFeatures(new Feature("root")));
 		program.revert();
 		return result;
 		
 	}
-	public Map<Goal,Double> makeFeatures(Goal g) {
-		TreeMap<Goal,Double> ret = new TreeMap<Goal,Double>();
+	public Map<Feature,Double> makeFeatures(Feature g) {
+		TreeMap<Feature,Double> ret = new TreeMap<Feature,Double>();
 		ret.put(g,1.0);
 		return ret;
 	}
-	public List<State> allSolutionsDFS(WamInterpreter wamInterp, Map<Goal,Double> incomingFeatures) {
+	public List<State> allSolutionsDFS(WamInterpreter wamInterp, Map<Feature,Double> incomingFeatures) {
 		return allSolutionsDFS(wamInterp,incomingFeatures,0,new ArrayList<State>());
 	}
-	public List<State> allSolutionsDFS(WamInterpreter wamInterp, Map<Goal,Double> incomingFeatures,int depth,List<State> tail) {
+	public List<State> allSolutionsDFS(WamInterpreter wamInterp, Map<Feature, Double> fd,int depth,List<State> tail) {
 		if (depth >= MAXDEPTH) return tail;
 		if (wamInterp.getState().isCompleted()) {
 			tail.add(wamInterp.getState());
@@ -79,7 +80,7 @@ public class WamInterpreterTest {
 			for (Integer addr : wamInterp.getProgram().getAddresses(wamInterp.getState().getJumpTo())) {
 				wamInterp.restoreState(savedState);
 				//try and match the rule head
-				Map<Goal,Double> features = wamInterp.executeWithoutBranching(addr);
+				Map<Feature,Double> features = wamInterp.executeWithoutBranching(addr);
 				if (!features.isEmpty() && !wamInterp.getState().isFailed()) {
 					wamInterp.executeWithoutBranching();
 					if (!wamInterp.getState().isFailed()) {

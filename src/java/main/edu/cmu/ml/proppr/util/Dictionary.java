@@ -1,5 +1,7 @@
 package edu.cmu.ml.proppr.util;
 
+import edu.cmu.ml.proppr.util.math.LongDense;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.iterator.TObjectDoubleIterator;
@@ -218,6 +220,15 @@ public class Dictionary {
 		return sb;
 	}
 
+	public static StringBuilder buildString(float[] keys, StringBuilder sb, String delim, boolean first) {
+		for (float t : keys) { 
+			if (first) first = false;
+			else sb.append(delim);
+			sb.append(t); 
+		}
+		return sb;
+	}
+	
 	// augh java primitives
 	public static StringBuilder buildString(int[] keys, StringBuilder sb, String delim) {
 		return buildString(keys,sb,delim,true);

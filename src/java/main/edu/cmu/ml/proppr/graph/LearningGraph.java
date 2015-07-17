@@ -67,7 +67,8 @@ public class LearningGraph {
 	public void serialize(StringBuilder serialized) {
 		serialized.append(nodeSize()) // nodes
 		.append(LearningGraphBuilder.TAB).append(edgeSize()) //edges
-		.append(LearningGraphBuilder.TAB).append(labelDependencySize()); // label dependencies
+		.append(LearningGraphBuilder.TAB).append(labelDependencySize()) // label dependencies
+		.append(LearningGraphBuilder.TAB);
 		for (int i = 0; i<getFeatureSet().size(); i++) {
 			if (i>0) serialized.append(LearningGraphBuilder.FEATURE_INDEX_DELIM);
 			serialized.append(featureLibrary.getSymbol(i+1));

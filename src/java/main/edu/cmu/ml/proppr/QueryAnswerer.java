@@ -1,9 +1,11 @@
 package edu.cmu.ml.proppr;
 
+import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.WeightingScheme;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.*;
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
@@ -14,13 +16,15 @@ import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.WamQueryProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
-import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
 
@@ -64,7 +68,8 @@ public class QueryAnswerer {
 	protected boolean normalize;
 	protected int nthreads;
 	protected int numSolutions;
-	public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads, int topk) {
+	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>();
+public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads, int topk) {
 		this.apr = apr;
 		this.program = program;
 		this.plugins = plugins;
@@ -115,13 +120,16 @@ public class QueryAnswerer {
 	public Map<State,Double> getSolutions(Prover prover, ProofGraph pg) throws LogicProgramException {
 		return prover.prove(pg);
 	}
-	public void addParams(Prover prover, ParamVector<String,?> params, WeightingScheme<Goal> wScheme) {
-		prover.setWeighter(InnerProductWeighter.fromParamVec(params, wScheme));
+	public void addParams(Prover prover, ParamVector<String,?> params, SquashingFunction<Goal> f) {
+		InnerProductWeighter w = InnerProductWeighter.fromParamVec(params, f); 
+		prover.setWeighter(w);
+		for (Feature g : w.getWeights().keySet()) this.featureTable.insert(g);
 	}
 
 	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
-		ProofGraph pg = new ProofGraph(query, apr, program, plugins);
-		if(log.isInfoEnabled()) log.info("Querying: "+query);
+		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(), 
+				new InferenceExample(query,null,null), apr, featureTable, program, plugins);
+		if(log.isDebugEnabled()) log.debug("Querying: "+query);
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);
 		long end = System.currentTimeMillis();
@@ -139,7 +147,7 @@ public class QueryAnswerer {
 		}
 		List<Map.Entry<Query,Double>> solutionDist = Dictionary.sort(solutions);
 		//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
-		if(log.isInfoEnabled()) log.info("Writing "+solutionDist.size()+" solutions...");
+		if(log.isDebugEnabled()) log.debug("Writing "+solutionDist.size()+" solutions...");
 		StringBuilder sb = new StringBuilder("# proved ").append(String.valueOf(id)).append("\t").append(query.toString())
 				.append("\t").append((end - start) + " msec\n");
 		int rank = 0;
@@ -155,7 +163,9 @@ public class QueryAnswerer {
 		return sb.toString();
 	}
 
-	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException {
+	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException 
+	{
+		System.out.println("called findSolutions");
 		Multithreading<Query,String> m = new Multithreading<Query,String>(log, maintainOrder);
 		m.executeJob(
 				this.nthreads, 
@@ -226,7 +236,7 @@ public class QueryAnswerer {
 		try {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_ANSWERS;
-			int modules = Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME;
+			int modules = Configuration.USE_PROVER | Configuration.USE_SQUASHFUNCTION;
 			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
 			QueryAnswererConfiguration c = new QueryAnswererConfiguration(
 					args,
@@ -236,10 +246,11 @@ public class QueryAnswerer {
 			if(log.isInfoEnabled()) log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
-				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.weightingScheme);
+				qa.addParams(c.prover, new SimpleParamVector<String>(Dictionary.load(file, new ConcurrentHashMap<String,Double>())), c.squashingFunction);
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();
+			System.out.println("calling findSolutions");
 			qa.findSolutions(c.queryFile, c.solutionsFile, c.maintainOrder);
 			System.out.println("Query-answering time: "+(System.currentTimeMillis()-start));
 

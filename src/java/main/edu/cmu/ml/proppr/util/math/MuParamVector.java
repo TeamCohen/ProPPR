@@ -1,4 +1,4 @@
-package edu.cmu.ml.proppr.util;
+package edu.cmu.ml.proppr.util.math;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -7,6 +7,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import edu.cmu.ml.proppr.util.TimestampedWeight;
+
 /**
  * A version of the parameter vector which also tracks the last update time of each key
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
@@ -14,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MuParamVector<F> extends ParamVector<F,TimestampedWeight> {
 	private ConcurrentHashMap<F,TimestampedWeight> backingStore;
-	private int count=0;
+	private long count=0;
 	
 	public MuParamVector() {
 		this.backingStore = new ConcurrentHashMap<F,TimestampedWeight>();
@@ -52,7 +54,7 @@ public class MuParamVector<F> extends ParamVector<F,TimestampedWeight> {
 	public int getLast(F key) {
 		if (!this.backingStore.containsKey(key)) 
 			return 0;
-		return this.count - this.backingStore.get(key).k;
+		return (int) -(this.backingStore.get(key).k - count);
 	}
 	
 	public void setLast(Set<F> keys) {

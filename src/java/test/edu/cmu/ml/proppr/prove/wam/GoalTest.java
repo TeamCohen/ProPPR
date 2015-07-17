@@ -10,7 +10,7 @@ import org.junit.Test;
 import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Query;
-import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 
 public class GoalTest {
 

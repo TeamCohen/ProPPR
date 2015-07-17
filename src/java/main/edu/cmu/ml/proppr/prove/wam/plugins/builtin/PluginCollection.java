@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr.prove.wam.plugins.builtin;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
@@ -29,13 +30,13 @@ def outlinks(self,state,wamInterp,computeFeatures=True):
 **/
 public abstract class PluginCollection extends WamPlugin {
 	protected Map<String,PluginFunction> registry;
-	protected Map<Goal,Double> fd;
+	protected Map<Feature, Double> fd;
 	// TODO: helpText
 	
 	public PluginCollection(APROptions apr) {
 		super(apr);
-		this.fd = new HashMap<Goal,Double>();
-		this.fd.put(Query.parseGoal("builtin"), 1.0);
+		this.fd = new HashMap<Feature,Double>();
+		this.fd.put(new Feature("builtin"), 1.0);
 	}
 
 	@Override

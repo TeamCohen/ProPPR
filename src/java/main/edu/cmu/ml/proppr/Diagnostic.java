@@ -20,11 +20,11 @@ import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.math.ParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
-import edu.cmu.ml.proppr.util.ParamVector;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,7 +49,7 @@ public class Diagnostic {
 			final ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
 			final SRW srw = c.srw;
 			final ParamVector params = srw.setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(16,(float) 0.75,24)));
-			for (String f : srw.untrainedFeatures()) params.put(f,srw.getWeightingScheme().defaultWeight());
+			for (String f : srw.untrainedFeatures()) params.put(f,srw.getSquashingFunction().defaultValue());
 			srw.setEpoch(1);
 			srw.clearLoss();
 			srw.untrainedFeatures().add("id(restart)");

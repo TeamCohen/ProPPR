@@ -16,6 +16,10 @@ all: results.txt
 clean:
 	rm -f *results.txt params.wts *.grounded *.solutions.txt
 
+results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
+	echo phase subset uR mR uMRR mMRR uMAP mMAP > $@
+	cat $^ >> $@
+
 graphKey: pre.${TRAIN}.examples.grounded post.${TRAIN}.examples.grounded
 
 pre.%.examples.grounded: %.examples

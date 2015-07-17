@@ -19,7 +19,7 @@ public class PropertiesConfigurationTest {
 				0,
 				Configuration.USE_PARAMS,
 				Configuration.USE_FORCE,
-				Configuration.USE_PROVER | Configuration.USE_WEIGHTINGSCHEME);
+				Configuration.USE_PROVER | Configuration.USE_SQUASHFUNCTION);
 		assertTrue("Didn't fetch properties from file",c.paramsFile != null);
 		assertTrue("Didn't prefer command line properties",c.prover instanceof DfsProver);
 		assertTrue("Didn't fetch unary argument",c.force);
