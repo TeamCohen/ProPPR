@@ -1,13 +1,8 @@
 package edu.cmu.ml.proppr;
 
-import java.io.File;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -15,60 +10,60 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
+import edu.cmu.ml.proppr.learn.AdaGradSRW;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
+import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
-import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
-import edu.cmu.ml.proppr.util.FileBackedIterable;
 import edu.cmu.ml.proppr.util.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleParamVector;
-import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
-import edu.cmu.ml.proppr.util.multithreading.Transformer;
-import gnu.trove.map.TObjectDoubleMap;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-public class Trainer {
-	private static final Logger log = Logger.getLogger(Trainer.class);
+/**
+ * Version of the Trainer class which uses Adaptive Sub Gradient method (AdaGrad) instead of 
+ * Stochastic Gradient Descent 
+ * 
+ * @author rosecatherinek
+ *
+ */
+public class AdaGradTrainer {
+	private static final Logger log = Logger.getLogger(AdaGradTrainer.class);
 	public static final int DEFAULT_CAPACITY = 16;
 	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
 	protected int throttle;
 
-	protected SRW learner;
+	protected AdaGradSRW agLearner;
 	protected int epoch;
 	LossData lossLastEpoch;
 	TrainingStatistics statistics=new TrainingStatistics();
 
-	public Trainer(SRW learner, int nthreads, int throttle) {
-		this.learner = learner;
+	public AdaGradTrainer(AdaGradSRW agLearner, int nthreads, int throttle) {
+		this.agLearner = agLearner;
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
 
-		learner.untrainedFeatures().add("fixedWeight");
-		learner.untrainedFeatures().add("id(trueLoop)");
-		learner.untrainedFeatures().add("id(trueLoopRestart)");
-		learner.untrainedFeatures().add("id(restart)");
+		agLearner.untrainedFeatures().add("fixedWeight");
+		agLearner.untrainedFeatures().add("id(trueLoop)");
+		agLearner.untrainedFeatures().add("id(trueLoopRestart)");
+		agLearner.untrainedFeatures().add("id(restart)");
 	}
 
-	public Trainer(SRW srw) {
-		this(srw, 1, Multithreading.DEFAULT_THROTTLE);
+	public AdaGradTrainer(AdaGradSRW agSRW) {
+		this(agSRW, 1, Multithreading.DEFAULT_THROTTLE);
 	}
 
 	public class TrainingStatistics {
@@ -122,7 +117,7 @@ public class Trainer {
 	}
 
 	public void doExample(PosNegRWExample x, ParamVector<String,?> paramVec, boolean traceLosses) {
-		this.learner.trainOnExample(paramVec, x);
+		this.agLearner.trainOnExample(paramVec, x);
 	}
 
 	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, int numEpochs, boolean traceLosses) {
@@ -136,9 +131,15 @@ public class Trainer {
 	}
 
 	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
-		ParamVector paramVec = this.learner.setupParams(initialParamVec);
-		if (paramVec.size() == 0)
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getWeightingScheme().defaultWeight());
+		ParamVector paramVec = this.agLearner.setupParams(initialParamVec);
+		if (paramVec.size() == 0){
+			for (String f : this.agLearner.untrainedFeatures()) paramVec.put(f, this.agLearner.getWeightingScheme().defaultWeight());
+		}
+		
+		//@rck AG
+		//create a cuncurrent hash map to store the running total of the squares of the gradient
+		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
+		
 		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		int poolSize = Math.max(this.nthreads/2, 1);
@@ -149,11 +150,11 @@ public class Trainer {
 		for (int i=0; i<numEpochs; i++) {
 			// set up current epoch
 			this.epoch++;
-			this.learner.setEpoch(epoch);
+			this.agLearner.setEpoch(epoch);
 			log.info("epoch "+epoch+" ...");
 
 			// reset counters & file pointers
-			this.learner.clearLoss();
+			this.agLearner.clearLoss();
 			this.statistics = new TrainingStatistics();
 			parseThreads.reset();
 			trainThreads.reset();
@@ -171,7 +172,7 @@ public class Trainer {
 			for (String s : examples) {
 				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
 				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = trainPool.submit(new Train(parsed, paramVec, learner, id));
+				Future<Integer> trained = trainPool.submit(new AdaGradTrain(parsed, paramVec, totSqGrad, agLearner, id));
 				cleanPool.submit(new TraceLosses(trained, id));
 				start = System.currentTimeMillis();
 			}
@@ -193,11 +194,11 @@ public class Trainer {
 			}
 
 			// finish any trailing updates for this epoch
-			this.learner.cleanupParams(paramVec,paramVec);
+			this.agLearner.cleanupParams(paramVec,paramVec);
 
 			// loss status
 			if(traceLosses) {
-				LossData lossThisEpoch = this.learner.cumulativeLoss();
+				LossData lossThisEpoch = this.agLearner.cumulativeLoss();
 				printLossOutput(lossThisEpoch);
 				lossLastEpoch = lossThisEpoch;
 			}
@@ -234,9 +235,9 @@ public class Trainer {
 		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
+			for (String f : this.agLearner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
-		paramVec = this.learner.setupParams(paramVec);
+		paramVec = this.agLearner.setupParams(paramVec);
 
 		//		
 		//		//WW: accumulate example-size normalized gradient
@@ -259,7 +260,7 @@ public class Trainer {
 		int id=1;
 		for (String s : examples) {
 			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id));
+			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, agLearner, id));
 			cleanPool.submit(new TraceLosses(gradfound, id));
 		}
 		parsePool.shutdown();
@@ -273,7 +274,7 @@ public class Trainer {
 			log.error("Interrupted?",e);
 		}
 
-		this.learner.cleanupParams(paramVec, sumGradient);
+		this.agLearner.cleanupParams(paramVec, sumGradient);
 
 		//WW: renormalize by the total number of queries
 		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
@@ -308,7 +309,7 @@ public class Trainer {
 		public PosNegRWExample call() throws Exception {
 			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
-			PosNegRWExample ex = new RWExampleParser().parse(in, builder.copy(), learner);
+			PosNegRWExample ex = new RWExampleParser().parse(in, builder.copy(), agLearner);
 			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
 			statistics.updateParsingStatistics(System.currentTimeMillis()-start);
 			return ex;
@@ -321,23 +322,25 @@ public class Trainer {
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
 	 *
 	 */
-	protected class Train implements Callable<Integer> {
+	protected class AdaGradTrain implements Callable<Integer> {
 		Future<PosNegRWExample> in;
 		ParamVector paramVec;
-		SRW learner;
+		AdaGradSRW agLearner;
+		SimpleParamVector<String> totSqGrad;
 		int id;
-		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, SRW learner, int id) {
+		public AdaGradTrain(Future<PosNegRWExample> parsed, ParamVector paramVec, SimpleParamVector<String> totSqGrad, AdaGradSRW agLearner, int id) {
 			this.in = parsed;
 			this.id = id;
-			this.learner = learner;
+			this.agLearner = agLearner;
 			this.paramVec = paramVec;
+			this.totSqGrad = totSqGrad;
 		}
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
 			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
-			learner.trainOnExample(paramVec, ex);
+			agLearner.trainOnExample(paramVec, totSqGrad, ex);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
 			
@@ -434,7 +437,13 @@ public class Trainer {
 			}
 			log.info("Training model parameters on "+groundedFile+"...");
 			long start = System.currentTimeMillis();
-			ParamVector params = c.trainer.train(
+			
+			//@rck AG
+			AdaGradSRW agSRW = new AdaGradSRW(c.srw.getOptions());
+			AdaGradTrainer agTrainer = new AdaGradTrainer(agSRW, c.nthreads, c.throttle);
+			
+			
+			ParamVector params = agTrainer.train(
 					new ParsedFile(groundedFile), 
 					new ArrayLearningGraphBuilder(), 
 					c.epochs, 

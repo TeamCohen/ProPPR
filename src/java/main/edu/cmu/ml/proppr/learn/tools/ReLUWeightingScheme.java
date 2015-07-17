@@ -17,6 +17,9 @@ public class ReLUWeightingScheme<G> extends WeightingScheme<G> {
 	@Override
 	public double defaultWeight() {
 		return 1.0;
+//		rosecatherinek  Check default of 0
+//		return 0.0;
+		
 	}
 
 	@Override

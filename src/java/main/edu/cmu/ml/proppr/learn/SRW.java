@@ -55,9 +55,9 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
  *
  */
 public class SRW {	
-	private static final Logger log = Logger.getLogger(SRW.class);
-	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
-	private static Random random = new Random();
+	protected static final Logger log = Logger.getLogger(SRW.class);
+	protected static final double BOUND = 1.0e-15; //Prevent infinite log loss.
+	protected static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
 	public static WeightingScheme DEFAULT_WEIGHTING_SCHEME() { return new ReLUWeightingScheme(); }
 	protected Set<String> untrainedFeatures;
@@ -82,9 +82,12 @@ public class SRW {
 
 		initializeFeatures(params, example.getGraph());
 		prepareForExample(params, example.getGraph(), params);
+		//rosecatherinek 	Testing w
+		ParamVector pBefore = params;
 		load(params, example);
 		inference(params, example);
 		sgd(params, example);
+		ParamVector pAfter = params;
 	}
 
 	public void accumulateGradient(ParamVector params, PosNegRWExample example, ParamVector accumulator) {
@@ -200,7 +203,10 @@ public class SRW {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
 				params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
-				//params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*ThreadLocalRandom.current().nextDouble() : 0));
+				//rosecatherinek	checking with no random perturb
+//				params.put(f,c.weightingScheme.defaultWeight());
+				
+//				params.put(f,c.weightingScheme.defaultWeight()+ (trainable(f) ? 0.01*ThreadLocalRandom.current().nextDouble() : 0));
 			}
 		}
 	}
@@ -223,6 +229,8 @@ public class SRW {
 
 	}
 	protected void inferenceUpdate(PosNegRWExample example) {
+		//rosecatherinek 
+//		System.out.println("alpha = " + c.apr.alpha);
 		PprExample ex = (PprExample) example;
 		double[] pNext = new double[ex.getGraph().node_hi];
 		TIntDoubleMap[] dNext = new TIntDoubleMap[ex.getGraph().node_hi];
@@ -275,6 +283,8 @@ public class SRW {
 			grad.advance();
 			if (grad.value()==0) continue;
 			String feature = ex.getGraph().featureLibrary.getSymbol(grad.key());
+			//rosecatherinek check gradient
+//			System.out.println("gradient: " + feature + ": " + grad.value());
 			if (trainable(feature)) params.adjustValue(feature, - learningRate() * grad.value());
 		}
 	}
