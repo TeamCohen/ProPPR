@@ -178,7 +178,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		}
 
 		// foreach src node
-		for (int u=getRootId(); u<this.nodeSize(); u++) {
+		for (int u=getRootId(); u<=this.nodeSize(); u++) {
 			SimpleSparse.FloatMatrix nearu = this.nodeVec.get(u);
 			if (nearu==null) continue;
 			HashSet<Integer> outgoingFeatures = new HashSet<Integer>();
