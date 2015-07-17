@@ -1,9 +1,9 @@
 package edu.cmu.ml.proppr.learn;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 

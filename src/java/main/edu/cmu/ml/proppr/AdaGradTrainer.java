@@ -25,10 +25,10 @@ import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
-import edu.cmu.ml.proppr.util.ParamVector;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
-import edu.cmu.ml.proppr.util.SimpleParamVector;
+import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
 
@@ -133,7 +133,7 @@ public class AdaGradTrainer {
 	public ParamVector train(Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.agLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0){
-			for (String f : this.agLearner.untrainedFeatures()) paramVec.put(f, this.agLearner.getWeightingScheme().defaultWeight());
+			for (String f : this.agLearner.untrainedFeatures()) paramVec.put(f, this.agLearner.getSquashingFunction().defaultValue());
 		}
 		
 		//@rck AG
@@ -427,7 +427,7 @@ public class AdaGradTrainer {
 			int inputFiles = Configuration.USE_TRAIN;
 			int outputFiles = Configuration.USE_PARAMS;
 			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
-			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_WEIGHTINGSCHEME;
+			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
 			ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
 			log.info(c.toString());
 
