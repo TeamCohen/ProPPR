@@ -50,7 +50,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		this.moveProbability = 1.0-stayProbability;
 	}
 
-	public Prover copy() {
+	public Prover<CachingIdProofGraph> copy() {
 		IdDprProver copy = new IdDprProver(this.stayProbability, apr);
 		copy.setWeighter(weighter);
 		return copy;
@@ -68,7 +68,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		if (this.weighter.weights.size()==0) 
 			params = new LongDense.UnitVector();
 		else 
-			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
+			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue());
 		//State state0 = pg.getStartState();
 		//r.put(state0, 1.0);
 		int state0 = pg.getRootId();

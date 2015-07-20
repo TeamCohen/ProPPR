@@ -121,7 +121,7 @@ public class Trainer {
 		}
 	}
 
-	protected ParamVector createParamVector() {
+	protected ParamVector<String,?> createParamVector() {
 		return new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads));
 	}
 
@@ -129,8 +129,8 @@ public class Trainer {
 		this.learner.trainOnExample(paramVec, x);
 	}
 
-	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
-		ParamVector initParams = null;
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
+		ParamVector<String,?> initParams = null;
 		if (initialParamVecFile != null) {
 			log.info("loading initial params from "+initialParamVecFile);
 			initParams = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(initialParamVecFile), new ConcurrentHashMap<String,Double>()));
@@ -147,8 +147,8 @@ public class Trainer {
 				);
 	}
 
-	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
-		ParamVector paramVec = this.learner.setupParams(initialParamVec);
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
+		ParamVector<String,?> paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
@@ -277,9 +277,9 @@ public class Trainer {
 			System.out.println();
 	}
 
-	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
+	public ParamVector<String,?> findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> paramVec) {
 		log.info("Computing gradient on cooked examples...");
-		ParamVector sumGradient = new SimpleParamVector<String>();
+		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
@@ -361,7 +361,7 @@ public class Trainer {
 		return sumGradient;
 	}
 
-	public ParamVector findGradient(ArrayList<PosNegRWExample> examples,
+	public ParamVector<String,?> findGradient(ArrayList<PosNegRWExample> examples,
 			SimpleParamVector<String> simpleParamVector) {
 		// TODO Auto-generated method stub
 		return null;
@@ -397,11 +397,11 @@ public class Trainer {
 	 */
 	protected class Train implements Callable<Integer> {
 		Future<PosNegRWExample> in;
-		ParamVector paramVec;
+		ParamVector<String,?> paramVec;
 		SRW learner;
 		int id;
 		Trainer notify;
-		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, SRW learner, int id, Trainer notify) {
+		public Train(Future<PosNegRWExample> parsed, ParamVector<String,?> paramVec, SRW learner, int id, Trainer notify) {
 			this.in = parsed;
 			this.id = id;
 			this.learner = learner;
@@ -422,8 +422,8 @@ public class Trainer {
 	}
 
 	protected class Grad extends Train {
-		ParamVector sumGradient;
-		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SRW learner, int id, Trainer notify) {
+		ParamVector<String,?> sumGradient;
+		public Grad(Future<PosNegRWExample> parsed, ParamVector<String,?> paramVec, ParamVector<String,?> sumGradient, SRW learner, int id, Trainer notify) {
 			super(parsed, paramVec, learner, id, notify);
 			this.sumGradient = sumGradient;
 		}
@@ -492,7 +492,7 @@ public class Trainer {
 			}
 			log.info("Training model parameters on "+groundedFile+"...");
 			long start = System.currentTimeMillis();
-			ParamVector params = c.trainer.train(
+			ParamVector<String,?> params = c.trainer.train(
 					masterFeatures,
 					new ParsedFile(groundedFile), 
 					new ArrayLearningGraphBuilder(), 

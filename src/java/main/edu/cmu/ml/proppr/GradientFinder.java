@@ -54,7 +54,7 @@ public class GradientFinder {
 			};
 			System.out.println(c.toString());
 
-			ParamVector params = null;
+			ParamVector<String,?> params = null;
 			File nullFile = null;
 			if (c.epochs > 0) {
 
@@ -79,7 +79,7 @@ public class GradientFinder {
 				params = new SimpleParamVector<String>();
 			}
 
-			ParamVector batchGradient = c.trainer.findGradient(
+			ParamVector<String,?> batchGradient = c.trainer.findGradient(
 					new ParsedFile(c.groundedFile), 
 					new ArrayLearningGraphBuilder(), 
 					params);

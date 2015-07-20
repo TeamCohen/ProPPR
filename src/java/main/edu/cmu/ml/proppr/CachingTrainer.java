@@ -34,7 +34,7 @@ public class CachingTrainer extends Trainer {
 	}
 
 	@Override
-	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
 		ArrayList<PosNegRWExample> examples = new ArrayList<PosNegRWExample>();
 		RWExampleParser parser = new RWExampleParser();
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
@@ -57,8 +57,8 @@ public class CachingTrainer extends Trainer {
 		return trainCached(examples,builder,initialParamVec,numEpochs,traceLosses,total);
 	}
 	
-	public ParamVector trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
-		ParamVector paramVec = this.learner.setupParams(initialParamVec);
+	public ParamVector<String,?> trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
+		ParamVector<String,?> paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");

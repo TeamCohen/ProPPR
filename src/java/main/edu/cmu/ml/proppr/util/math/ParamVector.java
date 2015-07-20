@@ -74,11 +74,8 @@ public abstract class ParamVector<F,T> implements Map<F,Double> {
 		return getWeight(getBackingStore().remove(key));
 	}
 
-	public ParamVector<F,Double> copy () {
-        ParamVector<F,Double> copy = new SimpleParamVector<F>();
-        copy.putAll(this);
-        return copy;
-    }
+	public abstract ParamVector<F,T> copy ();
+	
 	public void adjustValue(F key, double value) {
 		this.safeAdjustValue(key,value);
 		//this.hogwildAdjustValue(key, value);

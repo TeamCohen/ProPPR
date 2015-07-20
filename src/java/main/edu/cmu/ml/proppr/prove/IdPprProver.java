@@ -45,8 +45,8 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	@Override
 	public String toString() { return "ippr:"+this.apr.maxDepth; }
 	
-	public Prover copy() {
-		Prover copy = new IdPprProver(weighter, this.apr, this.trace);
+	public Prover<CachingIdProofGraph> copy() {
+		Prover<CachingIdProofGraph> copy = new IdPprProver(weighter, this.apr, this.trace);
 		return copy;
 	}
 	@Override

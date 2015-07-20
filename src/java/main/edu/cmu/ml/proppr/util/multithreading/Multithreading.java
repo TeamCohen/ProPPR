@@ -83,26 +83,12 @@ public class Multithreading<In,Out> {
 	 */
 	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,Cleanup<Out> cleanup,int throttle) 
 	{
-		log.info("executeJob: threads "+nThreads
+		log.info("executeJob:"
 						 +" streamer: "+streamer.getClass().getCanonicalName()
 						 +" transformer: "+transformer.getClass().getCanonicalName()
 						 +" throttle: "+throttle);
-		ExecutorService transformerPool = Executors.newFixedThreadPool(nThreads, new ThreadFactory() {
-			int next=1;
-			@Override
-			public Thread newThread(Runnable r) {
-				return new Thread(r, "transformer-"+next++);
-			}
-			
-		});
-		ExecutorService cleanupPool = Executors.newFixedThreadPool(1, new ThreadFactory() {
-			int next=1;
-			@Override
-			public Thread newThread(Runnable r) {
-				return new Thread(r, "cleanup-"+next++);
-			}
-			
-		});
+		ExecutorService transformerPool = Executors.newFixedThreadPool(nThreads, new NamedThreadFactory("transformer"));
+		ExecutorService cleanupPool = Executors.newFixedThreadPool(1, new NamedThreadFactory("cleanup"));
 
 		ArrayDeque<Future<?>> transformerQueue = new ArrayDeque<Future<?>>();
 		

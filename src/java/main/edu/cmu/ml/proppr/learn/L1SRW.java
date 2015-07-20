@@ -33,7 +33,7 @@ public class L1SRW extends SRW {
 	 * @return
 	 */
 	@Override
-	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {
+	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {
 		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
 			// want to take theta toward zero, but not past it: gradient can't be bigger than theta

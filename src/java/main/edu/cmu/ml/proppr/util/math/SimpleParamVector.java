@@ -38,5 +38,12 @@ public class SimpleParamVector<F> extends ParamVector<F,Double> {
 	public Set<java.util.Map.Entry<F, Double>> entrySet() {
 		return backingStore.entrySet();
 	}
+	
+	@Override
+	public ParamVector<F, Double> copy()  {
+        ParamVector<F,Double> copy = new SimpleParamVector<F>();
+        copy.putAll(this);
+        return copy;
+    }
 
 }
