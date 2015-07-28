@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 import edu.cmu.ml.proppr.RedBlueGraph;
@@ -36,12 +37,17 @@ public class SRWTest extends RedBlueGraph {
 	protected TIntDoubleMap startVec;
 	protected ExampleFactory factory;
 	
-	
+	@Before
 	@Override
-	public void moreSetup(LearningGraphBuilder lgb) {
+	public void setup() {
 		factory = new PprExampleFactory();
 		initSrw();
 		defaultSrwSettings();
+		super.setup();
+	}
+	
+	@Override
+	public void moreSetup(LearningGraphBuilder lgb) {
 		uniformParams = makeParams(new ConcurrentHashMap<String,Double>());
 		for (String n : new String[] {"fromb","tob","fromr","tor"}) uniformParams.put(n,srw.getSquashingFunction().defaultValue());
 		startVec = new TIntDoubleHashMap();

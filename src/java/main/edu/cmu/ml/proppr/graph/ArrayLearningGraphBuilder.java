@@ -54,7 +54,7 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 		if (outlinks[u] == null) outlinks[u] = new ArrayList<RWOutlink>();
 		if (rwOutlink != null) {
 			outlinks[u].add(rwOutlink);
-			labelSize += rwOutlink.fd.size();
+			labelSize += rwOutlink.labelSize();
 		} else labelSize++;
 	}
 
@@ -84,9 +84,10 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 				for (RWOutlink o : outlinks[u]) {
 					current.edge_dest[edge_cursor] = o.nodeid;
 					current.edge_labels_lo[edge_cursor] = label_cursor;
-					for(Map.Entry<String,Double> it : o.fd.entrySet()) {
-						current.label_feature_id[label_cursor] = ((LearningGraph) g).featureLibrary.getId(it.getKey());
-						current.label_feature_weight[label_cursor] = it.getValue();
+					for(int fi = 0; fi<o.labelSize(); fi++) {
+//					for(Map.Entry<String,Double> it : o.fd.entrySet()) {
+						current.label_feature_id[label_cursor] = o.feature_id[fi];
+						current.label_feature_weight[label_cursor] = o.feature_value[fi];
 //						if (current.labelDependencySize() < 0) outgoingFeatures.add(current.label_feature_id[label_cursor]);
 						outgoingFeatures.add(current.label_feature_id[label_cursor]);
 						label_cursor++;
@@ -120,5 +121,10 @@ public class ArrayLearningGraphBuilder extends LearningGraphBuilder {
 		String name = Thread.currentThread().getName();
 		if (!copies.containsKey(name)) copies.put(name,new ArrayLearningGraphBuilder());
 		return copies.get(name);
+	}
+
+	@Override
+	public SymbolTable<String> getFeatureLibrary() {
+		return current.featureLibrary;
 	}
 }
