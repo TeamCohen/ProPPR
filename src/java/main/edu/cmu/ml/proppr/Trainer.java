@@ -152,10 +152,11 @@ public class Trainer {
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
-		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
-		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
+//		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
+//		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
+		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
 		int poolSize = Math.max(this.nthreads/2, 1);
-		ThreadPoolExecutor parsePool, trainPool;
+		ThreadPoolExecutor workingPool;//parsePool, trainPool;
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
@@ -170,13 +171,15 @@ public class Trainer {
 			// reset counters & file pointers
 			this.learner.clearLoss();
 			this.statistics = new TrainingStatistics();
-			parseThreads.reset();
-			trainThreads.reset();
+//			parseThreads.reset();
+//			trainThreads.reset();
+			workingThreads.reset();
 
 			// set up separate pools for parsing, training, and tracing losses
-			parsePool = new ThreadPoolExecutor(this.nthreads-poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),parseThreads);
+//			parsePool = new ThreadPoolExecutor(this.nthreads-poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),parseThreads);
 			//Executors.newFixedThreadPool(this.nthreads-poolSize, parseThreads);
-			trainPool = new ThreadPoolExecutor(              poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),trainThreads); 
+//			trainPool = new ThreadPoolExecutor(              poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),trainThreads);
+			workingPool = new ThreadPoolExecutor(this.nthreads,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),workingThreads);
 			//Executors.newFixedThreadPool(poolSize, trainThreads);
 			cleanPool = Executors.newSingleThreadExecutor();
 
@@ -185,7 +188,7 @@ public class Trainer {
 			long start = System.currentTimeMillis();
 			int countdown=-1; Trainer notify = null;
 			for (String s : examples) {
-				if (log.isDebugEnabled()) log.debug("Queue size "+(trainPool.getTaskCount()-trainPool.getCompletedTaskCount()));
+				if (log.isDebugEnabled()) log.debug("Queue size "+(workingPool.getTaskCount()-workingPool.getCompletedTaskCount()));
 				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
 				if (countdown>0) {
 					if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
@@ -197,7 +200,7 @@ public class Trainer {
 					try {
 						synchronized(this) {
 							if (log.isDebugEnabled()) log.debug("Clearing training queue...");
-							while(trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > this.nthreads)
+							while(workingPool.getTaskCount()-workingPool.getCompletedTaskCount() > this.nthreads)
 								this.wait();
 							if (log.isDebugEnabled()) log.debug("Queue cleared.");
 						}
@@ -205,34 +208,40 @@ public class Trainer {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				} else if (trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > 1.5*this.nthreads) {
+				} else if (workingPool.getTaskCount()-workingPool.getCompletedTaskCount() > 1.5*this.nthreads) {
 					if (log.isDebugEnabled()) log.debug("Starting countdown");
 					countdown=this.nthreads;
 					notify = this;
 				}
-				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = trainPool.submit(new Train(parsed, paramVec, learner, id, notify));
+				Future<PosNegRWExample> parsed = workingPool.submit(new Parse(s, builder, id));
+				Future<Integer> trained = workingPool.submit(new Train(parsed, paramVec, learner, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 				start = System.currentTimeMillis();
 			}
-			parsePool.shutdown();
+//			parsePool.shutdown();
+//			try {
+//				parsePool.awaitTermination(7,TimeUnit.DAYS);
+//				// allocate the threads parsePool was using to finishing off training for this epoch
+//				//log.info("Reclaiming parser threads...");
+//				trainPool.setCorePoolSize(this.nthreads); 
+//				// by default ThreadPoolExecutor only creates new threads on submit() calls, so
+//				// we must start up our new threads by hand.
+//				while(trainPool.getActiveCount()>0) { if (!trainPool.prestartCoreThread()) break; }
+//				trainPool.shutdown();
+//				trainPool.awaitTermination(7, TimeUnit.DAYS);
+//				cleanPool.shutdown();
+//				cleanPool.awaitTermination(7, TimeUnit.DAYS);
+//			} catch (InterruptedException e) {
+//				log.error("Interrupted?",e);
+//			}
+
+			workingPool.shutdown();
 			try {
-				parsePool.awaitTermination(7,TimeUnit.DAYS);
-				// allocate the threads parsePool was using to finishing off training for this epoch
-				//log.info("Reclaiming parser threads...");
-				trainPool.setCorePoolSize(this.nthreads); 
-				// by default ThreadPoolExecutor only creates new threads on submit() calls, so
-				// we must start up our new threads by hand.
-				while(trainPool.getActiveCount()>0) { if (!trainPool.prestartCoreThread()) break; }
-				trainPool.shutdown();
-				trainPool.awaitTermination(7, TimeUnit.DAYS);
-				cleanPool.shutdown();
-				cleanPool.awaitTermination(7, TimeUnit.DAYS);
+				workingPool.awaitTermination(7, TimeUnit.DAYS);
 			} catch (InterruptedException e) {
 				log.error("Interrupted?",e);
 			}
-
 			// finish any trailing updates for this epoch
 			this.learner.cleanupParams(paramVec,paramVec);
 
