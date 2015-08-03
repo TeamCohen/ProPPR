@@ -155,6 +155,7 @@ public class Trainer {
 //		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
 //		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
+		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
 		int poolSize = Math.max(this.nthreads/2, 1);
 		ThreadPoolExecutor workingPool;//parsePool, trainPool;
 		ExecutorService cleanPool; 
@@ -181,7 +182,7 @@ public class Trainer {
 //			trainPool = new ThreadPoolExecutor(              poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),trainThreads);
 			workingPool = new ThreadPoolExecutor(this.nthreads,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),workingThreads);
 			//Executors.newFixedThreadPool(poolSize, trainThreads);
-			cleanPool = Executors.newSingleThreadExecutor();
+			cleanPool = Executors.newSingleThreadExecutor(cleaningThreads);
 
 			// run examples
 			int id=1;
@@ -239,6 +240,8 @@ public class Trainer {
 			workingPool.shutdown();
 			try {
 				workingPool.awaitTermination(7, TimeUnit.DAYS);
+				cleanPool.shutdown();
+				cleanPool.awaitTermination(7, TimeUnit.DAYS);
 			} catch (InterruptedException e) {
 				log.error("Interrupted?",e);
 			}
