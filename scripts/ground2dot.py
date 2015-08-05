@@ -2,6 +2,7 @@
 
 import sys
 from os import write
+from os import path
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -44,7 +45,12 @@ if __name__ == '__main__':
                 else:
                     write(2, "Didn't recognize key file syntax :(\n")
                 Q = query
-                
+    masterFeatures=[""]
+    masterFeaturesFile = "%s.features"%sys.argv[1]
+    if path.isfile(masterFeaturesFile):
+    	with open(masterFeaturesFile,'r') as featureFile:
+    		for f in featureFile:
+    			masterFeatures.append(f.strip())
     N=1;
     with open(sys.argv[1],'r') as grounded:
         for g in grounded:
@@ -54,7 +60,10 @@ if __name__ == '__main__':
             g = g.replace("\n","")
             (query,qid,pid,nid,nn,ne,flist,graph) = g.split("\t",7)
             features = [""]
-            features.extend(flist.split(":"))
+            if flist.find(":")>=0:
+            	features.extend(flist.split(":"))
+            else:
+            	features = masterFeatures
             for q in qid.split(","):
                 print "%s [fillcolor=gray,style=filled];"%q
             for p in pid.split(","):
