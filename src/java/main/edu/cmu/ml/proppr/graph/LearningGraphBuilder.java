@@ -21,6 +21,7 @@ public abstract class LearningGraphBuilder {
 	public abstract void addOutlink(LearningGraph g, int u, RWOutlink rwOutlink);
 	public abstract void freeze(LearningGraph g);
 	public abstract void index(int i0);
+	public abstract SymbolTable<String> getFeatureLibrary();
 	
 	static SymbolTable<String> masterFeatures;
 	public static void setFeatures(SymbolTable<String> features) {
@@ -82,13 +83,15 @@ public abstract class LearningGraphBuilder {
 			// As it turns out, a trove map is slower here
 			//TObjectDoubleHashMap<String> fd = new TObjectDoubleHashMap<String>();
 			HashMap<String,Double> fd = new HashMap<String,Double>();
-			for (String f : edgeFeatures) {
+			int[] fid = new int[edgeFeatures.length];
+			double[] wt = new double[edgeFeatures.length];
+			for (int fi=0; fi<edgeFeatures.length; fi++) {
+				String f = edgeFeatures[fi];
 				int wtDelim = f.indexOf(FEATURE_WEIGHT_DELIM);
-				int featureId = Integer.parseInt(wtDelim<0?f:f.substring(0,wtDelim));
-				double featureWt = wtDelim<0?1.0:Double.parseDouble(f.substring(wtDelim+1));
-				fd.put(features.getSymbol(featureId),featureWt);
+				fid[fi] = Integer.parseInt(wtDelim<0?f:f.substring(0,wtDelim));
+				wt[fi] = wtDelim<0?1.0:Double.parseDouble(f.substring(wtDelim+1));
 			}
-			b.addOutlink(g,nodes[0],new RWOutlink(fd,nodes[1]));
+			b.addOutlink(g,nodes[0],new RWOutlink(fid,wt,nodes[1]));
 		}
 		b.freeze(g);
 		return g;

@@ -55,6 +55,18 @@ public class RedBlueGraph {
 		super();
 		this.magicNumber = mn;
 	}
+	
+	protected RWOutlink makeOutlink(LearningGraphBuilder lgb, Map<String,Double> fd, int dest) {
+		int[] fid = new int[fd.size()];
+		double[] wt = new double[fd.size()];
+		int i=0;
+		for (Map.Entry<String, Double> e : fd.entrySet()) {
+			fid[i] = lgb.getFeatureLibrary().getId(e.getKey());
+			wt[i] = e.getValue();
+			i++;
+		}
+		return new RWOutlink(fid,wt,dest);
+	}
 
 	@Before
 	public void setup() {
@@ -70,20 +82,20 @@ public class RedBlueGraph {
 		//		brSRWs = new ArrayList<SRW>();
 		//		Collections.addAll(brSRWs, new L2SqLossSRW(), new L2SqLossSRW(), new L2SqLossSRW());
 
-		addColor(lgb, brGraph, magicNumber,"r");
-		addColor(lgb, brGraph, magicNumber,"b");
 		{
 			int u = nodes.getId("b0"), v=nodes.getId("r0");
 			HashMap<String,Double> ff = new HashMap<String,Double>();
 			ff.put("fromb", 1.0);
 			ff.put("tor",1.0);
-			lgb.addOutlink(brGraph, u, new RWOutlink(ff,v));
+			lgb.addOutlink(brGraph, u, makeOutlink(lgb,ff,v));
 
 			ff = new HashMap<String,Double>();
 			ff.put("fromr", 1.0);
 			ff.put("tob",1.0);
-			lgb.addOutlink(brGraph, v, new RWOutlink(ff,u));
-		}		
+			lgb.addOutlink(brGraph, v, makeOutlink(lgb,ff,u));
+		}
+		addColor(lgb, brGraph, magicNumber,"r");
+		addColor(lgb, brGraph, magicNumber,"b");
 
 		// save sets of red and blue nodes
 		reds = new TreeSet<String>();
@@ -102,19 +114,23 @@ public class RedBlueGraph {
 	}
 	//template
 	public void moreSetup(LearningGraphBuilder lgb) {}
+	//template
+	public void moreOutlinks(LearningGraphBuilder lgb,LearningGraph graph,int u) {}
 
 	public void addColor(LearningGraphBuilder lgb, LearningGraph graph, int num, String label) {
 		for (int x=0; x<num; x++) {
+			String u = label+x;
+			int uid=nodes.getId(u);
 			for (int y=0; y<num; y++) {
 //				if (x!=y) {
-					String u = label+x;
 					String v = label+y;
 					HashMap<String,Double> ff = new HashMap<String,Double>();
 					ff.put("from"+label, 1.0);
 					ff.put("to"+label,1.0);
-					lgb.addOutlink(graph, nodes.getId(u),new RWOutlink(ff,nodes.getId(v)));
+					lgb.addOutlink(graph, uid, makeOutlink(lgb,ff,nodes.getId(v)));
 //				}
 			}
+			moreOutlinks(lgb,graph,uid);
 		}
 	}
 

@@ -86,6 +86,7 @@ public class CachingTrainer extends Trainer {
 			for (PosNegRWExample s : examples) {
 				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id, null));
 				cleanPool.submit(new TraceLosses(trained, id));
+				id++;
 			}
 			try {
 				trainPool.shutdown();

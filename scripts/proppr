@@ -94,6 +94,8 @@ def doHelp(o):
    print '      e.g. "proppr answer test.examples --prover tr"'
    print '  (2) for all commands that invoke Java mains, appending "--help" will give help'
    print '      on available additional options'
+   print '  (3) the environment variable PROPPR_JAVA_ARGS can be used to specify additional'
+   print '      arguments to java, i.e. "export PROPPR_JAVA_ARGS=-Xmx32g" increases the heap size'
 shortHelpMsg['help'] = ': this help message'
 
 ## helpers
@@ -118,7 +120,7 @@ def invokeMain(o,main,*mainProgArgs):
    for (key,val) in loadOptionDict().items():
       optArgs.append(key)
       optArgs.append(val)
-   callProcess(o,['java','-cp',classPath,mainClass] + list(mainProgArgs) + optArgs)
+   callProcess(o,['java','-cp',classPath] + getJavaArgs()  + [mainClass] + list(mainProgArgs) + optArgs)
 
 def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""
@@ -137,6 +139,11 @@ def getRoot():
    except IndexError:
       print "you must set the environment variable 'PROPPR' to the root of your source tree"
       sys.exit(-1)
+
+def getJavaArgs():
+   """Get any java arguments defined in the environment"""
+   jargs = os.environ.get('PROPPR_JAVA_ARGS')
+   return jargs.split() if jargs else []
 
 def getArg(i,defaultVal=None):
    """Get the i-th command line argument."""

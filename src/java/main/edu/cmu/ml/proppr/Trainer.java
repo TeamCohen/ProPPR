@@ -78,46 +78,55 @@ public class Trainer {
 	public class TrainingStatistics {
 		int numExamplesThisEpoch = 0;
 		int exampleSetSize = 0;
-		//		long minReadTime = Integer.MAX_VALUE;
-		//		long maxReadTime = 0;
+				long minReadTime = Integer.MAX_VALUE;
+				long maxReadTime = 0;
 		long readTime = 0;
-		//		long minParseTime = Integer.MAX_VALUE;
-		//		long maxParseTime = 0;
+				long minParseTime = Integer.MAX_VALUE;
+				long maxParseTime = 0;
 		long parseTime = 0;
-		//		long minTrainTime = Integer.MAX_VALUE;
-		//		long maxTrainTime = 0;
+				long minTrainTime = Integer.MAX_VALUE;
+				long maxTrainTime = 0;
 		long trainTime = 0;
 		void updateReadingStatistics(long time) {
-			//			minReadTime = Math.min(time, minReadTime);
-			//			maxReadTime = Math.max(time, maxReadTime);
+						minReadTime = Math.min(time, minReadTime);
+						maxReadTime = Math.max(time, maxReadTime);
 			readTime += time;
 		}
 		void updateParsingStatistics(long time) {
-			//			minParseTime = Math.min(time, minParseTime);
-			//			maxParseTime = Math.max(time, maxParseTime);
+						minParseTime = Math.min(time, minParseTime);
+						maxParseTime = Math.max(time, maxParseTime);
 			parseTime += time;
 		}
 		void updateTrainingStatistics(long time) {
-			//			minTrainTime = Math.min(time, minTrainTime);
-			//			maxTrainTime = Math.max(time, maxTrainTime);
+						minTrainTime = Math.min(time, minTrainTime);
+						maxTrainTime = Math.max(time, maxTrainTime);
 			trainTime += time;
 			exampleSetSize++;
+		}
+		void updateSummaryStatistics(TrainingStatistics stats) {
+			readTime += stats.readTime;
+			minReadTime = Math.min(stats.minReadTime, minReadTime);
+			maxReadTime = Math.max(stats.maxReadTime, maxReadTime);
+			parseTime += stats.parseTime;
+			minParseTime = Math.min(stats.minParseTime, minParseTime);
+			maxParseTime = Math.max(stats.maxParseTime, maxParseTime);
+			trainTime += stats.trainTime;
+			minTrainTime = Math.min(stats.minTrainTime, minTrainTime);
+			maxTrainTime = Math.max(stats.maxTrainTime, maxTrainTime);
+			
 		}
 		synchronized void updateNumExamples(int length) {	
 			numExamplesThisEpoch+=length;
 		}
 		void checkStatistics() {
-			int poolSize = Math.max(1,nthreads/2);
+			int poolSize = nthreads;
 			readTime = Math.max(1, readTime);
 			parseTime = Math.max(1, parseTime);
 			trainTime = Math.max(1, trainTime);
-			// we can keep the parsing pool full if we can read $poolSize examples
-			// in the time it takes to parse 1 example
-			int parseFull = (int) Math.ceil(parseTime / readTime);
-			// we can keep the training pool full if parsing takes less time than training
-			int trainFull = (int) Math.ceil(trainTime * (nthreads-poolSize) / parseTime);
-			if (parseFull < poolSize) log.warn((poolSize-parseFull)+" parsing threads went unused; reading from disk is slow. :(");
-			if (trainFull < poolSize) log.warn((poolSize-trainFull)+" training threads went unused; parsing is slow. Ask Katie to enable parsing vs training pool size adjustments.");
+			// we can keep the working pool full if we can read $poolSize examples
+			// in the time it takes to parse + train 1 example
+			int parseFull = (int) Math.ceil( (parseTime+trainTime) / readTime);
+			if (parseFull < poolSize) log.warn((poolSize-parseFull)+" working threads went unused; reading from disk is slow. :(");
 		}
 	}
 
@@ -152,10 +161,9 @@ public class Trainer {
 		if (paramVec.size() == 0)
 			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
-		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
-		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
-		int poolSize = Math.max(this.nthreads/2, 1);
-		ThreadPoolExecutor parsePool, trainPool;
+		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
+		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
+		ThreadPoolExecutor workingPool;
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs, 1.0, 2);
@@ -170,22 +178,18 @@ public class Trainer {
 			// reset counters & file pointers
 			this.learner.clearLoss();
 			this.statistics = new TrainingStatistics();
-			parseThreads.reset();
-			trainThreads.reset();
+			workingThreads.reset();
+			cleaningThreads.reset();
 
-			// set up separate pools for parsing, training, and tracing losses
-			parsePool = new ThreadPoolExecutor(this.nthreads-poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),parseThreads);
-			//Executors.newFixedThreadPool(this.nthreads-poolSize, parseThreads);
-			trainPool = new ThreadPoolExecutor(              poolSize,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),trainThreads); 
-			//Executors.newFixedThreadPool(poolSize, trainThreads);
-			cleanPool = Executors.newSingleThreadExecutor();
+			workingPool = new ThreadPoolExecutor(this.nthreads,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),workingThreads);
+			cleanPool = Executors.newSingleThreadExecutor(cleaningThreads);
 
 			// run examples
 			int id=1;
 			long start = System.currentTimeMillis();
 			int countdown=-1; Trainer notify = null;
 			for (String s : examples) {
-				if (log.isDebugEnabled()) log.debug("Queue size "+(trainPool.getTaskCount()-trainPool.getCompletedTaskCount()));
+				if (log.isDebugEnabled()) log.debug("Queue size "+(workingPool.getTaskCount()-workingPool.getCompletedTaskCount()));
 				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
 				if (countdown>0) {
 					if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
@@ -197,7 +201,7 @@ public class Trainer {
 					try {
 						synchronized(this) {
 							if (log.isDebugEnabled()) log.debug("Clearing training queue...");
-							while(trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > this.nthreads)
+							while(workingPool.getTaskCount()-workingPool.getCompletedTaskCount() > this.nthreads)
 								this.wait();
 							if (log.isDebugEnabled()) log.debug("Queue cleared.");
 						}
@@ -205,34 +209,26 @@ public class Trainer {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				} else if (trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > 1.5*this.nthreads) {
+				} else if (workingPool.getTaskCount()-workingPool.getCompletedTaskCount() > 1.5*this.nthreads) {
 					if (log.isDebugEnabled()) log.debug("Starting countdown");
 					countdown=this.nthreads;
 					notify = this;
 				}
-				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = trainPool.submit(new Train(parsed, paramVec, learner, id, notify));
+				Future<PosNegRWExample> parsed = workingPool.submit(new Parse(s, builder, id));
+				Future<Integer> trained = workingPool.submit(new Train(parsed, paramVec, learner, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 				start = System.currentTimeMillis();
 			}
-			parsePool.shutdown();
+
+			workingPool.shutdown();
 			try {
-				parsePool.awaitTermination(7,TimeUnit.DAYS);
-				// allocate the threads parsePool was using to finishing off training for this epoch
-				//log.info("Reclaiming parser threads...");
-				trainPool.setCorePoolSize(this.nthreads); 
-				// by default ThreadPoolExecutor only creates new threads on submit() calls, so
-				// we must start up our new threads by hand.
-				while(trainPool.getActiveCount()>0) { if (!trainPool.prestartCoreThread()) break; }
-				trainPool.shutdown();
-				trainPool.awaitTermination(7, TimeUnit.DAYS);
+				workingPool.awaitTermination(7, TimeUnit.DAYS);
 				cleanPool.shutdown();
 				cleanPool.awaitTermination(7, TimeUnit.DAYS);
 			} catch (InterruptedException e) {
 				log.error("Interrupted?",e);
 			}
-
 			// finish any trailing updates for this epoch
 			this.learner.cleanupParams(paramVec,paramVec);
 
@@ -252,6 +248,9 @@ public class Trainer {
 			total.updateParsingStatistics(statistics.parseTime);
 			total.updateTrainingStatistics(statistics.trainTime);
 		}
+		log.info("Reading  statistics: min "+total.minReadTime+" / max "+total.maxReadTime+" / total "+total.readTime);
+		log.info("Parsing  statistics: min "+total.minParseTime+" / max "+total.maxParseTime+" / total "+total.parseTime);
+		log.info("Training statistics: min "+total.minTrainTime+" / max "+total.maxTrainTime+" / total "+total.trainTime);
 		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime + " Num Epochs: " + this.epoch);
 		return paramVec;
 	}

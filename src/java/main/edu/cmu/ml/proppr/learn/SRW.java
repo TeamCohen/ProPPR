@@ -55,15 +55,17 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
  *
  */
 public class SRW {	
-	protected static final Logger log = Logger.getLogger(SRW.class);
-	protected static final double BOUND = 1.0e-15; //Prevent infinite log loss.
-	protected static Random random = new Random();
+	private static final Logger log = Logger.getLogger(SRW.class);
+	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
+	private static final int MAX_ZERO_LOGS = 20;
+	private static Random random = new Random();
 	public static void seed(long seed) { random.setSeed(seed); }
 	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ReLU(); }
 	protected Set<String> untrainedFeatures;
 	protected int epoch;
 	protected SRWOptions c;
 	protected LossData cumloss;
+	protected int zeroLogsThisEpoch=0;
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
@@ -115,12 +117,7 @@ public class SRW {
 	/** fills M, dM in ex **/
 	protected void load(ParamVector params, PosNegRWExample example) {
 		PprExample ex = (PprExample) example;
-		ex.M = new double[ex.getGraph().node_hi][];
-		ex.dM_lo = new int[ex.getGraph().node_hi][];
-		ex.dM_hi = new int[ex.getGraph().node_hi][];
-		// use compact extendible arrays here while we accumulate; convert to primitive array later
-		TIntArrayList dM_features = new TIntArrayList();
-		TDoubleArrayList dM_values = new TDoubleArrayList();
+		int dM_cursor=0;
 		for (int uid = 0; uid < ex.getGraph().node_hi; uid++) {
 			// (a); (b): initialization
 			double tu = 0;
@@ -154,18 +151,11 @@ public class SRW {
 			}
 			// end (c)
 
-//			if (tu==0 && udeg>0) { 
-//				throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); 
-//			}
-
 			// begin (d): for each neighbor v of u,
-			ex.dM_lo[uid] = new int[udeg];
-			ex.dM_hi[uid] = new int[udeg];
-			ex.M[uid] = new double[udeg];
 			double scale = (1 / (tu*tu));
 			for(int eid = ex.getGraph().node_near_lo[uid], xvi = 0; eid < ex.getGraph().node_near_hi[uid]; eid++, xvi++) {
 				int vid = ex.getGraph().edge_dest[eid];
-				ex.dM_lo[uid][xvi] = dM_features.size();
+				ex.dM_lo[uid][xvi] = dM_cursor;//dM_features.size();
 				// create the vector dM_{uv} = (1/t^2_u) * (t_u * df_{uv} - f(s_{uv}) * dt_u)
 				// by looping over features i in dt_u
 				
@@ -174,13 +164,14 @@ public class SRW {
 				int[] seenFeatures = new int[ex.getGraph().edge_labels_hi[eid] - ex.getGraph().edge_labels_lo[eid]];
 				for (int lid = ex.getGraph().edge_labels_lo[eid], dfuvi = 0; lid < ex.getGraph().edge_labels_hi[eid]; lid++, dfuvi++) {
 					int fid = ex.getGraph().label_feature_id[lid];
-					dM_features.add(fid);
+					ex.dM_feature_id[dM_cursor] = fid; //dM_features.add(fid);
 					double dMuvi = (tu * dfu[xvi][dfuvi] - c.squashingFunction.edgeWeight(suv[xvi]) * dtu.get(fid));
 					if (tu == 0) { 
 						if (dMuvi != 0)
 							throw new IllegalStateException("tu=0 at u="+uid+"; example "+ex.toString()); 
 					} else dMuvi *= scale; 
-					dM_values.add(dMuvi);
+					ex.dM_value[dM_cursor] = dMuvi; //dM_values.add(dMuvi);
+					dM_cursor++;
 					seenFeatures[dfuvi] = fid; //save this feature so we can skip it later
 				}
 				Arrays.sort(seenFeatures);
@@ -189,12 +180,13 @@ public class SRW {
 					it.advance();
 					// skip features we already added in the df_uv loop
 					if (Arrays.binarySearch(seenFeatures, it.key())>=0) continue;
-					dM_features.add(it.key());
+					ex.dM_feature_id[dM_cursor] = it.key();//dM_features.add(it.key());
 					// zero the first term, since df_uv doesn't cover this feature
 					double dMuvi = scale * ( - c.squashingFunction.edgeWeight(suv[xvi]) * it.value());
-					dM_values.add(dMuvi);
+					ex.dM_value[dM_cursor] = dMuvi; //dM_values.add(dMuvi);
+					dM_cursor++;
 				}
-				ex.dM_hi[uid][xvi] = dM_features.size();
+				ex.dM_hi[uid][xvi] = dM_cursor;//dM_features.size();
 				// also create the scalar M_{uv} = f(s_{uv}) / t_u
 				ex.M[uid][xvi] = c.squashingFunction.edgeWeight(suv[xvi]);
 				if (tu==0) {
@@ -202,9 +194,6 @@ public class SRW {
 				} else ex.M[uid][xvi] /= tu;
 			}
 		}
-		// discard extendible version in favor of primitive array
-		ex.dM_feature_id = dM_features.toArray();
-		ex.dM_value = dM_values.toArray();
 	}
 
 	/** adds new features to params vector @ 1% random perturbation */
@@ -343,14 +332,18 @@ public class SRW {
 		}
 
 //		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
-		if (nonzero==0) log.warn("0 gradient. Try a different squashing function? "+ex.toString());
+		if (nonzero==0 && zeroLogsThisEpoch < MAX_ZERO_LOGS) {
+				log.warn("0 gradient. Try a different squashing function? "+ex.toString());
+				zeroLogsThisEpoch++;
+				if (zeroLogsThisEpoch >= MAX_ZERO_LOGS) {
+					log.warn("(that's your last 0 gradient warning this epoch)");
+				}
+		}
 		return gradient;
 	}
 	
 	/** template: update gradient with regularization term */
 	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {}
-
-
 
 	//////////////////////////// copypasta from SRW.java:
 
@@ -428,6 +421,7 @@ public class SRW {
 	}
 	public void setEpoch(int e) {
 		this.epoch = e;
+		this.zeroLogsThisEpoch = 0;
 	}
 	public void clearLoss() {
 		this.cumloss.clear();
