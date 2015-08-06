@@ -222,7 +222,9 @@ public class ModuleConfiguration extends Configuration {
 			this.setupSRW(line, flags, options);
 			seed(line);
 			if (isOn(flags,USE_TRAINER)) {
-				TRAINERS type = TRAINERS.cached;
+//				TRAINERS type = TRAINERS.cached;
+				//rosecatherinek: use Trainer not Cachine
+				TRAINERS type = TRAINERS.streaming;
 				if (line.hasOption(TRAINER_MODULE_OPTION)) type = TRAINERS.valueOf(line.getOptionValues(TRAINER_MODULE_OPTION)[0]);
 				switch(type) {
 				case streaming: 

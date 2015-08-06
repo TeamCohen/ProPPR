@@ -1,19 +1,31 @@
 package edu.cmu.ml.proppr;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.proppr.examples.InferenceExample;
-import edu.cmu.ml.proppr.examples.PosNegRWExample;
-import edu.cmu.ml.proppr.learn.SRW;
+import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
-import edu.cmu.ml.proppr.prove.*;
+import edu.cmu.ml.proppr.prove.InnerProductWeighter;
+import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.Feature;
-import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
-import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
-import edu.cmu.ml.proppr.prove.wam.WamQueryProgram;
+import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
@@ -27,22 +39,6 @@ import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.Transformer;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
-import org.apache.log4j.Logger;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -241,6 +237,7 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 			QueryAnswererConfiguration c = new QueryAnswererConfiguration(
 					args,
 					inputFiles, outputFiles, constants, modules);
+//			c.squashingFunction = new Exp();
 			System.out.println(c.toString());
 			QueryAnswerer qa = new QueryAnswerer(c.apr, c.program, c.plugins, c.prover, c.normalize, c.nthreads, c.topk);
 			if(log.isInfoEnabled()) log.info("Running queries from " + c.queryFile + "; saving results to " + c.solutionsFile);

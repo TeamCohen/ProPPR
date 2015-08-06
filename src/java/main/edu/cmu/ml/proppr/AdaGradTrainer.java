@@ -2,7 +2,6 @@ package edu.cmu.ml.proppr;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -19,15 +18,17 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.AdaGradSRW;
-import edu.cmu.ml.proppr.learn.SRW;
+import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
+import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
-import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
@@ -146,8 +147,10 @@ public class AdaGradTrainer {
 		ThreadPoolExecutor parsePool, trainPool;
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
-		// loop over epochs
-		for (int i=0; i<numEpochs; i++) {
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs, 1.0, 2);
+
+		// repeat until ready to stop
+		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
 			this.agLearner.setEpoch(epoch);
@@ -169,11 +172,44 @@ public class AdaGradTrainer {
 			// run examples
 			int id=1;
 			long start = System.currentTimeMillis();
+//			for (String s : examples) {
+//				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
+//				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
+//				Future<Integer> trained = trainPool.submit(new AdaGradTrain(parsed, paramVec, totSqGrad, agLearner, id));
+//				cleanPool.submit(new TraceLosses(trained, id));
+//				start = System.currentTimeMillis();
+//			}
+			int countdown=-1; AdaGradTrainer notify = null;
 			for (String s : examples) {
+				if (log.isDebugEnabled()) log.debug("Queue size "+(trainPool.getTaskCount()-trainPool.getCompletedTaskCount()));
 				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
+				if (countdown>0) {
+					if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
+					countdown--;
+				} else if (countdown == 0) {
+					if (log.isDebugEnabled()) log.debug("Countdown "+countdown +"; throttling:");
+					countdown--;
+					notify = null;
+					try {
+						synchronized(this) {
+							if (log.isDebugEnabled()) log.debug("Clearing training queue...");
+							while(trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > this.nthreads)
+								this.wait();
+							if (log.isDebugEnabled()) log.debug("Queue cleared.");
+						}
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else if (trainPool.getTaskCount()-trainPool.getCompletedTaskCount() > 1.5*this.nthreads) {
+					if (log.isDebugEnabled()) log.debug("Starting countdown");
+					countdown=this.nthreads;
+					notify = this;
+				}
 				Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = trainPool.submit(new AdaGradTrain(parsed, paramVec, totSqGrad, agLearner, id));
+				Future<Integer> trained = trainPool.submit(new AdaGradTrain(parsed, paramVec, totSqGrad, agLearner, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
+				id++;
 				start = System.currentTimeMillis();
 			}
 			parsePool.shutdown();
@@ -196,24 +232,28 @@ public class AdaGradTrainer {
 			// finish any trailing updates for this epoch
 			this.agLearner.cleanupParams(paramVec,paramVec);
 
-			// loss status
+			// loss status and signalling the stopper
 			if(traceLosses) {
 				LossData lossThisEpoch = this.agLearner.cumulativeLoss();
+				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
+				if (epoch>1) {
+					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
+				}
 				lossLastEpoch = lossThisEpoch;
 			}
+			stopper.recordEpoch();
 			statistics.checkStatistics();
 			total.updateReadingStatistics(statistics.readTime);
 			total.updateParsingStatistics(statistics.parseTime);
 			total.updateTrainingStatistics(statistics.trainTime);
 		}
-		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime);
+		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime + " Num Epochs: " + this.epoch);
 		return paramVec;
 	}
 
 
 	protected void printLossOutput(LossData lossThisEpoch) {
-		for(Map.Entry<LOSS,Double> e : lossThisEpoch.loss.entrySet()) e.setValue(e.getValue() / statistics.numExamplesThisEpoch);
 		System.out.print("avg training loss " + lossThisEpoch.total()
 				+ " on "+ statistics.numExamplesThisEpoch +" examples");
 		System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
@@ -222,15 +262,18 @@ public class AdaGradTrainer {
 			LossData diff = lossLastEpoch.diff(lossThisEpoch);
 			System.out.println(" improved by " + diff.total()
 					+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
-			if (diff.total() < 0.0) {
-				System.out.println("WARNING: loss INCREASED by " + 
+			double percentImprovement = 100 * diff.total()/lossThisEpoch.total();
+			System.out.println("pct reduction in training loss "+percentImprovement);
+			// warn if there is a more than 1/2 of 1 percent increase in loss
+			if (percentImprovement < -0.5) { 
+				System.out.println("WARNING: loss INCREASED by " + percentImprovement +" pct, i.e. total of "+
 						(-diff.total()) + " - what's THAT about?");
 			}
 		} else 
 			System.out.println();
 	}
 
-	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
+	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec, SimpleParamVector<String> totSqGrad) {
 		log.info("Computing gradient on cooked examples...");
 		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
@@ -258,9 +301,40 @@ public class AdaGradTrainer {
 
 		// run examples
 		int id=1;
+//		for (String s : examples) {
+//			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
+//			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, agLearner, id));
+//			cleanPool.submit(new TraceLosses(gradfound, id));
+//		}
+		int countdown=-1; AdaGradTrainer notify = null;
 		for (String s : examples) {
+			long queueSize = (((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount());
+			if (log.isDebugEnabled()) log.debug("Queue size "+queueSize);
+			if (countdown>0) {
+				if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
+				countdown--;
+			} else if (countdown == 0) {
+				if (log.isDebugEnabled()) log.debug("Countdown "+countdown +"; throttling:");
+				countdown--;
+				notify = null;
+				try {
+					synchronized(this) {
+						if (log.isDebugEnabled()) log.debug("Clearing training queue...");
+						while((((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount()) > this.nthreads)
+							this.wait();
+						if (log.isDebugEnabled()) log.debug("Queue cleared.");
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else if (queueSize > 1.5*this.nthreads) {
+				if (log.isDebugEnabled()) log.debug("Starting countdown");
+				countdown=this.nthreads;
+				notify = this;
+			}
 			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, agLearner, id));
+			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, totSqGrad, agLearner, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
 		}
 		parsePool.shutdown();
@@ -328,16 +402,19 @@ public class AdaGradTrainer {
 		AdaGradSRW agLearner;
 		SimpleParamVector<String> totSqGrad;
 		int id;
-		public AdaGradTrain(Future<PosNegRWExample> parsed, ParamVector paramVec, SimpleParamVector<String> totSqGrad, AdaGradSRW agLearner, int id) {
+		AdaGradTrainer notify;
+		public AdaGradTrain(Future<PosNegRWExample> parsed, ParamVector paramVec, SimpleParamVector<String> totSqGrad, AdaGradSRW agLearner, int id, AdaGradTrainer notify) {
 			this.in = parsed;
 			this.id = id;
 			this.agLearner = agLearner;
-			this.paramVec = paramVec;
 			this.totSqGrad = totSqGrad;
+			this.paramVec = paramVec;
+			this.notify = notify;
 		}
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
+			if (notify != null) synchronized(notify) { notify.notify(); }
 			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
 			agLearner.trainOnExample(paramVec, totSqGrad, ex);
@@ -368,24 +445,18 @@ public class AdaGradTrainer {
 		}
 	}
 
-	protected class Grad implements Callable<Integer> {
-		Future<PosNegRWExample> in;
-		ParamVector paramVec;
+	protected class Grad extends AdaGradTrain {
 		ParamVector sumGradient;
-		SRW learner;
-		int id;
-		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SRW learner, int id) {
-			this.in = parsed;
-			this.id = id;
-			this.learner = learner;
-			this.paramVec = paramVec;
+		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SimpleParamVector<String> totSqGrad, AdaGradSRW agLearner, int id, AdaGradTrainer notify) {
+			super(parsed, paramVec, totSqGrad, agLearner, id, notify);
 			this.sumGradient = sumGradient;
 		}
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
+			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
-			learner.accumulateGradient(paramVec, ex, sumGradient);
+			agLearner.accumulateGradient(paramVec, ex, sumGradient);
 			if (log.isDebugEnabled()) log.debug("Gradient done "+this.id);
 			return 1; 
 			// ^^^^ this is the equivalent of k++ from before;
@@ -439,7 +510,12 @@ public class AdaGradTrainer {
 			long start = System.currentTimeMillis();
 			
 			//@rck AG
-			AdaGradSRW agSRW = new AdaGradSRW(c.srw.getOptions());
+			SRWOptions srwOpt = c.srw.getOptions();
+			srwOpt.eta = 1;
+			srwOpt.mu = 1;
+			srwOpt.squashingFunction = new Exp();
+			c.squashingFunction = new Exp();
+			AdaGradSRW agSRW = new AdaGradSRW(srwOpt);
 			AdaGradTrainer agTrainer = new AdaGradTrainer(agSRW, c.nthreads, c.throttle);
 			
 			

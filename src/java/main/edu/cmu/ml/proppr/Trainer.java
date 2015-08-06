@@ -158,7 +158,7 @@ public class Trainer {
 		ThreadPoolExecutor parsePool, trainPool;
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
-		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs, 1.0, 2);
 
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
@@ -252,7 +252,7 @@ public class Trainer {
 			total.updateParsingStatistics(statistics.parseTime);
 			total.updateTrainingStatistics(statistics.trainTime);
 		}
-		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime);
+		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime + " Num Epochs: " + this.epoch);
 		return paramVec;
 	}
 
