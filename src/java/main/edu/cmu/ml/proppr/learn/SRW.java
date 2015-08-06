@@ -55,7 +55,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
  *
  */
 public class SRW {	
-	private static final Logger log = Logger.getLogger(SRW.class);
+	protected static final Logger log = Logger.getLogger(SRW.class);
 	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
 	private static final int MAX_ZERO_LOGS = 20;
 	private static Random random = new Random();
