@@ -18,6 +18,7 @@ import edu.cmu.ml.proppr.prove.wam.Outlink;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParsedFile;
 
 public class FactsPlugin extends WamPlugin {
@@ -67,6 +68,7 @@ public class FactsPlugin extends WamPlugin {
 	
 	public void addFact(String functor, String ... args) {
 		if (functor.indexOf(WamPlugin.WEIGHTED_SUFFIX)==functor.length()-1) {
+			if (log.isTraceEnabled()) log.trace("Adding weighted fact "+functor+" "+Dictionary.buildString(args,new StringBuilder()," ").toString());
 			addWeightedFact(
 					functor.substring(0, functor.length()-1), 
 					Double.parseDouble(args[args.length-1]),
@@ -132,6 +134,7 @@ public class FactsPlugin extends WamPlugin {
 					if (i<val.args.length) {
 						wamInterp.setArg(arity,i+1,val.args[i]);
 					} else if (returnWeights) {
+						log.debug("Using facts weight "+val.wt);
 						wamInterp.setWt(arity, i+1, val.wt);
 					}
 				}

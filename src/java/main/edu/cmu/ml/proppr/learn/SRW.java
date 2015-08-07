@@ -59,6 +59,7 @@ public class SRW {
 	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
 	private static final int MAX_ZERO_LOGS = 20;
 	private static Random random = new Random();
+	public static final String FIXED_WEIGHT_FUNCTOR="fixedWeight";
 	public static void seed(long seed) { random.setSeed(seed); }
 	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ReLU(); }
 	protected Set<String> untrainedFeatures;
@@ -390,7 +391,7 @@ public class SRW {
 	}
 
 	public boolean trainable(String feature) {
-		return !untrainedFeatures.contains(feature);
+		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));
 	}
 
 	/** Allow subclasses to filter feature list **/

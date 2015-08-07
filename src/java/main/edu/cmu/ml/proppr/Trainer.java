@@ -65,7 +65,6 @@ public class Trainer {
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
 
-		learner.untrainedFeatures().add("fixedWeight");
 		learner.untrainedFeatures().add("id(trueLoop)");
 		learner.untrainedFeatures().add("id(trueLoopRestart)");
 		learner.untrainedFeatures().add("id(restart)");
