@@ -64,7 +64,7 @@ public class CachingTrainer extends Trainer {
 		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 
-		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs, this.stoppingPercent, this.stoppingEpoch);
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
 			// set up current epoch

@@ -1,13 +1,8 @@
 package edu.cmu.ml.proppr;
 
 import java.io.File;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -15,10 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
@@ -26,29 +19,24 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
+import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
-import edu.cmu.ml.proppr.util.FileBackedIterable;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
-import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
-import edu.cmu.ml.proppr.util.multithreading.Transformer;
-import gnu.trove.map.TObjectDoubleMap;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class Trainer {
-	private static final Logger log = Logger.getLogger(Trainer.class);
+	protected static final Logger log = Logger.getLogger(Trainer.class);
 	public static final int DEFAULT_CAPACITY = 16;
 	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
@@ -56,8 +44,11 @@ public class Trainer {
 
 	protected SRW learner;
 	protected int epoch;
-	LossData lossLastEpoch;
-	TrainingStatistics statistics=new TrainingStatistics();
+	protected LossData lossLastEpoch;
+	protected TrainingStatistics statistics=new TrainingStatistics();
+	
+	protected int stoppingEpoch = 3;
+	protected double stoppingPercent = 1.0;
 
 
 	public Trainer(SRW learner, int nthreads, int throttle) {
@@ -166,7 +157,7 @@ public class Trainer {
 		ThreadPoolExecutor workingPool;
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
-		StoppingCriterion stopper = new StoppingCriterion(numEpochs, 1.0, 2);
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs, this.stoppingPercent, this.stoppingEpoch);
 
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
@@ -529,6 +520,12 @@ public class Trainer {
 			t.printStackTrace();
 			System.exit(-1);
 		}
+	}
+
+	public void setStoppingCriteria(int stoppingEpochs, double percent) {
+		this.stoppingEpoch = stoppingEpochs;
+		this.stoppingPercent = percent;
+
 	}
 
 

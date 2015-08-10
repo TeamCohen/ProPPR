@@ -6,6 +6,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import edu.cmu.ml.proppr.AdaGradTrainer;
 import edu.cmu.ml.proppr.CachingTrainer;
 import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
@@ -39,7 +40,7 @@ public class ModuleConfiguration extends Configuration {
 
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
-	private enum TRAINERS { cached, caching, streaming };
+	private enum TRAINERS { cached, caching, streaming, adagrad };
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -60,7 +61,6 @@ public class ModuleConfiguration extends Configuration {
 			options.addOption(
 					OptionBuilder
 					.withLongOpt(SQUASHFUNCTION_MODULE_OPTION)
-					.withLongOpt(OLD_SQUASHFUNCTION_MODULE_OPTION)
 					.withArgName("w")
 					.hasArg()
 					.withDescription("Default: ReLU\n"
@@ -222,9 +222,24 @@ public class ModuleConfiguration extends Configuration {
 			this.setupSRW(line, flags, options);
 			seed(line);
 			if (isOn(flags,USE_TRAINER)) {
-//				TRAINERS type = TRAINERS.cached;
-				//rosecatherinek: use Trainer not Cachine
-				TRAINERS type = TRAINERS.streaming;
+				double percent = 1.0;
+				int stoppingEpochs = 3;
+				
+				// --trainer adagrad:pct=2:epochs:4
+				boolean userFlagEpoch = false;
+				if (line.hasOption(TRAINER_MODULE_OPTION)) {
+					for (String val : line.getOptionValues(TRAINER_MODULE_OPTION)) {
+						if (val.startsWith("pct")) percent = Double.parseDouble(val.substring(val.indexOf("=")+1));
+						else if (val.startsWith("epochs")) {
+							stoppingEpochs = Integer.parseInt(val.substring(val.indexOf("=")+1));
+							userFlagEpoch = true;
+						}
+					}
+				}
+				
+				
+				
+				TRAINERS type = TRAINERS.cached;
 				if (line.hasOption(TRAINER_MODULE_OPTION)) type = TRAINERS.valueOf(line.getOptionValues(TRAINER_MODULE_OPTION)[0]);
 				switch(type) {
 				case streaming: 
@@ -240,8 +255,19 @@ public class ModuleConfiguration extends Configuration {
 					}
 					this.trainer = new CachingTrainer(this.srw, this.nthreads, this.throttle, shuff); 
 					break;
+				case adagrad:
+					this.trainer = new AdaGradTrainer(this.srw, this.nthreads, this.throttle);
+					//check if the appropriate squashing fn is being used
+					if(!(this.squashingFunction instanceof Exp)){
+						this.usageOptions(options, allFlags, "Adagrad trainer supports only Exp squashing function as of now.");
+					}
+					if(!userFlagEpoch){
+						stoppingEpochs = 2;
+					}
+					break;
 				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));
 				}
+				this.trainer.setStoppingCriteria(stoppingEpochs, percent);
 			}
 		}
 
@@ -262,7 +288,7 @@ public class ModuleConfiguration extends Configuration {
 	}
 
 	protected void setupSRW(CommandLine line, int flags, Options options) {
-		SRWOptions sp = new SRWOptions(apr);
+		SRWOptions sp = new SRWOptions(apr, this.squashingFunction);
 
 		if (line.hasOption(SRW_MODULE_OPTION)) {
 			String[] values = line.getOptionValues(SRW_MODULE_OPTION);
@@ -307,7 +333,9 @@ public class ModuleConfiguration extends Configuration {
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp);
 			} else if (values[0].equals("dpr")) {
 				this.srw = new edu.cmu.ml.proppr.learn.DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
-			} else {
+			}else if (values[0].equals("adagrad")) {
+				this.srw = new edu.cmu.ml.proppr.learn.AdaGradSRW (sp);
+			}  else {
 				usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
