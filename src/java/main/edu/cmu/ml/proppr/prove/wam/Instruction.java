@@ -15,7 +15,8 @@ public class Instruction {
 		fpushconst (true),
 		fpushboundvar (true),
 		freport (true),
-		ffindall (true),
+		ffindall (true), 
+		fpushweight (true),
 		unifyconst,
 		unifyboundvar;
 		private final boolean feature;
@@ -49,6 +50,7 @@ public class Instruction {
 		case fpushstart: return new Instruction(OP.fpushstart,args[0],Integer.parseInt(args[1]));
 		case fpushconst: return new Instruction(OP.fpushconst,args[0]);
 		case fpushboundvar: return new Instruction(OP.fpushboundvar,Integer.parseInt(args[0]));
+		case fpushweight: return new Instruction(OP.fpushweight);
 		case freport: return new Instruction(OP.freport);
 		case ffindall: return new Instruction(OP.ffindall, Integer.parseInt(args[0]));
 		}

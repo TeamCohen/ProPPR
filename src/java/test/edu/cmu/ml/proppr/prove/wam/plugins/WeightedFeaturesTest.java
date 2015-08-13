@@ -46,7 +46,11 @@ public class WeightedFeaturesTest {
 				new Query[] {Query.parse("predict(p1,neg)")}),
 				apr,new SimpleSymbolTable<Feature>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
-		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
+		String serialized = grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n");
+		System.out.println( serialized );
+		// hack
+		assertTrue("Word weights must appear in ground graph",serialized.indexOf("0.9")>0);
+		assertTrue("Word weights must appear in ground graph",serialized.indexOf("0.1")>0);
 		
 	}
 	
@@ -65,8 +69,11 @@ public class WeightedFeaturesTest {
 				new Query[] {Query.parse("predict(p1,neg)")}),
 				apr,new SimpleSymbolTable<Feature>(),program, plugins);
 		GroundedExample ex = grounder.groundExample(p, pg);
-		System.out.println( grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n"));
-		
+		String serialized = grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n");
+		System.out.println( serialized );
+		// hack
+		assertTrue("Word weights must appear in ground graph",serialized.indexOf("0.9")>0);
+		assertTrue("Word weights must appear in ground graph",serialized.indexOf("0.1")>0);
 	}
 
 }

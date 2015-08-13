@@ -30,6 +30,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import edu.cmu.ml.proppr.learn.SRW;
 
+/*
+ * This class intended to be used for one-off debugging.
+ * 
+ * Functionality not fixed -- do not use in scripts, for experiments, etc
+ */
 public class Diagnostic {
 	private static final Logger log = Logger.getLogger(Diagnostic.class);
 
@@ -55,7 +60,6 @@ public class Diagnostic {
 			srw.untrainedFeatures().add("id(restart)");
 			srw.untrainedFeatures().add("id(trueLoop)");
 			srw.untrainedFeatures().add("id(trueLoopRestart)");
-			srw.untrainedFeatures().add("fixedWeight");
 
 
 			/* DiagSrwES: */

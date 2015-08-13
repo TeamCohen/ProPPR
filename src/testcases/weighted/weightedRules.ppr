@@ -1,0 +1,3 @@
+shoppingList(X) :- inCupboard(X) {fixedWeight#(r1,W) : ruleWeight#(r1,W)}.
+shoppingList(X) :- inFridge(X) {fixedWeight#(r2,W) : ruleWeight#(r2,W)}.
+shoppingList(X) :- inPantry(X) {fixedWeight#(r3,W) : ruleWeight#(r3,W)}.

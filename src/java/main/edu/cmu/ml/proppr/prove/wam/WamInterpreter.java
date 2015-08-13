@@ -128,6 +128,7 @@ public class WamInterpreter {
 			case fpushstart: fpushstart(inst.s, inst.i1); break;
 			case fpushconst: fpushconst(inst.s); break;
 			case fpushboundvar: fpushboundvar(inst.i1); break;
+			case fpushweight: fpushweight(); break;
 			case freport: freport(); break;
 			case ffindall: ffindall(inst.i1); break;
 			}
@@ -333,6 +334,10 @@ public class WamInterpreter {
 		getFeaturePeek().append(cid);
 		state.incrementProgramCounter();
 	}
+	public void fpushweight() {
+		getFeaturePeek().wt = state.getWeight();
+		state.incrementProgramCounter();
+	}
 
 	public void freport() throws LogicProgramException {
 		for (FeatureBuilder f : this.featureStack) {
@@ -402,6 +407,7 @@ public class WamInterpreter {
 		if (log.isDebugEnabled()) log.debug("setArg("+k+","+i+","+value+")");
 		// use 1 as a placeholder in the heap
 		state.setHeap(rj, state.createConstantCell(1));
+		state.setWeight(value);
 		state.collapsePointers(j, rj);
 		if (log.isDebugEnabled()) log.debug("at _: state "+state);
 	}

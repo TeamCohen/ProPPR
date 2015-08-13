@@ -57,7 +57,7 @@ public class ModuleConfiguration extends Configuration {
 
 		//modules
 		flags = modules(allFlags);
-		if(isOn(flags, USE_SQUASHFUNCTION))
+		if(isOn(flags, USE_SQUASHFUNCTION)) { 
 			options.addOption(
 					OptionBuilder
 					.withLongOpt(SQUASHFUNCTION_MODULE_OPTION)
@@ -71,6 +71,7 @@ public class ModuleConfiguration extends Configuration {
 							+ "ReLU\n"
 							+ "exp")
 							.create());
+		}
 		if(isOn(flags, USE_PROVER))
 			options.addOption(
 					OptionBuilder

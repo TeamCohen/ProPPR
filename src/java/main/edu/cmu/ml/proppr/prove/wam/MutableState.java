@@ -19,6 +19,7 @@ import edu.cmu.ml.proppr.util.Dictionary;
 public class MutableState extends State {
 	private int hn;
 	private int rn;
+	private double wt;
 	
 	public MutableState() {
 		this.heap = new int[0];
@@ -99,11 +100,6 @@ public class MutableState extends State {
 		pc = i;
 	}
 
-
-//	public void truncateVarNameList(int newsize) {
-//		throw new RuntimeException("Bad programmer! Finish your vegetables");
-//	}
-
 	@Override
 	public int getHeapSize() {
 		return hn;
@@ -119,6 +115,13 @@ public class MutableState extends State {
 	}
 	public void truncateHeap(int newsize) {
 		hn = newsize;
+	}
+	
+	public void setWeight(double wt) {
+		this.wt = wt;
+	}
+	public double getWeight() {
+		return this.wt;
 	}
 
 	@Override
