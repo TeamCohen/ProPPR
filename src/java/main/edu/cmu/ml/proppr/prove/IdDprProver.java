@@ -73,7 +73,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 			params = new LongDense.UnitVector();
 		else {
 			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
-			synchronized(parent) {parent.setFrozenParams(params);}
+			if (parent != null) synchronized(parent) {parent.setFrozenParams(params);}
 		}
 		return params;
 	}
