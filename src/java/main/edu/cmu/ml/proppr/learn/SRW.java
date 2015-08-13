@@ -57,7 +57,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 public class SRW {	
 	private static final Logger log = Logger.getLogger(SRW.class);
 	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
-	private static final int MAX_ZERO_LOGS = 20;
+	private static final int MAX_ZERO_LOGS = 10;
 	private static Random random = new Random();
 	public static final String FIXED_WEIGHT_FUNCTOR="fixedWeight";
 	public static void seed(long seed) { random.setSeed(seed); }
@@ -66,6 +66,7 @@ public class SRW {
 	protected int epoch;
 	protected SRWOptions c;
 	protected LossData cumloss;
+	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
@@ -73,6 +74,7 @@ public class SRW {
 		this.epoch = 1;
 		this.untrainedFeatures = new TreeSet<String>();
 		this.cumloss = new LossData();
+		this.zeroGradientData = new ZeroGradientData();
 	}
 
 	/**
@@ -326,14 +328,27 @@ public class SRW {
 		}
 
 //		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
-		if (nonzero==0 && zeroLogsThisEpoch < MAX_ZERO_LOGS) {
-				log.warn("0 gradient. Try a different squashing function? "+ex.toString());
-				zeroLogsThisEpoch++;
-				if (zeroLogsThisEpoch >= MAX_ZERO_LOGS) {
-					log.warn("(that's your last 0 gradient warning this epoch)");
-				}
+		if (nonzero==0) {
+			this.zeroGradientData.numZero++;
+			if (this.zeroGradientData.numZero < MAX_ZERO_LOGS) {
+				this.zeroGradientData.examples.append("\n").append(ex);
+			}
+//				log.warn("0 gradient. Try a different squashing function? "+ex.toString());
+//				zeroLogsThisEpoch++;
+//				if (zeroLogsThisEpoch >= MAX_ZERO_LOGS) {
+//					log.warn("(that's your last 0 gradient warning this epoch)");
+//				}
 		}
 		return gradient;
+	}
+	
+	public class ZeroGradientData {
+		public int numZero=0;
+		public StringBuilder examples=new StringBuilder();
+	}
+	
+	public ZeroGradientData getZeroGradientData() {
+		return this.zeroGradientData;
 	}
 	
 	/** template: update gradient with regularization term */
@@ -415,7 +430,7 @@ public class SRW {
 	}
 	public void setEpoch(int e) {
 		this.epoch = e;
-		this.zeroLogsThisEpoch = 0;
+		this.zeroGradientData = new ZeroGradientData();
 	}
 	public void clearLoss() {
 		this.cumloss.clear();

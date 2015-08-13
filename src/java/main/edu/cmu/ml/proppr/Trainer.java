@@ -26,6 +26,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
+import edu.cmu.ml.proppr.learn.SRW.ZeroGradientData;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
@@ -48,6 +49,7 @@ import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class Trainer {
+	private static final double MAX_PCT_ZERO_GRADIENT = 0.2;
 	private static final Logger log = Logger.getLogger(Trainer.class);
 	public static final int DEFAULT_CAPACITY = 16;
 	public static final float DEFAULT_LOAD = (float) 0.75;
@@ -124,8 +126,8 @@ public class Trainer {
 			trainTime = Math.max(1, trainTime);
 			// we can keep the working pool full if we can read $poolSize examples
 			// in the time it takes to parse + train 1 example
-			int parseFull = (int) Math.ceil( (parseTime+trainTime) / readTime);
-			if (parseFull < poolSize) log.warn((poolSize-parseFull)+" working threads went unused; reading from disk is slow. :(");
+			int workFull = (int) Math.ceil( (parseTime+trainTime) / readTime);
+			if (poolSize - workFull > 1) log.warn((poolSize-workFull)+" working threads went unused; reading from disk is slow. :(");
 		}
 	}
 
@@ -190,6 +192,32 @@ public class Trainer {
 			for (String s : examples) {
 				if (log.isDebugEnabled()) log.debug("Queue size "+(workingPool.getTaskCount()-workingPool.getCompletedTaskCount()));
 				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
+				/*
+				 * Throttling behavior:
+				 * Once the number of unfinished tasks exceeds 1.5x the number of threads,
+				 * we add a 'notify' object to the next nthreads training tasks. Then, the
+				 * master thread gathers 'notify' signals until the number of unfinished tasks 
+				 * is no longer greater than the number of threads. Then we start adding tasks again.
+				 * 
+				 * This works more or less fine, since the master thread stops pulling examples
+				 * from disk when there are then a maximum of 2.5x training examples in the queue (that's
+				 * the original 1.5x, which could represent a maximum of 1.5x training examples,
+				 * plus the nthreads training tasks with active 'notify' objects. There's an 
+				 * additional nthreads parsing tasks in the queue but those don't take up much 
+				 * memory so we don't care). This lets us read in a good-sized buffer without
+				 * blowing up the heap.
+				 * 
+				 * Worst-case: None of the backlog is cleared before the master thread enters
+				 * the synchronized block. nthreads-1 threads will be training long jobs, and 
+				 * the one free thread works through the 0.5x backlog and all nthreads countdown 
+				 * examples. The notify() sent by the final countdown example will occur when 
+				 * there are nthreads unfinished tasks in the queue, and the master thread will exit
+				 * the synchronized block and proceed.
+				 * 
+				 * Best-case: The backlog is already cleared by the time the master thread enters
+				 * the synchronized block. The while() loop immediately exits, and the notify()
+				 * signals from the countdown examples have no effect.
+				 */
 				if (countdown>0) {
 					if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
 					countdown--;
@@ -205,7 +233,6 @@ public class Trainer {
 							if (log.isDebugEnabled()) log.debug("Queue cleared.");
 						}
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				} else if (workingPool.getTaskCount()-workingPool.getCompletedTaskCount() > 1.5*this.nthreads) {
@@ -220,37 +247,60 @@ public class Trainer {
 				start = System.currentTimeMillis();
 			}
 
-			workingPool.shutdown();
-			try {
-				workingPool.awaitTermination(7, TimeUnit.DAYS);
-				cleanPool.shutdown();
-				cleanPool.awaitTermination(7, TimeUnit.DAYS);
-			} catch (InterruptedException e) {
-				log.error("Interrupted?",e);
-			}
-			// finish any trailing updates for this epoch
-			this.learner.cleanupParams(paramVec,paramVec);
-
-			// loss status and signalling the stopper
-			if(traceLosses) {
-				LossData lossThisEpoch = this.learner.cumulativeLoss();
-				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
-				printLossOutput(lossThisEpoch);
-				if (epoch>1) {
-					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
-				}
-				lossLastEpoch = lossThisEpoch;
-			}
-			stopper.recordEpoch();
-			statistics.checkStatistics();
-			total.updateReadingStatistics(statistics.readTime);
-			total.updateParsingStatistics(statistics.parseTime);
-			total.updateTrainingStatistics(statistics.trainTime);
+			cleanEpoch(workingPool, cleanPool, paramVec, traceLosses, stopper, id, total);
 		}
 		log.info("Reading  statistics: min "+total.minReadTime+" / max "+total.maxReadTime+" / total "+total.readTime);
 		log.info("Parsing  statistics: min "+total.minParseTime+" / max "+total.maxParseTime+" / total "+total.parseTime);
 		log.info("Training statistics: min "+total.minTrainTime+" / max "+total.maxTrainTime+" / total "+total.trainTime);
 		return paramVec;
+	}
+	
+	/**
+	 * End-of-epoch cleanup routine shared by Trainer, CachingTrainer. 
+	 * Shuts down working thread, cleaning thread, regularizer, loss calculations, stopper calculations, 
+	 * training statistics, and zero gradient statistics.
+	 * @param workingPool
+	 * @param cleanPool
+	 * @param paramVec
+	 * @param traceLosses
+	 * @param stopper
+	 * @param n - number of examples
+	 * @param stats
+	 */
+	protected void cleanEpoch(ExecutorService workingPool, ExecutorService cleanPool,
+			ParamVector paramVec, boolean traceLosses, StoppingCriterion stopper, int n, TrainingStatistics stats) {
+		workingPool.shutdown();
+		try {
+			workingPool.awaitTermination(7, TimeUnit.DAYS);
+			cleanPool.shutdown();
+			cleanPool.awaitTermination(7, TimeUnit.DAYS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		// finish any trailing updates for this epoch
+		this.learner.cleanupParams(paramVec,paramVec);
+
+		// loss status and signalling the stopper
+		if(traceLosses) {
+			LossData lossThisEpoch = this.learner.cumulativeLoss();
+			lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
+			printLossOutput(lossThisEpoch);
+			if (epoch>1) {
+				stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
+			}
+			lossLastEpoch = lossThisEpoch;
+		}
+		ZeroGradientData zeros = this.learner.getZeroGradientData();
+		if (zeros.numZero > 0) {
+			log.info(zeros.numZero + " / "+n+" examples with 0 gradient");
+			if (zeros.numZero / (float) n > MAX_PCT_ZERO_GRADIENT) 
+				log.warn("Having this many 0 gradients is unusual. Try a different squashing function?");
+		}
+		stopper.recordEpoch();
+		statistics.checkStatistics();
+		stats.updateReadingStatistics(statistics.readTime);
+		stats.updateParsingStatistics(statistics.parseTime);
+		stats.updateTrainingStatistics(statistics.trainTime);
 	}
 
 

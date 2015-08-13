@@ -146,7 +146,6 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 			log.debug("not normalizing");
 		}
 		List<Map.Entry<Query,Double>> solutionDist = Dictionary.sort(solutions);
-		//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
 		if(log.isDebugEnabled()) log.debug("Writing "+solutionDist.size()+" solutions...");
 		StringBuilder sb = new StringBuilder("# proved ").append(String.valueOf(id)).append("\t").append(query.toString())
 				.append("\t").append((end - start) + " msec\n");
@@ -165,7 +164,6 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 
 	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException 
 	{
-		System.out.println("called findSolutions");
 		Multithreading<Query,String> m = new Multithreading<Query,String>(log, maintainOrder);
 		m.executeJob(
 				this.nthreads, 
@@ -250,7 +248,6 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();
-			System.out.println("calling findSolutions");
 			qa.findSolutions(c.queryFile, c.solutionsFile, c.maintainOrder);
 			System.out.println("Query-answering time: "+(System.currentTimeMillis()-start));
 
