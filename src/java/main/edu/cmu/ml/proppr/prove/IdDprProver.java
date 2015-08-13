@@ -28,6 +28,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	protected final double stayProbability;
 	protected final double moveProbability;
 	protected LongDense.AbstractFloatVector params=null;
+	protected IdDprProver parent=null;
 	
 	@Override
 	public String toString() { 
@@ -55,17 +56,25 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		IdDprProver copy = new IdDprProver(this.stayProbability, apr);
 		copy.setWeighter(weighter);
 		copy.params = this.params;
+		if (this.parent != null) copy.parent = this.parent;
+		else copy.parent = this;
 		return copy;
 	}
 	@Override
 	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
 	
+	protected void setFrozenParams(LongDense.AbstractFloatVector params) {
+		if (this.params == null) this.params = params;
+	}
+	
 	private LongDense.AbstractFloatVector getFrozenParams(CachingIdProofGraph pg) {
 		if (params != null) return params;
 		if (this.weighter.weights.size()==0) 
 			params = new LongDense.UnitVector();
-		else 
+		else {
 			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
+			synchronized(parent) {parent.setFrozenParams(params);}
+		}
 		return params;
 	}
 
