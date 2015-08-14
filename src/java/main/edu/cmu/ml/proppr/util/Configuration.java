@@ -103,7 +103,7 @@ public class Configuration {
 	public int nthreads = -1;
     public APROptions apr = new APROptions();
 	public int epochs = 5;
-	public boolean traceLosses = true;
+	public boolean traceLosses = false;
 	public boolean force = false;
 	public boolean ternaryIndex = false;
 	public boolean maintainOrder = true;

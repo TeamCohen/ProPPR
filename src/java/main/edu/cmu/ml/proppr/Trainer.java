@@ -36,7 +36,7 @@ import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
 
 public class Trainer {
-	protected static final Logger log = Logger.getLogger(Trainer.class);
+	private static final Logger log = Logger.getLogger(Trainer.class);
 	public static final int DEFAULT_CAPACITY = 16;
 	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
@@ -241,7 +241,6 @@ public class Trainer {
 		log.info("Reading  statistics: min "+total.minReadTime+" / max "+total.maxReadTime+" / total "+total.readTime);
 		log.info("Parsing  statistics: min "+total.minParseTime+" / max "+total.maxParseTime+" / total "+total.parseTime);
 		log.info("Training statistics: min "+total.minTrainTime+" / max "+total.maxTrainTime+" / total "+total.trainTime);
-		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime + " Num Epochs: " + this.epoch);
 		return paramVec;
 	}
 
@@ -406,27 +405,6 @@ public class Trainer {
 			learner.trainOnExample(paramVec, ex);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
-			
-			//rosecatherinek: testing P values at the end of training
-			int[] posList = ex.getPosList();
-			int[] negList = ex.getNegList();
-			int[] seedList = ex.getQueryVec().keys();
-			double[] p = ex.p;
-			
-			System.out.println("P of pos examples: ");
-			for(int i : posList){
-				System.out.println(p[i]);
-			}
-			System.out.println("P of neg examples:");
-			for(int i : negList){
-				System.out.println(p[i]);
-			}
-			System.out.println("P of seeds:");
-			for(int i : seedList){
-				System.out.println(i + ": " + p[i]);
-			}
-			
-			
 			return ex.length();
 		}
 	}

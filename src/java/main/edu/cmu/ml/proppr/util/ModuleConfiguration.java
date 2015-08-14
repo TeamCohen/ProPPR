@@ -16,6 +16,7 @@ import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.Linear;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.Sigmoid;
+import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.learn.tools.Tanh;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.DfsProver;
@@ -41,6 +42,7 @@ public class ModuleConfiguration extends Configuration {
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
+	private enum SRWS { l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -107,10 +109,14 @@ public class ModuleConfiguration extends Configuration {
 					.withArgName("class")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: cached:shuff=true\n"
-							+ "Available options:\n"
+					.withDescription("Default: cached:shuff=true:pct=0.1:stableEpochs=3\n"
+							+ "Available trainers:\n"
 							+ "cached[:shuff={true|false}] (faster)\n"
-							+ "streaming                   (large dataset)")
+							+ "streaming                   (large dataset)\n"
+							+ "adagrad\n"
+							+ "Available parameters:\n"
+							+ "pct - stopping criterion max % improvement\n"
+							+ "stableEpochs - stopping criterion")
 							.create());
 		if (isOn(flags, USE_SRW))
 			options.addOption(
@@ -125,6 +131,7 @@ public class ModuleConfiguration extends Configuration {
 							 + "l1p, l1plocal, l1laplacianplocal, l1pgrouplassoplocal\n"
 							 + "l2p, l2plocal\n"
 							 + "dpr\n"
+							 + "adagrad\n"
 							 + "Available parameters:\n"
 							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
@@ -223,22 +230,9 @@ public class ModuleConfiguration extends Configuration {
 			this.setupSRW(line, flags, options);
 			seed(line);
 			if (isOn(flags,USE_TRAINER)) {
-				double percent = 1.0;
-				int stoppingEpochs = 3;
-				
-				// --trainer adagrad:pct=2:epochs:4
-				boolean userFlagEpoch = false;
-				if (line.hasOption(TRAINER_MODULE_OPTION)) {
-					for (String val : line.getOptionValues(TRAINER_MODULE_OPTION)) {
-						if (val.startsWith("pct")) percent = Double.parseDouble(val.substring(val.indexOf("=")+1));
-						else if (val.startsWith("epochs")) {
-							stoppingEpochs = Integer.parseInt(val.substring(val.indexOf("=")+1));
-							userFlagEpoch = true;
-						}
-					}
-				}
-				
-				
+				// set default stopping criteria
+				double percent = StoppingCriterion.DEFAULT_MAX_PCT_IMPROVEMENT;
+				int stableEpochs = StoppingCriterion.DEFAULT_MIN_STABLE_EPOCHS;
 				
 				TRAINERS type = TRAINERS.cached;
 				if (line.hasOption(TRAINER_MODULE_OPTION)) type = TRAINERS.valueOf(line.getOptionValues(TRAINER_MODULE_OPTION)[0]);
@@ -260,15 +254,21 @@ public class ModuleConfiguration extends Configuration {
 					this.trainer = new AdaGradTrainer(this.srw, this.nthreads, this.throttle);
 					//check if the appropriate squashing fn is being used
 					if(!(this.squashingFunction instanceof Exp)){
-						this.usageOptions(options, allFlags, "Adagrad trainer supports only Exp squashing function as of now.");
+						this.usageOptions(options, allFlags, "Adagrad trainer supports only 'exp' squashing function as of now.");
 					}
-					if(!userFlagEpoch){
-						stoppingEpochs = 2;
-					}
+					stableEpochs = 2; // override default
 					break;
 				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));
 				}
-				this.trainer.setStoppingCriteria(stoppingEpochs, percent);
+				
+				// now get stopping criteria from command line
+				if (line.hasOption(TRAINER_MODULE_OPTION)) {
+					for (String val : line.getOptionValues(TRAINER_MODULE_OPTION)) {
+						if (val.startsWith("pct")) percent = Double.parseDouble(val.substring(val.indexOf("=")+1));
+						else if (val.startsWith("stableEpochs")) stableEpochs = Integer.parseInt(val.substring(val.indexOf("=")+1));
+					}
+				}
+				this.trainer.setStoppingCriteria(stableEpochs, percent);
 			}
 		}
 
@@ -319,25 +319,34 @@ public class ModuleConfiguration extends Configuration {
 					sp.zeta = Double.parseDouble(values[5]);
 				}
 			}
-
-			if (values[0].equals("l2p")) {
+			
+			SRWS type = SRWS.valueOf(values[0]);
+			switch(type) {
+			case l2p:
 				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
-			} else if (values[0].equals("l1p")) {
+				break;
+			case l1p:
 				this.srw = new edu.cmu.ml.proppr.learn.L1SRW(sp);
-			} else if (values[0].equals("l1plocal")) {
+				break;
+			case l1plocal:
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1SRW(sp);
-			} else if (values[0].equals("l1plaplacianlocal")) {
+				break;
+			case l1plaplacianlocal:
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);
-			} else if (values[0].equals("l1plocalgrouplasso")) {
+				break;
+			case l1plocalgrouplasso:
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp);
-			} else if (values[0].equals("l2plocal")) {
+				break;
+			case l2plocal:
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp);
-			} else if (values[0].equals("dpr")) {
+				break;
+			case dpr:
 				this.srw = new edu.cmu.ml.proppr.learn.DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
-			}else if (values[0].equals("adagrad")) {
+				break;
+			case adagrad:
 				this.srw = new edu.cmu.ml.proppr.learn.AdaGradSRW (sp);
-			}  else {
-				usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
+				break;
+			default: usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
 		} else {
 			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);

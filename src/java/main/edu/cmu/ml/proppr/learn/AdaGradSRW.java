@@ -1,5 +1,7 @@
 package edu.cmu.ml.proppr.learn;
 
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
@@ -30,6 +32,7 @@ import gnu.trove.map.TIntDoubleMap;
  *
  */
 public class AdaGradSRW extends SRW {	
+	private static final Logger log = Logger.getLogger(AdaGradSRW.class);
 	public AdaGradSRW() {
 		super(new SRWOptions());
 	}

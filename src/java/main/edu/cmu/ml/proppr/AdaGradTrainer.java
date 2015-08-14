@@ -10,6 +10,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.AdaGradSRW;
@@ -30,6 +32,7 @@ import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
  *
  */
 public class AdaGradTrainer extends Trainer {
+	private static final Logger log = Logger.getLogger(AdaGradTrainer.class);
 
 	protected AdaGradSRW agLearner;
 

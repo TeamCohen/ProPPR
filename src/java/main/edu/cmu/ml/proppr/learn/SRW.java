@@ -55,7 +55,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
  *
  */
 public class SRW {	
-	protected static final Logger log = Logger.getLogger(SRW.class);
+	private static final Logger log = Logger.getLogger(SRW.class);
 	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
 	private static final int MAX_ZERO_LOGS = 20;
 	private static Random random = new Random();
@@ -85,12 +85,9 @@ public class SRW {
 
 		initializeFeatures(params, example.getGraph());
 		prepareForExample(params, example.getGraph(), params);
-		//rosecatherinek 	Testing w
-		ParamVector pBefore = params;
 		load(params, example);
 		inference(params, example);
 		sgd(params, example);
-		ParamVector pAfter = params;
 	}
 
 	public void accumulateGradient(ParamVector params, PosNegRWExample example, ParamVector accumulator) {
@@ -224,8 +221,6 @@ public class SRW {
 
 	}
 	protected void inferenceUpdate(PosNegRWExample example) {
-		//rosecatherinek 
-//		System.out.println("alpha = " + c.apr.alpha);
 		PprExample ex = (PprExample) example;
 		double[] pNext = new double[ex.getGraph().node_hi];
 		TIntDoubleMap[] dNext = new TIntDoubleMap[ex.getGraph().node_hi];
@@ -278,8 +273,6 @@ public class SRW {
 			grad.advance();
 			if (grad.value()==0) continue;
 			String feature = ex.getGraph().featureLibrary.getSymbol(grad.key());
-			//rosecatherinek check gradient
-//			System.out.println("gradient: " + feature + ": " + grad.value());
 			if (trainable(feature)) params.adjustValue(feature, - learningRate() * grad.value());
 		}
 	}
