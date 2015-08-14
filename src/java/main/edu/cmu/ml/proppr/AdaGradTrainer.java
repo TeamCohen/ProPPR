@@ -33,12 +33,14 @@ import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
  */
 public class AdaGradTrainer extends Trainer {
 	private static final Logger log = Logger.getLogger(AdaGradTrainer.class);
+//
+//	protected AdaGradSRW learner;
 
-	protected AdaGradSRW agLearner;
-
-	public AdaGradTrainer(SRW agLearner, int nthreads, int throttle) {
-		super(agLearner, nthreads, throttle);
-		this.agLearner = (AdaGradSRW) agLearner;
+	public AdaGradTrainer(SRW srw, int nthreads, int throttle) {
+		super(srw, nthreads, throttle);
+		if (!(srw instanceof AdaGradSRW))
+			throw new IllegalArgumentException("AdaGradTrainer requires matching AdaGradSRW; received "+srw.getClass().getName()+" instead");
+//		this.learner = (AdaGradSRW) agLearner;
 	}
 
 	public AdaGradTrainer(SRW agSRW) {
@@ -47,13 +49,13 @@ public class AdaGradTrainer extends Trainer {
 
 
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
-		ParamVector paramVec = this.agLearner.setupParams(initialParamVec);
+		ParamVector paramVec = this.learner.setupParams(initialParamVec);
 		if (paramVec.size() == 0){
-			for (String f : this.agLearner.untrainedFeatures()) paramVec.put(f, this.agLearner.getSquashingFunction().defaultValue());
+			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
 		}
 
 		//@rck AG
-		//create a cuncurrent hash map to store the running total of the squares of the gradient
+		//create a concurrent hash map to store the running total of the squares of the gradient
 		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
 
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
@@ -68,11 +70,11 @@ public class AdaGradTrainer extends Trainer {
 		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
-			this.agLearner.setEpoch(epoch);
+			this.learner.setEpoch(epoch);
 			log.info("epoch "+epoch+" ...");
 
 			// reset counters & file pointers
-			this.agLearner.clearLoss();
+			this.learner.clearLoss();
 			this.statistics = new TrainingStatistics();
 			workingThreads.reset();
 			cleaningThreads.reset();
@@ -111,7 +113,7 @@ public class AdaGradTrainer extends Trainer {
 					notify = this;
 				}
 				Future<PosNegRWExample> parsed = workingPool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = workingPool.submit(new AdaGradTrain(parsed, paramVec, totSqGrad, agLearner, id, notify));
+				Future<Integer> trained = workingPool.submit(new AdaGradTrain(parsed, paramVec, totSqGrad, learner, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 				start = System.currentTimeMillis();
@@ -127,11 +129,11 @@ public class AdaGradTrainer extends Trainer {
 			}
 
 			// finish any trailing updates for this epoch
-			this.agLearner.cleanupParams(paramVec,paramVec);
+			this.learner.cleanupParams(paramVec,paramVec);
 
 			// loss status and signalling the stopper
 			if(traceLosses) {
-				LossData lossThisEpoch = this.agLearner.cumulativeLoss();
+				LossData lossThisEpoch = this.learner.cumulativeLoss();
 				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
 				if (epoch>1) {
@@ -158,9 +160,9 @@ public class AdaGradTrainer extends Trainer {
 		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.agLearner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
+			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
-		paramVec = this.agLearner.setupParams(paramVec);
+		paramVec = this.learner.setupParams(paramVec);
 
 		//		
 		//		//WW: accumulate example-size normalized gradient
@@ -209,7 +211,7 @@ public class AdaGradTrainer extends Trainer {
 				notify = this;
 			}
 			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, totSqGrad, agLearner, id, notify));
+			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, totSqGrad, learner, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
 		}
 		parsePool.shutdown();
@@ -223,7 +225,7 @@ public class AdaGradTrainer extends Trainer {
 			log.error("Interrupted?",e);
 		}
 
-		this.agLearner.cleanupParams(paramVec, sumGradient);
+		this.learner.cleanupParams(paramVec, sumGradient);
 
 		//WW: renormalize by the total number of queries
 		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
@@ -251,10 +253,11 @@ public class AdaGradTrainer extends Trainer {
 		SimpleParamVector<String> totSqGrad;
 		int id;
 		AdaGradTrainer notify;
-		public AdaGradTrain(Future<PosNegRWExample> parsed, ParamVector paramVec, SimpleParamVector<String> totSqGrad, AdaGradSRW agLearner, int id, AdaGradTrainer notify) {
+		public AdaGradTrain(Future<PosNegRWExample> parsed, ParamVector paramVec, 
+				SimpleParamVector<String> totSqGrad, SRW agLearner, int id, AdaGradTrainer notify) {
 			this.in = parsed;
 			this.id = id;
-			this.agLearner = agLearner;
+			this.agLearner = (AdaGradSRW) agLearner;
 			this.totSqGrad = totSqGrad;
 			this.paramVec = paramVec;
 			this.notify = notify;
@@ -296,7 +299,8 @@ public class AdaGradTrainer extends Trainer {
 
 	protected class Grad extends AdaGradTrain {
 		ParamVector sumGradient;
-		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SimpleParamVector<String> totSqGrad, AdaGradSRW agLearner, int id, AdaGradTrainer notify) {
+		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, 
+				SimpleParamVector<String> totSqGrad, SRW agLearner, int id, AdaGradTrainer notify) {
 			super(parsed, paramVec, totSqGrad, agLearner, id, notify);
 			this.sumGradient = sumGradient;
 		}
