@@ -3,6 +3,9 @@ include ../Makefile.in
 ifneq ($(strip $(SRW)),)
 SRW_OPTION=--srw $(SRW)
 endif
+ifneq ($(strip $(TRAINER)),)
+TRAINER_OPTION=--trainer $(TRAINER)
+endif
 
 ### DATASET
 PROGRAM:=webkb0.wam:webkb.graph:webkb.cfacts
@@ -24,7 +27,7 @@ results.txt: $(addsuffix .results.txt,${SUBSETS})
 	../scripts/makeResults.sh $(word 3,$^) $(word 2,$^) post.$* >> $@	
 
 %.params: train_no_%.data.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} $(SRW_OPTION) --epochs $(EPOCHS)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer $(TRAINER_OPTION) --train $< --params $@ --threads ${THREADS} $(SRW_OPTION) --epochs $(EPOCHS)
 
 train_no_%.data.grounded: train_no_%.data
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $^ --grounded $@ --prover ${PROVER} --threads ${THREADS} 
