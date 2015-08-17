@@ -28,6 +28,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	private static final boolean RESTART = true;
 	private static final boolean TRUELOOP = true;
 	protected boolean trace;
+	protected LongDense.AbstractFloatVector params=null;
 	
 	public IdPprProver() { this(DEFAULT_TRACE); }
 	public IdPprProver(boolean tr) {
@@ -46,11 +47,21 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	public String toString() { return "ippr:"+this.apr.maxDepth; }
 	
 	public Prover copy() {
-		Prover copy = new IdPprProver(weighter, this.apr, this.trace);
+		IdPprProver copy = new IdPprProver(weighter, this.apr, this.trace);
+		copy.params = this.params;
 		return copy;
 	}
 	@Override
 	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
+
+	private LongDense.AbstractFloatVector getFrozenParams(CachingIdProofGraph pg) {
+		if (params != null) return params;
+		if (this.weighter.weights.size()==0) 
+			params = new LongDense.UnitVector();
+		else 
+			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
+		return params;
+	}
 	
 	public void setMaxDepth(int i) {
 		this.apr.maxDepth = i;
@@ -64,11 +75,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	{
 		LongDense.FloatVector startVec = new LongDense.FloatVector();
 		startVec.set( pg.getRootId(), SEED_WEIGHT );
-		LongDense.AbstractFloatVector params = null;
-		if (this.weighter.weights.size()==0) 
-			params = new LongDense.UnitVector();
-		else 
-			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
+		LongDense.AbstractFloatVector params = getFrozenParams(pg);
 		
 		LongDense.FloatVector vec = startVec;
 

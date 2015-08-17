@@ -45,11 +45,11 @@ public class SimpleSparse
 		/** Return the dot product with a second vector
 		 * which is a LongDense.FloatVector
 		 */
-		public double dot(LongDense.AbstractFloatVector vec) 
+		public double dot(LongDense.AbstractFloatVector vec, float dflt) 
 		{
 			double result = 0.0;
 			for (int i=0; i<index.length; i++) {
-				result += val[i]*vec.get(index[i]);
+				result += val[i]* (vec.definesIndex(index[i]) ? vec.get(index[i]) : dflt);
 			}
 			return result;
 		}

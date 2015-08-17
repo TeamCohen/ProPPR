@@ -27,7 +27,9 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	private static final boolean TRUELOOP_ON = true;
 	protected final double stayProbability;
 	protected final double moveProbability;
-
+	protected LongDense.AbstractFloatVector params=null;
+	protected IdDprProver parent=null;
+	
 	@Override
 	public String toString() { 
 		return String.format("idpr:%.6g:%g", apr.epsilon, apr.alpha);
@@ -53,24 +55,33 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	public Prover copy() {
 		IdDprProver copy = new IdDprProver(this.stayProbability, apr);
 		copy.setWeighter(weighter);
+		copy.params = this.params;
+		if (this.parent != null) copy.parent = this.parent;
+		else copy.parent = this;
 		return copy;
 	}
 	@Override
 	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
-
-	public Map<State, Double> prove(CachingIdProofGraph pg) {
-		//Map<State,Double> p = new HashMap<State,Double>();
-		//Map<State,Double> r = new HashMap<State,Double>();
-		LongDense.FloatVector p = new LongDense.FloatVector();
-		LongDense.FloatVector r = new LongDense.FloatVector();
-		LongDense.AbstractFloatVector params = null;
-		// wwc: moved this up from proveState for efficiency
+	
+	protected void setFrozenParams(LongDense.AbstractFloatVector params) {
+		if (this.params == null) this.params = params;
+	}
+	
+	private LongDense.AbstractFloatVector getFrozenParams(CachingIdProofGraph pg) {
+		if (params != null) return params;
 		if (this.weighter.weights.size()==0) 
 			params = new LongDense.UnitVector();
-		else 
+		else {
 			params = pg.paramsAsVector(this.weighter.weights,this.weighter.squashingFunction.defaultValue()); // FIXME: default value should depend on f
-		//State state0 = pg.getStartState();
-		//r.put(state0, 1.0);
+			if (parent != null) synchronized(parent) {parent.setFrozenParams(params);}
+		}
+		return params;
+	}
+
+	public Map<State, Double> prove(CachingIdProofGraph pg) {
+		LongDense.FloatVector p = new LongDense.FloatVector();
+		LongDense.FloatVector r = new LongDense.FloatVector();
+		LongDense.AbstractFloatVector params = getFrozenParams(pg);
 		int state0 = pg.getRootId();
 		r.set( state0, 1.0);
 		int numPushes = 0;
@@ -127,7 +138,6 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 							if (Double.isNaN(r.get(vid))) log.debug("NaN in r at v="+vid+" wuv="+wuv+" z="+z+" ru="+ru);
 						}
-///*
 						if (log.isDebugEnabled()) {
 							// sanity-check r:
 							double sumr = 0;
@@ -138,7 +148,6 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 								log.debug("Should be 1.0 but isn't: after push sum p + r = "+sump+" + "+sumr+" = "+(sump+sumr));
 							}
 						}
-//*/
 					}
 
 					// for each v near u:

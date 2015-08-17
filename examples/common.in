@@ -1,20 +1,34 @@
+ifneq ($(strip $(PROGRAM)),)
+PROGRAM_OPTION=--programFiles $(PROGRAM)
+endif
+ifneq ($(strip $(PROVER)),)
+PROVER_OPTION=--prover $(PROVER)
+endif
+ifneq ($(strip $(SRW)),)
+SRW_OPTION=--srw $(SRW)
+endif
+ifneq ($(strip $(TRAINER)),)
+TRAINER_OPTION=--trainer $(TRAINER)
+endif
+
 
 default: all
 
 ifeq (1,$(words $(TRAIN)))
 
+### results target template:
 #results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
 #	echo phase subset uR mR uMRR mMRR uMAP mMAP > $@
 #	cat $^ >> $@
 
 post.%.solutions.txt: %.examples params.wts $(PROGRAM_DEPS)
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR} ${UNNORMALIZED}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer ${PROGRAM_OPTION} --queries $< --solutions $@ ${PROVER_OPTION} --threads ${THREADS} --params $(word 2,$^)  --apr ${APR} ${UNNORMALIZED}
 
 #post.%.gradient: %.examples.grounded params.wts $(PROGRAM_DEPS)
-#	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $(word 1,$^) --params $(word 2,$^) --threads ${THREADS} --apr ${APR} --epochs ${EPOCHS} --srw ${SRW} --gradient $@
+#	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $(word 1,$^) --params $(word 2,$^) --threads ${THREADS} --apr ${APR} --epochs ${EPOCHS} ${SRW_OPTION} --gradient $@
 
 params.wts: ${TRAIN}.examples.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} --srw ${SRW} --epochs ${EPOCHS} --apr ${APR}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params $@ --threads ${THREADS} ${SRW_OPTION} --epochs ${EPOCHS} --apr ${APR} ${TRAINER_OPTION}
 
 endif
 
@@ -27,11 +41,11 @@ endif
 	cat $@
 
 pre.%.solutions.txt: %.examples $(PROGRAM_DEPS)
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer ${PROGRAM_OPTION} --queries $< --solutions $@ ${PROVER_OPTION} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
 
 
 %.examples.grounded: %.examples $(PROGRAM_DEPS)
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder ${PROGRAM_OPTION} --queries $< --grounded $@ ${PROVER_OPTION} --threads ${THREADS} --apr ${APR}
 
 %.wam: %.ppr
 	python ${PROPPR}/src/scripts/compiler.py serialize $< > $@
