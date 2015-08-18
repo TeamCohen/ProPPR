@@ -24,8 +24,10 @@ import edu.cmu.ml.proppr.util.Dictionary;
 public class InnerProductWeighter extends FeatureDictWeighter {
 	private static final int MAX_UNKNOWN_FEATURE_WARNINGS = 10;
 	private int numUnknownFeatures = 0;
+	private int numKnownFeatures = 0;
 	private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
-	protected static final BloomFilter<Feature> unknownFeatures = new BloomFilter<Feature>(.01,100);
+	protected final BloomFilter<Feature> unknownFeatures;
+	protected final BloomFilter<Feature> knownFeatures;
 	private static SquashingFunction DEFAULT_SQUASHING_FUNCTION() {
 		return new Linear();
 	}
@@ -39,21 +41,21 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	public InnerProductWeighter(SquashingFunction f, Map<Feature,Double> weights) {
 		super(f);
 		this.weights = weights;
+		this.unknownFeatures = new BloomFilter<Feature>(.01,weights.size());
+		this.knownFeatures = new BloomFilter<Feature>(.01,weights.size());
 	}
 	@Override
 	public double w(Map<Feature, Double> featureDict) {
-		// check for unknown features
+		// track usage of known & unknown features
 		for (Feature g : featureDict.keySet()) {
 			if (!this.weights.containsKey(g)) {
 				if (!unknownFeatures.contains(g)) {
-					if (numUnknownFeatures<MAX_UNKNOWN_FEATURE_WARNINGS) {
-						log.warn("Using default weight 1.0 for unknown feature "+g+" (this message only prints once per feature)");				
-					} else if (numUnknownFeatures==MAX_UNKNOWN_FEATURE_WARNINGS) {
-						log.warn("You won't get warnings about other unknown features");
-					}
 					unknownFeatures.add(g);
 					numUnknownFeatures++;
 				}
+			} else if (!knownFeatures.contains(g)) {
+				knownFeatures.add(g);
+				numKnownFeatures++;
 			}
 		}
 		return this.squashingFunction.edgeWeight(this.weights, featureDict);
@@ -70,5 +72,11 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	}
 	public Map<Feature,Double> getWeights() {
 		return this.weights;
+	}
+	public int seenUnknownFeatures() {
+		return numUnknownFeatures;
+	}
+	public int seenKnownFeatures() {
+		return numKnownFeatures;
 	}
 }
