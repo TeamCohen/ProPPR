@@ -88,6 +88,8 @@ public class Trainer {
 				long minTrainTime = Integer.MAX_VALUE;
 				long maxTrainTime = 0;
 		long trainTime = 0;
+		int maxGraphSize = 0;
+		int totalGraphSize = 0;
 		void updateReadingStatistics(long time) {
 						minReadTime = Math.min(time, minReadTime);
 						maxReadTime = Math.max(time, maxReadTime);
@@ -116,8 +118,10 @@ public class Trainer {
 			maxTrainTime = Math.max(stats.maxTrainTime, maxTrainTime);
 			
 		}
-		synchronized void updateNumExamples(int length) {	
-			numExamplesThisEpoch+=length;
+		synchronized void updateExampleStats(ExampleStats n) {	
+			numExamplesThisEpoch+=n.length;
+			maxGraphSize = Math.max(n.nodes,maxGraphSize);
+			totalGraphSize += n.nodes;
 		}
 		void checkStatistics() {
 			int poolSize = nthreads;
@@ -168,6 +172,7 @@ public class Trainer {
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		boolean graphSizesStatusLog=true;
 
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
@@ -241,13 +246,17 @@ public class Trainer {
 					notify = this;
 				}
 				Future<PosNegRWExample> parsed = workingPool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = workingPool.submit(new Train(parsed, paramVec, learner, id, notify));
+				Future<ExampleStats> trained = workingPool.submit(new Train(parsed, paramVec, learner, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 				start = System.currentTimeMillis();
 			}
 
 			cleanEpoch(workingPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			if(graphSizesStatusLog) {
+				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
+				graphSizesStatusLog = false;
+			}
 		}
 		log.info("Reading  statistics: min "+total.minReadTime+" / max "+total.maxReadTime+" / total "+total.readTime);
 		log.info("Parsing  statistics: min "+total.minParseTime+" / max "+total.maxParseTime+" / total "+total.parseTime);
@@ -380,7 +389,7 @@ public class Trainer {
 				notify = this;
 			}
 			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id, notify));
+			Future<ExampleStats> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
 		}
 		parsePool.shutdown();
@@ -442,7 +451,7 @@ public class Trainer {
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
 	 *
 	 */
-	protected class Train implements Callable<Integer> {
+	protected class Train implements Callable<ExampleStats> {
 		Future<PosNegRWExample> in;
 		ParamVector paramVec;
 		SRW learner;
@@ -456,7 +465,7 @@ public class Trainer {
 			this.notify = notify;
 		}
 		@Override
-		public Integer call() throws Exception {
+		public ExampleStats call() throws Exception {
 			PosNegRWExample ex = in.get();
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			long start = System.currentTimeMillis();
@@ -464,7 +473,7 @@ public class Trainer {
 			learner.trainOnExample(paramVec, ex);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
-			return ex.length();
+			return new ExampleStats(ex.length(),ex.getGraph().nodeSize());
 		}
 	}
 
@@ -475,13 +484,13 @@ public class Trainer {
 			this.sumGradient = sumGradient;
 		}
 		@Override
-		public Integer call() throws Exception {
+		public ExampleStats call() throws Exception {
 			PosNegRWExample ex = in.get();
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
 			learner.accumulateGradient(paramVec, ex, sumGradient);
 			if (log.isDebugEnabled()) log.debug("Gradient done "+this.id);
-			return 1; 
+			return new ExampleStats(1,-1); 
 			// ^^^^ this is the equivalent of k++ from before;
 			// the total sum (query count) will be stored in numExamplesThisEpoch
 			// by TraceLosses. It's a hack but it works
@@ -495,24 +504,33 @@ public class Trainer {
 	 *
 	 */
 	protected class TraceLosses implements Runnable {
-		Future<Integer> in;
+		Future<ExampleStats> in;
 		int id;
-		public TraceLosses(Future<Integer> in, int id) {
+		public TraceLosses(Future<ExampleStats> in, int id) {
 			this.in = in;
 			this.id = id;
 		}
 		@Override
 		public void run() {
 			try {
-				int n = this.in.get();
+				ExampleStats n = this.in.get();
 				if (log.isDebugEnabled()) log.debug("Cleaning start "+this.id);
-				statistics.updateNumExamples(n);
+				statistics.updateExampleStats(n);
 				if (log.isDebugEnabled()) log.debug("Cleaning done "+this.id);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
 				log.error("Trouble with #"+id,e);
 			}
+		}
+	}
+	
+	protected class ExampleStats {
+		public int length;
+		public int nodes;
+		public ExampleStats(int el, int n) {
+			this.length = el;
+			this.nodes = n;
 		}
 	}
 

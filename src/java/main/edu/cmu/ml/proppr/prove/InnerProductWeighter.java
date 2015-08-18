@@ -41,8 +41,8 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	public InnerProductWeighter(SquashingFunction f, Map<Feature,Double> weights) {
 		super(f);
 		this.weights = weights;
-		this.unknownFeatures = new BloomFilter<Feature>(.01,weights.size());
-		this.knownFeatures = new BloomFilter<Feature>(.01,weights.size());
+		this.unknownFeatures = new BloomFilter<Feature>(.01,Math.max(100, weights.size()));
+		this.knownFeatures = new BloomFilter<Feature>(.01,Math.max(100, weights.size()));
 	}
 	@Override
 	public double w(Map<Feature, Double> featureDict) {

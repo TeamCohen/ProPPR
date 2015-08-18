@@ -65,6 +65,7 @@ public class CachingTrainer extends Trainer {
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		boolean graphSizesStatusLog = true;
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
 			// set up current epoch
@@ -84,12 +85,16 @@ public class CachingTrainer extends Trainer {
 			int id=1;
 			if (this.shuffle) Collections.shuffle(examples);
 			for (PosNegRWExample s : examples) {
-				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id, null));
+				Future<ExampleStats> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id, null));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 			}
 
 			cleanEpoch(trainPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			if(graphSizesStatusLog) {
+				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
+				graphSizesStatusLog = false;
+			}
 			
 //			try {
 //				trainPool.shutdown();
