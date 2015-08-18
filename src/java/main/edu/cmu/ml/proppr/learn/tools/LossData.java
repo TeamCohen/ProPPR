@@ -15,6 +15,11 @@ public class LossData {
 		LOG,
 		L2
 	}
+	public synchronized void add(LossData that) {
+		for (Map.Entry<LOSS,Double> x : that.loss.entrySet()) {
+			Dictionary.increment(loss, x.getKey(), x.getValue());
+		}
+	}
 	public synchronized void add(LOSS type, double loss) {
 		if (loss<0) {
 			log.warn("SUSPICIOUS: decreasing "+type+" loss? "+loss);

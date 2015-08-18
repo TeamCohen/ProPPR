@@ -54,20 +54,26 @@ public class Trainer {
 	protected int nthreads = 1;
 	protected int throttle;
 
-	protected SRW learner;
+	protected Map<String,SRW> learners;
+	protected SRW masterLearner;
 	protected int epoch;
 	LossData lossLastEpoch;
 	TrainingStatistics statistics=new TrainingStatistics();
 
 
 	public Trainer(SRW learner, int nthreads, int throttle) {
-		this.learner = learner;
+		this.masterLearner = learner;
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
 
 		learner.untrainedFeatures().add("id(trueLoop)");
 		learner.untrainedFeatures().add("id(trueLoopRestart)");
 		learner.untrainedFeatures().add("id(restart)");
+
+		this.learners = new HashMap<String,SRW>();
+		for (int i=0;i<this.nthreads;i++) {
+			this.learners.put("work-"+(i+1), learner.copy());
+		}
 	}
 
 	public Trainer(SRW srw) {
@@ -134,7 +140,7 @@ public class Trainer {
 	}
 
 	public void doExample(PosNegRWExample x, ParamVector<String,?> paramVec, boolean traceLosses) {
-		this.learner.trainOnExample(paramVec, x);
+		this.learners.get(Thread.currentThread().getName()).trainOnExample(paramVec, x);
 	}
 
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
@@ -156,9 +162,9 @@ public class Trainer {
 	}
 
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
-		ParamVector paramVec = this.learner.setupParams(initialParamVec);
+		ParamVector paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, this.masterLearner.getSquashingFunction().defaultValue());
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
 		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
@@ -171,11 +177,13 @@ public class Trainer {
 		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
-			this.learner.setEpoch(epoch);
+			for (SRW learner : this.learners.values()) {
+				learner.setEpoch(epoch);
+				learner.clearLoss();
+			}
 			log.info("epoch "+epoch+" ...");
 
 			// reset counters & file pointers
-			this.learner.clearLoss();
 			this.statistics = new TrainingStatistics();
 			workingThreads.reset();
 			cleaningThreads.reset();
@@ -214,7 +222,7 @@ public class Trainer {
 					notify = this;
 				}
 				Future<PosNegRWExample> parsed = workingPool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = workingPool.submit(new Train(parsed, paramVec, learner, id, notify));
+				Future<Integer> trained = workingPool.submit(new Train(parsed, paramVec, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 				start = System.currentTimeMillis();
@@ -229,11 +237,14 @@ public class Trainer {
 				log.error("Interrupted?",e);
 			}
 			// finish any trailing updates for this epoch
-			this.learner.cleanupParams(paramVec,paramVec);
+			masterLearner.cleanupParams(paramVec,paramVec);
 
 			// loss status and signalling the stopper
 			if(traceLosses) {
-				LossData lossThisEpoch = this.learner.cumulativeLoss();
+				LossData lossThisEpoch = new LossData();
+				for (SRW learner : this.learners.values()) {
+					lossThisEpoch.add(learner.cumulativeLoss());
+				}
 				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
 				if (epoch>1) {
@@ -279,9 +290,9 @@ public class Trainer {
 		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
-		paramVec = this.learner.setupParams(paramVec);
+		paramVec = this.masterLearner.setupParams(paramVec);
 
 		//		
 		//		//WW: accumulate example-size normalized gradient
@@ -291,20 +302,17 @@ public class Trainer {
 		//			k++;
 		//		}
 
-		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
-		NamedThreadFactory gradThreads = new NamedThreadFactory("grad-");
-		int nthreadsper = Math.max(this.nthreads/2, 1);
-		ExecutorService parsePool, gradPool, cleanPool; 
+		NamedThreadFactory workThreads = new NamedThreadFactory("work-");
+		ExecutorService workPool, cleanPool; 
 
-		parsePool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
-		gradPool = Executors.newFixedThreadPool(nthreadsper, gradThreads);
+		workPool = Executors.newFixedThreadPool(this.nthreads, workThreads);
 		cleanPool = Executors.newSingleThreadExecutor();
 
 		// run examples
 		int id=1;
 		int countdown=-1; Trainer notify = null;
 		for (String s : examples) {
-			long queueSize = (((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount());
+			long queueSize = (((ThreadPoolExecutor) workPool).getTaskCount()-((ThreadPoolExecutor) workPool).getCompletedTaskCount());
 			if (log.isDebugEnabled()) log.debug("Queue size "+queueSize);
 			if (countdown>0) {
 				if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
@@ -316,7 +324,7 @@ public class Trainer {
 				try {
 					synchronized(this) {
 						if (log.isDebugEnabled()) log.debug("Clearing training queue...");
-						while((((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount()) > this.nthreads)
+						while((((ThreadPoolExecutor) workPool).getTaskCount()-((ThreadPoolExecutor) workPool).getCompletedTaskCount()) > this.nthreads)
 							this.wait();
 						if (log.isDebugEnabled()) log.debug("Queue cleared.");
 					}
@@ -329,22 +337,20 @@ public class Trainer {
 				countdown=this.nthreads;
 				notify = this;
 			}
-			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id, notify));
+			Future<PosNegRWExample> parsed = workPool.submit(new Parse(s, builder, id));
+			Future<Integer> gradfound = workPool.submit(new Grad(parsed, paramVec, sumGradient, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
 		}
-		parsePool.shutdown();
+		workPool.shutdown();
 		try {
-			parsePool.awaitTermination(7,TimeUnit.DAYS);
-			gradPool.shutdown();
-			gradPool.awaitTermination(7, TimeUnit.DAYS);
+			workPool.awaitTermination(7,TimeUnit.DAYS);
 			cleanPool.shutdown();
 			cleanPool.awaitTermination(7, TimeUnit.DAYS);
 		} catch (InterruptedException e) {
 			log.error("Interrupted?",e);
 		}
 
-		this.learner.cleanupParams(paramVec, sumGradient);
+		this.masterLearner.cleanupParams(paramVec, sumGradient);
 
 		//WW: renormalize by the total number of queries
 		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
@@ -377,11 +383,12 @@ public class Trainer {
 		}
 		@Override
 		public PosNegRWExample call() throws Exception {
-			long start = System.currentTimeMillis();
+			SRW learner = learners.get(Thread.currentThread().getName());
 			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
+			long start = System.currentTimeMillis();
 			PosNegRWExample ex = new RWExampleParser().parse(in, builder.copy(), learner);
-			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
 			statistics.updateParsingStatistics(System.currentTimeMillis()-start);
+			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
 			return ex;
 		}
 
@@ -395,38 +402,38 @@ public class Trainer {
 	protected class Train implements Callable<Integer> {
 		Future<PosNegRWExample> in;
 		ParamVector paramVec;
-		SRW learner;
 		int id;
 		Trainer notify;
-		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, SRW learner, int id, Trainer notify) {
+		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, int id, Trainer notify) {
 			this.in = parsed;
 			this.id = id;
-			this.learner = learner;
 			this.paramVec = paramVec;
 			this.notify = notify;
 		}
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
+			SRW learner = learners.get(Thread.currentThread().getName());
 			if (notify != null) synchronized(notify) { notify.notify(); }
-			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
+			long start = System.currentTimeMillis();
 			learner.trainOnExample(paramVec, ex);
-			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
+			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			return ex.length();
 		}
 	}
 
 	protected class Grad extends Train {
 		ParamVector sumGradient;
-		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SRW learner, int id, Trainer notify) {
-			super(parsed, paramVec, learner, id, notify);
+		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, int id, Trainer notify) {
+			super(parsed, paramVec, id, notify);
 			this.sumGradient = sumGradient;
 		}
 		@Override
 		public Integer call() throws Exception {
 			PosNegRWExample ex = in.get();
+			SRW learner = learners.get(Thread.currentThread().getName());
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
 			learner.accumulateGradient(paramVec, ex, sumGradient);

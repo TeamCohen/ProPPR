@@ -46,7 +46,7 @@ public class CachingTrainer extends Trainer {
 			id++;
 			try {
 				long before = System.currentTimeMillis();
-				PosNegRWExample ex = parser.parse(s, builder, learner);
+				PosNegRWExample ex = parser.parse(s, builder, masterLearner);
 				total.updateParsingStatistics(System.currentTimeMillis()-before);
 				examples.add(ex);
 			} catch (GraphFormatException e) {
@@ -58,10 +58,10 @@ public class CachingTrainer extends Trainer {
 	}
 	
 	public ParamVector trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
-		ParamVector paramVec = this.learner.setupParams(initialParamVec);
+		ParamVector paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
-		NamedThreadFactory trainThreads = new NamedThreadFactory("train-");
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, this.masterLearner.getSquashingFunction().defaultValue());
+		NamedThreadFactory trainThreads = new NamedThreadFactory("work-");
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
@@ -69,11 +69,13 @@ public class CachingTrainer extends Trainer {
 		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
-			this.learner.setEpoch(epoch);
+			for (SRW learner : this.learners.values()) {
+				learner.setEpoch(epoch);
+				learner.clearLoss();
+			}
 			log.info("epoch "+epoch+" ...");
 
 			// reset counters & file pointers
-			this.learner.clearLoss();
 			this.statistics = new TrainingStatistics();
 			trainThreads.reset();
 
@@ -84,7 +86,7 @@ public class CachingTrainer extends Trainer {
 			int id=1;
 			if (this.shuffle) Collections.shuffle(examples);
 			for (PosNegRWExample s : examples) {
-				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, learner, id, null));
+				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, id, null));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 			}
@@ -98,11 +100,14 @@ public class CachingTrainer extends Trainer {
 			}
 
 			// finish any trailing updates for this epoch
-			this.learner.cleanupParams(paramVec,paramVec);
+			this.masterLearner.cleanupParams(paramVec,paramVec);
 
 			// update loss status and signal the stopper
 			if(traceLosses) {
-				LossData lossThisEpoch = this.learner.cumulativeLoss();
+				LossData lossThisEpoch = new LossData();
+				for (SRW learner : this.learners.values()) {
+					lossThisEpoch.add(learner.cumulativeLoss());
+				}
 				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
 				if (epoch>1) {

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -438,5 +439,33 @@ public class SRW {
 	public PosNegRWExample makeExample(String string, LearningGraph g,
 			TIntDoubleMap queryVec, int[] posList, int[] negList) {
 		return new PprExample(string, g, queryVec, posList, negList);
+	}
+	public SRW copy() {
+		Class<? extends SRW> clazz = this.getClass();
+		try {
+			SRW copy = clazz.getConstructor(SRWOptions.class).newInstance(this.c);
+			copy.untrainedFeatures = this.untrainedFeatures;
+			return copy;
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		throw new UnsupportedOperationException("Programmer error in SRW subclass "+clazz.getName()
+				+": Must provide the standard SRW constructor signature, or else override copy()");
 	}
 }
