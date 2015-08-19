@@ -53,9 +53,14 @@ public abstract class Prover<P extends ProofGraph> {
 	public Map<Query,Double> solvedQueries(P pg) throws LogicProgramException {
 		Map<State,Double> ans = prove(pg);
 		Map<Query,Double> solved = new HashMap<Query,Double>();
+		double normalizer = 0;
 		for (Map.Entry<State,Double> e : ans.entrySet()) {
-			if (e.getKey().isCompleted()) solved.put(pg.fill(e.getKey()),e.getValue());
+			if (e.getKey().isCompleted()) {
+				normalizer += e.getValue();
+				solved.put(pg.fill(e.getKey()),e.getValue());
+			}
 		}
+		for (Map.Entry<Query,Double> e : solved.entrySet()) { e.setValue(e.getValue()/normalizer); }
 		return solved;
 	}
 	public Map<String,Double> solutions(P pg) throws LogicProgramException {
@@ -63,8 +68,8 @@ public abstract class Prover<P extends ProofGraph> {
 		Map<String,Double> filtered = new HashMap<String,Double>();
 		double normalizer = 0;
 		for (Map.Entry<State, Double> e : proveOutput.entrySet()) {
-			normalizer += e.getValue();
 			if (e.getKey().isCompleted()) {
+				normalizer += e.getValue();
 				Map<Argument,String> d = pg.asDict(e.getKey());
 				String dstr = "";
 				if (!d.isEmpty()) dstr = Dictionary.buildString(d,new StringBuilder()," ").substring(1);
