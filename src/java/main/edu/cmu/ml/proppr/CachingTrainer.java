@@ -65,6 +65,7 @@ public class CachingTrainer extends Trainer {
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		boolean graphSizesStatusLog = true;
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
 			// set up current epoch
@@ -86,38 +87,41 @@ public class CachingTrainer extends Trainer {
 			int id=1;
 			if (this.shuffle) Collections.shuffle(examples);
 			for (PosNegRWExample s : examples) {
-				Future<Integer> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, id, null));
+				Future<ExampleStats> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, id, null));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 			}
-			try {
-				trainPool.shutdown();
-				trainPool.awaitTermination(7, TimeUnit.DAYS);
-				cleanPool.shutdown();
-				cleanPool.awaitTermination(7, TimeUnit.DAYS);
-			} catch (InterruptedException e) {
-				log.error("Interrupted?",e);
+
+			cleanEpoch(trainPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			if(graphSizesStatusLog) {
+				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
+				graphSizesStatusLog = false;
 			}
-
-			// finish any trailing updates for this epoch
-			this.masterLearner.cleanupParams(paramVec,paramVec);
-
-			// update loss status and signal the stopper
-			if(traceLosses) {
-				LossData lossThisEpoch = new LossData();
-				for (SRW learner : this.learners.values()) {
-					lossThisEpoch.add(learner.cumulativeLoss());
-				}
-				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
-				printLossOutput(lossThisEpoch);
-				if (epoch>1) {
-					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
-				}
-				lossLastEpoch = lossThisEpoch;
-			}
-			stopper.recordEpoch();
-
-			total.updateTrainingStatistics(statistics.trainTime);
+			
+//			try {
+//				trainPool.shutdown();
+//				trainPool.awaitTermination(7, TimeUnit.DAYS);
+//				cleanPool.shutdown();
+//				cleanPool.awaitTermination(7, TimeUnit.DAYS);
+//			} catch (InterruptedException e) {
+//				log.error("Interrupted?",e);
+//			}
+//			// finish any trailing updates for this epoch
+//			this.learner.cleanupParams(paramVec,paramVec);
+//
+//			// update loss status and signal the stopper
+//			if(traceLosses) {
+//				LossData lossThisEpoch = this.learner.cumulativeLoss();
+//				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
+//				printLossOutput(lossThisEpoch);
+//				if (epoch>1) {
+//					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
+//				}
+//				lossLastEpoch = lossThisEpoch;
+//			}
+//			stopper.recordEpoch();
+//
+//			total.updateTrainingStatistics(statistics.trainTime);
 		}
 		
 		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime);

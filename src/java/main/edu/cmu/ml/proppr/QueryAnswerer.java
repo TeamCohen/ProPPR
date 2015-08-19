@@ -61,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class QueryAnswerer {
 	private static final Logger log = Logger.getLogger(QueryAnswerer.class);
+	private static final double MIN_FEATURE_TRANSFER = .1;
 	protected WamProgram program;
 	protected WamPlugin[] plugins;
 	protected Prover prover;
@@ -146,7 +147,6 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 			log.debug("not normalizing");
 		}
 		List<Map.Entry<Query,Double>> solutionDist = Dictionary.sort(solutions);
-		//			    List<Map.Entry<String,Double>> solutionDist = Dictionary.sort(Dictionary.normalize(dist));
 		if(log.isDebugEnabled()) log.debug("Writing "+solutionDist.size()+" solutions...");
 		StringBuilder sb = new StringBuilder("# proved ").append(String.valueOf(id)).append("\t").append(query.toString())
 				.append("\t").append((end - start) + " msec\n");
@@ -165,7 +165,6 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 
 	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException 
 	{
-		System.out.println("called findSolutions");
 		Multithreading<Query,String> m = new Multithreading<Query,String>(log, maintainOrder);
 		m.executeJob(
 				this.nthreads, 
@@ -250,8 +249,16 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 				file.check(c);
 			}
 			long start = System.currentTimeMillis();
-			System.out.println("calling findSolutions");
 			qa.findSolutions(c.queryFile, c.solutionsFile, c.maintainOrder);
+			if (c.prover.getWeighter() instanceof InnerProductWeighter) {
+				InnerProductWeighter w = (InnerProductWeighter) c.prover.getWeighter();
+				int n = w.getWeights().size();
+				int m = w.seenKnownFeatures() + w.seenUnknownFeatures();
+				if ( ((double)w.seenKnownFeatures() / n) < MIN_FEATURE_TRANSFER)
+					log.warn("Only saw "+w.seenKnownFeatures()+" of "+n+" known features ("+((double)w.seenKnownFeatures() / n * 100)+"%) -- test data may be too different from training data");
+				if (w.seenUnknownFeatures() > w.seenKnownFeatures())
+					log.warn("Saw more unknown features ("+w.seenUnknownFeatures()+") than known features ("+w.seenKnownFeatures()+") -- test data may be too different from training data");
+			}
 			System.out.println("Query-answering time: "+(System.currentTimeMillis()-start));
 
 		} catch (Throwable t) {

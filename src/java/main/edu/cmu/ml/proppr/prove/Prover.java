@@ -76,4 +76,7 @@ public abstract class Prover<P extends ProofGraph> {
 		}
 		return filtered;
 	}
+	public FeatureDictWeighter getWeighter() {
+		return this.weighter;
+	}
 }
