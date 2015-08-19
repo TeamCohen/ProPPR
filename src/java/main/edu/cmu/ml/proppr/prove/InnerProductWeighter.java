@@ -71,4 +71,5 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	public Map<Feature,Double> getWeights() {
 		return this.weights;
 	}
+	
 }
