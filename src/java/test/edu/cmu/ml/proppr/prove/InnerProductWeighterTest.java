@@ -29,12 +29,12 @@ public class InnerProductWeighterTest {
 		featureDict.put(ng, 0.9);
 		featureDict.putAll(weights);
 		
-		assertFalse("Should start empty!",InnerProductWeighter.unknownFeatures.contains(ng));
+		assertFalse("Should start empty!",w.unknownFeatures.contains(ng));
 		for (Map.Entry<Feature,Double> e : featureDict.entrySet()) {
 			e.setValue(e.getValue()-Math.random()/10);
 		}
 		w.w(featureDict);
-		assertTrue("Wasn't added!",InnerProductWeighter.unknownFeatures.contains(ng));
+		assertTrue("Wasn't added!",w.unknownFeatures.contains(ng));
 	}
 
 }

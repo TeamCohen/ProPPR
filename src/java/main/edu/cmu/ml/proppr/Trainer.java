@@ -1,13 +1,10 @@
 package edu.cmu.ml.proppr;
 
 import java.io.File;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -15,10 +12,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
@@ -26,48 +21,54 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
-import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
+import edu.cmu.ml.proppr.learn.SRW.ZeroGradientData;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
+import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
-import edu.cmu.ml.proppr.util.FileBackedIterable;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
-import edu.cmu.ml.proppr.util.multithreading.Cleanup;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
-import edu.cmu.ml.proppr.util.multithreading.Transformer;
-import gnu.trove.map.TObjectDoubleMap;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 public class Trainer {
+	private static final double MAX_PCT_ZERO_GRADIENT = 0.2;
 	private static final Logger log = Logger.getLogger(Trainer.class);
 	public static final int DEFAULT_CAPACITY = 16;
 	public static final float DEFAULT_LOAD = (float) 0.75;
 	protected int nthreads = 1;
 	protected int throttle;
 
-	protected SRW learner;
+	protected Map<String,SRW> learners;
+	protected SRW masterLearner;
 	protected int epoch;
-	LossData lossLastEpoch;
-	TrainingStatistics statistics=new TrainingStatistics();
+	protected LossData lossLastEpoch;
+	protected TrainingStatistics statistics=new TrainingStatistics();
+	
+	protected int stoppingEpoch = 3;
+	protected double stoppingPercent = 1.0;
 
 
 	public Trainer(SRW learner, int nthreads, int throttle) {
-		this.learner = learner;
+		this.masterLearner = learner;
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
 
 		learner.untrainedFeatures().add("id(trueLoop)");
 		learner.untrainedFeatures().add("id(trueLoopRestart)");
 		learner.untrainedFeatures().add("id(restart)");
+
+		this.learners = new HashMap<String,SRW>();
+		for (int i=0;i<this.nthreads;i++) {
+			this.learners.put("work-"+(i+1), learner.copy());
+		}
 	}
 
 	public Trainer(SRW srw) {
@@ -86,6 +87,8 @@ public class Trainer {
 				long minTrainTime = Integer.MAX_VALUE;
 				long maxTrainTime = 0;
 		long trainTime = 0;
+		int maxGraphSize = 0;
+		int totalGraphSize = 0;
 		void updateReadingStatistics(long time) {
 						minReadTime = Math.min(time, minReadTime);
 						maxReadTime = Math.max(time, maxReadTime);
@@ -114,8 +117,10 @@ public class Trainer {
 			maxTrainTime = Math.max(stats.maxTrainTime, maxTrainTime);
 			
 		}
-		synchronized void updateNumExamples(int length) {	
-			numExamplesThisEpoch+=length;
+		synchronized void updateExampleStats(ExampleStats n) {	
+			numExamplesThisEpoch+=n.length;
+			maxGraphSize = Math.max(n.nodes,maxGraphSize);
+			totalGraphSize += n.nodes;
 		}
 		void checkStatistics() {
 			int poolSize = nthreads;
@@ -124,8 +129,8 @@ public class Trainer {
 			trainTime = Math.max(1, trainTime);
 			// we can keep the working pool full if we can read $poolSize examples
 			// in the time it takes to parse + train 1 example
-			int parseFull = (int) Math.ceil( (parseTime+trainTime) / readTime);
-			if (parseFull < poolSize) log.warn((poolSize-parseFull)+" working threads went unused; reading from disk is slow. :(");
+			int workFull = (int) Math.ceil( (parseTime+trainTime) / readTime);
+			if (poolSize - workFull > 1) log.warn((poolSize-workFull)+" working threads went unused; reading from disk is slow. :(");
 		}
 	}
 
@@ -134,7 +139,7 @@ public class Trainer {
 	}
 
 	public void doExample(PosNegRWExample x, ParamVector<String,?> paramVec, boolean traceLosses) {
-		this.learner.trainOnExample(paramVec, x);
+		this.learners.get(Thread.currentThread().getName()).trainOnExample(paramVec, x);
 	}
 
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
@@ -156,26 +161,28 @@ public class Trainer {
 	}
 
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
-		ParamVector paramVec = this.learner.setupParams(initialParamVec);
+		ParamVector paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, this.learner.getSquashingFunction().defaultValue());
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, this.masterLearner.getSquashingFunction().defaultValue());
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
 		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
 		ThreadPoolExecutor workingPool;
 		ExecutorService cleanPool; 
 		TrainingStatistics total = new TrainingStatistics();
-		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
-
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs, this.stoppingPercent, this.stoppingEpoch);
+		boolean graphSizesStatusLog=true;
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
 			// set up current epoch
 			this.epoch++;
-			this.learner.setEpoch(epoch);
+			for (SRW learner : this.learners.values()) {
+				learner.setEpoch(epoch);
+				learner.clearLoss();
+			}
 			log.info("epoch "+epoch+" ...");
 
 			// reset counters & file pointers
-			this.learner.clearLoss();
 			this.statistics = new TrainingStatistics();
 			workingThreads.reset();
 			cleaningThreads.reset();
@@ -190,6 +197,32 @@ public class Trainer {
 			for (String s : examples) {
 				if (log.isDebugEnabled()) log.debug("Queue size "+(workingPool.getTaskCount()-workingPool.getCompletedTaskCount()));
 				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
+				/*
+				 * Throttling behavior:
+				 * Once the number of unfinished tasks exceeds 1.5x the number of threads,
+				 * we add a 'notify' object to the next nthreads training tasks. Then, the
+				 * master thread gathers 'notify' signals until the number of unfinished tasks 
+				 * is no longer greater than the number of threads. Then we start adding tasks again.
+				 * 
+				 * This works more or less fine, since the master thread stops pulling examples
+				 * from disk when there are then a maximum of 2.5x training examples in the queue (that's
+				 * the original 1.5x, which could represent a maximum of 1.5x training examples,
+				 * plus the nthreads training tasks with active 'notify' objects. There's an 
+				 * additional nthreads parsing tasks in the queue but those don't take up much 
+				 * memory so we don't care). This lets us read in a good-sized buffer without
+				 * blowing up the heap.
+				 * 
+				 * Worst-case: None of the backlog is cleared before the master thread enters
+				 * the synchronized block. nthreads-1 threads will be training long jobs, and 
+				 * the one free thread works through the 0.5x backlog and all nthreads countdown 
+				 * examples. The notify() sent by the final countdown example will occur when 
+				 * there are nthreads unfinished tasks in the queue, and the master thread will exit
+				 * the synchronized block and proceed.
+				 * 
+				 * Best-case: The backlog is already cleared by the time the master thread enters
+				 * the synchronized block. The while() loop immediately exits, and the notify()
+				 * signals from the countdown examples have no effect.
+				 */
 				if (countdown>0) {
 					if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
 					countdown--;
@@ -205,7 +238,6 @@ public class Trainer {
 							if (log.isDebugEnabled()) log.debug("Queue cleared.");
 						}
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				} else if (workingPool.getTaskCount()-workingPool.getCompletedTaskCount() > 1.5*this.nthreads) {
@@ -214,43 +246,77 @@ public class Trainer {
 					notify = this;
 				}
 				Future<PosNegRWExample> parsed = workingPool.submit(new Parse(s, builder, id));
-				Future<Integer> trained = workingPool.submit(new Train(parsed, paramVec, learner, id, notify));
+				Future<ExampleStats> trained = workingPool.submit(new Train(parsed, paramVec, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
 				start = System.currentTimeMillis();
 			}
 
-			workingPool.shutdown();
-			try {
-				workingPool.awaitTermination(7, TimeUnit.DAYS);
-				cleanPool.shutdown();
-				cleanPool.awaitTermination(7, TimeUnit.DAYS);
-			} catch (InterruptedException e) {
-				log.error("Interrupted?",e);
+			cleanEpoch(workingPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			if(graphSizesStatusLog) {
+				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
+				graphSizesStatusLog = false;
 			}
-			// finish any trailing updates for this epoch
-			this.learner.cleanupParams(paramVec,paramVec);
+		}
+		log.info("Reading  statistics: min "+total.minReadTime+" / max "+total.maxReadTime+" / total "+total.readTime);
+		log.info("Parsing  statistics: min "+total.minParseTime+" / max "+total.maxParseTime+" / total "+total.parseTime);
+		log.info("Training statistics: min "+total.minTrainTime+" / max "+total.maxTrainTime+" / total "+total.trainTime);
+		return paramVec;
+	}
+	
+	/**
+	 * End-of-epoch cleanup routine shared by Trainer, CachingTrainer. 
+	 * Shuts down working thread, cleaning thread, regularizer, loss calculations, stopper calculations, 
+	 * training statistics, and zero gradient statistics.
+	 * @param workingPool
+	 * @param cleanPool
+	 * @param paramVec
+	 * @param traceLosses
+	 * @param stopper
+	 * @param n - number of examples
+	 * @param stats
+	 */
+	protected void cleanEpoch(ExecutorService workingPool, ExecutorService cleanPool,
+			ParamVector paramVec, boolean traceLosses, StoppingCriterion stopper, int n, TrainingStatistics stats) {
+		workingPool.shutdown();
+		try {
+			workingPool.awaitTermination(7, TimeUnit.DAYS);
+			cleanPool.shutdown();
+			cleanPool.awaitTermination(7, TimeUnit.DAYS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		// finish any trailing updates for this epoch
+		this.masterLearner.cleanupParams(paramVec,paramVec);
 
 			// loss status and signalling the stopper
 			if(traceLosses) {
-				LossData lossThisEpoch = this.learner.cumulativeLoss();
-				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
+
+				LossData lossThisEpoch = new LossData();
+				for (SRW learner : this.learners.values()) {
+					lossThisEpoch.add(learner.cumulativeLoss());
+				}				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
 				printLossOutput(lossThisEpoch);
 				if (epoch>1) {
 					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
 				}
 				lossLastEpoch = lossThisEpoch;
 			}
-			stopper.recordEpoch();
-			statistics.checkStatistics();
-			total.updateReadingStatistics(statistics.readTime);
-			total.updateParsingStatistics(statistics.parseTime);
-			total.updateTrainingStatistics(statistics.trainTime);
+
+		ZeroGradientData zeros = this.masterLearner.new ZeroGradientData();
+		for (SRW learner : this.learners.values()) {
+			zeros.add(learner.getZeroGradientData());
 		}
-		log.info("Reading  statistics: min "+total.minReadTime+" / max "+total.maxReadTime+" / total "+total.readTime);
-		log.info("Parsing  statistics: min "+total.minParseTime+" / max "+total.maxParseTime+" / total "+total.parseTime);
-		log.info("Training statistics: min "+total.minTrainTime+" / max "+total.maxTrainTime+" / total "+total.trainTime);
-		return paramVec;
+		if (zeros.numZero > 0) {
+			log.info(zeros.numZero + " / "+n+" examples with 0 gradient");
+			if (zeros.numZero / (float) n > MAX_PCT_ZERO_GRADIENT) 
+				log.warn("Having this many 0 gradients is unusual. Try a different squashing function?");
+		}
+		stopper.recordEpoch();
+		statistics.checkStatistics();
+		stats.updateReadingStatistics(statistics.readTime);
+		stats.updateParsingStatistics(statistics.parseTime);
+		stats.updateTrainingStatistics(statistics.trainTime);
 	}
 
 
@@ -279,9 +345,9 @@ public class Trainer {
 		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.learner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
-		paramVec = this.learner.setupParams(paramVec);
+		paramVec = this.masterLearner.setupParams(paramVec);
 
 		//		
 		//		//WW: accumulate example-size normalized gradient
@@ -291,20 +357,17 @@ public class Trainer {
 		//			k++;
 		//		}
 
-		NamedThreadFactory parseThreads = new NamedThreadFactory("parse-");
-		NamedThreadFactory gradThreads = new NamedThreadFactory("grad-");
-		int nthreadsper = Math.max(this.nthreads/2, 1);
-		ExecutorService parsePool, gradPool, cleanPool; 
+		NamedThreadFactory workThreads = new NamedThreadFactory("work-");
+		ExecutorService workPool, cleanPool; 
 
-		parsePool = Executors.newFixedThreadPool(nthreadsper, parseThreads);
-		gradPool = Executors.newFixedThreadPool(nthreadsper, gradThreads);
+		workPool = Executors.newFixedThreadPool(this.nthreads, workThreads);
 		cleanPool = Executors.newSingleThreadExecutor();
 
 		// run examples
 		int id=1;
 		int countdown=-1; Trainer notify = null;
 		for (String s : examples) {
-			long queueSize = (((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount());
+			long queueSize = (((ThreadPoolExecutor) workPool).getTaskCount()-((ThreadPoolExecutor) workPool).getCompletedTaskCount());
 			if (log.isDebugEnabled()) log.debug("Queue size "+queueSize);
 			if (countdown>0) {
 				if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
@@ -316,7 +379,7 @@ public class Trainer {
 				try {
 					synchronized(this) {
 						if (log.isDebugEnabled()) log.debug("Clearing training queue...");
-						while((((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount()) > this.nthreads)
+						while((((ThreadPoolExecutor) workPool).getTaskCount()-((ThreadPoolExecutor) workPool).getCompletedTaskCount()) > this.nthreads)
 							this.wait();
 						if (log.isDebugEnabled()) log.debug("Queue cleared.");
 					}
@@ -329,22 +392,20 @@ public class Trainer {
 				countdown=this.nthreads;
 				notify = this;
 			}
-			Future<PosNegRWExample> parsed = parsePool.submit(new Parse(s, builder, id));
-			Future<Integer> gradfound = gradPool.submit(new Grad(parsed, paramVec, sumGradient, learner, id, notify));
+			Future<PosNegRWExample> parsed = workPool.submit(new Parse(s, builder, id));
+			Future<ExampleStats> gradfound = workPool.submit(new Grad(parsed, paramVec, sumGradient, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
 		}
-		parsePool.shutdown();
+		workPool.shutdown();
 		try {
-			parsePool.awaitTermination(7,TimeUnit.DAYS);
-			gradPool.shutdown();
-			gradPool.awaitTermination(7, TimeUnit.DAYS);
+			workPool.awaitTermination(7,TimeUnit.DAYS);
 			cleanPool.shutdown();
 			cleanPool.awaitTermination(7, TimeUnit.DAYS);
 		} catch (InterruptedException e) {
 			log.error("Interrupted?",e);
 		}
 
-		this.learner.cleanupParams(paramVec, sumGradient);
+		this.masterLearner.cleanupParams(paramVec, sumGradient);
 
 		//WW: renormalize by the total number of queries
 		for (Iterator<String> it = sumGradient.keySet().iterator(); it.hasNext(); ) {
@@ -377,11 +438,12 @@ public class Trainer {
 		}
 		@Override
 		public PosNegRWExample call() throws Exception {
-			long start = System.currentTimeMillis();
+			SRW learner = learners.get(Thread.currentThread().getName());
 			if (log.isDebugEnabled()) log.debug("Parsing start "+this.id);
+			long start = System.currentTimeMillis();
 			PosNegRWExample ex = new RWExampleParser().parse(in, builder.copy(), learner);
-			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
 			statistics.updateParsingStatistics(System.currentTimeMillis()-start);
+			if (log.isDebugEnabled()) log.debug("Parsing done "+this.id);
 			return ex;
 		}
 
@@ -392,46 +454,46 @@ public class Trainer {
 	 * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
 	 *
 	 */
-	protected class Train implements Callable<Integer> {
+	protected class Train implements Callable<ExampleStats> {
 		Future<PosNegRWExample> in;
 		ParamVector paramVec;
-		SRW learner;
 		int id;
 		Trainer notify;
-		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, SRW learner, int id, Trainer notify) {
+		public Train(Future<PosNegRWExample> parsed, ParamVector paramVec, int id, Trainer notify) {
 			this.in = parsed;
 			this.id = id;
-			this.learner = learner;
 			this.paramVec = paramVec;
 			this.notify = notify;
 		}
 		@Override
-		public Integer call() throws Exception {
+		public ExampleStats call() throws Exception {
 			PosNegRWExample ex = in.get();
+			SRW learner = learners.get(Thread.currentThread().getName());
 			if (notify != null) synchronized(notify) { notify.notify(); }
-			long start = System.currentTimeMillis();
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
+			long start = System.currentTimeMillis();
 			learner.trainOnExample(paramVec, ex);
-			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
-			return ex.length();
+			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
+			return new ExampleStats(ex.length(),ex.getGraph().nodeSize());
 		}
 	}
 
 	protected class Grad extends Train {
 		ParamVector sumGradient;
-		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, SRW learner, int id, Trainer notify) {
-			super(parsed, paramVec, learner, id, notify);
+		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, int id, Trainer notify) {
+			super(parsed, paramVec, id, notify);
 			this.sumGradient = sumGradient;
 		}
 		@Override
-		public Integer call() throws Exception {
+		public ExampleStats call() throws Exception {
 			PosNegRWExample ex = in.get();
+			SRW learner = learners.get(Thread.currentThread().getName());
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
 			learner.accumulateGradient(paramVec, ex, sumGradient);
 			if (log.isDebugEnabled()) log.debug("Gradient done "+this.id);
-			return 1; 
+			return new ExampleStats(1,-1); 
 			// ^^^^ this is the equivalent of k++ from before;
 			// the total sum (query count) will be stored in numExamplesThisEpoch
 			// by TraceLosses. It's a hack but it works
@@ -445,24 +507,33 @@ public class Trainer {
 	 *
 	 */
 	protected class TraceLosses implements Runnable {
-		Future<Integer> in;
+		Future<ExampleStats> in;
 		int id;
-		public TraceLosses(Future<Integer> in, int id) {
+		public TraceLosses(Future<ExampleStats> in, int id) {
 			this.in = in;
 			this.id = id;
 		}
 		@Override
 		public void run() {
 			try {
-				int n = this.in.get();
+				ExampleStats n = this.in.get();
 				if (log.isDebugEnabled()) log.debug("Cleaning start "+this.id);
-				statistics.updateNumExamples(n);
+				statistics.updateExampleStats(n);
 				if (log.isDebugEnabled()) log.debug("Cleaning done "+this.id);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
 				log.error("Trouble with #"+id,e);
 			}
+		}
+	}
+	
+	protected class ExampleStats {
+		public int length;
+		public int nodes;
+		public ExampleStats(int el, int n) {
+			this.length = el;
+			this.nodes = n;
 		}
 	}
 
@@ -506,6 +577,12 @@ public class Trainer {
 			t.printStackTrace();
 			System.exit(-1);
 		}
+	}
+
+	public void setStoppingCriteria(int stoppingEpochs, double percent) {
+		this.stoppingEpoch = stoppingEpochs;
+		this.stoppingPercent = percent;
+
 	}
 
 

@@ -1,0 +1,15 @@
+0		comment	words(-1,-2) :- hasWord#(-1,-2,-3)  #v:['Doc', 'Word', 'Weight'].
+1	words/2	allocate	3	['Weight', 'Word', 'Doc']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	id	3
+6		fpushconst	words
+7		fpushconst	2
+8		fpushconst	4
+9		freport
+10		pushboundvar	-1
+11		pushboundvar	-2
+12		pushfreevar	-3
+13		callp	hasWord#/3
+14		returnp

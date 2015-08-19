@@ -72,7 +72,7 @@ fi
 cat  >> Makefile.in <<EOF
 SCRIPTS=\$(shell pwd)/scripts
 #### JVM
-ifeq (\$(strip \$(JOPTS)),)
+ifeq (\$(origin JOPTS),undefined)
 JOPTS=
 endif
 ifeq (\$(suffix \$(PROPPR)),'jar')
@@ -81,31 +81,31 @@ else
 CP:=.:\${PROPPR}/conf/:\${PROPPR}/bin:\${PROPPR}/lib/*
 endif
 #### Hyperparameters
-ifeq (\$(strip \$(EPSILON)),)
+ifeq (\$(origin EPSILON),undefined)
 EPSILON=1e-5
 endif
-ifeq (\$(strip \$(ALPHA)),)
+ifeq (\$(origin ALPHA),undefined)
 ALPHA=0.01
 endif
-ifeq (\$(strip \$(PROVER)),)
+ifeq (\$(origin PROVER),undefined)
 PROVER=dpr
 endif
-ifeq (\$(strip \$(MU)),)
+ifeq (\$(origin MU),undefined)
 MU=0.001
 endif
-ifeq (\$(strip \$(ETA)),)
+ifeq (\$(origin ETA),undefined)
 ETA=1.0
 endif
-ifeq (\$(strip \$(SRW)),)
+ifeq (\$(origin SRW),undefined)
 SRW=l2plocal:mu=\$(MU):eta=\$(ETA)
 endif
-ifeq (\$(strip \$(THREADS)),)
+ifeq (\$(origin THREADS),undefined)
 THREADS=3
 endif
-ifeq (\$(strip \$(EPOCHS)),)
+ifeq (\$(origin EPOCHS),undefined)
 EPOCHS=20
 endif
-ifeq (\$(strip \$(APR)),)
+ifeq (\$(origin APR),undefined)
 APR=eps=\$(EPSILON):alph=\$(ALPHA)
 endif
 

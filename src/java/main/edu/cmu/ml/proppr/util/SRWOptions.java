@@ -53,11 +53,11 @@ public class SRWOptions {
 	public APROptions apr;
 	
 	/** */
-	public SRWOptions(APROptions options) {
+	public SRWOptions(APROptions options, SquashingFunction fn) {
 		this(
 				DEFAULT_MU, 
 				DEFAULT_ETA, 
-				DEFAULT_SQUASHING_FUNCTION(), 
+				fn, 
 				DEFAULT_DELTA, 
 				DEFAULT_AFFGRAPH, 
 				DEFAULT_ZETA, 

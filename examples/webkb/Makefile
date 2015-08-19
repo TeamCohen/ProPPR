@@ -1,5 +1,12 @@
 include ../Makefile.in
 
+ifneq ($(strip $(SRW)),)
+SRW_OPTION=--srw $(SRW)
+endif
+ifneq ($(strip $(TRAINER)),)
+TRAINER_OPTION=--trainer $(TRAINER)
+endif
+
 ### DATASET
 PROGRAM:=webkb0.wam:webkb.graph:webkb.cfacts
 SUBSETS:=wisc wash texas cornell
@@ -11,25 +18,22 @@ all: results.txt
 clean:
 	rm -f *results.txt *.params *.grounded *.solutions.txt
 
-results.txt: $(addsuffix .results.txt,$(foreach subset,$(SUBSETS),$(addprefix pre.,$(subset)) $(addprefix post.,$(subset))))
+results.txt: $(addsuffix .results.txt,${SUBSETS})
 	echo phase.subset uR mR uMRR mMRR uMAP mMAP > $@
 	cat $^ >> $@
 
-%.results.txt: %.solutions.txt
-	python ${PROPPR}/scripts/answermetrics.py --data train_no_$(word 2,$(subst ., ,$*)).data --answers $< --metric recall --metric mrr --metric map |\
-	grep -e "micro:" -e "macro:" |\
-	awk '{print $$3}' |\
-	tr "\n" " " |\
-	awk '{print "$*",$$0}' > $@
+%.results.txt: pre.%.solutions.txt post.%.solutions.txt train_no_%.data
+	../scripts/makeResults.sh $(word 3,$^) $(word 1,$^) pre.$*   > $@
+	../scripts/makeResults.sh $(word 3,$^) $(word 2,$^) post.$* >> $@	
 
 %.params: train_no_%.data.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --prover ${PROVER} --train $< --params $@ --threads ${THREADS} --srw $(SRW) --epochs $(EPOCHS)
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer $(TRAINER_OPTION) --train $< --params $@ --threads ${THREADS} $(SRW_OPTION) --epochs $(EPOCHS)
 
 train_no_%.data.grounded: train_no_%.data
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} 
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $^ --grounded $@ --prover ${PROVER} --threads ${THREADS} 
 
 pre.%.solutions.txt: train_no_%.data
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS}
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $^ --solutions $@ --prover ${PROVER} --threads ${THREADS}
 
 post.%.solutions.txt: train_no_%.data %.params
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^)
