@@ -596,6 +596,7 @@ public class Configuration {
 		if (this.programFiles != null) {
 			display(sb, "Duplicate checking", duplicates>0? ("up to "+duplicates) : "off");
 		}
+		display(sb, THREADS_CONST_OPTION,nthreads);
 		return sb.toString();
 	}
 	private void displayFile(StringBuilder sb, String name, File f) {

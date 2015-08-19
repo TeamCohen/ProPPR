@@ -23,6 +23,7 @@ public class LongDense
 		 */
 		abstract public float get(int k); 
 		abstract public String toString();
+		abstract public boolean definesIndex(int i);
 	}
 
 	static public class UnitVector extends AbstractFloatVector {
@@ -31,6 +32,7 @@ public class LongDense
 		 */
 		public float get(int k) { return 1.0f; } 
 		public String toString() { return "1.0..."; }
+		public boolean definesIndex(int i) { return true; }
 	}
 
 	/** A float vector in which arbitrary floats can be stored.
@@ -69,6 +71,9 @@ public class LongDense
 			for (int k=0; k<=maxIndex; k++) {
 				val[k] = 0;
 			}
+		}
+		public boolean definesIndex(int i) {
+			return i<=maxIndex;
 		}
 		/** Return V[k] **/
 		public float get(int k) 
