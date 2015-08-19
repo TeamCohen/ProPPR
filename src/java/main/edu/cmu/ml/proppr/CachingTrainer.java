@@ -64,7 +64,7 @@ public class CachingTrainer extends Trainer {
 		NamedThreadFactory trainThreads = new NamedThreadFactory("work-");
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 
-		StoppingCriterion stopper = new StoppingCriterion(numEpochs);
+		StoppingCriterion stopper = new StoppingCriterion(numEpochs, this.stoppingPercent, this.stoppingEpoch);
 		boolean graphSizesStatusLog = true;
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
@@ -97,31 +97,6 @@ public class CachingTrainer extends Trainer {
 				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
 				graphSizesStatusLog = false;
 			}
-			
-//			try {
-//				trainPool.shutdown();
-//				trainPool.awaitTermination(7, TimeUnit.DAYS);
-//				cleanPool.shutdown();
-//				cleanPool.awaitTermination(7, TimeUnit.DAYS);
-//			} catch (InterruptedException e) {
-//				log.error("Interrupted?",e);
-//			}
-//			// finish any trailing updates for this epoch
-//			this.learner.cleanupParams(paramVec,paramVec);
-//
-//			// update loss status and signal the stopper
-//			if(traceLosses) {
-//				LossData lossThisEpoch = this.learner.cumulativeLoss();
-//				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
-//				printLossOutput(lossThisEpoch);
-//				if (epoch>1) {
-//					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
-//				}
-//				lossLastEpoch = lossThisEpoch;
-//			}
-//			stopper.recordEpoch();
-//
-//			total.updateTrainingStatistics(statistics.trainTime);
 		}
 		
 		log.info("Reading: "+total.readTime+" Parsing: "+total.parseTime+" Training: "+total.trainTime);

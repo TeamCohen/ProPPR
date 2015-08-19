@@ -442,6 +442,8 @@ public class SRW {
 	}
 	public void clearLoss() {
 		this.cumloss.clear();
+		this.cumloss.add(LOSS.LOG, 0.0);
+		this.cumloss.add(LOSS.REGULARIZATION, 0.0);
 	}
 	public LossData cumulativeLoss() {
 		return this.cumloss.copy();
