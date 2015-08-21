@@ -20,17 +20,17 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 **/
 	static public interface HashingStrategy<T> 
 	{
-		public Object computKey(T symbol);
+		public Object computeKey(T symbol);
 		public boolean equals(T o1,T o2);
 	}
 	public class DefaultHashingStrategy<T> implements HashingStrategy<T>
 	{
-		public Integer computKey(T symbol) { return symbol.hashCode(); }
+		public Integer computeKey(T symbol) { return symbol.hashCode(); }
 		public boolean equals(T o1,T o2) { return o1.equals(o2); }
 	}
 	public class IdentityHashingStrategy<T> implements HashingStrategy<T>
 	{
-		public T computKey(T symbol) { return symbol; }
+		public T computeKey(T symbol) { return symbol; }
 		public boolean equals(T o1,T o2) { return o1.equals(o2); }
 	}
 	public static enum HASHING_STRATEGIES {
@@ -67,7 +67,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 * @param symbol
 	 */
 	public void insert(T symbol) {
-		Object h = hashingStrategy.computKey(symbol);
+		Object h = hashingStrategy.computeKey(symbol);
 		if (symbol2Id.containsKey(h)) {
 			//check collision
 			if (id2symbol.get(symbol2Id.get(h)).equals(symbol)) return;
@@ -89,7 +89,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 */
 	public int getId(T symbol) {
 		insert(symbol);
-		Object h = hashingStrategy.computKey(symbol);
+		Object h = hashingStrategy.computeKey(symbol);
 		return symbol2Id.get(h);
 	}
 
@@ -97,7 +97,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	/** Test if the symbol has been previously inserted.
 	 */
 	public boolean hasId(T symbol) {
-		Object h = hashingStrategy.computKey(symbol);
+		Object h = hashingStrategy.computeKey(symbol);
 		return symbol2Id.containsKey(h);
 	}
 

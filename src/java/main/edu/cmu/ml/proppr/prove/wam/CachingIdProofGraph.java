@@ -39,7 +39,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		this.featureTab = featureTab;
 		nodeTab = new ConcurrentSymbolTable<State>(new ConcurrentSymbolTable.HashingStrategy<State>() {
 			@Override
-			public Object computKey(State s) {
+			public Object computeKey(State s) {
 				return s.canonicalHash();
 			}
 			@Override
