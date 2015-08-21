@@ -20,3 +20,4 @@ kbp_prototype
 .pydevproject
 .settings
 .Rhistory
+*.features

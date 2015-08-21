@@ -55,7 +55,7 @@ public abstract class GraphlikePlugin extends WamPlugin {
 
 	public void addEdge(String functor, String src, String dst,double weight) {
 		if (weight<=0) {
-			log.error("Negative weights discarded for graph edge"+functor+"("+src+","+dst+")");
+			log.error("Weights must be positive. Discarded graph edge "+functor+"("+src+","+dst+") with weight "+weight);
 		} else { 
 			indexAdd(functor+GRAPH_ARITY,src,dst,weight);
 		}
