@@ -41,6 +41,6 @@ public class StoppingCriterion {
 	}
 	public boolean satisified() {
 		boolean converged = numConseqStableEpochs >= minStableEpochs;
-		return converged || (numEpochs>maxEpochs);
+		return converged || (numEpochs>=maxEpochs);
 	}
 }
