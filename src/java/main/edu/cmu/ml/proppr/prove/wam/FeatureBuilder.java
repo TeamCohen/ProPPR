@@ -1,4 +1,7 @@
 package edu.cmu.ml.proppr.prove.wam;
+
+import java.util.Arrays;
+
 /**
  * Substitute for mixed-type feature-accumulator from Python
  * @author "Kathryn Mazaitis <krivard@cs.cmu.edu>"
@@ -19,5 +22,8 @@ public class FeatureBuilder {
 	public void append(int a) {
 		args[ai] = a;
 		ai++;
+	}
+	public String toString() {
+		return new StringBuilder(functor).append("/").append(arity).append(Arrays.toString(args)).toString();
 	}
 }
