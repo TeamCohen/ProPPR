@@ -1,38 +1,21 @@
-include ../Makefile.in
+cora: cora.wam cora.graph train.examples test.examples
+	proppr compile cora.wam
+	proppr set --programFiles cora.wam:cora.graph
+	proppr set --epochs 30 --srw l2plocal:mu=0.002
+	proppr ground train
+	proppr train train
+	proppr answer train pre.train.solutions.txt
+	proppr answer train post.train.solutions.txt --params train.params
+	proppr answer test pre.test.solutions.txt
+	proppr answer test post.test.solutions.txt --params train.params
+	sort -k 2rg train.params
+	proppr eval train.examples pre.train.solutions.txt
+	proppr eval train.examples post.train.solutions.txt
+	proppr eval test.examples pre.test.solutions.txt
+	proppr eval test.examples post.test.solutions.txt
 
-### PARAMETERS ###
-ifeq ($(strip $(PROVER)),)
-PROVER=dpr:1e-5
-endif
-ifeq ($(strip $(THREADS)),)
-THREADS=4
-endif
-ifeq ($(strip $(EPOCHS)),)
-EPOCHS=30
-endif
-
-SRW=l2plocal:mu=0.002:eta=$(ETA)
-
-### DATASET
-
-TRAIN=train
-TEST=test
-PROGRAM=cora.wam:cora.graph
-PROGRAM_DEPS=cora.graph
-
-### TARGETS
-include ../common.in
-
-all: results.txt
-
-clean:
-	rm -f *results.txt params.wts *.grounded *.examples *.graph *.solutions.txt
-
-results.txt: pre.${TRAIN}.results.txt post.${TRAIN}.results.txt pre.${TEST}.results.txt post.${TEST}.results.txt
-	echo phase subset uR mR uMRR mMRR > $@
-	cat $^ >> $@
-
-.PRECIOUS: params.wts
+clean:default.clean
+	rm -f *.wam *.solutions.txt *.grounded* *.params *.examples *.graph proppr.settings
 
 ### DATASET BUILDING
 

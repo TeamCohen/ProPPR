@@ -123,11 +123,18 @@ public class DprProver extends Prover<StateProofGraph> {
 								+Dictionary.buildString(o.fd,new StringBuilder(),"\n\t").toString());
 						z += o.wt;
 					}
+					if (z==0) {
+						//then we're in trouble
+						log.warn("Illegal graph: weight on this node has nowhere to go");
+						for (Outlink o: outs) {
+							log.warn("Outlink: "+Dictionary.buildString(o.fd, new StringBuilder(), "; "));
+						}
+					}
 					
 					// push this state as far as you can
 					while( r.get(u) / deg > iterEpsilon ) {
 						double ru = r.get(u);
-						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, u));
+						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d z %.6f state %s", iterEpsilon, depth, ru, deg, z, u));
 						
 						// p[u] += alpha * ru
 						addToP(p,u,ru);
@@ -136,6 +143,8 @@ public class DprProver extends Prover<StateProofGraph> {
 						
 						// for each v near u:
 						for (Outlink o : outs) {
+							// skip 0-weighted links
+							if (o.wt == 0) continue;
 							// r[v] += (1-alpha) * move? * Muv * ru
 							Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
 						}

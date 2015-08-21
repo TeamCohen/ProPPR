@@ -8,7 +8,7 @@ toy:
 	proppr compile multirankwalk.ppr
 	proppr set --programFiles multirankwalk.wam:toyseeds.graph:toyedges.graph
 	proppr answer toytest.examples
-	proppr eval toytest.examples toytest.solutions.txtw
+	proppr eval toytest.examples toytest.solutions.txt
 
 r8:
 	proppr compile multirankwalk.ppr
@@ -23,6 +23,6 @@ r8:
 	proppr eval 20ngtest.examples 20ngtest.solutions.txt
 
 clean:
-	rm -f proppr.settings *.wam *.solutions.txt tmp.txt
+	rm -f proppr.settings *.wam *.solutions.txt *.grounded *.grounded.features
 
 

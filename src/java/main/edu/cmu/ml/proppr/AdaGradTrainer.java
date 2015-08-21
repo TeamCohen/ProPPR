@@ -45,7 +45,7 @@ public class AdaGradTrainer extends Trainer {
 		this(agSRW, 1, Multithreading.DEFAULT_THROTTLE);
 	}
 
-
+	@Override
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0){
@@ -132,8 +132,8 @@ public class AdaGradTrainer extends Trainer {
 		return paramVec;
 	}
 
-
-	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec, SimpleParamVector<String> totSqGrad) {
+	@Override
+	public ParamVector findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
@@ -141,6 +141,7 @@ public class AdaGradTrainer extends Trainer {
 			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f,  this.masterLearner.getSquashingFunction().defaultValue());
 		}
 		paramVec = this.masterLearner.setupParams(paramVec);
+		if (masterFeatures != null && masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 
 		//		
 		//		//WW: accumulate example-size normalized gradient
@@ -159,6 +160,11 @@ public class AdaGradTrainer extends Trainer {
 		gradPool = Executors.newFixedThreadPool(nthreadsper, gradThreads);
 		cleanPool = Executors.newSingleThreadExecutor();
 
+		//@rck AG
+		//create a concurrent hash map to store the running total of the squares of the gradient
+		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
+
+		
 		// run examples
 		int id=1;
 		int countdown=-1; AdaGradTrainer notify = null;

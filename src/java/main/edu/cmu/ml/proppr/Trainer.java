@@ -61,13 +61,13 @@ public class Trainer {
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
 
-		learner.untrainedFeatures().add("id(trueLoop)");
-		learner.untrainedFeatures().add("id(trueLoopRestart)");
-		learner.untrainedFeatures().add("id(restart)");
+		this.masterLearner.untrainedFeatures().add("id(trueLoop)");
+		this.masterLearner.untrainedFeatures().add("id(trueLoopRestart)");
+		this.masterLearner.untrainedFeatures().add("id(restart)");
 
 		this.learners = new HashMap<String,SRW>();
 		for (int i=0;i<this.nthreads;i++) {
-			this.learners.put("work-"+(i+1), learner.copy());
+			this.learners.put("work-"+(i+1), this.masterLearner.copy());
 		}
 	}
 
@@ -340,14 +340,15 @@ public class Trainer {
 			System.out.println();
 	}
 
-	public ParamVector findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
+	public ParamVector findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		ParamVector sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, this.masterLearner.getSquashingFunction().defaultValue());
 		}
 		paramVec = this.masterLearner.setupParams(paramVec);
+		if (masterFeatures != null && masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 
 		//		
 		//		//WW: accumulate example-size normalized gradient

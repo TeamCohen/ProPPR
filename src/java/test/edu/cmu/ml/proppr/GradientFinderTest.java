@@ -7,11 +7,15 @@ import edu.cmu.ml.proppr.learn.L2SRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -78,7 +82,7 @@ public class GradientFinderTest extends RedBlueGraph {
 	}
 	
 	public ParamVector train() {
-		return this.trainer.findGradient(examples, new ArrayLearningGraphBuilder(), new SimpleParamVector<String>());
+		return this.trainer.findGradient(null, examples, new ArrayLearningGraphBuilder(), new SimpleParamVector<String>());
 	}
 
 	@Test
