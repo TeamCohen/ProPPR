@@ -168,6 +168,7 @@ public class DprProver extends Prover<StateProofGraph> {
 						// current pushcounter is passed down, gets incremented and returned, and 
 						// on the next for loop iter is passed down again...
 						if (o.child.equals(pg.getStartState())) continue;
+						if (o.wt == 0) continue;
 						pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
 					}
 				} catch (LogicProgramException e) {

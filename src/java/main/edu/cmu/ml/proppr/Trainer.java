@@ -163,7 +163,7 @@ public class Trainer {
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, this.masterLearner.getSquashingFunction().defaultValue());
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0);//this.masterLearner.getSquashingFunction().defaultValue());
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
 		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
@@ -475,6 +475,9 @@ public class Trainer {
 			long start = System.currentTimeMillis();
 			learner.trainOnExample(paramVec, ex);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
+			if (paramVec.get("id(restart)")!= 1.0) {
+				log.warn("Non-unit restart weight");
+			}
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			return new ExampleStats(ex.length(),ex.getGraph().nodeSize());
 		}

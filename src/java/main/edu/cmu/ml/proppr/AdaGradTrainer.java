@@ -49,7 +49,7 @@ public class AdaGradTrainer extends Trainer {
 	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0){
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, this.masterLearner.getSquashingFunction().defaultValue());
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0);//this.masterLearner.getSquashingFunction().defaultValue());
 		}
 
 		//@rck AG
