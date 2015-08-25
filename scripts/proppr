@@ -12,12 +12,19 @@ logging.basicConfig(level=logging.INFO)
 
 def doMain():
    logging.info('ProPPR v2')
-   opts = {'dryRun':False}
+   opts = {'dryRun':False, 'out':getOutputDirectory()}
    com = getArg(0)
-   if com == "-n":
-       opts['dryRun'] = True
-       sys.argv = sys.argv[1:]
-       com = getArg(0)
+   while True:
+      if com == "-n":
+         opts['dryRun'] = True
+         sys.argv = sys.argv[1:]
+         com = getArg(0)
+      elif com.startswith("-C"):
+         opts['out']=com[2:]
+         if not opts['out'].endswith("/"): opts['out'] += "/"
+         sys.argv = sys.argv[1:]
+         com = getArg(0)
+      else: break
    if com == "help":
       doHelp(opts)
    elif com == "set":
@@ -40,8 +47,8 @@ def doMain():
 # subcommands
 
 def doSet(o):
-   opts = loadOptionDict()  #also load command-line options
-   saveOptionDict(opts)
+   opts = loadOptionDict(o)  #also load command-line options
+   saveOptionDict(opts,o)
 shortHelpMsg['set'] = ' OPTION VALUE: store a default setting in proppr.settings, where OPTION starts with --'
 
 def doSettings(o):
@@ -51,21 +58,26 @@ shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 
 def doAnswer(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = getArg(2,stem+'.solutions.txt')
+   solutions = getArg(2,o['out']+stem+'.solutions.txt')
+   v = getArgvOptions()
+   for i in range(len(v)):
+      if v[i] == '--params':
+         setArgvOption(i+1,getFile(v[i+1],o))
+         break
    invokeMain(o,'QueryAnswerer','--queries',examples,'--solutions',solutions)
    logging.info('answers in '+solutions)
 shortHelpMsg['answer'] = ' INPUT.examples [OUTPUT.solutions.txt]: answer queries from file and write solutions'
 
 def doGround(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   grounded = getArg(2,stem+'.examples.grounded')
+   grounded = getArg(2,o['out']+stem+'.examples.grounded')
    invokeMain(o,'Grounder','--queries',examples,'--grounded',grounded)
    logging.info('grounded to '+grounded)
 shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from file and write graphs'
 
 def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = getArg(2, stem+'.solutions.txt')
+   solutions = getFile(getArg(2, stem+'.solutions.txt'),o)
    opts = getArgvOptions() or ['--metric','map']
    root = getRoot()
    callProcess(o,['python',root+'/scripts/answermetrics.py','--data',examples,'--answers',solutions] + opts)
@@ -81,7 +93,8 @@ shortHelpMsg['compile'] = ' INPUT.ppr [OUTPUT.wam]: compile a ProPPR program to 
 
 def doTrain(o):
    stem,src = stemExt(getArg(1),'.examples.grounded')
-   dst = getArg(2,stem+'.params')
+   src = getFile(src,o)
+   dst = getArg(2,o['out']+stem+'.params')
    invokeMain(o,'Trainer','--train',src,'--params',dst)
 shortHelpMsg['train'] = ' INPUT.examples.grounded [OUTPUT.params]: learn parameters for the prover'
 
@@ -117,7 +130,7 @@ def invokeMain(o,main,*mainProgArgs):
    classPath = '.:%s/conf/:%s/bin:%s/lib/*' % (root,root,root)
    mainClass = 'edu.cmu.ml.proppr.%s' % main
    optArgs = []
-   for (key,val) in loadOptionDict().items():
+   for (key,val) in loadOptionDict(o).items():
       optArgs.append(key)
       optArgs.append(val)
    callProcess(o,['java','-cp',classPath] + getJavaArgs()  + [mainClass] + list(mainProgArgs) + optArgs)
@@ -145,6 +158,23 @@ def getJavaArgs():
    jargs = os.environ.get('PROPPR_JAVA_ARGS')
    return jargs.split() if jargs else []
 
+def getOutputDirectory():
+   """Get any output directory defined in the environment"""
+   out = os.environ.get('PROPPR_OUTPUT')
+   if out and not out.endswith("/"):
+      out += "/"
+   return out or ""
+
+def getFile(name,o,quiet=False):
+   test = name
+   if os.path.exists(test): return test
+   test = o['out']+name
+   if os.path.exists(test): return test
+   if quiet:return name
+   print "no file %s in current directory" % name,
+   if o['out']: print "or %s" % o['out']
+   else: print ""
+
 def getArg(i,defaultVal=None):
    """Get the i-th command line argument."""
    def safeDefault():
@@ -166,12 +196,18 @@ def getArgvOptions():
          return sys.argv[i:]
    return []
 
-def loadOptionDict():
+def setArgvOption(n,val):
+   for i in range(len(sys.argv)):
+      if sys.argv[i].startswith('--'):
+         sys.argv[i+n]=val
+         return
+
+def loadOptionDict(o):
    """Load options from proppr.settings, ie previously stored with 'proppr set',
    or from the command line."""
    opts = {}
    try:
-      for line in open("proppr.settings",'r'):
+      for line in open(getFile("proppr.settings",o,quiet=True),'r'):
          key,val = line.strip().split("\t")
          opts[key] = val
    except IOError:
@@ -184,8 +220,8 @@ def loadOptionDict():
       opts[commandLineOpts[i]] = '1'
    return opts
 
-def saveOptionDict(opts):
-   fp = open("proppr.settings",'w')
+def saveOptionDict(opts,o):
+   fp = open(o['out']+"proppr.settings",'w')
    for key,val in opts.items():
       fp.write(key + '\t' + val + '\n')
    fp.close()
