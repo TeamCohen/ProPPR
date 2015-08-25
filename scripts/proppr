@@ -68,6 +68,10 @@ shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from
 def doShow(o):
    stem,grounded = stemExt(getArg(1),'.grounded')
    eid = int(getArg(2,'1'))
+   maxDepth=-1
+   v = getArgvOptions() or ['--maxDepth','-1']
+   if v[0] == '--maxDepth':
+      maxDepth=int(v[1])
    featurefile = "%s.features" % grounded
    features = [0]
    with open(featurefile,'r') as f:
@@ -95,34 +99,44 @@ def doShow(o):
       if not graph.has_key(src): graph[src] = {}
       if not graph[src].has_key(F): graph[src][F] = []
       graph[src][F].append(dest)
+   
    cursor = 1
    def show(cursor,level):
       print "%d" % (cursor),
-      for (F,links) in graph[cursor].iteritems():
-         labels = []
-         skip = False
-         for f in F.split(","):
-            p = f.split("@")
-            label = (features[int(p[0])], float(p[1]))
-            if label[0] == "id(restart)":
-               skip = True
-            elif label[0] == "id(trueLoop)":
-               if cursor in pos: print "+"
-               elif cursor in neg: print "-"
-               else: print "?"
-               skip = True
-            labels.append(label)
-         #print labels,links,skip
-         if skip: continue
-         print "->"
-         for link in links:
-            print "%s%s: " % ( '  |'*level,labels),
-            show(link,level+1) 
+      if type(graph[cursor]) == type(1):
+         # then we've seen this node before
+         graph[cursor] += 1
+         if cursor in pos: print "+"
+         elif cursor in neg: print "-"
+         else: print "%% (x%d)" % graph[cursor]
+      else:
+         descendants = graph[cursor]
+         graph[cursor] = 1
+         for (F,links) in descendants.iteritems():
+            labels = []
+            skip = False
+            for f in F.split(","):
+               p = f.split("@")
+               label = (features[int(p[0])], float(p[1]))
+               if label[0] == "id(restart)":
+                  skip = True
+               elif label[0] == "id(trueLoop)":
+                  if cursor in pos: print "+"
+                  elif cursor in neg: print "-"
+                  else: print "?"
+                  skip = True
+               labels.append(label)
+            if skip: continue
+            print "->"
+            for link in links:
+               print "%s%s: " % ( '  |'*level,labels),
+               if (maxDepth<0) or (level<maxDepth):
+                  show(link,level+1)
+               else:
+                  print "%d [truncated]" % link
    print query
    show(1,1)
-   
-
-shortHelpMsg['show'] = ' INPUT.grounded [example#]: display an ASCII representation of a grounded example'
+shortHelpMsg['show'] = ' INPUT.grounded [example#] [--maxDepth d]: display an ASCII representation of a grounded example'
 
 def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
