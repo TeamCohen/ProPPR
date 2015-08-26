@@ -112,14 +112,18 @@ public abstract class GraphlikePlugin extends WamPlugin {
 					public boolean execute(String val, double wt) {
 						try {
 //							String weightString = returnWeights ? Double.toString(wt) : null;
-							if (dstConst != null && val==dstConst) {
-								wamInterp.restoreState(state);
-								if (returnWeights) {
-									wamInterp.setWt(arity,3,wt);
+							if (dstConst != null){
+								if (val.equals(dstConst)) {
+									wamInterp.restoreState(state);
+									if (returnWeights) {
+										wamInterp.setWt(arity,3,wt);
+									}
+									wamInterp.returnp();
+									wamInterp.executeWithoutBranching();
+								} else {
+									return true;
 								}
-								wamInterp.returnp();
-								wamInterp.executeWithoutBranching();
-							} else if (dstConst == null) {
+							} else { // dstConst == null
 								wamInterp.restoreState(state);
 								wamInterp.setArg(arity,2,val);
 								if (returnWeights) {							
