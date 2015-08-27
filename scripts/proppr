@@ -58,7 +58,7 @@ shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 
 def doAnswer(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = getArg(2,o['out']+stem+'.solutions.txt')
+   solutions = o['out']+getArg(2,stem+'.solutions.txt')
    v = getArgvOptions()
    for i in range(len(v)):
       if v[i] == '--params':
