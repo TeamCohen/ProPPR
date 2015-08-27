@@ -60,7 +60,7 @@ shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 
 def doAnswer(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = o['out']+getArg(2,stem+'.solutions.txt')
+   solutions = makeOutput(getArg(2,stem+'.solutions.txt'),o)
    v = getArgvOptions()
    for i in range(len(v)):
       if v[i] == '--params':
@@ -72,7 +72,7 @@ shortHelpMsg['answer'] = ' INPUT.examples [OUTPUT.solutions.txt]: answer queries
 
 def doGround(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   grounded = getArg(2,o['out']+stem+'.examples.grounded')
+   grounded = makeOutput(getArg(2,stem+'.grounded'),o)
    invokeMain(o,'Grounder','--queries',examples,'--grounded',grounded)
    logging.info('grounded to '+grounded)
 shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from file and write graphs'
@@ -172,9 +172,9 @@ def doCompile(o):
 shortHelpMsg['compile'] = ' INPUT.ppr [OUTPUT.wam]: compile a ProPPR program to abstract machine'
 
 def doTrain(o):
-   stem,src = stemExt(getArg(1),'.examples.grounded')
+   stem,src = stemExt(getArg(1),'.grounded')
    src = getFile(src,o)
-   dst = getArg(2,o['out']+stem+'.params')
+   dst = makeOutput(getArg(2,stem+'.params'),o)
    invokeMain(o,'Trainer','--train',src,'--params',dst)
 shortHelpMsg['train'] = ' INPUT.examples.grounded [OUTPUT.params]: learn parameters for the prover'
 
@@ -206,6 +206,8 @@ def stemExt(fileName,expectedExtension):
          if stem<0: stem = len(fileName)
          return (fileName[:stem],fileName)
       return (fileName,fileName+expectedExtension)
+
+
 
 def invokeMain(o,main,*mainProgArgs):
    """Invoke a main program, supplying options from the settings file
@@ -258,6 +260,10 @@ def getFile(name,o,quiet=False):
    print "no file %s in current directory" % name,
    if o['out']: print "or %s" % o['out']
    else: print ""
+
+def makeOutput(filename,o):
+   if filename.startswith(o['out']): return filename
+   return o['out']+filename
 
 def getArg(i,defaultVal=None):
    """Get the i-th command line argument."""
