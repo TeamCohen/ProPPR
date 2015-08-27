@@ -121,6 +121,10 @@ def stemExt(fileName,expectedExtension):
    if fileName.endswith(expectedExtension):
       return (fileName[:-len(expectedExtension)],fileName)
    else:
+      if os.path.exists(fileName):
+         stem = fileName.rfind('.')
+         if stem<0: stem = len(fileName)
+         return (fileName[:stem],fileName)
       return (fileName,fileName+expectedExtension)
 
 def invokeMain(o,main,*mainProgArgs):
