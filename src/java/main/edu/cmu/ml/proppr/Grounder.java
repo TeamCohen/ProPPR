@@ -67,7 +67,7 @@ public class Grounder {
 	protected int nthreads=1;
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
-	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>();
+	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>(ConcurrentSymbolTable.HASHING_STRATEGIES.identity);
 
 
 	public Grounder(APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {

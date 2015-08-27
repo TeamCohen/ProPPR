@@ -37,6 +37,8 @@ def doMain():
       doAnswer(opts)
    elif com == "ground":
       doGround(opts)
+   elif com == "show":
+      doShow(opts)
    elif com == "eval":
       doEval(opts)
    elif com == "train":
@@ -74,6 +76,79 @@ def doGround(o):
    invokeMain(o,'Grounder','--queries',examples,'--grounded',grounded)
    logging.info('grounded to '+grounded)
 shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from file and write graphs'
+
+def doShow(o):
+   stem,grounded = stemExt(getArg(1),'.grounded')
+   eid = int(getArg(2,'1'))
+   maxDepth=-1
+   v = getArgvOptions() or ['--maxDepth','-1']
+   if v[0] == '--maxDepth':
+      maxDepth=int(v[1])
+   featurefile = "%s.features" % grounded
+   features = [0]
+   with open(featurefile,'r') as f:
+      features.extend([line.strip() for line in f])
+   lineno=0
+   query = ""
+   edges = []
+   pos = []
+   neg = []
+   with open(grounded,'r') as f:
+      for line in f:
+         lineno+=1
+         if lineno == eid:
+            fields = line.strip().split("\t")
+            query = fields[0]
+            pos = [int(n) for n in fields[2].split(',')]
+            neg = [int(n) for n in fields[3].split(',')]
+            edges = fields[7:]
+            break
+   graph = {}
+   for edge in edges:
+      (e,F) = edge.split(":")
+      (src,dest) = [ int(n) for n in e.split("->") ]
+      #
+      if not graph.has_key(src): graph[src] = {}
+      if not graph[src].has_key(F): graph[src][F] = []
+      graph[src][F].append(dest)
+   
+   cursor = 1
+   def show(cursor,level):
+      print "%d" % (cursor),
+      if type(graph[cursor]) == type(1):
+         # then we've seen this node before
+         graph[cursor] += 1
+         if cursor in pos: print "+"
+         elif cursor in neg: print "-"
+         else: print "%% (x%d)" % graph[cursor]
+      else:
+         descendants = graph[cursor]
+         graph[cursor] = 1
+         for (F,links) in descendants.iteritems():
+            labels = []
+            skip = False
+            for f in F.split(","):
+               p = f.split("@")
+               label = (features[int(p[0])], float(p[1]))
+               if label[0] == "id(restart)":
+                  skip = True
+               elif label[0] == "id(trueLoop)":
+                  if cursor in pos: print "+"
+                  elif cursor in neg: print "-"
+                  else: print "?"
+                  skip = True
+               labels.append(label)
+            if skip: continue
+            print "->"
+            for link in links:
+               print "%s%s: " % ( '  |'*level,labels),
+               if (maxDepth<0) or (level<maxDepth):
+                  show(link,level+1)
+               else:
+                  print "%d [truncated]" % link
+   print query
+   show(1,1)
+shortHelpMsg['show'] = ' INPUT.grounded [example#] [--maxDepth d]: display an ASCII representation of a grounded example'
 
 def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
