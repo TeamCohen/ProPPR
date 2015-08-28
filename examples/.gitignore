@@ -6,3 +6,5 @@ Makefile.in
 *.out
 *params.wts
 results.txt
+*.dat
+*.grounded.features
