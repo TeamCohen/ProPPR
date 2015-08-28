@@ -12,12 +12,19 @@ logging.basicConfig(level=logging.INFO)
 
 def doMain():
    logging.info('ProPPR v2')
-   opts = {'dryRun':False}
+   opts = {'dryRun':False, 'out':getOutputDirectory()}
    com = getArg(0)
-   if com == "-n":
-       opts['dryRun'] = True
-       sys.argv = sys.argv[1:]
-       com = getArg(0)
+   while True:
+      if com == "-n":
+         opts['dryRun'] = True
+         sys.argv = sys.argv[1:]
+         com = getArg(0)
+      elif com.startswith("-C"):
+         opts['out']=com[2:]
+         if not opts['out'].endswith("/"): opts['out'] += "/"
+         sys.argv = sys.argv[1:]
+         com = getArg(0)
+      else: break
    if com == "help":
       doHelp(opts)
    elif com == "set":
@@ -30,6 +37,8 @@ def doMain():
       doAnswer(opts)
    elif com == "ground":
       doGround(opts)
+   elif com == "show":
+      doShow(opts)
    elif com == "eval":
       doEval(opts)
    elif com == "train":
@@ -40,8 +49,8 @@ def doMain():
 # subcommands
 
 def doSet(o):
-   opts = loadOptionDict()  #also load command-line options
-   saveOptionDict(opts)
+   opts = loadOptionDict(o)  #also load command-line options
+   saveOptionDict(opts,o)
 shortHelpMsg['set'] = ' OPTION VALUE: store a default setting in proppr.settings, where OPTION starts with --'
 
 def doSettings(o):
@@ -51,21 +60,104 @@ shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 
 def doAnswer(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = getArg(2,stem+'.solutions.txt')
+   solutions = makeOutput(getArg(2,stem+'.solutions.txt'),o)
+   v = getArgvOptions()
+   for i in range(len(v)):
+      if v[i] == '--params':
+         setArgvOption(i+1,getFile(v[i+1],o))
+         break
    invokeMain(o,'QueryAnswerer','--queries',examples,'--solutions',solutions)
    logging.info('answers in '+solutions)
 shortHelpMsg['answer'] = ' INPUT.examples [OUTPUT.solutions.txt]: answer queries from file and write solutions'
 
 def doGround(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   grounded = getArg(2,stem+'.examples.grounded')
+   grounded = makeOutput(getArg(2,stem+'.grounded'),o)
    invokeMain(o,'Grounder','--queries',examples,'--grounded',grounded)
    logging.info('grounded to '+grounded)
 shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from file and write graphs'
 
+def doShow(o):
+   stem,grounded = stemExt(getArg(1),'.grounded')
+   eid = int(getArg(2,'1'))
+   maxDepth=-1
+   v = getArgvOptions() or ['--maxDepth','-1']
+   if v[0] == '--maxDepth':
+      maxDepth=int(v[1])
+   featurefile = "%s.features" % grounded
+   features = [0]
+   with open(featurefile,'r') as f:
+      features.extend([line.strip() for line in f])
+   trueLoop = features.index("id(trueLoop)")
+   lineno=0
+   query = ""
+   edges = []
+   pos = []
+   neg = []
+   with open(grounded,'r') as f:
+      for line in f:
+         lineno+=1
+         if lineno == eid:
+            fields = line.strip().split("\t")
+            query = fields[0]
+            pos = [int(n) for n in fields[2].split(',')]
+            neg = [int(n) for n in fields[3].split(',')]
+            edges = fields[7:]
+            break
+   graph = {}
+   for edge in edges:
+      (e,F) = edge.split(":")
+      (src,dest) = [ int(n) for n in e.split("->") ]
+      if not graph.has_key(src): graph[src] = {}
+      if dest==1: continue
+      if not graph[src].has_key(F): graph[src][F] = []
+      graph[src][F].append(dest)
+   posneg = pos+neg
+   posneg.sort()
+   
+   cursor = 1
+   def show(cursor,level):
+      print "%d" % (cursor),
+      if cursor in pos: print "+",
+      elif cursor in neg: print "-",
+      if type(graph[cursor]) == type(1):
+         # then we've seen this node before
+         graph[cursor] += 1
+         print "%% (x%d)" % graph[cursor]
+      else:
+         descendants = graph[cursor]
+         graph[cursor] = 1
+         if len(descendants) > 1: print "->"
+         elif len(descendants) == 0: print "R"
+         elif not descendants.keys()[0].startswith("%d@" % trueLoop):
+            print "->"
+         elif cursor not in posneg:
+            print "?"
+         else: print ""
+         for (F,links) in descendants.iteritems():
+            labels = []
+            skip = False
+            for f in F.split(","):
+               p = f.split("@")
+               label = (features[int(p[0])], float(p[1]))
+               if label[0] == "id(trueLoop)":
+                  skip = True
+               labels.append(label)
+            if skip: continue
+            for link in links:
+               print "%s%s: " % ( '  |'*level,labels),
+               if (maxDepth<0) or (level<maxDepth):
+                  show(link,level+1)
+               else:
+                  print "%d [truncated]" % link
+            #print "%s  ---" % ( '  |'*(level-1))
+   print query
+   show(1,1)
+shortHelpMsg['show'] = ' INPUT.grounded [example#] [--maxDepth d]: display an ASCII representation of a grounded example'
+
 def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = getArg(2, stem+'.solutions.txt')
+   solutions = getFile(getArg(2, stem+'.solutions.txt'),o)
    opts = getArgvOptions() or ['--metric','map']
    root = getRoot()
    callProcess(o,['python',root+'/scripts/answermetrics.py','--data',examples,'--answers',solutions] + opts)
@@ -80,8 +172,9 @@ def doCompile(o):
 shortHelpMsg['compile'] = ' INPUT.ppr [OUTPUT.wam]: compile a ProPPR program to abstract machine'
 
 def doTrain(o):
-   stem,src = stemExt(getArg(1),'.examples.grounded')
-   dst = getArg(2,stem+'.params')
+   stem,src = stemExt(getArg(1),'.grounded')
+   src = getFile(src,o)
+   dst = makeOutput(getArg(2,stem+'.params'),o)
    invokeMain(o,'Trainer','--train',src,'--params',dst)
 shortHelpMsg['train'] = ' INPUT.examples.grounded [OUTPUT.params]: learn parameters for the prover'
 
@@ -108,7 +201,13 @@ def stemExt(fileName,expectedExtension):
    if fileName.endswith(expectedExtension):
       return (fileName[:-len(expectedExtension)],fileName)
    else:
+      if os.path.exists(fileName):
+         stem = fileName.rfind('.')
+         if stem<0: stem = len(fileName)
+         return (fileName[:stem],fileName)
       return (fileName,fileName+expectedExtension)
+
+
 
 def invokeMain(o,main,*mainProgArgs):
    """Invoke a main program, supplying options from the settings file
@@ -117,7 +216,7 @@ def invokeMain(o,main,*mainProgArgs):
    classPath = '.:%s/conf/:%s/bin:%s/lib/*' % (root,root,root)
    mainClass = 'edu.cmu.ml.proppr.%s' % main
    optArgs = []
-   for (key,val) in loadOptionDict().items():
+   for (key,val) in loadOptionDict(o).items():
       optArgs.append(key)
       optArgs.append(val)
    callProcess(o,['java','-cp',classPath] + getJavaArgs()  + [mainClass] + list(mainProgArgs) + optArgs)
@@ -145,6 +244,27 @@ def getJavaArgs():
    jargs = os.environ.get('PROPPR_JAVA_ARGS')
    return jargs.split() if jargs else []
 
+def getOutputDirectory():
+   """Get any output directory defined in the environment"""
+   out = os.environ.get('PROPPR_OUTPUT')
+   if out and not out.endswith("/"):
+      out += "/"
+   return out or ""
+
+def getFile(name,o,quiet=False):
+   test = name
+   if os.path.exists(test): return test
+   test = o['out']+name
+   if os.path.exists(test): return test
+   if quiet:return name
+   print "no file %s in current directory" % name,
+   if o['out']: print "or %s" % o['out']
+   else: print ""
+
+def makeOutput(filename,o):
+   if filename.startswith(o['out']): return filename
+   return o['out']+filename
+
 def getArg(i,defaultVal=None):
    """Get the i-th command line argument."""
    def safeDefault():
@@ -166,12 +286,18 @@ def getArgvOptions():
          return sys.argv[i:]
    return []
 
-def loadOptionDict():
+def setArgvOption(n,val):
+   for i in range(len(sys.argv)):
+      if sys.argv[i].startswith('--'):
+         sys.argv[i+n]=val
+         return
+
+def loadOptionDict(o):
    """Load options from proppr.settings, ie previously stored with 'proppr set',
    or from the command line."""
    opts = {}
    try:
-      for line in open("proppr.settings",'r'):
+      for line in open(getFile("proppr.settings",o,quiet=True),'r'):
          key,val = line.strip().split("\t")
          opts[key] = val
    except IOError:
@@ -184,8 +310,8 @@ def loadOptionDict():
       opts[commandLineOpts[i]] = '1'
    return opts
 
-def saveOptionDict(opts):
-   fp = open("proppr.settings",'w')
+def saveOptionDict(opts,o):
+   fp = open(o['out']+"proppr.settings",'w')
    for key,val in opts.items():
       fp.write(key + '\t' + val + '\n')
    fp.close()

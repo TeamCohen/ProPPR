@@ -10,6 +10,9 @@ import org.apache.log4j.Logger;
 
 
 public abstract class Cleanup<Result> {
+	private static final int LOGUPDATE_MS = 5000;
+	protected long last=0L;
+	protected int count=0;
 	public abstract Runnable cleanup(Future<Result> in, int id);
 	public Logger getLog() { return null; }
 	
@@ -30,16 +33,28 @@ public abstract class Cleanup<Result> {
 		}
 		@Override
 		public void run() {
-			try {
-				Result result = input.get(50, TimeUnit.MILLISECONDS);
-			} catch (TimeoutException e) {
-				// if we timeout, resubmit the job
-				if (getLog() != null && getLog().isDebugEnabled()) getLog().debug("Rescheduling #"+id);
-				cleanupPool.submit(this);
-				return;
-			} catch (InterruptedException | ExecutionException e) { return; }
+			if (cleanupPool != null) {
+				try {
+					Result result = input.get(50, TimeUnit.MILLISECONDS);
+				} catch (TimeoutException e) {
+					// if we timeout, resubmit the job
+					if (getLog() != null && getLog().isDebugEnabled()) getLog().debug("Rescheduling #"+id);
+					cleanupPool.submit(this);
+					return;
+				} catch (InterruptedException | ExecutionException e) { return; }
+			}
+			
 			// otherwise pass to the wrapped runnable:
 			wrapped.run();
+
+			if (getLog() != null) {
+				count++;
+				long now = System.currentTimeMillis();
+				if (now-last > 5000) {
+					if (getLog().isInfoEnabled()) getLog().info(count+" examples finished...");
+					last = now;
+				}
+			}
 		}
 		
 	}

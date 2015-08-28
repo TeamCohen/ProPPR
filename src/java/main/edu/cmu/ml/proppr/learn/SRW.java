@@ -277,7 +277,8 @@ public class SRW {
 			grad.advance();
 			if (grad.value()==0) continue;
 			String feature = ex.getGraph().featureLibrary.getSymbol(grad.key());
-			if (trainable(feature)) params.adjustValue(feature, - learningRate() * grad.value());
+			if (trainable(feature)) 
+				params.adjustValue(feature, - learningRate() * grad.value());
 		}
 	}
 

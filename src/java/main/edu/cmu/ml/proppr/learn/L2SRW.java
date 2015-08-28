@@ -32,9 +32,12 @@ public class L2SRW extends SRW {
 	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {
 		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
-			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
-			if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ret);
-			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
+			double ret = 0.0;
+			if (trainable(f)) {
+				if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ret);
+				ret = 2*c.mu*value;
+				this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
+			}
 			gradient.adjustOrPutValue(ex.getGraph().featureLibrary.getId(f), ret, ret);
 		}
 	}

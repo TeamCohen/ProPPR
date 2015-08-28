@@ -33,7 +33,7 @@ public class StoppingCriterion {
 	public void recordConsecutiveLosses(LossData lossThisEpoch,LossData lossLastEpoch) {
 		LossData diff = lossLastEpoch.diff(lossThisEpoch);
 		double percentImprovement = 100 * diff.total()/lossThisEpoch.total();
-		if (percentImprovement > maxPctImprovementInLoss) {
+		if (Math.abs(percentImprovement) > maxPctImprovementInLoss) {
 			numConseqStableEpochs = 0;				
 		} else {
 			numConseqStableEpochs++;
@@ -41,6 +41,6 @@ public class StoppingCriterion {
 	}
 	public boolean satisified() {
 		boolean converged = numConseqStableEpochs >= minStableEpochs;
-		return converged || (numEpochs>maxEpochs);
+		return converged || (numEpochs>=maxEpochs);
 	}
 }

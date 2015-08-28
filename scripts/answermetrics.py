@@ -416,8 +416,10 @@ if __name__ == "__main__":
             if val in metrics:
                 print '=' * 78
                 print 'metric %s %s' % (val,metrics[val].explanation())
-                print '. micro:',metrics[val].microAverage(answers,labels)
-                print '. macro:',metrics[val].macroAverage(answers,labels)
+                micro = metrics[val].microAverage(answers,labels)
+                macro = metrics[val].macroAverage(answers,labels)
+                print '. micro:',micro
+                print '. macro:',macro
                 if '--details' in option:
                     print '. details:'
                     d = metrics[val].detailedReportAsDict(answers,labels)

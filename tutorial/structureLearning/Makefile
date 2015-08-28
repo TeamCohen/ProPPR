@@ -1,4 +1,4 @@
-include ../Makefile.in
+CP=.:${PROPPR}/bin:${PROPPR}/conf:${PROPPR}/lib/*
 
 ### Paths ###
 
@@ -11,10 +11,10 @@ endif
 
 # NAME: filename stem
 ifeq ($(strip $(NAME)),)
-NAME=uml_1
-ifeq ($(strip $(JOPTS)),-Xmx10G)
-JOPTS=-Xmx30G
+NAME=tmp
 endif
+ifeq ($(strip $(NAME)),uml_1)
+JOPTS=-Xmx30G
 endif
 
 # SL: Structure learning ruleset
@@ -32,15 +32,10 @@ TEST=${NAME}-test
 
 ### Settings ##
 
-ifeq ($(strip $(MU)),)
 MU=0.0001
-endif
-ifeq ($(strip $(EPSILON)),)
 EPSILON=.0001
-endif
-ifeq ($(strip $(ALPHA)),)
 ALPHA=.001
-endif
+THREADS=3
 
 # for measuring gradient
 GSRW=l2p:mu=$(MU):eta=5.0
@@ -49,8 +44,11 @@ TSRW=l2p:mu=$(MU):eta=1.0
 EPOCHS=100
 PROVER=dpr
 APR=eps=$(EPSILON):alph=$(ALPHA)
-WEIGHTINGSCHEME=--weightingScheme tanh
-UNNORMALIZED=--unnormalized $(WEIGHTINGSCHEME)
+WEIGHTINGSCHEME=--squashingFunction tanh
+UNNORMALIZED=--unnormalized
+ifneq ($(strip $(UNNORMALIZED)),)
+UNNORMALIZED_LOPT=$(UNNORMALIZED) 1
+endif
 
 ifeq ($(strip $(ITERS)),)
 ITERS=10
@@ -64,9 +62,9 @@ vpath %.cfacts $(DIR)
 #     $ make isg
 #     $ make
 
-all: results.txt
-
-include ../common.in
+all:
+	make -e isg &&\
+	make -e results.txt
 
 clean:
 	rm -f *results.txt *.grounded *.solutions.txt params.*.wts *.gradient \
@@ -124,7 +122,7 @@ results.txt:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(su
 	ROOT=$*;\
 	ROOT=$${ROOT#*.};\
 	ROOT=$(DIR)/$${ROOT%.*};\
-	python ${PROPPR}/scripts/answermetrics.py --data $${ROOT}.examples --answers $< --metric recall --echo |\
+	proppr eval $${ROOT}.examples $< --metric recall --echo |\
 	grep "^[0-9]" |\
 	awk 'BEGIN{FS=OFS="\t"}{flag=0; if ($$4=="True" || ($$4=="+=" && $$5=="True")) { flag=-1 } print $$2,flag,$$3}' > $@ ;\
 	sed 's/\S*\t//;s/\t/\n/g' $${ROOT}.examples |\
@@ -146,7 +144,7 @@ results.txt:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(su
 	STEM=$${STEM#${DIR}/};\
 	ROOT=$${STEM#*.};\
 	ROOT=${DIR}/$${ROOT%.*};\
-	python ${PROPPR}/scripts/answermetrics.py --data $${ROOT}.examples --answers $< --metric recall --metric mrr --metric map |\
+	proppr eval $${ROOT}.examples $< --metric recall --metric mrr --metric map |\
 	grep -e "micro:" -e "macro:" |\
 	awk '{print $$3}' |\
 	tr "\n" " " |\
@@ -162,40 +160,52 @@ results.txt:       $(foreach it,$(wildcard ${NAME}_delta_*.ppr),$(addsuffix $(su
 # from e.g.     uml_1-test.examples
 #               uml_1_SL_01.wam
 pre.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam ${NAME}-test.cfacts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 3,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
+	proppr set --programFiles $(word 3,$^):$(word 2,$^)
+	PROPPR_JAVA_ARGS=${JOPTS}; \
+	proppr answer $< $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED_LOPT} ${WEIGHTINGSCHEME}
 
 # make e.g. post.uml_1-test.SL_01.solutions.txt
 # from e.g.      uml_1-test.examples
 #                uml_1_SL_01.wam
 #               params.SL_01.wts
 post.${NAME}-test.%.solutions.txt: ${NAME}-test.examples ${NAME}_%.wam params.%.wts ${NAME}-test.cfacts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 4,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
+	proppr set --programFiles $(word 4,$^):$(word 2,$^)
+	PROPPR_JAVA_ARGS=${JOPTS}; \
+	proppr answer $< $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED_LOPT} ${WEIGHTINGSCHEME} --params $(word 3,$^)
 
 # make e.g. pre.uml_1-train.SL_01.solutions.txt
 # from e.g.     uml_1-train.examples
 #               uml_1_SL_01.wam
 pre.${NAME}-train.%.solutions.txt: ${NAME}-train.examples ${NAME}_%.wam ${NAME}-train.cfacts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 3,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED}
+	proppr set --programFiles $(word 3,$^):$(word 2,$^)
+	PROPPR_JAVA_ARGS=${JOPTS}; \
+	proppr answer $< $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED_LOPT} ${WEIGHTINGSCHEME}
 
 # make e.g. post.uml_1-train.SL_01.solutions.txt
 # from e.g.      uml_1-train.examples
 #                uml_1_SL_01.wam
 #               params.SL_01.wts
 post.${NAME}-train.%.solutions.txt: ${NAME}-train.examples ${NAME}_%.wam params.%.wts ${NAME}-train.cfacts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles $(word 4,$^):$(word 2,$^) --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED} --params $(word 3,$^)
+	proppr set --programFiles $(word 4,$^):$(word 2,$^)
+	PROPPR_JAVA_ARGS=${JOPTS}; \
+	proppr answer $< $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${UNNORMALIZED_LOPT} ${WEIGHTINGSCHEME} --params $(word 3,$^)
 
 
 # make e.g.      params.alone_01.wts
 # from e.g. uml_1-train.alone_01.examples.grounded
 params.%.wts: ${TRAIN}.%.examples.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer --train $< --params tmp --threads ${THREADS} --srw ${TSRW} --epochs ${EPOCHS} --apr ${APR} ${WEIGHTINGSCHEME}
-	awk 'BEGIN{FS=OFS="\t"} /FactsPlugin.*train.cfacts/ {foo=$$0;sub("train","test",foo);print foo}{print}' tmp > $@
+	proppr train $< $@ --threads ${THREADS} --srw ${TSRW} --epochs ${EPOCHS} --apr ${APR} ${WEIGHTINGSCHEME} --traceLosses
+	sed -i '/train.cfacts/ {p;s/train/test/};' $@
+
+# ^^^^ sed cmd duplicates the train.cfacts feature and exchanges the name for test.cfacts
 
 # make e.g. uml_1-train.SL_01.examples.grounded
 # from e.g. uml_1-train.examples
 #           uml_1_SL_01.wam
 ${NAME}-train.%.examples.grounded: ${NAME}-train.examples ${NAME}_%.wam ${NAME}-train.cfacts
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles $(word 3,$^):$(word 2,$^) --queries $< --grounded $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${WEIGHTINGSCHEME}
+	proppr set --programFiles $(word 3,$^):$(word 2,$^)
+	PROPPR_JAVA_ARGS=${JOPTS}; \
+	proppr ground $< $@ --prover ${PROVER} --threads ${THREADS} --apr ${APR} ${WEIGHTINGSCHEME}
 
 ## Additional targets for building an executable program from gradient-generated rules:
 
@@ -217,3 +227,8 @@ isg:
 # first training for e.g.   01 epochs
 ${NAME}_%.gradient: ${NAME}-train.SL_%.examples.grounded
 	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $< --threads ${THREADS} --apr ${APR} --epochs $* --srw ${GSRW} --gradient $@ --trainer streaming
+
+%.wam: %.ppr
+	proppr compile $<
+
+.SECONDARY:

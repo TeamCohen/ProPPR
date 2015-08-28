@@ -20,26 +20,45 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 **/
 	static public interface HashingStrategy<T> 
 	{
-		public int computeHashCode(T symbol);
+		public Object computeKey(T symbol);
 		public boolean equals(T o1,T o2);
 	}
 	public class DefaultHashingStrategy<T> implements HashingStrategy<T>
 	{
-		public int computeHashCode(T symbol) { return symbol.hashCode(); }
+		public Integer computeKey(T symbol) { return symbol.hashCode(); }
 		public boolean equals(T o1,T o2) { return o1.equals(o2); }
+	}
+	public class IdentityHashingStrategy<T> implements HashingStrategy<T>
+	{
+		public T computeKey(T symbol) { return symbol; }
+		public boolean equals(T o1,T o2) { return o1.equals(o2); }
+	}
+	public static enum HASHING_STRATEGIES {
+		hashCode,
+		identity
 	}
 
 
-	protected ConcurrentHashMap<Integer,Integer> symbol2Id = new ConcurrentHashMap<Integer,Integer>();
+	protected ConcurrentHashMap<Object,Integer> symbol2Id = new ConcurrentHashMap<Object,Integer>();
 	protected ConcurrentHashMap<Integer,T> id2symbol  = new ConcurrentHashMap<Integer,T>();
-	protected HashingStrategy hashingStrategy;
+	protected HashingStrategy<T> hashingStrategy;
 	protected int nextId = 0;
 	
 	public ConcurrentSymbolTable(HashingStrategy<T> strategy) {
-		this.hashingStrategy = strategy==null? new DefaultHashingStrategy<T>() : strategy;
+		this.init(strategy);
+	}
+	public ConcurrentSymbolTable(HASHING_STRATEGIES h) {
+		switch(h) {
+		case hashCode: init(new DefaultHashingStrategy<T>()); break;
+		case identity: init(new IdentityHashingStrategy<T>()); break;
+		}
 	}
 	public ConcurrentSymbolTable() {
-		this(null);
+		this(HASHING_STRATEGIES.hashCode);
+	}
+	private void init(HashingStrategy<T> strategy) {
+
+		this.hashingStrategy = strategy==null? new DefaultHashingStrategy<T>() : strategy;
 	}
 
 	/**
@@ -48,7 +67,11 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 * @param symbol
 	 */
 	public void insert(T symbol) {
-		int h = hashingStrategy.computeHashCode(symbol);
+		Object h = hashingStrategy.computeKey(symbol);
+		/* if (symbol2Id.containsKey(h)) {
+			//check collision
+			if (id2symbol.get(symbol2Id.get(h)).equals(symbol)) return;
+			} */
 		synchronized(this) {
 			if (!symbol2Id.containsKey(h)) {
 				int newId = ++nextId;
@@ -66,7 +89,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 */
 	public int getId(T symbol) {
 		insert(symbol);
-		int h = hashingStrategy.computeHashCode(symbol);
+		Object h = hashingStrategy.computeKey(symbol);
 		return symbol2Id.get(h);
 	}
 
@@ -74,7 +97,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	/** Test if the symbol has been previously inserted.
 	 */
 	public boolean hasId(T symbol) {
-		int h = hashingStrategy.computeHashCode(symbol);
+		Object h = hashingStrategy.computeKey(symbol);
 		return symbol2Id.containsKey(h);
 	}
 

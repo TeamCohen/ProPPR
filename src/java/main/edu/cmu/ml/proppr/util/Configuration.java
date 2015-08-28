@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PermissiveParser;
@@ -128,25 +130,39 @@ public class Configuration {
 		int[] flags = {inputFiles, outputFiles, constants, modules};
 		
 		Options options = new Options();
-		options.addOption(OptionBuilder.withLongOpt("profile")
-				.withDescription("Holds all computation & loading until the return key is pressed.")
-				.create());
+		options.addOption(Option.builder().longOpt("profile")
+				.desc("Holds all computation & loading until the return key is pressed.")
+				.build());
 		addOptions(options, flags);
+//		System.err.println(Dictionary.buildString(args, new StringBuilder(), "\n").toString());
 
 		CommandLine line = null;
 		try {
-			PermissiveParser parser = new PermissiveParser(true);
-
-			// if the user specified a properties file, add those values at the end
+			DefaultParser parser = new DefaultParser();
+			Properties props = new Properties();
+			// if the user specified a properties file, add those values at the beginning
 			// (so that command line args override them)
 			if(combine) args = combinedArgs(args);
+			for (int i=0; i<args.length; i++) {
+				if (args[i].startsWith("--")) {
+					if (!options.hasOption(args[i])) {
+						System.err.println("Unrecognized option: "+args[i]);
+						continue; // skip unrecognized options
+					}
+					if (i+1 < args.length && !args[i+1].startsWith("--")) {
+						props.setProperty(args[i], args[i+1]);
+						i++;
+					} else props.put(args[i], true);
+				}
+			}
+
 
 			// parse the command line arguments
-			line = parser.parse( options, args );
-			if (parser.hasUnrecognizedOptions()) {
-				System.err.println("WARNING: unrecognized options detected:");
-				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
-			}
+			line = parser.parse(options, new String[0], props);
+//			if (parser.hasUnrecognizedOptions()) {
+//				System.err.println("WARNING: unrecognized options detected:");
+//				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
+//			}
 			if (line.hasOption("profile")) {
 				System.out.println("Holding for profiler setup; press any key to proceed.");
 				System.in.read();

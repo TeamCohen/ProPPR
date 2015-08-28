@@ -56,16 +56,18 @@ public class GradientFinder {
 
 			ParamVector params = null;
 			File nullFile = null;
-			if (c.epochs > 0) {
 
-				SymbolTable<String> masterFeatures = new SimpleSymbolTable<String>();
-				File featureIndex = new File(c.groundedFile.getParent(),c.groundedFile.getName()+Grounder.FEATURE_INDEX_EXTENSION);
-				if (featureIndex.exists()) {
-					log.info("Reading feature index from "+featureIndex.getName()+"...");
-					for (String line : new ParsedFile(featureIndex)) {
-						masterFeatures.insert(line.trim());
-					}
+			SymbolTable<String> masterFeatures = new SimpleSymbolTable<String>();
+			File featureIndex = new File(c.groundedFile.getParent(),c.groundedFile.getName()+Grounder.FEATURE_INDEX_EXTENSION);
+			if (featureIndex.exists()) {
+				log.info("Reading feature index from "+featureIndex.getName()+"...");
+				for (String line : new ParsedFile(featureIndex)) {
+					masterFeatures.insert(line.trim());
 				}
+			}
+			
+			if (c.epochs > 0) {
+				// train first
 				params = c.trainer.train(
 						masterFeatures,
 						new ParsedFile(c.groundedFile), 
@@ -80,6 +82,7 @@ public class GradientFinder {
 			}
 
 			ParamVector batchGradient = c.trainer.findGradient(
+					masterFeatures,
 					new ParsedFile(c.groundedFile), 
 					new ArrayLearningGraphBuilder(), 
 					params);

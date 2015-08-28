@@ -1,0 +1,17 @@
+# ProPPR Tutorials
+
+These tutorials are designed to be at least three of the following: 
+
+1.  small, so you can run them on a laptop; 
+1.  human-readable/type-able, so you could conceivably type out all the commands; 
+1.  representative of how ProPPR is actually used;
+1.  interesting, or showing somewhat of the breadth of problems ProPPR can solve.
+
+Each tutorial (should) have its own README discussing the problem and how to run it.
+
+## Tutorial index:
+
+1. `textcat` - text categorization
+2. `labelProp` - label propagation and SSL
+3. `structureLearning` - using the pageRank gradient to select new rule candidates
+4. ??
