@@ -54,7 +54,6 @@ import edu.cmu.ml.proppr.util.multithreading.Transformer;
 public class Grounder {
 	public static final String FEATURE_INDEX_EXTENSION = ".features";
 	private static final Logger log = Logger.getLogger(Grounder.class);
-	private static final int LOGUPDATE_MS = 5000;
 	public static final String GROUNDED_SUFFIX = ".grounded";
 	protected File graphKeyFile=null;
 	protected Writer graphKeyWriter=null;
@@ -94,27 +93,36 @@ public class Grounder {
 		int totalPos=0, totalNeg=0, coveredPos=0, coveredNeg=0;
 		InferenceExample worstX = null;
 		double smallestFractionCovered = 1.0;
-		int count;
-
-		protected synchronized void updateStatistics(InferenceExample ex,int npos,int nneg,int covpos,int covneg) {
+		Integer count=0;
+		Integer noPosNeg=0;
+		Integer emptyGraph=0;
+		protected void noPosNeg() {
+			synchronized(noPosNeg) { noPosNeg++; }
+		}
+		protected void emptyGraph() {
+			synchronized(emptyGraph) { emptyGraph++; }
+		}
+		protected void updateStatistics(InferenceExample ex,int npos,int nneg,int covpos,int covneg) {
 			// keep track of some statistics - synchronized for multithreading
-			count ++;
-			totalPos += npos;
-			totalNeg += nneg;
-			coveredPos += covpos;
-			coveredNeg += covneg;
-			double fractionCovered = covpos/(double)npos;
-			if (fractionCovered < smallestFractionCovered) {
-				worstX = ex;
-				smallestFractionCovered = fractionCovered;
-			}
-			
-			if (log.isInfoEnabled()) {
-				long now = System.currentTimeMillis();
-				if (now-lastPrint > LOGUPDATE_MS) {
-					lastPrint = now;
-					log.info("Grounded "+count+" examples...");
+			synchronized(count) {
+				count ++;
+				totalPos += npos;
+				totalNeg += nneg;
+				coveredPos += covpos;
+				coveredNeg += covneg;
+				double fractionCovered = covpos/(double)npos;
+				if (fractionCovered < smallestFractionCovered) {
+					worstX = ex;
+					smallestFractionCovered = fractionCovered;
 				}
+
+//				if (log.isInfoEnabled()) {
+//					long now = System.currentTimeMillis();
+//					if (now-lastPrint > LOGUPDATE_MS) {
+//						lastPrint = now;
+//						log.info("Grounded "+count+" examples...");
+//					}
+//				}
 			}
 		}
 	}
@@ -138,9 +146,8 @@ public class Grounder {
 						groundedFile, 
 						this.throttle);
 
-			log.info("Grounded all "+statistics.count+" examples");
 			reportStatistics(empty);
-			
+
 			File indexFile = new File(groundedFile.getParent(), groundedFile.getName()+FEATURE_INDEX_EXTENSION);
 			serializeFeatures(indexFile, featureTable);
 
@@ -181,7 +188,7 @@ public class Grounder {
 			}
 		}
 	}
-	
+
 	protected void serializeFeatures(File indexFile, SymbolTable<Feature> featureTable) throws IOException {
 		Writer w = new BufferedWriter(new FileWriter(indexFile));
 		for (int i=1; i<=featureTable.size(); i++) {
@@ -222,7 +229,10 @@ public class Grounder {
 
 	protected void reportStatistics(int empty) {
 		if(!log.isInfoEnabled()) return;
-		if (empty>0) log.info("Skipped "+empty+" examples due to empty graphs");
+		log.info("Processed "+statistics.count+" examples");
+		int skipped = statistics.noPosNeg+statistics.emptyGraph;
+		log.info("Grounded: "+(statistics.count-skipped));
+		log.info("Skipped: "+skipped+" = "+statistics.noPosNeg+" with no labeled solutions; "+statistics.emptyGraph+" with empty graphs");
 		log.info("totalPos: " + statistics.totalPos 
 				+ " totalNeg: "+statistics.totalNeg
 				+" coveredPos: "+statistics.coveredPos
@@ -299,10 +309,10 @@ public class Grounder {
 				if (gx.length() > 0) {
 					return (serializeGroundedExample(pg, gx));
 				} else {
-					log.warn("No positive or negative solutions for query "+id+":"+pg.getExample().getQuery().toString()+"; skipping");
+					statistics.noPosNeg();
+					//log.warn("No positive or negative solutions for query "+id+":"+pg.getExample().getQuery().toString()+"; skipping");
 				}
-			} else log.warn("Empty graph for example "+id);
-			empty++;
+			} else statistics.emptyGraph(); //log.warn("Empty graph for example "+id);
 			return null;
 		}
 	}
@@ -317,7 +327,7 @@ public class Grounder {
 
 			ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);
 			System.out.println(c.toString());
-			
+
 			if (c.getCustomSetting("graphKey") != null) c.grounder.useGraphKeyFile((File) c.getCustomSetting("graphKey"));
 			if (c.paramsFile != null) {
 				ParamsFile file = new ParamsFile(c.paramsFile);
