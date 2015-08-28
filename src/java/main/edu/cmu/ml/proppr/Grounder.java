@@ -54,7 +54,6 @@ import edu.cmu.ml.proppr.util.multithreading.Transformer;
 public class Grounder {
 	public static final String FEATURE_INDEX_EXTENSION = ".features";
 	private static final Logger log = Logger.getLogger(Grounder.class);
-	private static final int LOGUPDATE_MS = 5000;
 	public static final String GROUNDED_SUFFIX = ".grounded";
 	protected File graphKeyFile=null;
 	protected Writer graphKeyWriter=null;
@@ -117,13 +116,13 @@ public class Grounder {
 					smallestFractionCovered = fractionCovered;
 				}
 
-				if (log.isInfoEnabled()) {
-					long now = System.currentTimeMillis();
-					if (now-lastPrint > LOGUPDATE_MS) {
-						lastPrint = now;
-						log.info("Grounded "+count+" examples...");
-					}
-				}
+//				if (log.isInfoEnabled()) {
+//					long now = System.currentTimeMillis();
+//					if (now-lastPrint > LOGUPDATE_MS) {
+//						lastPrint = now;
+//						log.info("Grounded "+count+" examples...");
+//					}
+//				}
 			}
 		}
 	}
