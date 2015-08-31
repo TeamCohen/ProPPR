@@ -11,7 +11,7 @@ import edu.cmu.ml.proppr.util.math.MuParamVector;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TObjectDoubleMap;
 
-public class LocalL1LaplacianPosNegLossTrainedSRW extends LocalL1SRW {
+public class LocalL1LaplacianPosNegLossTrainedSRW extends LocalL1Regularizer {
 	public LocalL1LaplacianPosNegLossTrainedSRW(SRWOptions params) {
 		super(params);
 	}

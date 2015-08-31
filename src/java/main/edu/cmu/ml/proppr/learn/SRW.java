@@ -70,6 +70,7 @@ public class SRW {
 	protected LossData cumloss;
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
+	private Regularizer regularizer;
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
@@ -88,7 +89,7 @@ public class SRW {
 		log.info("Training on "+example);
 
 		initializeFeatures(params, example.getGraph());
-		prepareForExample(params, example.getGraph(), params);
+		regularizer.prepareForExample(params, example.getGraph(), params);
 		load(params, example);
 		inference(params, example);
 		sgd(params, example);
@@ -99,7 +100,7 @@ public class SRW {
 
 		initializeFeatures(params, example.getGraph());
 		ParamVector<String,Double> prepare = new SimpleParamVector<String>();
-		prepareForExample(params, example.getGraph(), prepare);
+		regularizer.prepareForExample(params, example.getGraph(), prepare);
 		load(params, example);
 		inference(params, example);
 		TIntDoubleMap gradient = gradient(params,example);
@@ -283,7 +284,7 @@ public class SRW {
 
 	protected TIntDoubleMap gradient(ParamVector params, PosNegRWExample example) {
 		PosNegRWExample ex = (PosNegRWExample) example;
-		Set<String> features = this.localFeatures(params, ex.getGraph());
+		Set<String> features = this.regularizer.localFeatures(params, ex.getGraph());
 		TIntDoubleMap gradient = new TIntDoubleHashMap(features.size());
 		// add regularization term
 		regularization(params, ex, gradient);
@@ -417,19 +418,19 @@ public class SRW {
 		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));
 	}
 
-	/** Allow subclasses to filter feature list **/
-	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
-		return paramVec.keySet();
-	}
-	/** Allow subclasses to swap in an alternate parameter implementation **/
-	public ParamVector<String,?> setupParams(ParamVector<String,?> params) { return params; }
+//	/** Allow subclasses to filter feature list **/
+//	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
+//		return paramVec.keySet();
+//	}
+//	/** Allow subclasses to swap in an alternate parameter implementation **/
+//	public ParamVector<String,?> setupParams(ParamVector<String,?> params) { return params; }
 
 
-	/** Allow subclasses to do pre-example calculations (e.g. lazy regularization) **/
-	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {}
+//	/** Allow subclasses to do pre-example calculations (e.g. lazy regularization) **/
+//	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {}
 	
 	/** Allow subclasses to do additional parameter processing at the end of an epoch **/
-	public void cleanupParams(ParamVector<String,?> params, ParamVector apply) {}
+//	public void cleanupParams(ParamVector<String,?> params, ParamVector apply) {}
 
 
 	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }

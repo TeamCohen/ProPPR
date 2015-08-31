@@ -326,10 +326,10 @@ public class ModuleConfiguration extends Configuration {
 				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
 				break;
 			case l1p:
-				this.srw = new edu.cmu.ml.proppr.learn.L1SRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.L1Regularizer(sp);
 				break;
 			case l1plocal:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1SRW(sp);
+				this.srw = new edu.cmu.ml.proppr.learn.LocalL1Regularizer(sp);
 				break;
 			case l1plaplacianlocal:
 				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);

@@ -9,17 +9,10 @@ import edu.cmu.ml.proppr.util.SRWOptions;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
 
-public class L1SRW extends SRW {
-	protected LossData cumloss;
+public class L1Regularizer extends Regularizer {
 
-	public L1SRW(SRWOptions params) {
-		super(params);
-		this.cumloss = new LossData();
-	}
-
-	public L1SRW() {
-		super();
-		this.cumloss = new LossData();
+	public L1Regularizer(SRW srw) {
+		super(srw);
 	}
 
 	/**
@@ -37,8 +30,9 @@ public class L1SRW extends SRW {
 		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
 			// want to take theta toward zero, but not past it: gradient can't be bigger than theta
-			double ret = untrainedFeatures.contains(f) ? 0.0 : Math.signum(value) * Math.min( Math.abs(value), c.mu);
-			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.abs(value));
+			
+			double ret = Math.signum(value) * Math.min( Math.abs(value), parent.c.mu);
+			parent.cumloss.add(LOSS.REGULARIZATION, parent.c.mu * Math.abs(value));
 			gradient.adjustOrPutValue(ex.getGraph().featureLibrary.getId(f), ret, ret);
 		}
 	}

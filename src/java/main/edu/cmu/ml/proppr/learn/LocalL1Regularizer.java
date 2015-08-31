@@ -13,12 +13,11 @@ import edu.cmu.ml.proppr.util.math.MuParamVector;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TObjectDoubleMap;
 
-public class LocalL1SRW extends L1SRW {
-	private static final Logger log = Logger.getLogger(LocalL1SRW.class);
-	public LocalL1SRW(SRWOptions params) {
-		super(params);
+public class LocalL1Regularizer extends L1Regularizer {
+	private static final Logger log = Logger.getLogger(LocalL1Regularizer.class);
+	public LocalL1Regularizer(SRW s) {
+		super(s);
 	}
-	public LocalL1SRW() { super(); }
 
 	@Override
 	public Set<String> localFeatures(ParamVector paramVec, LearningGraph graph) {
@@ -26,10 +25,9 @@ public class LocalL1SRW extends L1SRW {
 	}
 
 	@Override
-	protected void sgd(ParamVector params, PosNegRWExample ex) {
+	public void prepareForSgd(ParamVector params, PosNegRWExample ex) {
 		((MuParamVector)params).count();
 		((MuParamVector)params).setLast(localFeatures(params,ex.getGraph()));
-		super.sgd(params, ex);
 	}
 
 	@Override
@@ -45,10 +43,11 @@ public class LocalL1SRW extends L1SRW {
 		((MuParamVector)paramVec).setLast(paramVec.keySet());
 	}
 
-	@Override
-	public void initializeFeatures(ParamVector params, LearningGraph graph) {
-		super.initializeFeatures(params, graph);
-	}
+	// what was this for? [kmm]
+//	@Override
+//	public void initializeFeatures(ParamVector params, LearningGraph graph) {
+//		super.initializeFeatures(params, graph);
+//	}
 	
 	@Override
 	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {
@@ -75,7 +74,7 @@ public class LocalL1SRW extends L1SRW {
 	 * @param apply
 	 */
 	private void prepareFeature(ParamVector params, String f,ParamVector apply) {
-		if (!trainable(f)) return;
+		if (!parent.trainable(f)) return;
 		int gap = ((MuParamVector)params).getLast(f);
 		if (gap==0) return;
 
@@ -83,16 +82,16 @@ public class LocalL1SRW extends L1SRW {
 		//
 		//signum(w) * max(0.0, abs(w) - shrinkageVal)
 
-		double shrinkageVal = gap * this.learningRate() * c.mu;
+		double shrinkageVal = gap * parent.learningRate() * parent.c.mu;
 		double weightDecay;
-		if((c.mu != 0) && (!Double.isInfinite(shrinkageVal))){
+		if((parent.c.mu != 0) && (!Double.isInfinite(shrinkageVal))){
 			double value = Dictionary.safeGet(params,f);
 			weightDecay = Math.signum(value) * Math.min(Math.abs(value), shrinkageVal);
 			apply.adjustValue(f, weightDecay);
 			//FIXME: opportunity for out-of-date `value`; may want to convert to a try loop
 
 			if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ -weightDecay);
-			this.cumloss.add(LOSS.REGULARIZATION, gap * c.mu * Math.abs(value));
+			parent.cumloss.add(LOSS.REGULARIZATION, gap * parent.c.mu * Math.abs(value));
 		}
 	}
 }
