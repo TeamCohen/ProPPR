@@ -70,7 +70,7 @@ public class SRW {
 	protected LossData cumloss;
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
-	private Regularizer regularizer;
+	private RegularizationSchedule regularizer;
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
@@ -78,6 +78,10 @@ public class SRW {
 		this.untrainedFeatures = new TreeSet<String>();
 		this.cumloss = new LossData();
 		this.zeroGradientData = new ZeroGradientData();
+	}
+	
+	public void setRegularizer(RegularizationSchedule r) {
+		this.regularizer = r;
 	}
 
 	/**

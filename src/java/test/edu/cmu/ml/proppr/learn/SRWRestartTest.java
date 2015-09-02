@@ -29,7 +29,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
  */
 public class SRWRestartTest extends SRWTest {
 	public void initSrw() {
-		srw = new L2SRW();
+		srw = new RegularizeL2();
 		srw.setAlpha(0.01);
 	}
 	

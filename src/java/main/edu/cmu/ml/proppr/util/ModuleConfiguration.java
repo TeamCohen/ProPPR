@@ -10,7 +10,15 @@ import edu.cmu.ml.proppr.AdaGradTrainer;
 import edu.cmu.ml.proppr.CachingTrainer;
 import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
+import edu.cmu.ml.proppr.learn.AdaGradSRW;
 import edu.cmu.ml.proppr.learn.DprSRW;
+import edu.cmu.ml.proppr.learn.LocalRegularization;
+import edu.cmu.ml.proppr.learn.RegularizationSchedule;
+import edu.cmu.ml.proppr.learn.Regularize;
+import edu.cmu.ml.proppr.learn.RegularizeL1;
+import edu.cmu.ml.proppr.learn.RegularizeL1GroupLasso;
+import edu.cmu.ml.proppr.learn.RegularizeL1Laplacian;
+import edu.cmu.ml.proppr.learn.RegularizeL2;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.Linear;
@@ -42,7 +50,9 @@ public class ModuleConfiguration extends Configuration {
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
-	private enum SRWS { l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
+	private enum SRWS { ppr, dpr, adagrad }
+	private enum Regularizers { l1, l1laplacian, l1grouplasso, l2 };
+	private enum RegularizerSchedules { synch, global, lazy, local };//l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -293,14 +303,24 @@ public class ModuleConfiguration extends Configuration {
 
 		if (line.hasOption(SRW_MODULE_OPTION)) {
 			String[] values = line.getOptionValues(SRW_MODULE_OPTION);
-
+			Regularizers regularizerType = Regularizers.l2;
+			RegularizerSchedules scheduleType = RegularizerSchedules.synch;
 			boolean namedParameters = false;
 			if (values.length > 1 && values[1].contains("=")) namedParameters = true;
 
 			if (namedParameters) {
 				for (int i=1; i<values.length; i++) {
 					String[] parts = values[i].split("=");
-					sp.set(parts);
+					switch(parts[0]) {
+					case "reg":
+						regularizerType = Regularizers.valueOf(parts[1]);
+						break;
+					case "sched":
+						scheduleType = RegularizerSchedules.valueOf(parts[1]);
+						break;
+					default:
+						sp.set(parts);
+					}
 				}
 			} else {
 				if (values.length > 1) {
@@ -322,34 +342,47 @@ public class ModuleConfiguration extends Configuration {
 			
 			SRWS type = SRWS.valueOf(values[0]);
 			switch(type) {
-			case l2p:
-				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
-				break;
-			case l1p:
-				this.srw = new edu.cmu.ml.proppr.learn.L1Regularizer(sp);
-				break;
-			case l1plocal:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1Regularizer(sp);
-				break;
-			case l1plaplacianlocal:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);
-				break;
-			case l1plocalgrouplasso:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp);
-				break;
-			case l2plocal:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp);
+			case ppr:
+				this.srw = new SRW(sp);
 				break;
 			case dpr:
-				this.srw = new edu.cmu.ml.proppr.learn.DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
+				this.srw = new DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
 				break;
 			case adagrad:
-				this.srw = new edu.cmu.ml.proppr.learn.AdaGradSRW (sp);
+				this.srw = new AdaGradSRW(sp);
 				break;
 			default: usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
+			Regularize reg = null;
+			switch(regularizerType) {
+			case l1:
+				reg = new RegularizeL1();
+				break;
+			case l1laplacian:
+				reg = new RegularizeL1Laplacian();
+				break;
+			case l1grouplasso:
+				reg = new RegularizeL1GroupLasso();
+				break;
+			case l2:
+				reg = new RegularizeL2();
+				break;
+			}
+			RegularizationSchedule regularizer = null;
+			switch(scheduleType) {
+			case global:
+			case synch: // fallthrough
+				regularizer = new RegularizationSchedule(this.srw, reg);
+				break;
+			case local:
+			case lazy: // fallthrough
+				regularizer = new LocalRegularization(this.srw, reg);
+				break;
+			}
+			this.srw.setRegularizer(regularizer);
 		} else {
-			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
+			this.srw = new SRW(sp);
+			this.srw.setRegularizer(new RegularizationSchedule(this.srw, new RegularizeL2()));
 		}
 	}
 

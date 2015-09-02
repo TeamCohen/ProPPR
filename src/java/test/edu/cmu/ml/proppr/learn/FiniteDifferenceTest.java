@@ -102,7 +102,7 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 	@Test
 	public void testL2PosNegLossSRW() {
 		SRW 
-		srw = new L2SRW();
+		srw = new RegularizeL2();
 		setupSrw(srw);
 		ParamVector p = defaultParams();
 		fillParams(srw,p);
