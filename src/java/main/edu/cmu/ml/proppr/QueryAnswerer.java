@@ -200,6 +200,7 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 
 	private class QueryStreamer implements Iterable<Query>, Iterator<Query> {
 		ParsedFile reader;
+		
 		public QueryStreamer(File queryFile) {
 			reader = new ParsedFile(queryFile);
 		}

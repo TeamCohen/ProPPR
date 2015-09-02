@@ -132,7 +132,7 @@ public class Multithreading<In,Out> {
 			Future<Out> transformerFuture = transformerPool.submit(transformer.transformer(item, id));
 			if (log.isDebugEnabled()) log.debug("Adding done "+(id));
 			if (maintainOrder) {
-				cleanupPool.submit(cleanup.cleanup(transformerFuture, id));
+				cleanupPool.submit(cleanup.cleanup(transformerFuture, null, id));
 			} else {
 				if (log.isDebugEnabled()) log.debug("Permitting rescheduling of #"+id);
 				cleanupPool.submit(cleanup.cleanup(transformerFuture, cleanupPool, id));

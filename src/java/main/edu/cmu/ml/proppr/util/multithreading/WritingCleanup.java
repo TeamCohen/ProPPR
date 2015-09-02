@@ -35,7 +35,6 @@ public class WritingCleanup extends Cleanup<String> {
 			try {
 				String s = this.input.get();
 				if (s != null) this.writer.write(s);
-				else log.warn("No output for #"+id);
 			} catch (IOException e) {
 				throw new IllegalStateException("IO trouble while writing: ",e);
 			} catch (InterruptedException e) {
