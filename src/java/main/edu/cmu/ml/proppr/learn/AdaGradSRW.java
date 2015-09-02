@@ -52,7 +52,7 @@ public class AdaGradSRW extends SRW {
 		log.info("Training on "+example);
 
 		initializeFeatures(params, example.getGraph());
-		prepareForExample(params, example.getGraph(), params);
+		regularizer.prepareForExample(params, example.getGraph(), params);
 		load(params, example);
 		inference(params, example);
 		agd(params, totSqGrad, example);

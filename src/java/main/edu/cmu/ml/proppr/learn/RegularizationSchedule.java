@@ -28,4 +28,8 @@ public class RegularizationSchedule {
 	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {}
 	public void prepareForSgd(ParamVector params, PosNegRWExample ex) {}
 	public void cleanupParams(ParamVector<String,?> params, ParamVector apply) {}
+
+	public RegularizationSchedule copy(SRW srw) {
+		return new RegularizationSchedule(srw,this.reg);
+	}
 }

@@ -101,8 +101,8 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 	
 	@Test
 	public void testL2PosNegLossSRW() {
-		SRW 
-		srw = new RegularizeL2();
+		SRW srw = new SRW();
+		srw.setRegularizer(new RegularizationSchedule(srw, new RegularizeL2()));
 		setupSrw(srw);
 		ParamVector p = defaultParams();
 		fillParams(srw,p);
@@ -110,7 +110,8 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 	}
 	@Test
 	public void testLocalL2PosNegLossSRW() {
-		SRW srw = new LocalL2SRW();
+		SRW srw = new SRW();
+		srw.setRegularizer(new LocalRegularizationSchedule(srw, new RegularizeL2()));
 		setupSrw(srw);
 		ParamVector p = new MuParamVector(new ConcurrentHashMap<String,Double>());
 		fillParams(srw,p);

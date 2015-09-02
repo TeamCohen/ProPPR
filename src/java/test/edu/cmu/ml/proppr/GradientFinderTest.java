@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr;
 import static org.junit.Assert.*;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
+import edu.cmu.ml.proppr.learn.RegularizationSchedule;
 import edu.cmu.ml.proppr.learn.RegularizeL2;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
@@ -36,7 +37,8 @@ public class GradientFinderTest extends RedBlueGraph {
 	@Before
 	public void setup() {
 		super.setup();
-		this.srw = new RegularizeL2();
+		this.srw = new SRW();
+		this.srw.setRegularizer(new RegularizationSchedule(this.srw, new RegularizeL2()));
 		this.srw.setSquashingFunction(new ReLU<String>());
 		this.initTrainer();
 		

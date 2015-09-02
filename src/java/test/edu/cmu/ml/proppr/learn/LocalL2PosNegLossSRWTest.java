@@ -1,20 +1,17 @@
 package edu.cmu.ml.proppr.learn;
 
-import static org.junit.Assert.*;
 
 import java.util.Map;
 
-import org.junit.Test;
 
-import edu.cmu.ml.proppr.learn.LocalL2SRW;
 import edu.cmu.ml.proppr.util.math.MuParamVector;
 import edu.cmu.ml.proppr.util.math.ParamVector;
-import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 
 public class LocalL2PosNegLossSRWTest extends SRWTest {
 	@Override
 	public void initSrw() {
-		srw = new LocalL2SRW();
+		srw = new SRW();
+		this.srw.setRegularizer(new LocalRegularizationSchedule(this.srw, new RegularizeL2()));
 	}
 	@Override
 	public ParamVector makeParams(Map<String,Double> foo) {

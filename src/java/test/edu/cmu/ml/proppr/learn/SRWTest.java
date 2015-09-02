@@ -64,6 +64,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	public void initSrw() { 
 		srw = new SRW();
+		this.srw.setRegularizer(new RegularizationSchedule(this.srw, new Regularize()));
 		srw.c.apr.maxDepth=10;
 	}
 	

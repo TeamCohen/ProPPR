@@ -12,7 +12,7 @@ import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.learn.AdaGradSRW;
 import edu.cmu.ml.proppr.learn.DprSRW;
-import edu.cmu.ml.proppr.learn.LocalRegularization;
+import edu.cmu.ml.proppr.learn.LocalRegularizationSchedule;
 import edu.cmu.ml.proppr.learn.RegularizationSchedule;
 import edu.cmu.ml.proppr.learn.Regularize;
 import edu.cmu.ml.proppr.learn.RegularizeL1;
@@ -376,7 +376,7 @@ public class ModuleConfiguration extends Configuration {
 				break;
 			case local:
 			case lazy: // fallthrough
-				regularizer = new LocalRegularization(this.srw, reg);
+				regularizer = new LocalRegularizationSchedule(this.srw, reg);
 				break;
 			}
 			this.srw.setRegularizer(regularizer);

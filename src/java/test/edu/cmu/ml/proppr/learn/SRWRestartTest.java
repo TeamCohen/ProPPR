@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 
 
+
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -29,7 +30,8 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
  */
 public class SRWRestartTest extends SRWTest {
 	public void initSrw() {
-		srw = new RegularizeL2();
+		srw = new SRW();
+		this.srw.setRegularizer(new RegularizationSchedule(this.srw, new RegularizeL2()));
 		srw.setAlpha(0.01);
 	}
 	

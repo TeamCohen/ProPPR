@@ -176,7 +176,7 @@ public class DprSRW extends SRW {
 	@Override	
 	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {
 		
-		for (String f : localFeatures(params, ex.getGraph())) {
+		for (String f : regularizer.localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
 			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
 			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));

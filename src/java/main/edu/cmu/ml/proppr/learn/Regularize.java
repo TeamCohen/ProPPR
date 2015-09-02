@@ -13,7 +13,9 @@ import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
 
-public abstract class Regularize {
-	protected abstract void synchronousUpdate(SRWOptions c, ParamVector params, String f, TIntDoubleMap gradient, LossData loss, SymbolTable<String> featureLibrary);
-	protected abstract void lazyUpdate(SRWOptions c, ParamVector params, ParamVector apply, String f, LossData loss, double learningRate);
+public class Regularize {
+	protected void synchronousUpdate(SRWOptions c, ParamVector params, String f, 
+			TIntDoubleMap gradient, LossData loss, SymbolTable<String> featureLibrary) {}
+	protected void lazyUpdate(SRWOptions c, ParamVector params, 
+			ParamVector apply, String f, LossData loss, double learningRate) {}
 }

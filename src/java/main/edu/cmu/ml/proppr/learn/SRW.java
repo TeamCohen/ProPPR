@@ -70,7 +70,7 @@ public class SRW {
 	protected LossData cumloss;
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
-	private RegularizationSchedule regularizer;
+	protected RegularizationSchedule regularizer;
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
@@ -334,17 +334,11 @@ public class SRW {
 			this.cumloss.add(LOSS.LOG, -Math.log(1.0-pb));
 		}
 
-//		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
 		if (nonzero==0) {
 			this.zeroGradientData.numZero++;
 			if (this.zeroGradientData.numZero < MAX_ZERO_LOGS) {
 				this.zeroGradientData.examples.append("\n").append(ex);
 			}
-//				log.warn("0 gradient. Try a different squashing function? "+ex.toString());
-//				zeroLogsThisEpoch++;
-//				if (zeroLogsThisEpoch >= MAX_ZERO_LOGS) {
-//					log.warn("(that's your last 0 gradient warning this epoch)");
-//				}
 		}
 		return gradient;
 	}
@@ -469,11 +463,18 @@ public class SRW {
 			TIntDoubleMap queryVec, int[] posList, int[] negList) {
 		return new PprExample(string, g, queryVec, posList, negList);
 	}
+	public ParamVector setupParams(ParamVector params) {
+		return regularizer.setupParams(params);
+	}
+	public void cleanupParams(ParamVector params, ParamVector apply) {
+		regularizer.cleanupParams(params, apply);
+	}
 	public SRW copy() {
 		Class<? extends SRW> clazz = this.getClass();
 		try {
 			SRW copy = clazz.getConstructor(SRWOptions.class).newInstance(this.c);
 			copy.untrainedFeatures = this.untrainedFeatures;
+			copy.setRegularizer(this.regularizer.copy(copy));
 			return copy;
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block
