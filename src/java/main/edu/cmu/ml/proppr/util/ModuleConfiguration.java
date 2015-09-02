@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.learn.AdaGradSRW;
 import edu.cmu.ml.proppr.learn.DprSRW;
 import edu.cmu.ml.proppr.learn.LocalRegularizationSchedule;
+import edu.cmu.ml.proppr.learn.PosNegLoss;
 import edu.cmu.ml.proppr.learn.RegularizationSchedule;
 import edu.cmu.ml.proppr.learn.Regularize;
 import edu.cmu.ml.proppr.learn.RegularizeL1;
@@ -51,8 +52,10 @@ public class ModuleConfiguration extends Configuration {
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { ppr, dpr, adagrad }
-	private enum Regularizers { l1, l1laplacian, l1grouplasso, l2 };
-	private enum RegularizerSchedules { synch, global, lazy, local };//l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
+	private enum REGULARIZERS { l1, l1laplacian, l1grouplasso, l2 };
+	private enum REGULARIZERSCHEDULES { synch, global, lazy, local };
+	private enum LOSSFUNCTIONS { posneg };
+	
 	public Grounder grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -135,14 +138,13 @@ public class ModuleConfiguration extends Configuration {
 					.withArgName("class")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
+					.withDescription("Default: ppr:reg=l2:sched=global:loss=posneg\n"
 							 + "Syntax: srw:param=value:param=value...\n"
-							 + "Available srws:\n"
-							 + "l1p, l1plocal, l1laplacianplocal, l1pgrouplassoplocal\n"
-							 + "l2p, l2plocal\n"
-							 + "dpr\n"
-							 + "adagrad\n"
-							 + "Available parameters:\n"
+							 + "Available srws: ppr,dpr,adagrad\n"
+							 + "Available [reg]ularizers: l1,l1laplacian,l1grouplasso,l2\n"
+							 + "Available [sched]ules: global,local\n"
+							 + "Available [loss] functions: posneg\n"
+							 + "Other parameters:\n"
 							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
 							+ "Default eta=1.0")
@@ -303,8 +305,9 @@ public class ModuleConfiguration extends Configuration {
 
 		if (line.hasOption(SRW_MODULE_OPTION)) {
 			String[] values = line.getOptionValues(SRW_MODULE_OPTION);
-			Regularizers regularizerType = Regularizers.l2;
-			RegularizerSchedules scheduleType = RegularizerSchedules.synch;
+			REGULARIZERS regularizerType = REGULARIZERS.l2;
+			REGULARIZERSCHEDULES scheduleType = REGULARIZERSCHEDULES.synch;
+			LOSSFUNCTIONS lossType = LOSSFUNCTIONS.posneg;
 			boolean namedParameters = false;
 			if (values.length > 1 && values[1].contains("=")) namedParameters = true;
 
@@ -313,10 +316,13 @@ public class ModuleConfiguration extends Configuration {
 					String[] parts = values[i].split("=");
 					switch(parts[0]) {
 					case "reg":
-						regularizerType = Regularizers.valueOf(parts[1]);
+						regularizerType = REGULARIZERS.valueOf(parts[1]);
 						break;
 					case "sched":
-						scheduleType = RegularizerSchedules.valueOf(parts[1]);
+						scheduleType = REGULARIZERSCHEDULES.valueOf(parts[1]);
+						break;
+					case "loss":
+						lossType = LOSSFUNCTIONS.valueOf(parts[1]);
 						break;
 					default:
 						sp.set(parts);
@@ -368,18 +374,21 @@ public class ModuleConfiguration extends Configuration {
 				reg = new RegularizeL2();
 				break;
 			}
-			RegularizationSchedule regularizer = null;
 			switch(scheduleType) {
 			case global:
 			case synch: // fallthrough
-				regularizer = new RegularizationSchedule(this.srw, reg);
+				this.srw.setRegularizer(new RegularizationSchedule(this.srw, reg));
 				break;
 			case local:
 			case lazy: // fallthrough
-				regularizer = new LocalRegularizationSchedule(this.srw, reg);
+				this.srw.setRegularizer(new LocalRegularizationSchedule(this.srw, reg));
 				break;
 			}
-			this.srw.setRegularizer(regularizer);
+			switch(lossType) {
+			case posneg:
+				this.srw.setLossFunction(new PosNegLoss());
+				break;
+			}
 		} else {
 			this.srw = new SRW(sp);
 			this.srw.setRegularizer(new RegularizationSchedule(this.srw, new RegularizeL2()));

@@ -58,7 +58,6 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
  */
 public class SRW {	
 	private static final Logger log = Logger.getLogger(SRW.class);
-	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
 	private static final int MAX_ZERO_LOGS = 10;
 	private static Random random = new Random();
 	public static final String FIXED_WEIGHT_FUNCTOR="fixedWeight";
@@ -71,6 +70,7 @@ public class SRW {
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
 	protected RegularizationSchedule regularizer;
+	protected LossFunction lossf=new PosNegLoss();
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
@@ -78,6 +78,10 @@ public class SRW {
 		this.untrainedFeatures = new TreeSet<String>();
 		this.cumloss = new LossData();
 		this.zeroGradientData = new ZeroGradientData();
+	}
+	
+	public void setLossFunction(LossFunction f) {
+		this.lossf = f;
 	}
 	
 	public void setRegularizer(RegularizationSchedule r) {
@@ -293,46 +297,7 @@ public class SRW {
 		// add regularization term
 		regularization(params, ex, gradient);
 		
-		int nonzero=0;
-		double mag = 0;
-		
-		// add empirical loss gradient term
-		// positive examples
-		double pmax = 0;
-		for (int a : ex.getPosList()) {
-			double pa = clip(ex.p[a]);
-			if(pa > pmax) pmax = pa;
-			for (TIntDoubleIterator da = ex.dp[a].iterator(); da.hasNext(); ) {
-				da.advance();
-				if (da.value()==0) continue;
-				nonzero++;
-				double aterm = -da.value() / pa;
-				mag += aterm*aterm;
-				gradient.adjustOrPutValue(da.key(), aterm, aterm);
-			}
-			if (log.isDebugEnabled()) log.debug("+p="+pa);
-			this.cumloss.add(LOSS.LOG, -Math.log(pa));
-		}
-
-		//negative instance booster
-		double h = pmax + c.delta;
-		double beta = 1;
-		if(c.delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
-
-		// negative examples
-		for (int b : ex.getNegList()) {
-			double pb = clip(ex.p[b]);
-			for (TIntDoubleIterator db = ex.dp[b].iterator(); db.hasNext(); ) {
-				db.advance();
-				if (db.value()==0) continue;
-				nonzero++;
-				double bterm = beta * db.value() / (1 - pb);
-				mag += bterm*bterm;
-				gradient.adjustOrPutValue(db.key(), bterm, bterm);
-			}
-			if (log.isDebugEnabled()) log.debug("-p="+pb);
-			this.cumloss.add(LOSS.LOG, -Math.log(1.0-pb));
-		}
+		int nonzero=lossf.computeLossGradient(params, example, gradient, this.cumloss, c);
 
 		if (nonzero==0) {
 			this.zeroGradientData.numZero++;
@@ -406,11 +371,6 @@ public class SRW {
 		return Math.pow(this.epoch,-2) * c.eta;
 	}
 
-	public double clip(double prob)
-	{
-		if(prob <= 0) return BOUND;
-		return prob;
-	}
 
 	public boolean trainable(String feature) {
 		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));

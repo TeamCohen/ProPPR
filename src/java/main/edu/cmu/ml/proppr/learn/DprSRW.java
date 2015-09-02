@@ -30,9 +30,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 public class DprSRW extends SRW {
 	private static final Logger log = Logger.getLogger(DprSRW.class);
 	public static final double DEFAULT_STAYPROB=DprProver.STAYPROB_DEFAULT;
-	
 	private double stayProb;
-	protected LossData cumloss;
 
 	public DprSRW() {
 		super();
