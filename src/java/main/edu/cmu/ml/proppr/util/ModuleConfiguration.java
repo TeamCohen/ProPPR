@@ -43,11 +43,11 @@ public class ModuleConfiguration extends Configuration {
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
-	public Grounder grounder;
+	public Grounder<?> grounder;
 	public SRW srw;
 	public Trainer trainer;
 	public SquashingFunction squashingFunction;
-	public Prover prover;
+	public Prover<?> prover;
 	public ModuleConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		super(args,  inputFiles,  outputFiles,  constants,  modules);
 	}

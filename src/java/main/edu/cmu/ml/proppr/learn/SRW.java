@@ -84,7 +84,7 @@ public class SRW {
 	 * @param params
 	 * @param example
 	 */
-	public void trainOnExample(ParamVector params, PosNegRWExample example) {
+	public void trainOnExample(ParamVector<String,?> params, PosNegRWExample example) {
 		log.info("Training on "+example);
 
 		initializeFeatures(params, example.getGraph());
@@ -94,7 +94,7 @@ public class SRW {
 		sgd(params, example);
 	}
 
-	public void accumulateGradient(ParamVector params, PosNegRWExample example, ParamVector accumulator) {
+	public void accumulateGradient(ParamVector<String,?> params, PosNegRWExample example, ParamVector<String,?> accumulator) {
 		log.info("Gradient calculating on "+example);
 
 		initializeFeatures(params, example.getGraph());
@@ -117,7 +117,7 @@ public class SRW {
 
 
 	/** fills M, dM in ex **/
-	protected void load(ParamVector params, PosNegRWExample example) {
+	protected void load(ParamVector<String,?> params, PosNegRWExample example) {
 		PprExample ex = (PprExample) example;
 		int dM_cursor=0;
 		for (int uid = 0; uid < ex.getGraph().node_hi; uid++) {
@@ -199,7 +199,7 @@ public class SRW {
 	}
 
 	/** adds new features to params vector @ 1% random perturbation */
-	public void initializeFeatures(ParamVector params, LearningGraph graph) {
+	public void initializeFeatures(ParamVector<String,?> params, LearningGraph graph) {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
 				params.put(f,c.squashingFunction.defaultValue()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
@@ -209,7 +209,7 @@ public class SRW {
 
 	/** fills p, dp 
 	 * @param params */
-	protected void inference(ParamVector params, PosNegRWExample example) {
+	protected void inference(ParamVector<String,?> params, PosNegRWExample example) {
 		PosNegRWExample ex = (PosNegRWExample) example;
 		ex.p = new double[ex.getGraph().node_hi];
 		ex.dp = new TIntDoubleMap[ex.getGraph().node_hi];
@@ -270,7 +270,7 @@ public class SRW {
 	}
 
 	/** edits params */
-	protected void sgd(ParamVector params, PosNegRWExample ex) {
+	protected void sgd(ParamVector<String,?> params, PosNegRWExample ex) {
 		TIntDoubleMap gradient = gradient(params,ex);
 		// apply gradient to param vector
 		for (TIntDoubleIterator grad = gradient.iterator(); grad.hasNext(); ) {
@@ -281,7 +281,7 @@ public class SRW {
 		}
 	}
 
-	protected TIntDoubleMap gradient(ParamVector params, PosNegRWExample example) {
+	protected TIntDoubleMap gradient(ParamVector<String,?> params, PosNegRWExample example) {
 		PosNegRWExample ex = (PosNegRWExample) example;
 		Set<String> features = this.localFeatures(params, ex.getGraph());
 		TIntDoubleMap gradient = new TIntDoubleHashMap(features.size());
@@ -360,7 +360,7 @@ public class SRW {
 	}
 	
 	/** template: update gradient with regularization term */
-	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {}
+	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {}
 
 	//////////////////////////// copypasta from SRW.java:
 
@@ -426,10 +426,10 @@ public class SRW {
 
 
 	/** Allow subclasses to do pre-example calculations (e.g. lazy regularization) **/
-	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {}
+	public void prepareForExample(ParamVector<String,?> params, LearningGraph graph, ParamVector<String,?> apply) {}
 	
 	/** Allow subclasses to do additional parameter processing at the end of an epoch **/
-	public void cleanupParams(ParamVector<String,?> params, ParamVector apply) {}
+	public void cleanupParams(ParamVector<String,?> params, ParamVector<String,?> apply) {}
 
 
 	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }

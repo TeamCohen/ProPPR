@@ -52,14 +52,14 @@ public class TrainerTest extends RedBlueGraph {
 		}
 	}
 	
-	public ParamVector train() {
+	public ParamVector<String,?> train() {
 		File nullFile = null;
 		return this.trainer.train(new SimpleSymbolTable<String>(), examples, new ArrayLearningGraphBuilder(), nullFile, 5, true);
 	}
 
 	@Test
 	public void test() {
-		ParamVector params = train();
+		ParamVector<String,?> params = train();
 		System.err.println(Dictionary.buildString(params,new StringBuilder(),"\n"));
 		for (Object o : params.keySet()) {
 			String f = (String) o;

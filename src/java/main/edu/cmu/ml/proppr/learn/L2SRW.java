@@ -29,7 +29,7 @@ public class L2SRW extends SRW {
 	 * @return
 	 */
 	@Override	
-	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {
+	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {
 		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
 			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;

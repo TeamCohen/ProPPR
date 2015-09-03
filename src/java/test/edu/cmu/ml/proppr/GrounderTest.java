@@ -107,7 +107,7 @@ public class GrounderTest {
 		ix = new InferenceExample(Query.parse("predict(howard,Y)"), 
 				new Query[] {Query.parse("predict(howard,bird)")}, 
 				new Query[] {});
-		ProofGraph pg = ProofGraph.makeProofGraph(p.getProofGraphClass(),ix,apr,program,plugins);
+		ProofGraph pg = p.makeProofGraph(ix,apr,program,plugins);
 		State pos=null;
 		Map<State,Double> sols = p.prove(pg);
 		System.out.println(pg.serialize(ex));

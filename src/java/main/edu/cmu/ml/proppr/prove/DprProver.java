@@ -58,7 +58,7 @@ public class DprProver extends Prover<StateProofGraph> {
 		this.moveProbability = 1.0-stayProbability;
 	}
 
-	public Prover copy() {
+	public Prover<StateProofGraph> copy() {
 		DprProver copy = new DprProver(this.stayProbability, apr);
 		copy.setWeighter(weighter);
 		return copy;
