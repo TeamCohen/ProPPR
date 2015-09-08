@@ -20,6 +20,7 @@ import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.Sigmoid;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.learn.tools.Tanh;
+import edu.cmu.ml.proppr.learn.tools.Tanh1;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
@@ -43,7 +44,7 @@ public class ModuleConfiguration extends Configuration {
 	private static final String PROVER_MODULE_OPTION = "prover";
 
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
-	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, LReLU, exp, clipExp };
+	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, tanh1, ReLU, LReLU, exp, clipExp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
 	public Grounder grounder;
@@ -212,6 +213,7 @@ public class ModuleConfiguration extends Configuration {
 				case linear: squashingFunction = new Linear(); break;
 				case sigmoid: squashingFunction = new Sigmoid(); break;
 				case tanh: squashingFunction = new Tanh(); break;
+				case tanh1: squashingFunction = new Tanh1(); break;
 				case ReLU: squashingFunction = new ReLU(); break;
 				case LReLU: squashingFunction = new LReLU(); break;
 				case exp: squashingFunction = new Exp(); break;
