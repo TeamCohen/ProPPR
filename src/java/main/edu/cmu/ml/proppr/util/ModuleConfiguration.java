@@ -12,7 +12,9 @@ import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.learn.DprSRW;
 import edu.cmu.ml.proppr.learn.SRW;
+import edu.cmu.ml.proppr.learn.tools.ClippedExp;
 import edu.cmu.ml.proppr.learn.tools.Exp;
+import edu.cmu.ml.proppr.learn.tools.LReLU;
 import edu.cmu.ml.proppr.learn.tools.Linear;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.Sigmoid;
@@ -40,7 +42,7 @@ public class ModuleConfiguration extends Configuration {
 	private static final String PROVER_MODULE_OPTION = "prover";
 
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
-	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
+	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, LReLU, exp, clipExp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
 	public Grounder grounder;
@@ -71,7 +73,9 @@ public class ModuleConfiguration extends Configuration {
 							+ "sigmoid\n"
 							+ "tanh\n"
 							+ "ReLU\n"
-							+ "exp")
+							+ "LReLU (leaky ReLU)\n"
+							+ "exp\n"
+							+ "clipExp (clipped @x=1)")
 							.create());
 		}
 		if(isOn(flags, USE_PROVER))
@@ -208,7 +212,9 @@ public class ModuleConfiguration extends Configuration {
 				case sigmoid: squashingFunction = new Sigmoid(); break;
 				case tanh: squashingFunction = new Tanh(); break;
 				case ReLU: squashingFunction = new ReLU(); break;
+				case LReLU: squashingFunction = new LReLU(); break;
 				case exp: squashingFunction = new Exp(); break;
+				case clipExp: squashingFunction = new ClippedExp(); break;
 				default: this.usageOptions(options, allFlags, "Unrecognized squashing function " + line.getOptionValue(SQUASHFUNCTION_MODULE_OPTION));
 				}
 			}
