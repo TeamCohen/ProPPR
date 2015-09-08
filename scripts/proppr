@@ -43,6 +43,8 @@ def doMain():
       doEval(opts)
    elif com == "train":
       doTrain(opts)
+   elif com == "gradient":
+      doGradient(opts)
    else:
       doHelp(opts)
       
@@ -177,6 +179,13 @@ def doTrain(o):
    dst = makeOutput(getArg(2,stem+'.params'),o)
    invokeMain(o,'Trainer','--train',src,'--params',dst)
 shortHelpMsg['train'] = ' INPUT.examples.grounded [OUTPUT.params]: learn parameters for the prover'
+
+def doGradient(o):
+   stem,src = stemExt(getArg(1),'.grounded')
+   src = getFile(src,o)
+   dst = makeOutput(getArg(2,stem+'.gradient'),o)
+   invokeMain(o,'GradientFinder','--grounded',src,'--gradient',dst)
+shortHelpMsg['gradient'] = ' INPUT.examples.grounded [OUTPUT.gradient]: measure gradient with respect to parameters'
 
 def doHelp(o):
    print 'ProPPR v2: commands are:'
