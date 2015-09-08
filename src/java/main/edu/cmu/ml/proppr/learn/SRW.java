@@ -22,6 +22,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.SRW.ZeroGradientData;
+import edu.cmu.ml.proppr.learn.tools.ClippedExp;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
@@ -63,7 +64,7 @@ public class SRW {
 	private static Random random = new Random();
 	public static final String FIXED_WEIGHT_FUNCTOR="fixedWeight";
 	public static void seed(long seed) { random.setSeed(seed); }
-	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ReLU(); }
+	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ClippedExp(); }
 	protected Set<String> untrainedFeatures;
 	protected int epoch;
 	protected SRWOptions c;

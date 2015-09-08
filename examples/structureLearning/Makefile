@@ -49,7 +49,7 @@ TSRW=l2p:mu=$(MU):eta=1.0
 EPOCHS=100
 PROVER=dpr
 APR=eps=$(EPSILON):alph=$(ALPHA)
-WEIGHTINGSCHEME=--weightingScheme tanh
+WEIGHTINGSCHEME=--squashingFunction tanh
 UNNORMALIZED=--unnormalized $(WEIGHTINGSCHEME)
 
 ifeq ($(strip $(ITERS)),)
