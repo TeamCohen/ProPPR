@@ -17,11 +17,11 @@ public class LocalL2PosNegLossSRWTest extends SRWTest {
 		srw = new LocalL2SRW();
 	}
 	@Override
-	public ParamVector makeParams(Map<String,Double> foo) {
+	public ParamVector<String,?> makeParams(Map<String,Double> foo) {
 		return new MuParamVector(foo);
 	}
 	@Override
-	public ParamVector makeParams() {
+	public ParamVector<String,?> makeParams() {
 		return new MuParamVector();
 	}
 }

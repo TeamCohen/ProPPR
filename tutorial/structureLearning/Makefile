@@ -32,10 +32,15 @@ TEST=${NAME}-test
 
 ### Settings ##
 
+ifeq ($(strip $(MU)),)
 MU=0.0001
+endif
+ifeq ($(strip $(EPSILON)),)
 EPSILON=.0001
+endif
+ifeq ($(strip $(ALPHA)),)
 ALPHA=.001
-THREADS=3
+endif
 
 # for measuring gradient
 GSRW=l2p:mu=$(MU):eta=5.0

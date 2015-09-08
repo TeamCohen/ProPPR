@@ -55,18 +55,18 @@ import edu.cmu.ml.proppr.util.multithreading.Transformer;
  * RANK <TAB> SCORE <TAB> VARIABLE-BINDINGS
  */
 
-public class QueryAnswerer {
+public class QueryAnswerer<P extends ProofGraph> {
 	private static final Logger log = Logger.getLogger(QueryAnswerer.class);
 	private static final double MIN_FEATURE_TRANSFER = .1;
 	protected WamProgram program;
 	protected WamPlugin[] plugins;
-	protected Prover prover;
+	protected Prover<P> prover;
 	protected APROptions apr;
 	protected boolean normalize;
 	protected int nthreads;
 	protected int numSolutions;
 	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>();
-public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover prover, boolean normalize, int threads, int topk) {
+public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover<P> prover, boolean normalize, int threads, int topk) {
 		this.apr = apr;
 		this.program = program;
 		this.plugins = plugins;
@@ -114,18 +114,17 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 		}
 	}
 
-	public Map<State,Double> getSolutions(Prover prover, ProofGraph pg) throws LogicProgramException {
+	public Map<State,Double> getSolutions(Prover<P> prover, P pg) throws LogicProgramException {
 		return prover.prove(pg);
 	}
-	public void addParams(Prover prover, ParamVector<String,?> params, SquashingFunction<Goal> f) {
+	public void addParams(Prover<P> prover, ParamVector<String,?> params, SquashingFunction<Goal> f) {
 		InnerProductWeighter w = InnerProductWeighter.fromParamVec(params, f); 
 		prover.setWeighter(w);
 		for (Feature g : w.getWeights().keySet()) this.featureTable.insert(g);
 	}
 
-	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover prover, Query query, boolean normalize, int id) throws LogicProgramException {
-		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(), 
-				new InferenceExample(query,null,null), apr, featureTable, program, plugins);
+	public String findSolutions(WamProgram program, WamPlugin[] plugins, Prover<P> prover, Query query, boolean normalize, int id) throws LogicProgramException {
+		P pg = prover.makeProofGraph(new InferenceExample(query,null,null), apr, featureTable, program, plugins);
 		if(log.isDebugEnabled()) log.debug("Querying: "+query);
 		long start = System.currentTimeMillis();
 		Map<State,Double> dist = getSolutions(prover,pg);

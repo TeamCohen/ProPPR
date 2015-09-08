@@ -53,7 +53,7 @@ public class Diagnostic {
 			
 			final ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
 			final SRW srw = c.srw;
-			final ParamVector params = srw.setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(16,(float) 0.75,24)));
+			final ParamVector<String,?> params = srw.setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(16,(float) 0.75,24)));
 			for (String f : srw.untrainedFeatures()) params.put(f,srw.getSquashingFunction().defaultValue());
 			srw.setEpoch(1);
 			srw.clearLoss();
@@ -277,7 +277,7 @@ public class Diagnostic {
 
 	private static class PosNegRWExampleStreamer implements Iterable<PosNegRWExample>,Iterator<PosNegRWExample> {
 		Iterator<String> examples;
-		ParamVector paramVec;
+		ParamVector<String,?> paramVec;
 		LearningGraphBuilder builder;
 		SRW srw;
 		int id=0;

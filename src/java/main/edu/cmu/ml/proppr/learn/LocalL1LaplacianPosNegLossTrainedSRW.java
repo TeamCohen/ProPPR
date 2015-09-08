@@ -4,12 +4,10 @@ import java.util.Set;
 import java.util.List;
 
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SRWOptions;
 import edu.cmu.ml.proppr.util.math.MuParamVector;
 import edu.cmu.ml.proppr.util.math.ParamVector;
-import gnu.trove.map.TObjectDoubleMap;
 
 public class LocalL1LaplacianPosNegLossTrainedSRW extends LocalL1SRW {
 	public LocalL1LaplacianPosNegLossTrainedSRW(SRWOptions params) {
@@ -17,7 +15,7 @@ public class LocalL1LaplacianPosNegLossTrainedSRW extends LocalL1SRW {
 	}
 	public LocalL1LaplacianPosNegLossTrainedSRW() { super(); }
 
-	private void prepareFeature(ParamVector paramVec, String f) {
+	private void prepareFeature(ParamVector<String,?> paramVec, String f) {
 		if (!trainable(f)) return;
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;

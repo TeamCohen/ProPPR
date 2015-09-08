@@ -32,9 +32,10 @@ import java.io.*;
  *
  */
 public class Configuration {
-	private static final Logger log = Logger.getLogger(Configuration.class);
+	protected static final Logger log = Logger.getLogger(Configuration.class);
 	public static final int FORMAT_WIDTH=18;
 	public static final String FORMAT_STRING="%"+FORMAT_WIDTH+"s";
+	public static final String EXAMPLES_FORMAT = "f(A1,A2)\\t{+|-}f(a1,a2)\\t...";
 	/* set files */
 	/** file. */
 	public static final int USE_QUERIES = 0x1;
@@ -53,7 +54,6 @@ public class Configuration {
 	public static final String PARAMS_FILE_OPTION = "params";
 	public static final String INIT_PARAMS_FILE_OPTION = "initParams";
 	public static final String GRADIENT_FILE_OPTION = "gradient";
-	public static final String EXAMPLES_FORMAT = "f(A1,A2)\\t{+|-}f(a1,a2)\\t...";
 
 	/* set constants */
 	/** constant. programFiles, ternaryIndex */
@@ -78,7 +78,7 @@ public class Configuration {
 	private static final String THROTTLE_CONST_OPTION = "throttle";
 	
 
-	/* set class for module */
+	/* set class for module. Options for this section are handled in ModuleConfiguration.java. */
 	/** module. */
 	public static final int USE_SQUASHFUNCTION = 0x1;
 	public static final int USE_GROUNDER = 0x2;
@@ -86,6 +86,7 @@ public class Configuration {
 	public static final int USE_TRAINER = 0x8;
 	public static final int USE_PROVER = 0x10;
 
+	/** */
 	public static final String PROPFILE = "config.properties";
 	private static final boolean DEFAULT_COMBINE = true;
 	

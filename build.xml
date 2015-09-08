@@ -2,8 +2,8 @@
 <project basedir="." default="build" name="ProPPR">
     <property environment="env"/>
     <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.7"/>
-    <property name="source" value="1.7"/>
+    <property name="target" value="1.8"/>
+    <property name="source" value="1.8"/>
     <property name="build" value="bin"/>
     <property name="junit.results" value="test-results"/>
     <property name="ant.junit.failureCollector" value="${junit.results}/FailedTests"/>

@@ -132,7 +132,7 @@ public class SRWRestartTest extends SRWTest {
 //		SRW<PairwiseRWExample> mysrw = new SRW<PairwiseRWExample>(maxT);
 //		mysrw.setAlpha(0.01);
 		TIntDoubleMap baseLineRwr = myRWR(startVec, brGraph, maxT, new SimpleParamVector<String>(), srw.getSquashingFunction());
-		ParamVector biasedParams = makeBiasedVec();
+		ParamVector<String,?> biasedParams = makeBiasedVec();
 		
 		TIntDoubleMap newRwr = myRWR(startVec, brGraph, maxT, biasedParams, srw.getSquashingFunction());
 		
