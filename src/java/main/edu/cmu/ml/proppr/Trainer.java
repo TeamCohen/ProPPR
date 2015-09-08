@@ -278,6 +278,7 @@ public class Trainer {
 	 */
 	protected void cleanEpoch(ExecutorService workingPool, ExecutorService cleanPool,
 			ParamVector paramVec, boolean traceLosses, StoppingCriterion stopper, int n, TrainingStatistics stats) {
+		n = n-1;
 		workingPool.shutdown();
 		try {
 			workingPool.awaitTermination(7, TimeUnit.DAYS);
