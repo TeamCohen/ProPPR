@@ -68,10 +68,10 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 */
 	public void insert(T symbol) {
 		Object h = hashingStrategy.computeKey(symbol);
-		if (symbol2Id.containsKey(h)) {
+		/* if (symbol2Id.containsKey(h)) {
 			//check collision
 			if (id2symbol.get(symbol2Id.get(h)).equals(symbol)) return;
-		}
+			} */
 		synchronized(this) {
 			if (!symbol2Id.containsKey(h)) {
 				int newId = ++nextId;
