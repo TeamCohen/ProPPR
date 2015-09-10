@@ -41,6 +41,7 @@ endif
 ifeq ($(strip $(ALPHA)),)
 ALPHA=.001
 endif
+THREADS=3
 
 # for measuring gradient
 GSRW=l2p:mu=$(MU):eta=5.0
@@ -231,7 +232,9 @@ isg:
 # from e.g. uml_1-train.SL_01.examples.grounded
 # first training for e.g.   01 epochs
 ${NAME}_%.gradient: ${NAME}-train.SL_%.examples.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $< --threads ${THREADS} --apr ${APR} --epochs $* --srw ${GSRW} --gradient $@ --trainer streaming
+	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.GradientFinder --grounded $< \
+	--threads ${THREADS} --apr ${APR} --epochs $* --srw ${GSRW} --gradient $@ \
+	--trainer streaming --squashingFunction ReLU
 
 %.wam: %.ppr
 	proppr compile $<
