@@ -49,7 +49,7 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 		this.moveProbability = 1.0-stayProbability;
 	}
 
-	public Prover copy() {
+	public Prover<CachingIdProofGraph> copy() {
 		PriorityQueueProver copy = new PriorityQueueProver(this.stayProbability, apr);
 		copy.setWeighter(weighter);
 		return copy;

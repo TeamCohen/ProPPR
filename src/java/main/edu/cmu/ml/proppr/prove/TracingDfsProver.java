@@ -3,6 +3,7 @@ package edu.cmu.ml.proppr.prove;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
+import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 
@@ -32,7 +33,7 @@ public class TracingDfsProver extends DfsProver {
 		System.out.println(sb.toString());
 	}
 	@Override
-	public Prover copy() {
+	public Prover<StateProofGraph> copy() {
 		return new TracingDfsProver(this.weighter, this.apr, this.trueLoop);
 	}
 }

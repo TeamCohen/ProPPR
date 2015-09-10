@@ -81,13 +81,13 @@ public class GradientFinderTest extends RedBlueGraph {
 		}
 	}
 	
-	public ParamVector train() {
+	public ParamVector<String,?> train() {
 		return this.trainer.findGradient(null, examples, new ArrayLearningGraphBuilder(), new SimpleParamVector<String>());
 	}
 
 	@Test
 	public void test() {
-		ParamVector params = train();
+		ParamVector<String,?> params = train();
 		System.err.println(Dictionary.buildString(params,new StringBuilder(),"\n"));
 		for (Object o : params.keySet()) {
 			String f = (String) o;

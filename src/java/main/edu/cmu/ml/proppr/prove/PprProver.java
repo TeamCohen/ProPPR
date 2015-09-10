@@ -47,8 +47,8 @@ public class PprProver extends Prover<StateProofGraph> {
 	@Override
 	public String toString() { return "ppr:"+this.apr.maxDepth; }
 	
-	public Prover copy() {
-		Prover copy = new PprProver(weighter, this.apr, this.trace);
+	public Prover<StateProofGraph> copy() {
+		Prover<StateProofGraph> copy = new PprProver(weighter, this.apr, this.trace);
 		return copy;
 	}
 	

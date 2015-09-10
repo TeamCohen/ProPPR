@@ -30,7 +30,7 @@ public class LocalL2SRW extends L2SRW {
 	}
 	
 	@Override
-	protected TIntDoubleMap gradient(ParamVector params, PosNegRWExample ex) {
+	protected TIntDoubleMap gradient(ParamVector<String,?> params, PosNegRWExample ex) {
 		TIntDoubleMap ret = super.gradient(params, ex);
 		((MuParamVector)params).count();
 		((MuParamVector)params).setLast(localFeatures(params,ex.getGraph()));
@@ -41,7 +41,7 @@ public class LocalL2SRW extends L2SRW {
 	public ParamVector<String,?> setupParams(ParamVector<String,?> paramVec) { return new MuParamVector<String>(paramVec); }
 	
 	@Override
-	public void cleanupParams(ParamVector<String,?> paramVec, ParamVector apply) { 
+	public void cleanupParams(ParamVector<String,?> paramVec, ParamVector<String,?> apply) { 
 		for(String f : (Set<String>) paramVec.keySet()) {
 			// finish catching up the regularization:
 			// Bj = Bj - lambda * (Rj)
@@ -51,12 +51,12 @@ public class LocalL2SRW extends L2SRW {
 	}
 	
 	@Override
-	public void initializeFeatures(ParamVector params, LearningGraph graph) {
+	public void initializeFeatures(ParamVector<String,?> params, LearningGraph graph) {
 		super.initializeFeatures(params, graph);
 	}
 	
 	@Override
-	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {
+	public void prepareForExample(ParamVector<String,?> params, LearningGraph graph, ParamVector<String,?> apply) {
 		for (String f : localFeatures(params,graph)) {
 			prepareFeature(params,f,apply);
 		}
@@ -84,7 +84,7 @@ public class LocalL2SRW extends L2SRW {
 	 * @param f
 	 * @param apply
 	 */
-	private void prepareFeature(ParamVector<String,?> paramVec, String f, ParamVector apply) {
+	private void prepareFeature(ParamVector<String,?> paramVec, String f, ParamVector<String,?> apply) {
 		if (!trainable(f)) return;
 		int gap = ((MuParamVector)paramVec).getLast(f);
 		if (gap==0) return;
