@@ -46,8 +46,8 @@ public class AdaGradTrainer extends Trainer {
 	}
 
 	@Override
-	public ParamVector train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector initialParamVec, int numEpochs, boolean traceLosses) {
-		ParamVector paramVec = this.masterLearner.setupParams(initialParamVec);
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
+		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0){
 			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0);//this.masterLearner.getSquashingFunction().defaultValue());
 		}
@@ -132,10 +132,9 @@ public class AdaGradTrainer extends Trainer {
 		return paramVec;
 	}
 
-	@Override
-	public ParamVector findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec) {
+	public ParamVector<String,?> findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec, SimpleParamVector<String> totSqGrad) {
 		log.info("Computing gradient on cooked examples...");
-		ParamVector sumGradient = new SimpleParamVector<String>();
+		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
 			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f,  this.masterLearner.getSquashingFunction().defaultValue());
@@ -162,7 +161,7 @@ public class AdaGradTrainer extends Trainer {
 
 		//@rck AG
 		//create a concurrent hash map to store the running total of the squares of the gradient
-		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
+//		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
 
 		
 		// run examples
@@ -232,11 +231,11 @@ public class AdaGradTrainer extends Trainer {
 	 */
 	protected class AdaGradTrain implements Callable<ExampleStats> {
 		Future<PosNegRWExample> in;
-		ParamVector paramVec;
+		ParamVector<String,?> paramVec;
 		SimpleParamVector<String> totSqGrad;
 		int id;
 		AdaGradTrainer notify;
-		public AdaGradTrain(Future<PosNegRWExample> parsed, ParamVector paramVec, 
+		public AdaGradTrain(Future<PosNegRWExample> parsed, ParamVector<String,?> paramVec, 
 				SimpleParamVector<String> totSqGrad, int id, AdaGradTrainer notify) {
 			this.in = parsed;
 			this.id = id;
@@ -281,8 +280,8 @@ public class AdaGradTrainer extends Trainer {
 	}
 
 	protected class Grad extends AdaGradTrain {
-		ParamVector sumGradient;
-		public Grad(Future<PosNegRWExample> parsed, ParamVector paramVec, ParamVector sumGradient, 
+		ParamVector<String,?> sumGradient;
+		public Grad(Future<PosNegRWExample> parsed, ParamVector<String,?> paramVec, ParamVector<String,?> sumGradient, 
 				SimpleParamVector<String> totSqGrad, int id, AdaGradTrainer notify) {
 			super(parsed, paramVec, totSqGrad, id, notify);
 			this.sumGradient = sumGradient;

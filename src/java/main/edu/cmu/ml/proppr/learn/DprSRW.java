@@ -59,7 +59,7 @@ public class DprSRW extends SRW {
 		this.cumloss = new LossData();
 	}
 	
-	private double dotP(LearningGraph g, int eid, ParamVector paramVec) {
+	private double dotP(LearningGraph g, int eid, ParamVector<String,?> paramVec) {
 		double dotP = 0;
 		for (int fid = g.edge_labels_lo[eid]; fid<g.edge_labels_hi[eid]; fid++) {
 			dotP += paramVec.get(g.featureLibrary.getSymbol(g.label_feature_id[fid])) 
@@ -68,7 +68,7 @@ public class DprSRW extends SRW {
 		return dotP;
 	}
 	
-	public double totalEdgeProbWeight(LearningGraph g, int uid,  ParamVector p) {
+	public double totalEdgeProbWeight(LearningGraph g, int uid,  ParamVector<String,?> p) {
 		double sum = 0.0;
 		for(int eid = g.node_near_lo[uid]; eid < g.node_near_hi[uid]; eid++) {
 			double ew = c.squashingFunction.edgeWeight(g,eid,p); 
@@ -96,7 +96,7 @@ public class DprSRW extends SRW {
 	 * @param dp
 	 * @param dr
 	 */
-	public void push(int u, ParamVector paramVec, DprExample ex) {
+	public void push(int u, ParamVector<String,?> paramVec, DprExample ex) {
 		log.debug("Pushing "+u);
 		
 		// update p for the pushed node:
@@ -171,10 +171,10 @@ public class DprSRW extends SRW {
 	}
 	
 	@Override
-	protected void load(ParamVector params, PosNegRWExample example) {}
+	protected void load(ParamVector<String,?> params, PosNegRWExample example) {}
 
 	@Override	
-	protected void regularization(ParamVector params, PosNegRWExample ex, TIntDoubleMap gradient) {
+	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {
 		
 		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
@@ -185,7 +185,7 @@ public class DprSRW extends SRW {
 	}
 	
 	@Override
-	protected void inference(ParamVector params, PosNegRWExample example) {
+	protected void inference(ParamVector<String,?> params, PosNegRWExample example) {
 		DprExample ex = (DprExample) example;
 		
 		// startNode maps node->weight

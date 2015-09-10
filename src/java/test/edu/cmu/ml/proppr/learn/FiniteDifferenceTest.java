@@ -32,17 +32,17 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		startVec = new TIntDoubleHashMap();
 		startVec.put(nodes.getId("r0"),1.0);
 	}
-	public double makeLoss(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg, ExampleFactory f) {
+	public double makeLoss(SRW srw, ParamVector<String,?> paramVec, TIntDoubleMap query, int[] pos, int[] neg, ExampleFactory f) {
 		srw.clearLoss();
 		srw.accumulateGradient(paramVec, f.makeExample("gradient", brGraph, query, pos, neg), new SimpleParamVector<String>());
 		return srw.cumulativeLoss().total();
 	}
-	public ParamVector makeGradient(SRW srw, ParamVector paramVec, TIntDoubleMap query, int[] pos, int[] neg, ExampleFactory f) {
-		ParamVector grad = new SimpleParamVector<String>();
+	public ParamVector<String,?> makeGradient(SRW srw, ParamVector<String,?> paramVec, TIntDoubleMap query, int[] pos, int[] neg, ExampleFactory f) {
+		ParamVector<String,?> grad = new SimpleParamVector<String>();
 		srw.accumulateGradient(paramVec, f.makeExample("gradient", brGraph, query, pos,neg), grad);
 		return grad;
 	}
-	public void test(SRW srw, ParamVector uniformParams, ExampleFactory f) {
+	public void test(SRW srw, ParamVector<String,?> uniformParams, ExampleFactory f) {
 
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
@@ -53,11 +53,11 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		double perturb_epsilon = 1e-10;
 		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
 			
-			ParamVector pert = uniformParams.copy();
+			ParamVector<String,?> pert = uniformParams.copy();
 			pert.put(feature, pert.get(feature)+perturb_epsilon);
 			
 			srw.clearLoss();
-			ParamVector epsGrad = makeGradient(srw, pert, startVec, pos, neg, f);
+			ParamVector<String,?> epsGrad = makeGradient(srw, pert, startVec, pos, neg, f);
 			double newLoss = srw.cumulativeLoss().total();
 			
 
@@ -82,10 +82,10 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		srw.c.apr.maxDepth=10;
 		srw.setSquashingFunction(new Exp());
 	}
-	public ParamVector defaultParams() {
+	public ParamVector<String,?> defaultParams() {
 		return new SimpleParamVector(new ConcurrentHashMap<String,Double>());
 	}
-	public void fillParams(SRW srw, ParamVector uniformParams) {
+	public void fillParams(SRW srw, ParamVector<String,?> uniformParams) {
 		for (String n : new String[] {"fromb","tob","fromr","tor"}) uniformParams.put(n,srw.getSquashingFunction().defaultValue());
 	}
 	
@@ -94,7 +94,7 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		SRW srw = new DprSRW();
 		setupSrw(srw);
 		srw.getOptions().set("apr","epsilon","1e-7");
-		ParamVector p = defaultParams();
+		ParamVector<String,?> p = defaultParams();
 		fillParams(srw,p);
 		test(srw,p, new DprExampleFactory());
 	}
@@ -104,7 +104,7 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		SRW 
 		srw = new L2SRW();
 		setupSrw(srw);
-		ParamVector p = defaultParams();
+		ParamVector<String,?> p = defaultParams();
 		fillParams(srw,p);
 		test(srw,p, new PprExampleFactory());
 	}
@@ -112,7 +112,7 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 	public void testLocalL2PosNegLossSRW() {
 		SRW srw = new LocalL2SRW();
 		setupSrw(srw);
-		ParamVector p = new MuParamVector(new ConcurrentHashMap<String,Double>());
+		ParamVector<String,?> p = new MuParamVector(new ConcurrentHashMap<String,Double>());
 		fillParams(srw,p);
 		test(srw,p, new PprExampleFactory());
 	}

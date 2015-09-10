@@ -68,8 +68,7 @@ public abstract class ProverTestTemplate {
 		w.put(featureTab.getSymbol(milk),2);
 		prover.setWeighter(w);
 
-		ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),
-				new InferenceExample(Query.parse("isa(elsie,X)"),null,null), apr, featureTab, lpMilk, fMilk);
+		ProofGraph pg = prover.makeProofGraph(new InferenceExample(Query.parse("isa(elsie,X)"),null,null), apr, featureTab, lpMilk, fMilk);
 		Map<State,Double> dist = prover.prove(pg);//("isa","elsie","X"));
 
 		double query=0.0;

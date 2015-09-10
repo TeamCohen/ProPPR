@@ -47,11 +47,11 @@ public class ModuleConfiguration extends Configuration {
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, tanh1, ReLU, LReLU, exp, clipExp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
-	public Grounder grounder;
+	public Grounder<?> grounder;
 	public SRW srw;
 	public Trainer trainer;
 	public SquashingFunction squashingFunction;
-	public Prover prover;
+	public Prover<?> prover;
 	public ModuleConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		super(args,  inputFiles,  outputFiles,  constants,  modules);
 	}
@@ -69,7 +69,7 @@ public class ModuleConfiguration extends Configuration {
 					.withLongOpt(SQUASHFUNCTION_MODULE_OPTION)
 					.withArgName("w")
 					.hasArg()
-					.withDescription("Default: ReLU\n"
+					.withDescription("Default: clipExp\n"
 							+ "Available options:\n"
 							+ "linear\n"
 							+ "sigmoid\n"
@@ -77,7 +77,7 @@ public class ModuleConfiguration extends Configuration {
 							+ "ReLU\n"
 							+ "LReLU (leaky ReLU)\n"
 							+ "exp\n"
-							+ "clipExp (clipped @x=1)")
+							+ "clipExp (clipped to e*x @x=1)")
 							.create());
 		}
 		if(isOn(flags, USE_PROVER))
@@ -261,11 +261,8 @@ public class ModuleConfiguration extends Configuration {
 					break;
 				case adagrad:
 					this.trainer = new AdaGradTrainer(this.srw, this.nthreads, this.throttle);
-					//check if the appropriate squashing fn is being used
-					if(!(this.squashingFunction instanceof Exp)){
-					    Logger.getRootLogger().warn("Adagrad works best with --"+SQUASHFUNCTION_MODULE_OPTION+" exp. You've selected "+this.squashingFunction.getClass().getName()+"; you may see poor performance.");
-					    //this.usageOptions(options, allFlags, "Adagrad trainer supports only 'exp' squashing function as of now.");
-					}
+					if (this.squashingFunction instanceof ReLU)
+						log.warn("AdaGrad performs quite poorly with --squashingFunction ReLU. For better results, switch to an exp variant.");
 					stableEpochs = 2; // override default
 					break;
 				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));

@@ -98,7 +98,7 @@ public class Dictionary {
 	 * @param key
 	 * @param value
 	 */
-	public static void set(ParamVector map, String key, double value) {
+	public static void set(ParamVector<String,?> map, String key, double value) {
 		map.put(key,sanitize(value, key));
 	}
 

@@ -48,7 +48,7 @@ public class DfsProver extends Prover<StateProofGraph> {
 	private void init(boolean trueLoop) {
 		this.trueLoop = trueLoop;
 	}
-	public Prover copy() {
+	public Prover<StateProofGraph> copy() {
 		return new DfsProver(this.weighter, this.apr, this.trueLoop);
 	}
 	@Override

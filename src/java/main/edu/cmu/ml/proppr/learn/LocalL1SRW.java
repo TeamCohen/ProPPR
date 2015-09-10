@@ -21,22 +21,22 @@ public class LocalL1SRW extends L1SRW {
 	public LocalL1SRW() { super(); }
 
 	@Override
-	public Set<String> localFeatures(ParamVector paramVec, LearningGraph graph) {
+	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
 		return graph.getFeatureSet();
 	}
 
 	@Override
-	protected void sgd(ParamVector params, PosNegRWExample ex) {
+	protected void sgd(ParamVector<String,?> params, PosNegRWExample ex) {
 		((MuParamVector)params).count();
 		((MuParamVector)params).setLast(localFeatures(params,ex.getGraph()));
 		super.sgd(params, ex);
 	}
 
 	@Override
-	public ParamVector setupParams(ParamVector paramVec) { return new MuParamVector(paramVec); }
+	public ParamVector<String,?> setupParams(ParamVector<String,?> paramVec) { return new MuParamVector(paramVec); }
 
 	@Override
-	public void cleanupParams(ParamVector paramVec, ParamVector apply) { 
+	public void cleanupParams(ParamVector<String,?> paramVec, ParamVector<String,?> apply) { 
 		for(String f : (Set<String>) paramVec.keySet()) {
 			// finish catching up the regularization:
 			// Bj = Bj - lambda * (Rj)
@@ -46,12 +46,12 @@ public class LocalL1SRW extends L1SRW {
 	}
 
 	@Override
-	public void initializeFeatures(ParamVector params, LearningGraph graph) {
+	public void initializeFeatures(ParamVector<String,?> params, LearningGraph graph) {
 		super.initializeFeatures(params, graph);
 	}
 	
 	@Override
-	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {
+	public void prepareForExample(ParamVector<String,?> params, LearningGraph graph, ParamVector<String,?> apply) {
 		for (String f : localFeatures(params, graph)) {
 			prepareFeature(params,f,apply);
 		}
@@ -74,7 +74,7 @@ public class LocalL1SRW extends L1SRW {
 	 * @param f
 	 * @param apply
 	 */
-	private void prepareFeature(ParamVector params, String f,ParamVector apply) {
+	private void prepareFeature(ParamVector<String,?> params, String f,ParamVector<String,?> apply) {
 		if (!trainable(f)) return;
 		int gap = ((MuParamVector)params).getLast(f);
 		if (gap==0) return;
