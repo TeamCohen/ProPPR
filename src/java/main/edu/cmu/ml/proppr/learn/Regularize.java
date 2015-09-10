@@ -10,12 +10,13 @@ import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SRWOptions;
 import edu.cmu.ml.proppr.util.SymbolTable;
+import edu.cmu.ml.proppr.util.math.MuParamVector;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.map.TIntDoubleMap;
 
 public class Regularize {
-	protected void synchronousUpdate(SRWOptions c, ParamVector params, String f, 
+	protected void synchronousUpdate(SRWOptions c, ParamVector<String,?> params, String f, 
 			TIntDoubleMap gradient, LossData loss, SymbolTable<String> featureLibrary) {}
-	protected void lazyUpdate(SRWOptions c, ParamVector params, 
-			ParamVector apply, String f, LossData loss, double learningRate) {}
+	protected void lazyUpdate(SRWOptions c, MuParamVector<String> params, 
+			ParamVector<String,?> apply, String f, LossData loss, double learningRate) {}
 }

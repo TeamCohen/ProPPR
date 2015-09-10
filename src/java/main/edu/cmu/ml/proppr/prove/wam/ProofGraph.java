@@ -14,7 +14,6 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LightweightStateGraph;
-import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.FilterPluginCollection;
 import edu.cmu.ml.proppr.prove.wam.plugins.builtin.PluginFunction;
@@ -106,21 +105,7 @@ public abstract class ProofGraph {
 		return result;
 	}
 	
-	/* **************** factory ****************** */
-	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		return makeProofGraph(p, ex, apr, new SimpleSymbolTable<Feature>(), program, plugins);
-	}
-		
-	public static ProofGraph makeProofGraph(Class<ProofGraph> p, InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		// is there a better way to do this, without pushing it all the way through java.reflect? :( [-kmm]
-		if (p.equals(CachingIdProofGraph.class)) {
-			return new CachingIdProofGraph(ex, apr, featureTab, program, plugins);
-		} else if (p.equals(StateProofGraph.class)) {
-			return new StateProofGraph(ex, apr, featureTab, program, plugins);
-		} else {
-			throw new IllegalArgumentException ("Invalid proof graph class "+p.getName());
-		}
-	}
+	
 	
 	/* **************** proving ****************** */
 	

@@ -14,11 +14,11 @@ public class LocalL2PosNegLossSRWTest extends SRWTest {
 		this.srw.setRegularizer(new LocalRegularizationSchedule(this.srw, new RegularizeL2()));
 	}
 	@Override
-	public ParamVector makeParams(Map<String,Double> foo) {
+	public ParamVector<String,?> makeParams(Map<String,Double> foo) {
 		return new MuParamVector(foo);
 	}
 	@Override
-	public ParamVector makeParams() {
+	public ParamVector<String,?> makeParams() {
 		return new MuParamVector();
 	}
 }

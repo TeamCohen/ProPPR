@@ -24,7 +24,7 @@ public class RegularizeL2 extends Regularize {
 	 * @return
 	 */
 	@Override
-	protected void synchronousUpdate(SRWOptions c, ParamVector params, String f,
+	protected void synchronousUpdate(SRWOptions c, ParamVector<String,?> params, String f,
 			TIntDoubleMap gradient, LossData loss,
 			SymbolTable<String> featureLibrary) {
 		double value = Dictionary.safeGet(params, f);
@@ -56,9 +56,9 @@ public class RegularizeL2 extends Regularize {
 	 * @param paramVec
 	 */
 	@Override
-	protected void lazyUpdate(SRWOptions c, ParamVector params, ParamVector apply,
+	protected void lazyUpdate(SRWOptions c, MuParamVector<String> params, ParamVector<String,?> apply,
 			String f, LossData loss, double learningRate) {
-		int gap = ((MuParamVector)params).getLast(f);
+		int gap = params.getLast(f);
 		if (gap==0) return;
 		double value = Dictionary.safeGet(params,f);
 		double powerTerm = Math.pow(1 - 2 * c.mu * learningRate, gap);

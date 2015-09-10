@@ -52,7 +52,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		this.moveProbability = 1.0-stayProbability;
 	}
 
-	public Prover copy() {
+	public Prover<CachingIdProofGraph> copy() {
 		IdDprProver copy = new IdDprProver(this.stayProbability, apr);
 		copy.setWeighter(weighter);
 		copy.params = this.params;

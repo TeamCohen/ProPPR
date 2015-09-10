@@ -17,17 +17,17 @@ public class RegularizationSchedule {
 		this.reg = r;
 	}
 
-	public void regularization(ParamVector params, RWExample ex, TIntDoubleMap gradient) {
+	public void regularization(ParamVector<String,?> params, RWExample ex, TIntDoubleMap gradient) {
 		for (String f : localFeatures(params, ex.getGraph())) {
 			if (!parent.trainable(f)) continue;
 			reg.synchronousUpdate(parent.c, params, f, gradient, parent.cumulativeLoss(), ex.getGraph().featureLibrary);
 		}
 	}
 	public ParamVector<String,?> setupParams(ParamVector<String,?> params) { return params; }
-	public Set<String> localFeatures(ParamVector paramVec, LearningGraph graph) { return paramVec.keySet(); }
-	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {}
-	public void prepareForSgd(ParamVector params, PosNegRWExample ex) {}
-	public void cleanupParams(ParamVector<String,?> params, ParamVector apply) {}
+	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) { return paramVec.keySet(); }
+	public void prepareForExample(ParamVector<String,?> params, LearningGraph graph, ParamVector<String,?> apply) {}
+	public void prepareForSgd(ParamVector<String,?> params, PosNegRWExample ex) {}
+	public void cleanupParams(ParamVector<String,?> params, ParamVector<String,?> apply) {}
 
 	public RegularizationSchedule copy(SRW srw) {
 		return new RegularizationSchedule(srw,this.reg);

@@ -24,7 +24,7 @@ public class RegularizeL1 extends Regularize {
 	 * @return
 	 */
 	@Override
-	protected void synchronousUpdate(SRWOptions c, ParamVector params, String f, 
+	protected void synchronousUpdate(SRWOptions c, ParamVector<String,?> params, String f, 
 			TIntDoubleMap gradient, LossData loss, SymbolTable<String> featureLibrary) {
 			double value = Dictionary.safeGet(params, f);
 			// want to take theta toward zero, but not past it: gradient can't be bigger than theta
@@ -50,10 +50,10 @@ public class RegularizeL1 extends Regularize {
 	 * @param f
 	 */
 	@Override
-	protected void lazyUpdate(SRWOptions c, ParamVector params, ParamVector apply, String f,
+	protected void lazyUpdate(SRWOptions c, MuParamVector<String> params, ParamVector<String,?> apply, String f,
 			LossData loss, double learningRate) {
 //		if (!parent.trainable(f)) return;
-		int gap = ((MuParamVector)params).getLast(f);
+		int gap = ((MuParamVector<String>)params).getLast(f);
 		if (gap==0) return;
 
 		//L1 with a proximal operator

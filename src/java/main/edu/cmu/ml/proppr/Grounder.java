@@ -51,7 +51,7 @@ import edu.cmu.ml.proppr.util.multithreading.Transformer;
  * @author wcohen,krivard
  *
  */
-public class Grounder {
+public class Grounder<P extends ProofGraph> {
 	public static final String FEATURE_INDEX_EXTENSION = ".features";
 	private static final Logger log = Logger.getLogger(Grounder.class);
 	public static final String GROUNDED_SUFFIX = ".grounded";
@@ -60,7 +60,7 @@ public class Grounder {
 	protected GroundingStatistics statistics=new GroundingStatistics();
 
 	protected APROptions apr;
-	protected Prover prover;
+	protected Prover<P> prover;
 	protected WamProgram masterProgram;
 	protected WamPlugin[] masterPlugins;
 	protected int nthreads=1;
@@ -69,13 +69,13 @@ public class Grounder {
 	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>(ConcurrentSymbolTable.HASHING_STRATEGIES.identity);
 
 
-	public Grounder(APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {
+	public Grounder(APROptions apr, Prover<P> p, WamProgram program, WamPlugin ... plugins) {
 		this.apr = apr;
 		this.prover = p;
 		this.masterProgram = program;
 		this.masterPlugins = plugins;
 	}
-	public Grounder(int nthreads, int throttle, APROptions apr, Prover p, WamProgram program, WamPlugin ... plugins) {
+	public Grounder(int nthreads, int throttle, APROptions apr, Prover<P> p, WamProgram program, WamPlugin ... plugins) {
 		this(apr,p,program,plugins);
 		this.nthreads = Math.max(1,nthreads);
 		this.throttle = throttle;
@@ -160,11 +160,11 @@ public class Grounder {
 	long lastPrint = 0;//System.currentTimeMillis();
 
 	/** Requires non-empty graph; non-empty example */
-	public String serializeGroundedExample(ProofGraph pg, GroundedExample x) {
+	public String serializeGroundedExample(P pg, GroundedExample x) {
 		return pg.serialize(x);
 	}
 
-	protected String serializeGraphKey(GroundedExample ex, ProofGraph pg) {
+	protected String serializeGraphKey(GroundedExample ex, P pg) {
 		StringBuilder key = new StringBuilder();
 		String s = pg.getExample().getQuery().toString();
 		for (int i=0; i<ex.getGraph().nodeSize(); i++) {
@@ -178,7 +178,7 @@ public class Grounder {
 		return key.toString();
 	}
 
-	protected void saveGraphKey(GroundedExample grounded, ProofGraph pg) {
+	protected void saveGraphKey(GroundedExample grounded, P pg) {
 		String graphKey = serializeGraphKey(grounded,pg);
 		synchronized (this.graphKeyWriter) {
 			try {
@@ -198,13 +198,13 @@ public class Grounder {
 		w.close();
 	}
 
-	protected Prover getProver() {
+	protected Prover<P> getProver() {
 		return this.prover;
 	}
 
 
 
-	public GroundedExample groundExample(ProofGraph pg) throws LogicProgramException {
+	public GroundedExample groundExample(P pg) throws LogicProgramException {
 		return this.groundExample(this.prover.copy(),pg);
 	}
 	/**
@@ -213,7 +213,7 @@ public class Grounder {
 	 * @return
 	 * @throws LogicProgramException 
 	 */
-	public GroundedExample groundExample(Prover p, ProofGraph pg) throws LogicProgramException {
+	public GroundedExample groundExample(Prover<P> p, P pg) throws LogicProgramException {
 		if (log.isTraceEnabled())
 			log.trace("thawed example: "+pg.getExample().toString());
 		Map<State,Double> ans = p.prove(pg);
@@ -222,9 +222,9 @@ public class Grounder {
 		return ground;
 	}
 
-	public GroundedExample groundExample(Prover p,
+	public GroundedExample groundExample(Prover<P> p,
 			InferenceExample inferenceExample) throws LogicProgramException {
-		return this.groundExample(p, ProofGraph.makeProofGraph(p.getProofGraphClass(),inferenceExample,apr,featureTable,masterProgram, masterPlugins));
+		return this.groundExample(p, p.makeProofGraph(inferenceExample,apr,featureTable,masterProgram, masterPlugins));
 	}
 
 	protected void reportStatistics(int empty) {
@@ -299,7 +299,7 @@ public class Grounder {
 		}
 		@Override
 		public String call() throws Exception {
-			ProofGraph pg = ProofGraph.makeProofGraph(prover.getProofGraphClass(),inf,apr,featureTable,masterProgram,masterPlugins);
+			P pg = prover.makeProofGraph(inf,apr,featureTable,masterProgram,masterPlugins);
 			GroundedExample gx = groundExample(getProver().copy(), pg);
 			InferenceExample ix = pg.getExample();
 			statistics.updateStatistics(ix,

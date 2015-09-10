@@ -69,7 +69,7 @@ public class MuParamVector<F> extends ParamVector<F,TimestampedWeight> {
 	}
 	
 	@Override
-	public ParamVector copy () {
+	public ParamVector<F,TimestampedWeight> copy () {
 		MuParamVector copy = new MuParamVector();
         copy.putAll(this);
         return copy;

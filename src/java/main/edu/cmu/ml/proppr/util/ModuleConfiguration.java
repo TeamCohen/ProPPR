@@ -21,7 +21,9 @@ import edu.cmu.ml.proppr.learn.RegularizeL1GroupLasso;
 import edu.cmu.ml.proppr.learn.RegularizeL1Laplacian;
 import edu.cmu.ml.proppr.learn.RegularizeL2;
 import edu.cmu.ml.proppr.learn.SRW;
+import edu.cmu.ml.proppr.learn.tools.ClippedExp;
 import edu.cmu.ml.proppr.learn.tools.Exp;
+import edu.cmu.ml.proppr.learn.tools.LReLU;
 import edu.cmu.ml.proppr.learn.tools.Linear;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.Sigmoid;
@@ -49,18 +51,18 @@ public class ModuleConfiguration extends Configuration {
 	private static final String PROVER_MODULE_OPTION = "prover";
 
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
-	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, exp };
+	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, LReLU, exp, clipExp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { ppr, dpr, adagrad }
 	private enum REGULARIZERS { l1, l1laplacian, l1grouplasso, l2 };
 	private enum REGULARIZERSCHEDULES { synch, global, lazy, local };
 	private enum LOSSFUNCTIONS { posneg };
 	
-	public Grounder grounder;
+	public Grounder<?> grounder;
 	public SRW srw;
 	public Trainer trainer;
 	public SquashingFunction squashingFunction;
-	public Prover prover;
+	public Prover<?> prover;
 	public ModuleConfiguration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		super(args,  inputFiles,  outputFiles,  constants,  modules);
 	}
@@ -78,13 +80,15 @@ public class ModuleConfiguration extends Configuration {
 					.withLongOpt(SQUASHFUNCTION_MODULE_OPTION)
 					.withArgName("w")
 					.hasArg()
-					.withDescription("Default: ReLU\n"
+					.withDescription("Default: clipExp\n"
 							+ "Available options:\n"
 							+ "linear\n"
 							+ "sigmoid\n"
 							+ "tanh\n"
 							+ "ReLU\n"
-							+ "exp")
+							+ "LReLU (leaky ReLU)\n"
+							+ "exp\n"
+							+ "clipExp (clipped to e*x @x=1)")
 							.create());
 		}
 		if(isOn(flags, USE_PROVER))
@@ -220,7 +224,9 @@ public class ModuleConfiguration extends Configuration {
 				case sigmoid: squashingFunction = new Sigmoid(); break;
 				case tanh: squashingFunction = new Tanh(); break;
 				case ReLU: squashingFunction = new ReLU(); break;
+				case LReLU: squashingFunction = new LReLU(); break;
 				case exp: squashingFunction = new Exp(); break;
+				case clipExp: squashingFunction = new ClippedExp(); break;
 				default: this.usageOptions(options, allFlags, "Unrecognized squashing function " + line.getOptionValue(SQUASHFUNCTION_MODULE_OPTION));
 				}
 			}
@@ -264,10 +270,8 @@ public class ModuleConfiguration extends Configuration {
 					break;
 				case adagrad:
 					this.trainer = new AdaGradTrainer(this.srw, this.nthreads, this.throttle);
-					//check if the appropriate squashing fn is being used
-					if(!(this.squashingFunction instanceof Exp)){
-						this.usageOptions(options, allFlags, "Adagrad trainer supports only 'exp' squashing function as of now.");
-					}
+					if (this.squashingFunction instanceof ReLU)
+						log.warn("AdaGrad performs quite poorly with --squashingFunction ReLU. For better results, switch to an exp variant.");
 					stableEpochs = 2; // override default
 					break;
 				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));
