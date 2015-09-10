@@ -132,7 +132,6 @@ public class AdaGradTrainer extends Trainer {
 		return paramVec;
 	}
 
-	@Override
 	public ParamVector<String,?> findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec, SimpleParamVector<String> totSqGrad) {
 		log.info("Computing gradient on cooked examples...");
 		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
@@ -162,7 +161,7 @@ public class AdaGradTrainer extends Trainer {
 
 		//@rck AG
 		//create a concurrent hash map to store the running total of the squares of the gradient
-		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
+//		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
 
 		
 		// run examples
