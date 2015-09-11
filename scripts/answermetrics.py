@@ -136,7 +136,7 @@ class Answers(object):
             if line.startswith('#'):
                 totQueries += 1
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
-                intVarQuery = answerWithIntVars(intVarQuery[:(intVarQuery.index("#")-2)])
+                intVarQuery = answerWithIntVars(intVarQuery[:(intVarQuery.rindex(".")-1)])
                 self.queryTime[intVarQuery] = int(timeStr.split(" ")[0])
                 #print line
                 #print intVarQuery
