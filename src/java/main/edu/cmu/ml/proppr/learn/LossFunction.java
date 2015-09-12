@@ -1,5 +1,7 @@
 package edu.cmu.ml.proppr.learn;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
@@ -20,4 +22,19 @@ public abstract class LossFunction {
 	
 	public abstract int computeLossGradient(ParamVector params, PosNegRWExample example, TIntDoubleMap gradient, LossData lossdata, SRWOptions c);
 
+	@Override
+	protected LossFunction clone() throws CloneNotSupportedException {
+		Class<? extends LossFunction> clazz = this.getClass();
+		try {
+			LossFunction copy = clazz.getConstructor().newInstance();
+			return copy;
+		} catch (InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+		}
+		throw new CloneNotSupportedException("Programmer error in LossDate subclass "+clazz.getName()
+		+": Must provide the standard LossData constructor signature, or else override clone()");
+	}
+	
 }

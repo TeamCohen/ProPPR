@@ -11,7 +11,7 @@ ifeq ($(strip $(EPOCHS)),)
 EPOCHS=30
 endif
 
-SRW=l2plocal:mu=0.002:eta=$(ETA)
+SRW=ppr:reg=l2:sched=local:loss=posneg:mu=0.002:eta=$(ETA)
 
 ### DATASET
 
