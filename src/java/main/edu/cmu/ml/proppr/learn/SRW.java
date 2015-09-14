@@ -13,30 +13,23 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.proppr.examples.PprExample;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.examples.PprExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.learn.SRW.ZeroGradientData;
 import edu.cmu.ml.proppr.learn.tools.ClippedExp;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SRWOptions;
-import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntDoubleMap;
-import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
 /**
@@ -436,6 +429,7 @@ public class SRW {
 			SRW copy = clazz.getConstructor(SRWOptions.class).newInstance(this.c);
 			copy.untrainedFeatures = this.untrainedFeatures;
 			copy.setRegularizer(this.regularizer.copy(copy));
+			copy.setLossFunction(this.lossf.clone());
 			return copy;
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block
@@ -453,6 +447,9 @@ public class SRW {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CloneNotSupportedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -5,6 +5,7 @@ TRAIN=train
 TEST=test
 PROGRAM=textcat.wam:toylabels.cfacts:toywords.graph
 
+SRW=ppr:reg=l2:sched=local:loss=posneg
 ### TARGETS
 include ../common.in
 

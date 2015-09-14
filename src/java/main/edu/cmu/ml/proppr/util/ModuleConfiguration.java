@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.learn.AdaGradSRW;
 import edu.cmu.ml.proppr.learn.DprSRW;
 import edu.cmu.ml.proppr.learn.LocalRegularizationSchedule;
+import edu.cmu.ml.proppr.learn.NormalizedPosLoss;
 import edu.cmu.ml.proppr.learn.PosNegLoss;
 import edu.cmu.ml.proppr.learn.RegularizationSchedule;
 import edu.cmu.ml.proppr.learn.Regularize;
@@ -27,16 +28,16 @@ import edu.cmu.ml.proppr.learn.tools.LReLU;
 import edu.cmu.ml.proppr.learn.tools.Linear;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.Sigmoid;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.learn.tools.Tanh;
-import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.IdDprProver;
-import edu.cmu.ml.proppr.prove.PriorityQueueProver;
-import edu.cmu.ml.proppr.prove.PathDprProver;
 import edu.cmu.ml.proppr.prove.IdPprProver;
+import edu.cmu.ml.proppr.prove.PathDprProver;
 import edu.cmu.ml.proppr.prove.PprProver;
+import edu.cmu.ml.proppr.prove.PriorityQueueProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
@@ -56,7 +57,7 @@ public class ModuleConfiguration extends Configuration {
 	private enum SRWS { ppr, dpr, adagrad }
 	private enum REGULARIZERS { l1, l1laplacian, l1grouplasso, l2 };
 	private enum REGULARIZERSCHEDULES { synch, global, lazy, local };
-	private enum LOSSFUNCTIONS { posneg };
+	private enum LOSSFUNCTIONS { posneg, normpos };
 	
 	public Grounder<?> grounder;
 	public SRW srw;
@@ -392,6 +393,8 @@ public class ModuleConfiguration extends Configuration {
 			case posneg:
 				this.srw.setLossFunction(new PosNegLoss());
 				break;
+			case normpos:
+				this.srw.setLossFunction(new NormalizedPosLoss());
 			}
 		} else {
 			this.srw = new SRW(sp);
