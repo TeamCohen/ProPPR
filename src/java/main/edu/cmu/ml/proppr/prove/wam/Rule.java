@@ -47,12 +47,12 @@ public class Rule {
 			}
 			sb.append("}");
 		}
-		if (this.nvars>0) {
-			sb.append("  #v:[");
-//			Dictionary.buildString(this.variableList, sb, ",");
-			sb.append("?");
-			sb.append("]");
-		}
+//		if (this.nvars>0) {
+//			sb.append("  #v:[");
+////			Dictionary.buildString(this.variableList, sb, ",");
+//			sb.append("?");
+//			sb.append("]");
+//		}
 		sb.append(".");
 		return sb.toString();
 	}
