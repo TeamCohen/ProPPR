@@ -1,0 +1,464 @@
+# Label Propagation in ProPPR
+
+In this tutorial you will learn:
+
+* how to write an inference-only ProPPR program
+* how to examine ProPPR programs & proof graphs for bloat
+* how to use tail recursion in ProPPR programs
+* the sequence of `proppr` commands for grounding, visualizing proof graphs, query-answering, and evaluation
+
+This tutorial assumes you are more-or-less familiar with the ProPPR terminology and file types covered in the `textcat` tutorial, so you may want to start there if you're brand new to ProPPR.
+
+## Step 0: Install ProPPR and set up your path
+
+If you haven't already,
+
+    $ git clone git@github.com:TeamCohen/ProPPR.git
+    $ cd ProPPR
+    $ ant clean build
+    
+& then if you're using a new shell,
+    
+    $ cd ProPPR
+    $ export PROPPR=`pwd`
+    $ export PATH=$PATH:$PROPPR/scripts
+    
+We'll be working out of the `tutorials/labelprop` directory.
+
+## Step 1: Defining the task
+
+We'll be building a ProPPR dataset to classify documents in a semi-supervised fashion using a method similar to Lin & Cohen's MultiRankWalk method, *Semi-Supervised Classification of Network Data Using Very Few Labels* in ASONAM-2010. We've selected a small number of labeled examples to use as seeds for each class, and we want to propagate those labels to neighboring documents in a bipartite document-word graph.
+
+This dataset will not require training; we're just using ProPPR to do the propagation.
+## Step 2: Building the database
+
+We'll start with the same document set we used for the `textcat` tutorial:
+
+    train00001    a pricy doll house
+    train00002    a little red fire truck
+    train00003	a red wagon
+    train00004	a pricy red sports car
+    train00005	punk queen barbie and ken
+    ...
+    
+Except this time we want to define a relation 'edge' which connects documents to their words in both directions:
+
+    edge    train00001	a
+    edge	a	train00001
+    edge    train00001	pricy
+    edge	pricy	train00001
+    edge	train00001	doll
+    edge	doll	train00001
+    edge	train00001	house
+    edge	house	train00001
+    ...
+
+Since the edge from a word to the documents that contain it will already have a fanout of the document frequency of that word, we don't need the full TF-IDF and can just use the term frequency as the edge weight:
+
+    edge    train00001	a	1
+    edge	a	train00001	1
+    edge    train00001	pricy	1
+    edge	pricy	train00001	1
+    edge	train00001	doll	1
+    edge	doll	train00001	1
+    edge	train00001	house	1
+    edge	house	train00001	1
+    ...
+
+We've stored that data in a file called `toyedges.graph`.
+
+We'll use our training examples as seeds, and store them as facts:
+
+    seed    pos	train00001
+    seed	pos	train00002
+    seed	pos	train00003
+    seed	pos	train00004
+    seed	pos	train00005
+    seed	pos	train00006
+    seed	neg	train00007
+    seed	neg	train00008
+    seed	neg	train00009
+    seed	neg	train00010
+    seed	neg	train00011
+
+...in a file called `toyseeds.graph`.
+
+## Step 3a: Writing the ProPPR program
+
+Since we're doing label propagation, we want to organize our program differently than we did for the `textcat` tutorial. Our queries will take the form `predict(Class,Document)`, which will let us start with the seeds for a class and generate more related documents from there. In ProPPR as with Prolog, it's always better to push the free or unknown variables to the right, since facts are generally indexed from the left.
+
+First, given a class, we want to predict the seeds as belonging to that class, since they're a gimme:
+
+    predict(Class,Document) :- seed(Class,Document).
+
+You'll notice we're not including any features here, since we're not intending to train any sort of model -- we want pure label propagation.
+
+Next, we want to include documents that may be near the seeds (or any other document we've already predicted for this class) in terms of vocabulary, using our word membership graph. 
+
+    predict(Class,Document) :- predict(Class,OtherDocument),edge(OtherDocument,Document).
+
+This formulation is very intuitive, but has problems, which we'll see in a moment. For now, we've saved this program as `naive.ppr`.
+
+## Step 4a: Generating query groundings
+
+We'll use our testing examples as queries for this dataset, but since we flipped the variable order for `predict`, we end up with one example per class that just lists all the documents that should be there with a `+` and all the documents that shouldn't be there with a `-`:
+
+    predict(neg,X)    -predict(neg,test00004)	+predict(neg,test00007)	-predict(neg,test00001)	-predict(neg,test00003)	+predict(neg,test00005)	-predict(neg,test00002)	+predict(neg,test00006)
+    predict(pos,X)	+predict(pos,test00004)	-predict(pos,test00007)	+predict(pos,test00001)	+predict(pos,test00003)	-predict(pos,test00005)	+predict(pos,test00002)	-predict(pos,test00006)
+
+We've called that file `toytest.examples`.
+
+Now we just have to compile our program and tell ProPPR about our database:
+
+    $ proppr compile naive.ppr
+    $ proppr set --programFiles naive.wam:toyseeds.graph:toyedges.graph
+
+And we can ground our examples. We're grounding instead of answering at this stage because we want to examine the proof graphs -- always a good idea when developing a new dataset.
+
+    $ proppr ground toytest.examples
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:${PROPPR}/conf:${PROPPR}/bin:${PROPPR}/lib/* edu.cmu.ml.proppr.Grounder --queries toytest.examples --grounded toytest.grounded --programFiles naive.wam:toyseeds.graph:toyedges.graph
+     WARN [Configuration] Consolidated graph files not yet supported! If the same functor exists in two files, facts in the later file will be hidden from the prover!
+     INFO [Grounder] Resetting grounding statistics...
+    
+    edu.cmu.ml.proppr.Grounder.ExampleGrounderConfiguration
+          queries file: toytest.examples
+         grounded file: toytest.grounded
+    Duplicate checking: up to 1000000
+               threads: -1
+                Prover: edu.cmu.ml.proppr.prove.DprProver
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ClippedExp
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [Grounder] Resetting grounding statistics...
+     INFO [Grounder] executeJob: streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
+     INFO [Grounder] 1 examples finished...
+     INFO [Grounder] Processed 2 examples
+     INFO [Grounder] Grounded: 2
+     INFO [Grounder] Skipped: 0 = 0 with no labeled solutions; 0 with empty graphs
+     INFO [Grounder] totalPos: 7 totalNeg: 7 coveredPos: 7 coveredNeg: 7
+     INFO [Grounder] For positive examples 7/7 proveable [100.0%]
+     INFO [Grounder] For negative examples 7/7 proveable [100.0%]
+    Grounding time: 151
+    Done.
+    INFO:root:grounded to toytest.grounded
+
+The warning about consolidated graph files is okay, because while we do have multiple graph files, each relation (`edge` and `seed`) is contained within a single file. 
+
+Looks like we finished with no empty graphs, and all labels recovered. Great!
+
+
+## Step 5a: Troubleshooting
+
+
+Now we can bust open the ground file and examine the proof graph for the first example. The `proppr` utility has an ascii proof graph visualization command called `show` that we can use for this purpose:
+
+    $ proppr show toytest.grounded | less
+    INFO:root:ProPPR v2
+    predict(neg,X1).
+    1 >>
+      |[('id(predict,2,18)', 1.0)]:  3 >>
+      |  |[('id(predict,2,18)', 1.0)]:  10 >>
+      |  |  |[('id(predict,2,18)', 1.0)]:  49 >>
+      |  |  |  |[('id(predict,2,18)', 1.0)]:  56 >>
+      |  |  |  |  |[('id(predict,2,18)', 1.0)]:  63 >>
+      |  |  |  |  |  |[('id(predict,2,18)', 1.0)]:  146 >>
+      |  |  |  |  |  |  |[('id(predict,2,18)', 1.0)]:  153 >>
+      |  |  |  |  |  |  |  |[('id(predict,2,18)', 1.0)]:  256 >>
+      |  |  |  |  |  |  |  |  |[('id(predict,2,18)', 1.0)]:  263 R
+      |  |  |  |  |  |  |  |  |[('id(predict,2,4)', 1.0)]:  262 R
+      |  |  |  |  |  |  |  |[('id(predict,2,4)', 1.0)]:  255 >>
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  257 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  258 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  259 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  260 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  261 R
+      |  |  |  |  |  |  |[('id(predict,2,4)', 1.0)]:  152 >>
+      |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  250 >>
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  264 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  265 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  266 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  267 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  268 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  269 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  270 R
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  271 R
+      |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  251 >>
+      |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  272 R
+    ...
+    
+Firstly, some syntax: Each line of the output represents a node. The first line,
+
+    1 >>
+
+represents the query node, which always has id 1. The end of the line, `>>`, states that the query node has several child nodes.
+
+The next line,
+
+      |[('id(predict,2,18)', 1.0)]:  3 >>
+
+states that there is an edge from node 1 to node 3, with label `id(predict,2,18)` at weight 1.0. Our program contains two definitions for `predict`, and these map to features `id(predict,2,4)` for the seed case and `id(predict,2,18)` for the recursion case, so we know this node came from the latter. Further, we know from the line ending `>>` that node 3 has several child nodes.
+
+The next kind of line ending we see in the visualization is `R`, which stands for "reset". This means that the only edge leaving that node goes back to the query node. This happens under two conditions: either the program fails (there are no facts that match the lookup pattern), or the pageRank approximation discards the path based on its termination criteria (the weight on the current node is so small that none of its children have weight greater than epsilon). When we see the `R` line ending for all the nodes at a particular level, it usually means that the approximation has terminated, which often happens when you have a lot of fanout or superfluous graph depth.
+
+In fact, as we look through the graph we can see that it's mostly made up of big blocks of `R` nodes. This is a bad sign -- individually, giving up on a line of inquiry when the weight drops too low is fine, but if a node is repeatedly discarded, the total weight of all those repetitions could be significant, wrecking ProPPR's approximation.
+
+You can look through the rest of the graph if you like, to see the general shape of the thing -- lines ending with `+` are positive-labeled solutions; `-` marks negative-labeled solutions, and `?` marks solutions that weren't listed in the `.examples` file. `% (xN)` marks a node that has appeared previously in the graph, listing the number of times it's been seen so far and eliding its descendants.
+
+Let's now look back at the program we wrote:
+
+    predict(Y,X) :- seed(Y,X).
+    predict(Y,X) :- predict(Y,Z),edge(Z,X).
+
+If we step through it by hand for a moment -- imagine a query comes in and puts us at node id 1:
+
+    1 predict(pos,X).
+
+The next step is a two-way split, one for each definition of `predict/2`.
+
+    1 predict(pos,X).
+      |[('id(predict,2,4)', 1.0)]:  2 seed(pos,X).
+      |[('id(predict,2,18)', 1.0)]:  3 predict(pos,Z),edge(Z,X).
+
+Following node 2, we do a database lookup for `seed` and return each result as a query solution.
+
+      |[('id(predict,2,4)', 1.0)]:  2 seed(pos,X).
+      |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  4 X=train00001
+      |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  5 X=train00002
+      |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  6 X=train00003
+      |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  7 X=train00004
+      |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  8 X=train00005
+      |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  9 X=train00006
+
+So far, so good.
+
+Following node 3, we have a two-way split again -- which looks remarkably like the one we did at node 1:
+
+      |[('id(predict,2,18)', 1.0)]:  3 predict(pos,Z),edge(Z,X).
+      |  |[('id(predict,2,4)', 1.0)]:  10 seed(pos,Z),edge(Z,X).
+      |  |[('id(predict,2,18)', 1.0)]:  11 predict(pos,Z'),edge(Z',Z),edge(Z,X).
+
+Following node 10, we do a database lookup -- the same database lookup we've already done once, so this is wasted work -- and set the value of Z.
+
+      |  |[('id(predict,2,4)', 1.0)]:  10 seed(pos,Z),edge(Z,X).
+      |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  12 edge(train00001,X).
+      |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  13 edge(train00002,X).
+      |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  14 edge(train00003,X).
+      |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  15 edge(train00004,X).
+      |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  16 edge(train00005,X).
+      |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  17 edge(train00006,X).
+
+Then we do a database lookup for `edge`, and return those values as query solutions:
+
+      |  |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  12 edge(train00001,X).
+      |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  18 X=a
+      |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  19 X=pricy
+      |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  20 X=doll
+      |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  21 X=house
+
+You'll notice that the 'solutions' are words, not documents. That's okay -- our graph is bipartite, so we won't see documents as solutions until the next recursion level.
+
+If we go back up and follow node 11... hopefully you can see how we'll be doing a two-way split again, looking up all the seeds again, and looking up all the level-1 words again, before we finally get to look up real solution documents. What a mess!
+
+## Step 3b: Revising the program
+
+Let's look at the task again, with an eye toward avoiding repeated database lookups wherever possible.
+
+We know we want to start with the seeds:
+
+    predict(Y,X) :- seed(Y,X).
+
+Instead of throwing that work away though, let's use the seed bindings as a jumping-off point for the next phase of calculation. We can do that by defining another relation, `sim`, that has an identity definition so the original seeds can be returned. Like so:
+
+    predict(Y,X) :- seed(Y,Z),sim(Z,X).
+    sim(X,X) :- .
+
+One line 2 there, because we've given both arguments to `sim` the same name in the head of the rule, ProPPR will give them the same value when the rule is executed. The rule has no tail, since a document is always similar to itself, without needing to do any further calculation.
+
+Now we can add another definition of `sim` to do the propagation, without having to do the seed lookups again.
+
+    sim(X,Y) :- edge(X,Z),sim(Z,Y).
+
+It's worth noting that we could have written this rule differently:
+
+    # less-efficient variation:
+    sim(X,Y) :- sim(X,Z),edge(Z,Y).
+
+but we would run into the same problem we had before, since the edge values in the first execution (`sim(X,X),edge(X,Y)`) would get returned, and you'd have to look them up all over again for the non-identity path. Just like with the seeds, we want to use the edge values as solutions but also as jumping off points without having to repeat the lookups, so it's important to put the recursive bit (`sim`) at the end of the expression. This is called *tail recursion*, and it's a powerful way to write logic programs that are faster (because they don't have to do repeated lookups) and smaller (because they don't have to store big blocks of terminated paths thrown out by the pageRank approximation algorithm).
+
+Here's our complete revised ProPPR program:
+
+    predict(Y,X) :- seed(Y,Z),sim(Z,X).
+    sim(X,X) :- .
+    sim(X,W) :- edge(X,Z),sim(Z,W).
+
+We've stored it in a file called `multirankwalk.ppr`, after the approach in Lin2010 cited above.
+
+## Step 4b: Generating revised groundings
+
+First let's back up our initial results:
+
+    $ mkdir naive
+    $ mv *grounded* naive
+
+Then compile the new program and tell ProPPR about it:
+
+    $ proppr compile multirankwalk.ppr
+    $ proppr set --programFiles multirankwalk.wam:toyseeds.graph:toyedges.graph
+
+Now we can generate the groundings for the new program:
+
+    $ proppr ground toytest.examples
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:${PROPPR}/conf/:${PROPPR}/bin:${PROPPR}/lib/* edu.cmu.ml.proppr.Grounder --queries toytest.examples --grounded toytest.grounded --programFiles multirankwalk.wam:toyseeds.graph:toyedges.graph
+     WARN [Configuration] Consolidated graph files not yet supported! If the same functor exists in two files, facts in the later file will be hidden from the prover!
+     INFO [Grounder] Resetting grounding statistics...
+    
+    edu.cmu.ml.proppr.Grounder.ExampleGrounderConfiguration
+          queries file: toytest.examples
+         grounded file: toytest.grounded
+    Duplicate checking: up to 1000000
+               threads: -1
+                Prover: edu.cmu.ml.proppr.prove.DprProver
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ClippedExp
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [Grounder] Resetting grounding statistics...
+     INFO [Grounder] executeJob: streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
+     INFO [Grounder] 1 examples finished...
+     INFO [Grounder] Processed 2 examples
+     INFO [Grounder] Grounded: 2
+     INFO [Grounder] Skipped: 0 = 0 with no labeled solutions; 0 with empty graphs
+     INFO [Grounder] totalPos: 7 totalNeg: 7 coveredPos: 7 coveredNeg: 3
+     INFO [Grounder] For positive examples 7/7 proveable [100.0%]
+     INFO [Grounder] For negative examples 3/7 proveable [42.857142857142854%]
+    Grounding time: 128
+    Done.
+    INFO:root:grounded to toytest.grounded
+
+Like before, we've got no empty graphs, and all the positive labels were recovered. This time though, some of the negative labels didn't show up. That's okay, since for this task we'd really prefer it if documents didn't get misclassified. For other tasks, you may need good coverage of negative examples though -- so think carefully about the coverage figures that show up in your own work.
+
+## Step 5b: Comparing groundings
+
+We can look at the ascii visualization just like before:
+
+    $ proppr show toytest.grounded | less
+    INFO:root:ProPPR v2
+    predict(neg,X1).
+    1 >>
+      |[('id(predict,2,4)', 1.0)]:  2 >>
+      |  |[('db(LightweightGraphPlugin,toyseeds.graph)', 1.0)]:  3 >>
+      |  |  |[('id(sim,2,32)', 1.0)]:  9 >>
+      |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  18 >>
+      |  |  |  |  |[('id(sim,2,32)', 1.0)]:  51 >>
+      |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  3 % (x2)
+      |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  52 >>
+      |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  128 >>
+      |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  18 % (x2)
+      |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  30 >>
+      |  |  |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  88 >>
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  52 % (x2)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  4 >>
+      |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  11 >>
+      |  |  |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  26 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  79 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  56 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  139 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  26 % (x2)
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  140 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  185 R
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,21)', 1.0)]:  184 R
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  141 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  187 R
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,21)', 1.0)]:  186 R
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  19 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,32)', 1.0)]:  54 >>
+      |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  55 >>
+
+We already see far fewer blocks of terminated (`R`) paths. Part of this is because our program is now written with less fanout at the solution level (since we end with `sim` instead of with `edge`), but part of it is because our proof graph is more efficient and compact.
+
+We can see this in the graph sizes, if we want. Fields 5 and 6 of the ground files show the number of nodes and edges in the graph, respectively:
+
+    $ cut -f 5,6 toytest.grounded
+    187    483
+    159    384
+    $ cut -f 5,6 naive/toytest.grounded
+    315    791
+    245    625
+
+The naive version required more nodes and more edges to accomplish more-or-less the same thing, taking up more space on disk and requiring more computation for inference.
+
+Let's also look at the number of merged paths for solution states. When the same solution is reached by more than one path, the duplicate solution nodes are merged, and their weights combined. This is useful, since it lets you assign weight based on more than one ruleset, but can be risky, since splitting up the weight of a node across paths makes it more likely that one or more of the paths will be pruned by the approximation algorithm. We can use the `show` command to display merged paths for solution states like so:
+
+    $ proppr show toytest.grounded | grep +
+    INFO:root:ProPPR v2
+    |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,21)', 1.0)]:  134 + 
+    |  |  |  |  |  |  |  |  |  |  |  |  |  |  |[('id(sim,2,21)', 1.0)]:  138 + 
+    |  |  |  |  |  |  |[('id(sim,2,21)', 1.0)]:  127 + 
+
+This shows that we have one path for each of 3 different +-labeled solutions using the multirank-walk program.
+
+For our first draft program, we also see 3 different solutions, but they are each split across 3 or 4 paths:
+
+    $ proppr show naive/toytest.grounded | grep + | sort -k 12
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  90 + 
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  90 + % (x2)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  90 + % (x3)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  90 + % (x4)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  91 + 
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  91 + % (x2)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  91 + % (x3)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  92 + 
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  92 + % (x2)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  92 + % (x3)
+      |  |  |  |  |  |  |  |  |  |[('db(LightweightGraphPlugin,toyedges.graph)', 1.0)]:  92 + % (x4)
+
+All in all, we were able to reduce our ground file size by 40%, which is trivial for our toy example (about 8 kb) but would be substantial for a larger dataset. Proof graph and program analysis can be crucial!
+
+## Step 6: Answering queries
+
+Now that we like our program better, we can finally get around to running the system for real:
+
+    $ proppr answer toytest.examples
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:${PROPPR}/conf/:${PROPPR}/bin:${PROPPR}/lib/* edu.cmu.ml.proppr.QueryAnswerer --queries toytest.examples --solutions toytest.solutions.txt --programFiles multirankwalk.wam:toyseeds.graph:toyedges.graph
+     WARN [Configuration] Consolidated graph files not yet supported! If the same functor exists in two files, facts in the later file will be hidden from the prover!
+    
+    edu.cmu.ml.proppr.QueryAnswerer.QueryAnswererConfiguration
+          queries file: toytest.examples
+        solutions file: toytest.solutions.txt
+    Duplicate checking: up to 1000000
+               threads: -1
+                Prover: edu.cmu.ml.proppr.prove.DprProver
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ClippedExp
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [QueryAnswerer] Running queries from toytest.examples; saving results to toytest.solutions.txt
+     INFO [QueryAnswerer] executeJob: streamer: edu.cmu.ml.proppr.QueryAnswerer.QueryStreamer transformer: null throttle: -1
+     INFO [QueryAnswerer] 1 examples finished...
+    Query-answering time: 119
+    INFO:root:answers in toytest.solutions.txt
+
+All looks well there.
+
+## Step 7: Evaluation
+
+We'll use `acc1` as our metric, which is basic accuracy assuming the class is in arg1.
+
+    $ proppr eval toytest.examples toytest.solutions.txt --metric acc1
+    INFO:root:ProPPR v2
+    INFO:root:calling: python ${PROPPR}/scripts/answermetrics.py --data toytest.examples --answers toytest.solutions.txt --metric acc1
+    queries 2 answers 75 labeled answers 10
+    ==============================================================================
+    metric acc1 (Accuracy L1): accuracy where goals are of the form predict(Y,X), ie label is first argument.
+    . accuracy notes: 7 / 7 examples correct: typical instances ['test00005', 'test00004', 'test00007']
+    . micro: -1
+    . macro: 1.0
+    
+Nicely done!

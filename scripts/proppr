@@ -102,8 +102,8 @@ def doShow(o):
          if lineno == eid:
             fields = line.strip().split("\t")
             query = fields[0]
-            pos = [int(n) for n in fields[2].split(',')]
-            neg = [int(n) for n in fields[3].split(',')]
+            if fields[2] != '': pos = [int(n) for n in fields[2].split(',')]
+            if fields[3] != '': neg = [int(n) for n in fields[3].split(',')]
             edges = fields[7:]
             break
    graph = {}
@@ -114,6 +114,7 @@ def doShow(o):
       if dest==1: continue
       if not graph[src].has_key(F): graph[src][F] = []
       graph[src][F].append(dest)
+      if not graph.has_key(dest): graph[dest] = {}
    posneg = pos+neg
    posneg.sort()
    
@@ -129,10 +130,10 @@ def doShow(o):
       else:
          descendants = graph[cursor]
          graph[cursor] = 1
-         if len(descendants) > 1: print "->"
+         if len(descendants) > 1: print ">>"
          elif len(descendants) == 0: print "R"
          elif not descendants.keys()[0].startswith("%d@" % trueLoop):
-            print "->"
+            print ">>"
          elif cursor not in posneg:
             print "?"
          else: print ""
