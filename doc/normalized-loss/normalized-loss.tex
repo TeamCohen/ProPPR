@@ -1,0 +1,53 @@
+\documentclass[12pt]{article}
+
+\usepackage{graphicx}
+\usepackage{latexsym,algorithm,algorithmic}
+\usepackage{times}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{mathptmx}      % use Times fonts if available on your TeX system
+
+\parindent=0.0in
+\parskip=0.2in
+\setlength{\textwidth}{7in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{-0.5in}
+\setlength{\evensidemargin}{-0.5in}
+\setlength{\topmargin}{-0.5in}
+
+
+\newcommand{\weightvec}{\textbf{w}}
+\newcommand{\edge}[2]{{u\rightarrow{}v}}
+\newcommand{\edgeuv}{{\edge{u}{v}}}
+
+\newcommand{\vek}[1]{\textbf{#1}}
+\newcommand{\ddw}{\frac{\partial}{\partial\vek{w}}}
+\newcommand{\M}{\textrm{M}}
+\newcommand{\dM}{\textrm{dM}}
+\newcommand{\df}{\textbf{df}}
+\newcommand{\dt}{\textbf{dt}}
+\newcommand{\vphi}{\vec{\phi}}
+
+\begin{document}
+
+Solution nodes $A = A^+ \cup A^-$ are meant to include all nodes in the graph which represent solutions. At runtime we only have access to the node ids for labeled solutions, thus normalized loss is only applicable for problems where all solutions are labeled (such as classification and ssl).
+
+For the normalized loss,
+\begin{align}
+L(\weightvec) &= -\log\left[ \sum\limits_{a\in A^+} Pr(a | q;\weightvec)\right] + R(\weightvec)\\
+&= -\log\left[ \sum\limits_{a\in A^+} \frac{ppr(a|q;\weightvec)}{\sum\limits_{a'\in A} ppr(a' | q;\weightvec)}\right] + R(\weightvec)\\
+&= -\log\left[ \sum\limits_{a\in A^+} ppr(a|q;\weightvec)\right] + \log\left[\sum\limits_{a\in A} ppr(a|q;\weightvec)\right] + R(\weightvec)
+\end{align}
+
+For the gradient of the normalized loss,
+\begin{align}
+G(\weightvec) &= \ddw L(\weightvec)\\
+&= \ddw \left( -\log\left[ \sum\limits_{a\in A^+} ppr(a|q;\weightvec)\right] + \log\left[\sum\limits_{a\in A} ppr(a|q;\weightvec)\right] + R(\weightvec) \right)\\
+&= -\frac{1}{\sum\limits_{a\in A^+} ppr(a|q;\weightvec)}\left(\ddw \sum\limits_{a\in A^+} ppr(a|q;\weightvec)\right) + \frac{1}{\sum\limits_{a\in A} ppr(a|q;\weightvec)}\left(\ddw \sum\limits_{a\in A} ppr(a|q;\weightvec)\right) + \ddw R(\weightvec)\\
+&=\frac{\sum\limits_{a\in A^+} - \ddw ppr(a|q;\weightvec)}{\sum\limits_{a\in A^+} ppr(a|q;\weightvec)} + \frac{\sum\limits_{a\in A} \ddw ppr(a|q;\weightvec)}{\sum\limits_{a\in A} ppr(a|q;\weightvec)} + \ddw R(\weightvec)
+\end{align}
+
+In the code, {\tt ex.p} contains the values of $ppr(x|q;\weightvec)$ for every node in the graph.
+
+Likewise, {\tt ex.d} contains the values of $\ddw ppr(x|q;\weightvec)$.
+
+\end{document}
