@@ -7,8 +7,9 @@ public class WamQueryProgram extends WamProgram {
 	private WamProgram masterProgram;
 	private WamProgram queryProgram;
 	public WamQueryProgram(WamProgram master) {
+		if (master == null) master = new WamBaseProgram();
 		this.masterProgram = master;
-	}
+	} 
 	@Override
 	public void append(Instruction inst) {
 		this.queryProgram.append(inst);
