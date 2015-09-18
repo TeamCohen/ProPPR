@@ -23,6 +23,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String>, FileBacke
 	private boolean cheating=false;
 	private String filename;
 	private LineNumberReader reader;
+	private String last;
 	private String peek;
 	private int dataLine;
 	private boolean closed;
@@ -83,10 +84,10 @@ public class ParsedFile implements Iterable<String>, Iterator<String>, FileBacke
 		if (this.strict)
 			throw new IllegalArgumentException("Unparsable line "+filename+":"+reader.getLineNumber()+":"
 					+ (msg!=null ? ("\n"+msg) : "")
-					+ "\n"+peek);
+					+ "\n"+last);
 		log.error("Unparsable line "+filename+":"+reader.getLineNumber()+":"
 				+ (msg!=null ? ("\n"+msg) : "")
-				+ "\n"+peek);
+				+ "\n"+last);
 	}
 	
 	@Override
@@ -142,7 +143,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String>, FileBacke
 
 	@Override
 	public String next() {
-		String next = peek;
+		last = peek;
 		try {
 			peek = reader.readLine();
 			for(boolean skip=true; peek != null; ) {
@@ -158,7 +159,7 @@ public class ParsedFile implements Iterable<String>, Iterator<String>, FileBacke
 			e.printStackTrace();
 		}
 		dataLine++;
-		return next;
+		return last;
 	}
 
 	@Override
