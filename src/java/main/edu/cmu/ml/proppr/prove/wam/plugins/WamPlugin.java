@@ -26,7 +26,7 @@ public abstract class WamPlugin {
 	protected static final double DEFAULT_DSTWEIGHT = 1.0;
 	public static final String WEIGHTED_SUFFIX = "#";
 	public static Feature pluginFeature(WamPlugin plugin, String identifier) {
-		return new Feature("db("+plugin.getClass().getSimpleName()+","+identifier+")");
+		return new Feature(FACTS_FUNCTOR+plugin.getClass().getSimpleName()+","+identifier+")");
 	}
 
 	/** Convert from a string like "foo#/3" to "foo/2" **/

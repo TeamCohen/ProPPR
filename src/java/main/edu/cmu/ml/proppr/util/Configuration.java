@@ -15,6 +15,7 @@ import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.GraphlikePlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
+import edu.cmu.ml.proppr.prove.wam.plugins.SecondstringPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.SplitFactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
@@ -257,6 +258,8 @@ public class Configuration {
 				facts++;
 			} else if (s.endsWith(SparseGraphPlugin.FILE_EXTENSION)) {
 				this.plugins[i++] = SparseGraphPlugin.load(this.apr, this.getExistingFile(s));
+			} else if (s.endsWith(SecondstringPlugin.FILE_EXTENSION)) {
+				this.plugins[i++] = SecondstringPlugin.load(this.apr, this.getExistingFile(s));
 			} else {
 				usageOptions(options,flags,PROGRAMFILES_CONST_OPTION+": Plugin type for "+s+" unsupported/unknown");
 			}
