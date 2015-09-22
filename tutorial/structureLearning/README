@@ -1,0 +1,134 @@
+# Structure Learning in ProPPR, v1
+
+In this tutorial you will learn:
+
+* how to be Really Clever with ProPPR features
+* how to construct a complex ProPPR workflow using GNU make
+
+This tutorial assumes you are familiar with ProPPR terminology and file types. If you're branch new to ProPPR, you will want to look over the `textcat` and `labelProp` tutorials.
+
+## Step 0: Install ProPPR and set up your path
+
+If you haven't already,
+
+    $ git clone git@github.com:TeamCohen/ProPPR.git
+    $ cd ProPPR
+    $ ant clean build
+    
+& then if you're using a new shell,
+    
+    $ cd ProPPR
+    $ export PROPPR=`pwd`
+    $ export PATH=$PATH:$PROPPR/scripts
+    
+We'll be working out of the `tutorials/structureLearning` directory.
+
+## Step 1: Defining the task
+
+We'll be building a ProPPR dataset for automatically extracting structural patterns in a knowledge base, using the method described in *Structure Learning via Parameter Learning* (Wang, Mazaitis, & Cohen, CIKM'14). Our database will describe a family tree where some relations have been removed. These relations will then be queried, with ProPPR recovering the data through other structural information in the knowledge base.
+
+How we express a structure learning task in ProPPR is a bit abstract if you've never encountered abductive second-order logic before (and perhaps even if you have), so we'll go slow.
+
+## Step 2: Building the database
+
+### Step 2.1: Generating the base KB
+
+First, we'll generate the complete family record. We don't know which relations might be easier or harder to recover yet, so we'll leave that to a later script.
+
+The database for this task is extremely simple: each fact expresses a relationship between two people in the family tree. We restrict our vocabulary to the 12 relations *wife*, *husband*, *mother*, *father*, *daughter*, *son*, *sister*, *brother*, *aunt*, *uncle*, *niece*, and *nephew*. We'll generate 2 families and use one for training and the other for testing.
+
+Because we want to reason over the relationships, it will make our life easier later if we include the name of the relationship as one of the arguments, and use a generic functor.
+
+Our training family data are stored in `kinship-train.cfacts`:
+
+    rel    aunt	jennifer	charlotte
+    rel    aunt	jennifer	colin
+    rel    aunt	margaret	charlotte
+    rel    aunt	margaret	colin
+    rel    brother	arthur	victoria
+    rel    brother	colin	charlotte
+    rel    brother	james	jennifer
+    rel    daughter	charlotte	james
+    rel    daughter	charlotte	victoria
+    rel    daughter	jennifer	andrew
+    ...
+
+...and our testing family data likewise in `kinship-test.cfacts`:
+
+    rel aunt	angela	alfonso
+    rel	aunt	gina	alfonso
+    rel	aunt	gina	sophia
+    rel	brother	alfonso	sophia
+    rel	brother	emilio	lucia
+    rel	brother	marco	angela
+    rel	daughter	angela	pierro
+    rel	daughter	lucia	maria
+    rel	daughter	lucia	roberto
+    rel	daughter	sophia	lucia
+    ...
+
+These relations should be read as "*arg1* is the *relation* of *arg2*" so that Jennifer is the aunt of Colin.
+
+For the training and testing examples, we'll include a query for each *(relation,person)* pair in the database, with positive labels for the correct facts. For negative labels, we'll first see if the query's *person* participates in any facts other than the query's *relation*, then add those non-*relation* person-person pairs to the negative set.
+
+For example, let's generate the labels for the query `interp(i_aunt,jennifer,Y)`, which asks of whom Jennifer is the aunt.
+
+    $ grep "jennifer" kinship-train.cfacts
+    rel    aunt	jennifer	charlotte
+    rel	aunt	jennifer	colin
+    rel	brother	james	jennifer
+    rel	daughter	jennifer	andrew
+    rel	daughter	jennifer	christine
+    rel	father	andrew	jennifer
+    rel	husband	charles	jennifer
+    rel	mother	christine	jennifer
+    rel	nephew	colin	jennifer
+    rel	niece	charlotte	jennifer
+    rel	wife	jennifer	charles
+
+The positive labels, then, should be for Y=charlotte and colin, since Jennifer is their aunt. The negative labels should be for Y=andrew, christine, and charles, since Jennifer is something to them, but not their aunt.
+
+If we proceed that way for every *(relation,person)* pair in the training set, we end up with the file `kinship-train.examples`. The lines are a bit long for a true sample, but hopefully you get the idea:
+
+    interp(i_aunt,andrew,Y) -interp(i_aunt,andrew,christine)	-interp(i_aunt,andrew,james)...
+    interp(i_aunt,arthur,Y)	-interp(i_aunt,arthur,charlotte)	-interp(i_aunt,arthur,penelope)...
+    interp(i_aunt,charles,Y)	-interp(i_aunt,charles,charlotte)	-interp(i_aunt,charles,jennifer)...
+    interp(i_aunt,charlotte,Y)	-interp(i_aunt,charlotte,james)	-interp(i_aunt,charlotte,charles)...
+    interp(i_aunt,christine,Y)	-interp(i_aunt,christine,james)	-interp(i_aunt,christine,jennifer)...
+    interp(i_aunt,christopher,Y)	-interp(i_aunt,christopher,arthur)...
+    interp(i_aunt,colin,Y)	-interp(i_aunt,colin,charlotte)	-interp(i_aunt,colin,james)...
+    interp(i_aunt,james,Y)	-interp(i_aunt,james,charlotte)	-interp(i_aunt,james,christine)...
+    interp(i_aunt,jennifer,Y)	+interp(i_aunt,jennifer,charlotte)	+interp(i_aunt,jennifer,colin)...
+    interp(i_aunt,margaret,Y)	+interp(i_aunt,margaret,charlotte)	+interp(i_aunt,margaret,colin)...
+    ...
+
+Note that many of the queries have no positive examples; some of these cases are gender-exclusions (Charles is no one's wife) and some are relations that just happen to be empty for this set (Colin has no children). Older versions of ProPPR had a problem with queries without both positive and negative examples; support for single-flavor labels started with v2.0.
+
+We perform the same procedure for the test family, resulting in the file `kinship-test.examples`.
+
+### Step 2.1: Generating incomplete KBs
+
+We happen to know from experiments that previous tools are particularly bad at recovering complimentary pairs of relations such as husband/wife, sister/brother, etc. For this tutorial, we will remove husband/wife; you can easily repeat the experiment for other pairs (or any relation or set or relations).
+
+First we can generate database files which are missing the husband/wife information:
+
+    $ grep -v -e "husband" -e "wife" kinship-train.cfacts > k_spouse-train.cfacts
+    $ grep -v -e "husband" -e "wife" kinship-test.cfacts > k_spouse-test.cfacts
+
+Then we'll generate examples files which include only the husband/wife queries:
+
+    $ grep -e "husband" -e "wife" kinship-train.examples > k_spouse-train.examples
+    $ grep -e "husband" -e "wife" kinship-test.examples > k_spouse-test.examples
+
+## Step 3: Writing the rules file
+
+We're going to use an abductive program to learn alternate pathways through the KB that express the missing husband/wife relationship. This means that the features of our logic program must themselves represent first-order clauses, so that during the learning step, we can use the gradient as an indicator of which of these clauses are the most useful in expressing the missing relationships.
+
+We will support three first-order clauses in the features of our program:
+
+ * `if(P,R)` = *let P(X,Y) be true if R(X,Y) is true*
+ * `ifInv(P,R)` = *let P(X,Y) be true if R(Y,X) is true*
+ * `chain(P,R1,R2)` = *let P(X,Y) be true if R1(X,Z) is true and R2(Z,Y) is true*
+
+
+

@@ -1,0 +1,6 @@
+*.grounded
+*.wts
+*.solutions.txt
+uml_1_*.ppr
+uml_1_*.wam
+uml_1_*.gradient
