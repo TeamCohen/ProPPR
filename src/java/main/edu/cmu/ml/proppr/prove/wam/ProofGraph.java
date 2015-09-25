@@ -42,9 +42,9 @@ public abstract class ProofGraph {
 	
 	private InferenceExample example;
 	private WamProgram program;
-	private final WamInterpreter interpreter;
+	protected final WamInterpreter interpreter;
 	private int queryStartAddress;
-	private final ImmutableState startState;
+	protected final ImmutableState startState;
 	private int[] variableIds;
 	private Map<Feature,Double> trueLoopFD;
 	private Feature restartFeature;
