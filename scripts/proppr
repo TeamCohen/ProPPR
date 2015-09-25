@@ -186,6 +186,7 @@ def doGradient(o):
    src = getFile(src,o)
    dst = makeOutput(getArg(2,stem+'.gradient'),o)
    invokeMain(o,'GradientFinder','--grounded',src,'--gradient',dst)
+   logging.info('gradient in '+dst)
 shortHelpMsg['gradient'] = ' INPUT.examples.grounded [OUTPUT.gradient]: measure gradient with respect to parameters'
 
 def doHelp(o):

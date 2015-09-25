@@ -104,3 +104,5 @@ ${NAME}_%.gradient: ${NAME}-train.sl_%.examples.grounded
 
 %.wam: %.ppr
 	proppr compile $<
+
+.SECONDARY:
