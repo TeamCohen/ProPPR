@@ -56,7 +56,7 @@ def doSet(o):
 shortHelpMsg['set'] = ' OPTION VALUE: store a default setting in proppr.settings, where OPTION starts with --'
 
 def doSettings(o):
-   for key,val in loadOptionDict().items():
+   for key,val in loadOptionDict(o).items():
       print key,val
 shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 
