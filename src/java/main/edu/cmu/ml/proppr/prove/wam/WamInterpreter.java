@@ -54,6 +54,7 @@ public class WamInterpreter {
 	private WamPlugin[] plugins;
 	public static final String WEIGHTED_JUMPTO_DELIMITER="#/";
 	public static final String JUMPTO_DELIMITER = "/";
+	private static final int MAX_HASH = 1 << (Integer.SIZE-2);
 	public WamInterpreter(WamProgram program, WamPlugin[] plugins) {
 		this(new SimpleSymbolTable<String>(), program, plugins);
 	}
@@ -441,6 +442,7 @@ public class WamInterpreter {
 		// first get binding information for vars in the root state
 		for (int k : root.getRegisters()) {
 			int j = from.dereference(k);
+			if (hash>MAX_HASH) log.warn("Canonical hash overflow");
 			if (hash>0) hash = hash << 1;
 			if (from.hasConstantAt(j)) 
 				hash = hash ^ from.getIdOfConstantAt(j)-1;
@@ -455,6 +457,7 @@ public class WamInterpreter {
 			this.executeWithoutBranching(false);
 			if (this.state.getJumpTo() != null) {
 				// call information
+				if (hash>MAX_HASH) log.warn("Canonical hash overflow");
 				hash = hash << 1;
 				hash = hash ^ this.state.getJumpTo().hashCode();
 				int arity = Integer.parseInt(this.state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER)[1]);
@@ -475,11 +478,11 @@ public class WamInterpreter {
 			int j = from.dereference(k);
 			if (sb.length()>0) sb.append(",");
 			sb.append("X").append(k).append("=");
-			int cid = from.getIdOfConstantAt(j);
-			if (cid>this.getConstantTable().size()) throw new IllegalStateException ("No value for constant id "+cid);
-			if (from.hasConstantAt(j)) 
+			if (from.hasConstantAt(j)) {
+				int cid = from.getIdOfConstantAt(j);
+				if (cid>this.getConstantTable().size()) throw new IllegalStateException ("No value for constant id "+cid);
 				sb.append(this.getConstantTable().getSymbol(cid));
-			else sb.append("X").append(j);
+			} else sb.append("X").append(j);
 		}
 		// next get pending goal information
 		// back up the current state

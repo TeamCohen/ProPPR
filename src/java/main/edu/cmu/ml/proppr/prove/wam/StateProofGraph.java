@@ -39,7 +39,10 @@ public class StateProofGraph extends ProofGraph {
 
 			@Override
 			public boolean equals(State s1, State s2) {
-				return s1.canonicalHash() == s2.canonicalHash();
+				if (s1.canonicalHash() != s2.canonicalHash()) return false;
+				s1.setCanonicalForm(interpreter, startState);
+				s2.setCanonicalForm(interpreter, startState);
+				return s1.canonicalForm().equals(s2.canonicalForm());
 			}},
 			featureTab);
 	}
