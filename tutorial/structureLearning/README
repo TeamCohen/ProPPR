@@ -127,9 +127,9 @@ We're going to use an abductive program to learn alternate pathways through the 
 
 We will support three first-order clauses in the features of our program:
 
- * `if(P,R)` meaning, *let P(X,Y) be true if R(X,Y) is true*
- * `ifInv(P,R)`  meaning, *let P(X,Y) be true if R(Y,X) is true*
- * `chain(P,R1,R2)`  meaning, *let P(X,Y) be true if R1(X,Z) is true and R2(Z,Y) is true*
+ * `if(P,R)` meaning, *P(X,Y) :- R(X,Y)*
+ * `ifInv(P,R)`  meaning, *P(X,Y) :- R(Y,X)*
+ * `chain(P,R1,R2)`  meaning, *P(X,Y) :- R1(X,Z),R2(Z,Y)*
 
 Each of these clauses will correspond to a pair of rules for answering a query of the form `interp(someP,someX,Yunknown)`:
 
@@ -244,4 +244,69 @@ Then we can read the parameters like this:
 and so on.
 
 ## Step 5: Using the gradient to generate rules
+
+Now we're going to construct the rules file suggested by the gradient -- that is, for each useful feature (i.e. with gradient < 0), add the equivalent first-order clause as a rule for answering `interp` queries.
+
+So for feature `chain(i_wife,mother,daughter)` we'll add rule
+
+    interp0(i_wife,X,Y) :- rel(mother,X,Z),rel(daughter,Z,Y) {chain(i_wife,mother,daughter)}.
+
+The feature block at the end isn't strictly necessary, but if we ever have to break open a ground file we'll be glad we included human-readable features.
+
+Since this transformation is fairly simple, we can write a script to do it for us:
+
+    #!/usr/bin/python
+    import sys
+    import re
+    
+    def gradient_to_rules(gradFile):
+        rules = []
+        with open(gradFile,"r") as f:
+            for line in f:
+                if line.startswith("#"): continue
+                (sfeature,sscore) = line.strip().split("\t")
+                score = float(sscore)
+                if score>=0: continue
+                feature = re.split("[(),]",sfeature)[:-1]
+                if feature[0] == "if":
+                    newrule = "interp0(%s,X,Y) :- rel(%s,X,Y) {%s}." % (feature[1],feature[2],sfeature)
+                elif feature[0] == "ifInv":
+                    newrule = "interp0(%s,X,Y) :- rel(%s,Y,X) {%s}." % (feature[1],feature[2],sfeature)
+                elif feature[0] == "chain":
+                    newrule = "interp0(%s,X,Y) :- rel(%s,X,Z),rel(%s,Z,Y) {%s}." % (feature[1],feature[2],feature[3],sfeature)
+                else:
+                    print "#?? unparsed feature",feature
+                    continue
+                rules.append(newrule)
+        return rules
+    
+    if __name__=='__main__':
+        print "\n".join(gradient_to_rules(sys.argv[1]))
+
+We've stored this script as `structureLearning.py`, and if you run it on the gradient file, you get this:
+
+    $ python structureLearning.py k_spouse-train.gradient
+    #?? unparsed feature ['db', 'FactsPlugin', 'k_spouse-train.cfacts']
+    interp0(i_wife,X,Y) :- rel(aunt,X,Z),rel(niece,Z,Y) {chain(i_wife,aunt,niece)}.
+    interp0(i_husband,X,Y) :- rel(father,X,Z),rel(son,Z,Y) {chain(i_husband,father,son)}.
+    interp0(i_wife,X,Y) :- rel(father,X,Z),rel(father,Z,Y) {chain(i_wife,father,father)}.
+    interp0(i_husband,X,Y) :- rel(mother,X,Z),rel(mother,Z,Y) {chain(i_husband,mother,mother)}.
+    interp0(i_wife,X,Y) :- rel(father,X,Z),rel(aunt,Z,Y) {chain(i_wife,father,aunt)}.
+    interp0(i_husband,X,Y) :- rel(nephew,X,Z),rel(son,Z,Y) {chain(i_husband,nephew,son)}.
+    interp0(i_wife,X,Y) :- rel(mother,X,Z),rel(uncle,Z,Y) {chain(i_wife,mother,uncle)}.
+    ...
+    
+We'll store that output as `k_spouse_delta_01.ppr` since they are the new rules (**delta**) spawned after zero epochs of training.
+
+You may notice that these are not actually rules for answering `interp`. Since we are computer scientists after all, we're going to insert an extra level of indirection with the following:
+
+    interp(P,X,Y) :- interp0(P,X,Y).
+
+That line has been saved as `interp.ppr`, and so to produce a complete ruleset, we need to concatenate the gradient-generated rules with the interp rules:
+
+    $ cat k_spouse_delta_01.ppr interp.ppr > k_spouse_alone_01.ppr
+
+This gives us a standalone (**alone**) rulefile.
+
+## Step 6: Using the gradient-generated rulefile to answer queries
 
