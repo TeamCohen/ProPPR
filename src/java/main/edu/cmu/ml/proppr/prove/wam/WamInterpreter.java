@@ -436,7 +436,6 @@ public class WamInterpreter {
 		// first get binding information for vars in the root state
 		for (int k : root.getRegisters()) {
 			int j = from.dereference(k);
-			if (hash>MAX_HASH) log.warn("Canonical hash overflow");
 			if (hash>0) hash = hash << 1;
 			if (from.hasConstantAt(j)) 
 				hash = hash ^ from.getIdOfConstantAt(j)-1;
@@ -451,7 +450,6 @@ public class WamInterpreter {
 			this.executeWithoutBranching(false);
 			if (this.state.getJumpTo() != null) {
 				// call information
-				if (hash>MAX_HASH) log.warn("Canonical hash overflow");
 				hash = hash << 1;
 				hash = hash ^ this.state.getJumpTo().hashCode();
 				int arity = Integer.parseInt(this.state.getJumpTo().split(WamInterpreter.JUMPTO_DELIMITER)[1]);
