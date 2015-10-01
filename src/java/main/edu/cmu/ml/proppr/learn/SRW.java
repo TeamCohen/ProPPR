@@ -64,7 +64,7 @@ public class SRW {
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
 	protected RegularizationSchedule regularizer;
-	protected LossFunction lossf=new PosNegLoss();
+	protected LossFunction lossf= new L2SqLOss();//new PosNegLoss();//
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
@@ -106,7 +106,7 @@ public class SRW {
 		load(params, example);
 		inference(params, example);
 		TIntDoubleMap gradient = gradient(params,example);
-		
+
 		for (Map.Entry<String, Double> e : prepare.entrySet()) {
 			if (trainable(e.getKey())) 
 				accumulator.adjustValue(e.getKey(), -e.getValue() / example.length());
@@ -292,7 +292,9 @@ public class SRW {
 		regularization(params, ex, gradient);
 		
 		int nonzero=lossf.computeLossGradient(params, example, gradient, this.cumloss, c);
-
+		for(int i: gradient.keys()){
+			gradient.put(i,gradient.get(i)/example.length());
+		}
 		if (nonzero==0) {
 			this.zeroGradientData.numZero++;
 			if (this.zeroGradientData.numZero < MAX_ZERO_LOGS) {
