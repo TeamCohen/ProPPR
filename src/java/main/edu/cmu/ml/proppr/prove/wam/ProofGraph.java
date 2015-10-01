@@ -65,7 +65,9 @@ public abstract class ProofGraph {
 		
 		this.trueLoopFD = new HashMap<Feature,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
 		this.restartFeature = RESTART;
+		this.init(featureTab);
 	}
+	protected abstract void init(SymbolTable<Feature> featureTab);
 	private ImmutableState createStartState() throws LogicProgramException {
 		// execute to the first call
 		this.example.getQuery().variabilize();

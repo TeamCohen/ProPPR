@@ -34,7 +34,9 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		super(query, apr, program, plugins);
 	}
 	public CachingIdProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		super(ex, apr, featureTab, program, plugins);
+		super(ex,apr,featureTab,program,plugins);
+	}
+	protected void init(SymbolTable<Feature> featureTab) {
 		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
 		this.featureTab = featureTab;
 		nodeTab = new ConcurrentSymbolTable<State>(new ConcurrentSymbolTable.HashingStrategy<State>() {
