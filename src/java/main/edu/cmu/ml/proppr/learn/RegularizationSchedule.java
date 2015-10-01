@@ -20,7 +20,7 @@ public class RegularizationSchedule {
 	public void regularization(ParamVector<String,?> params, RWExample ex, TIntDoubleMap gradient) {
 		for (String f : localFeatures(params, ex.getGraph())) {
 			if (!parent.trainable(f)) continue;
-			reg.synchronousUpdate(parent.c, params, f, gradient, parent.cumulativeLoss(), ex.getGraph().featureLibrary);
+			reg.synchronousUpdate(parent.c, params, f, gradient, parent._cumulativeLoss(), ex.getGraph().featureLibrary);
 		}
 	}
 	public ParamVector<String,?> setupParams(ParamVector<String,?> params) { return params; }
