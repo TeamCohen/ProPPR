@@ -318,7 +318,9 @@ public class SRW {
 	}
 	
 	/** template: update gradient with regularization term */
-	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {}
+	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {
+		regularizer.regularization(params, ex, gradient);
+	}
 
 	//////////////////////////// copypasta from SRW.java:
 
@@ -397,6 +399,9 @@ public class SRW {
 		this.cumloss.clear();
 		this.cumloss.add(LOSS.LOG, 0.0);
 		this.cumloss.add(LOSS.REGULARIZATION, 0.0);
+	}
+	public LossData _cumulativeLoss() {
+		return this.cumloss;
 	}
 	public LossData cumulativeLoss() {
 		return this.cumloss.copy();
