@@ -287,6 +287,7 @@ public class Trainer {
 			e.printStackTrace();
 		}
 		// finish any trailing updates for this epoch
+		// finish any trailing updates for this epoch
 		this.masterLearner.cleanupParams(paramVec,paramVec);
 
 			// loss status and signalling the stopper

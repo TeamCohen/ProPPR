@@ -2,6 +2,7 @@ package edu.cmu.ml.proppr.util;
 
 import java.io.IOException;
 
+import edu.cmu.ml.proppr.learn.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -10,18 +11,6 @@ import edu.cmu.ml.proppr.AdaGradTrainer;
 import edu.cmu.ml.proppr.CachingTrainer;
 import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
-import edu.cmu.ml.proppr.learn.AdaGradSRW;
-import edu.cmu.ml.proppr.learn.DprSRW;
-import edu.cmu.ml.proppr.learn.LocalRegularizationSchedule;
-import edu.cmu.ml.proppr.learn.NormalizedPosLoss;
-import edu.cmu.ml.proppr.learn.PosNegLoss;
-import edu.cmu.ml.proppr.learn.RegularizationSchedule;
-import edu.cmu.ml.proppr.learn.Regularize;
-import edu.cmu.ml.proppr.learn.RegularizeL1;
-import edu.cmu.ml.proppr.learn.RegularizeL1GroupLasso;
-import edu.cmu.ml.proppr.learn.RegularizeL1Laplacian;
-import edu.cmu.ml.proppr.learn.RegularizeL2;
-import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ClippedExp;
 import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.LReLU;
@@ -57,7 +46,7 @@ public class ModuleConfiguration extends Configuration {
 	private enum SRWS { ppr, dpr, adagrad }
 	private enum REGULARIZERS { l1, l1laplacian, l1grouplasso, l2 };
 	private enum REGULARIZERSCHEDULES { synch, global, lazy, local };
-	private enum LOSSFUNCTIONS { posneg, normpos };
+	private enum LOSSFUNCTIONS { posneg, normpos, l2square };
 	
 	public Grounder<?> grounder;
 	public SRW srw;
@@ -395,6 +384,10 @@ public class ModuleConfiguration extends Configuration {
 				break;
 			case normpos:
 				this.srw.setLossFunction(new NormalizedPosLoss());
+				break;
+			case l2square:
+				this.srw.setLossFunction(new L2SqLOss());
+				break;
 			}
 		} else {
 			this.srw = new SRW(sp);
