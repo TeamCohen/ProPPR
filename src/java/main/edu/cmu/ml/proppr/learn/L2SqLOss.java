@@ -22,25 +22,24 @@ public class L2SqLOss extends LossFunction{
         // add empirical loss gradient term
         // positive examples
         double pmax = 0;
-        for(int a: ex.getNegList()){
-            for(int b: ex.getPosList()){
-                double delta = ex.p[a] - ex.p[b];
+        for(int b: ex.getNegList()){
+            for(int a: ex.getPosList()){
+                double delta = ex.p[b] - ex.p[a];
 
-                int[] keys = getKeys(ex.dp[a],ex.dp[b]);
+                int[] keys = getKeys(ex.dp[b],ex.dp[a]);
                 for(int feature: keys) {
-                    double da = ex.dp[a].get(feature);
-                    if(da!=0.0)
-                        nonzero++;
                     double db = ex.dp[b].get(feature);
                     if(db!=0.0)
                         nonzero++;
-                    double del = derivLoss(delta) * (da - db);
+                    double da = ex.dp[a].get(feature);
+                    if(da!=0.0)
+                        nonzero++;
+                    double del = derivLoss(delta) * (db - da);
                     gradient.adjustOrPutValue(feature, del, del);
 
                 }
                 if (log.isDebugEnabled()) log.debug("+pa=" + ex.p[a] +" pb = " + ex.p[b]);
-                lossdata.add(LOSS.L2, delta);
-
+                lossdata.add(LOSS.L2, Math.max(0, delta));
             }
         }
 
