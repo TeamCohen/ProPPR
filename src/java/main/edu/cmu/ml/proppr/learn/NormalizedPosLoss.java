@@ -20,6 +20,7 @@ public class NormalizedPosLoss extends LossFunction {
 		for (int a : ex.getPosList()) {
 			sumPos += clip(ex.p[a]);
 		}
+		sumPos = clip(sumPos);
 
 
 		for (int a : ex.getPosList()) {
@@ -42,23 +43,31 @@ public class NormalizedPosLoss extends LossFunction {
 		for (double pa : ex.getNegList()) {
 			sumPosNeg += clip(pa);
 		}
-
-		for (TIntDoubleMap dpa : ex.dp) {
-
-			if (dpa == null)
-				continue;
-			for (TIntDoubleIterator da = dpa.iterator(); da.hasNext();) {
+		sumPosNeg = clip(sumPosNeg);
+		
+		for (int a : ex.getPosList()) {
+			for (TIntDoubleIterator da = ex.dp[a].iterator(); da.hasNext();) {
 				da.advance();
 				if (da.value() == 0)
 					continue;
 				nonzero++;
-				double nterm = da.value() / sumPosNeg;
-				gradient.adjustOrPutValue(da.key(), nterm, nterm);
+				double bterm = da.value() / sumPosNeg;
+				gradient.adjustOrPutValue(da.key(), bterm, bterm);
 			}
 		}
+		for (int b : ex.getNegList()) {
+			for (TIntDoubleIterator db = ex.dp[b].iterator(); db.hasNext();) {
+				db.advance();
+				if (db.value() == 0)
+					continue;
+				nonzero++;
+				double bterm = db.value() / sumPosNeg;
+				gradient.adjustOrPutValue(db.key(), bterm, bterm);
+			}
+		}
+
 		lossdata.add(LOSS.LOG, Math.log(sumPosNeg));
 
 		return nonzero;
-	}
-
+	}	
 }
