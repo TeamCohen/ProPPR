@@ -33,6 +33,7 @@ public abstract class State {
 	protected boolean failed;
 	protected LinkedList<CallStackFrame> calls;
 	protected int canon;
+	protected String canonF;
 	/** True iff there is a constant at heap position i. */
 	public boolean hasConstantAt(int i) { return heap[i]<0; }
 	/** True iff there is a variable at heap position i. */
@@ -48,7 +49,8 @@ public abstract class State {
 	 * @return
 	 */
 	public int getIdOfConstantAt(int i) { 
-		if (heap[i]>=0) throw new InvalidHeapException();
+		if (heap[i]>=0)
+			throw new InvalidHeapException();
 		return -heap[i];
 	}
 	/** Create a heap cell that stores a constant with the given id */
@@ -164,10 +166,22 @@ public abstract class State {
 	public int canonicalHash() {
 		return canon;
 	}
+	public String canonicalForm() {
+		return canonF;
+	}
 	public void setCanonicalHash(WamInterpreter interpreter, State startState) {
 		try {
 //			this.canon = interpreter.canonicalForm(startState, this).hashCode();
 			this.canon = interpreter.canonicalHash(startState, this);
+		} catch (LogicProgramException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void setCanonicalForm(WamInterpreter interpreter, State startState) {
+		if (this.canonF != null) return;
+		try {
+			this.canonF = interpreter.canonicalForm(startState, this);
 		} catch (LogicProgramException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
