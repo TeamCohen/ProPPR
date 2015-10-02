@@ -27,12 +27,12 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	public class DefaultHashingStrategy<T> implements HashingStrategy<T>
 	{
 		public Integer computeKey(T symbol) { return symbol.hashCode(); }
-		public boolean equals(T o1,T o2) { return o1.equals(o2); }
+		public boolean equals(T o1,T o2) { if (o1==null) return false; return o1.equals(o2); }
 	}
 	public class IdentityHashingStrategy<T> implements HashingStrategy<T>
 	{
 		public T computeKey(T symbol) { return symbol; }
-		public boolean equals(T o1,T o2) { return o1.equals(o2); }
+		public boolean equals(T o1,T o2) { if (o1==null) return false; return o1.equals(o2); }
 	}
 	public static enum HASHING_STRATEGIES {
 		hashCode,
@@ -93,7 +93,9 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 		if (!symbol2Id.containsKey(h)) return false;
 		Integer[] ids = symbol2Id.get(h);
 		for (int i=ids.length-1-ids[0];i>0;i--) {
-			if (hashingStrategy.equals(id2symbol.get(ids[i]), symbol)) return true;
+			T candidate = id2symbol.get(ids[i]);
+			if (candidate == null) throw new IllegalStateException("Found null symbol at hash "+h+":"+i+" of "+Dictionary.buildString(ids, new StringBuilder(), ",").toString());
+			if (hashingStrategy.equals(candidate, symbol)) return true;
 		}
 		return false;
 	}
@@ -107,6 +109,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 		//check collision
 		if (symbolContains(symbol)) return;
 		synchronized(this) {
+			if (symbolContains(symbol)) return;
 			Object h = hashingStrategy.computeKey(symbol);
 			int newId = ++nextId;
 //				symbol2Id.put(h,newId);
