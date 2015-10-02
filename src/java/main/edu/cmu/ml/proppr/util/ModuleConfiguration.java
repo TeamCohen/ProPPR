@@ -386,7 +386,7 @@ public class ModuleConfiguration extends Configuration {
 				this.srw.setLossFunction(new NormalizedPosLoss());
 				break;
 			case l2square:
-				this.srw.setLossFunction(new L2SqLOss());
+				this.srw.setLossFunction(new L2SqLoss());
 				break;
 			}
 		} else {
