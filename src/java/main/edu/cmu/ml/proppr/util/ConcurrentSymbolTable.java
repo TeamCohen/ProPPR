@@ -1,5 +1,6 @@
 package edu.cmu.ml.proppr.util;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +40,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	}
 
 
-	protected ConcurrentHashMap<Object,Integer> symbol2Id = new ConcurrentHashMap<Object,Integer>();
+	protected ConcurrentHashMap<Object,Integer[]> symbol2Id = new ConcurrentHashMap<Object,Integer[]>();
 	protected ConcurrentHashMap<Integer,T> id2symbol  = new ConcurrentHashMap<Integer,T>();
 	protected HashingStrategy<T> hashingStrategy;
 	protected int nextId = 0;
@@ -60,6 +61,42 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 
 		this.hashingStrategy = strategy==null? new DefaultHashingStrategy<T>() : strategy;
 	}
+	
+	private void putSymbol(Object h,int id) {
+//		symbol2Id.put(h,id);
+		if (!symbol2Id.containsKey(h)) {
+			symbol2Id.put(h, new Integer[] {0,id});
+		} else {
+			Integer[] cur = symbol2Id.get(h);
+			if (cur[0] == 0) {
+				// then there are no more free slots and we need to retabulate
+				Integer[] now = new Integer[(cur.length-1)*2 + 1];
+				for (int i=0;i<cur.length;i++) {now[i] = cur[i];}
+				now[0]=now.length-cur.length;
+				symbol2Id.put(h, now);
+				cur=now;
+			}
+			cur[cur.length - cur[0]]=id;
+			cur[0]--;
+		}
+	}
+	private int symbolGet(T symbol) {
+		Object h = hashingStrategy.computeKey(symbol);
+		Integer[] ids = symbol2Id.get(h);
+		for (int i=ids.length-1-ids[0];i>0;i--) {
+			if (hashingStrategy.equals(id2symbol.get(ids[i]), symbol)) return ids[i];
+		}
+		throw new IllegalStateException("Symbol "+symbol+" not found in ConcurrentSymbolTable");
+	}
+	private boolean symbolContains(T symbol) {
+		Object h = hashingStrategy.computeKey(symbol);
+		if (!symbol2Id.containsKey(h)) return false;
+		Integer[] ids = symbol2Id.get(h);
+		for (int i=ids.length-1-ids[0];i>0;i--) {
+			if (hashingStrategy.equals(id2symbol.get(ids[i]), symbol)) return true;
+		}
+		return false;
+	}
 
 	/**
 	 * Ensure that a 'symbol' is in the table.
@@ -67,17 +104,14 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 * @param symbol
 	 */
 	public void insert(T symbol) {
-		Object h = hashingStrategy.computeKey(symbol);
-		if (symbol2Id.containsKey(h)) {
-			//check collision
-			if (id2symbol.get(symbol2Id.get(h)).equals(symbol)) return;
-		}
+		//check collision
+		if (symbolContains(symbol)) return;
 		synchronized(this) {
-			if (!symbol2Id.containsKey(h)) {
-				int newId = ++nextId;
-				symbol2Id.put(h,newId);
-				id2symbol.put(newId,symbol);
-			}
+			Object h = hashingStrategy.computeKey(symbol);
+			int newId = ++nextId;
+//				symbol2Id.put(h,newId);
+			putSymbol(h,newId);
+			id2symbol.put(newId,symbol);
 		}
 	}
 	
@@ -89,16 +123,14 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	 */
 	public int getId(T symbol) {
 		insert(symbol);
-		Object h = hashingStrategy.computeKey(symbol);
-		return symbol2Id.get(h);
+		return symbolGet(symbol);
 	}
 
 	
 	/** Test if the symbol has been previously inserted.
 	 */
 	public boolean hasId(T symbol) {
-		Object h = hashingStrategy.computeKey(symbol);
-		return symbol2Id.containsKey(h);
+		return symbolContains(symbol);
 	}
 
 	/** Get the symbol that corresponds to an id.  Returns null of the
