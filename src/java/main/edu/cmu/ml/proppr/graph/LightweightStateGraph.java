@@ -107,6 +107,9 @@ public class LightweightStateGraph implements InferenceGraph {
 		return result;
 	}
 	
+	public void setOutlinks(int uid, List<Outlink> outlinks) {
+		setOutlinks(this.nodeTab.getSymbol(uid), outlinks);
+	}
 	public void setOutlinks(State u, List<Outlink> outlinks) {
 		// wwc: why are we saving these outlinks as a trove thing? space?
 		int ui = this.nodeTab.getId(u);

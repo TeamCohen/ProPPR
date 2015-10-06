@@ -31,5 +31,12 @@ public interface InferenceGraph {
 	 * @return
 	 */
 	public abstract String serialize();
+	public abstract String serialize(boolean includeFeatureIndex);
+	
+	/**
+	 * only used for unit tests
+	 */
+	public abstract void setOutlinks(int id, List<Outlink> outlinks);
+	public abstract int getId(State s);
 	
 }

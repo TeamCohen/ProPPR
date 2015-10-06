@@ -146,7 +146,7 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 	/** Return N, the largest id.
 	 */
 	public int size() {
-		return this.symbol2Id.size();
+		return this.id2symbol.size();
 	}
 
 	// simple command-line test 
