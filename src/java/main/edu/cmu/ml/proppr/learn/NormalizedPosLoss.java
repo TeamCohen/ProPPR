@@ -37,11 +37,11 @@ public class NormalizedPosLoss extends LossFunction {
 		lossdata.add(LOSS.LOG, -Math.log(sumPos));
 		
 		double sumPosNeg = 0;
-		for (double pa : ex.getPosList()) {
-			sumPosNeg += clip(pa);
+		for (int pa : ex.getPosList()) {
+			sumPosNeg += clip(ex.p[pa]);
 		}
-		for (double pa : ex.getNegList()) {
-			sumPosNeg += clip(pa);
+		for (int pa : ex.getNegList()) {
+			sumPosNeg += clip(ex.p[pa]);
 		}
 		sumPosNeg = clip(sumPosNeg);
 		
