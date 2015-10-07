@@ -80,6 +80,9 @@ public abstract class LearningGraphBuilder {
 			String[] edgeFeatures = split(next<0?string.substring(edgeDelim+1):string.substring(edgeDelim+1,next),EDGE_FEATURE_DELIM);
 			nodes[0] = Integer.parseInt(string.substring(last,srcDest));
 			nodes[1] = Integer.parseInt(string.substring(srcDest+2,edgeDelim));
+			if (nodes[1] > nodeSize) 
+				throw new GraphFormatException("Corrupted graph file: node size is listed = "+nodeSize 
+						+" but has an edge with dest "+nodes[1]);
 			// As it turns out, a trove map is slower here
 			//TObjectDoubleHashMap<String> fd = new TObjectDoubleHashMap<String>();
 			HashMap<String,Double> fd = new HashMap<String,Double>();

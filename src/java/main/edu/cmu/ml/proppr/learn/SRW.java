@@ -237,6 +237,9 @@ public class SRW {
 			for(int eid = ex.getGraph().node_near_lo[uid], xvi = 0; eid < ex.getGraph().node_near_hi[uid]; eid++, xvi++) {
 				int vid = ex.getGraph().edge_dest[eid];
 				// p: 2(b)i. p_v^{t+1} += (1-alpha) * p_u^t * M_uv
+				if (vid>=pNext.length) {
+					throw new IllegalStateException("vid="+vid+" > pNext.length="+pNext.length);
+				}
 				pNext[vid] += (1-c.apr.alpha) * ex.p[uid] * ex.M[uid][xvi];
 				// d: i. for each feature i in dM_uv:
 				if (dNext[vid] == null)
