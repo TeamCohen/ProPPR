@@ -23,6 +23,12 @@ import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
+/**
+ * This test is known to fail and we're not sure why. :(
+ * 
+ * @author krivard
+ *
+ */
 public class FiniteDifferenceTest extends RedBlueGraph {
 	private static final Logger log = Logger.getLogger(FiniteDifferenceTest.class);
 	protected TIntDoubleMap startVec;

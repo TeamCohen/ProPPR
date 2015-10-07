@@ -1,8 +1,9 @@
 Makefile.in
 *.results.txt
 *.log
-*.cooked
+*.grounded
 *.rdata
 *.out
-*params.wts
+*.wts
+*.params
 results.txt

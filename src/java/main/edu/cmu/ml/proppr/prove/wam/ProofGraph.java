@@ -42,9 +42,9 @@ public abstract class ProofGraph {
 	
 	private InferenceExample example;
 	private WamProgram program;
-	private final WamInterpreter interpreter;
+	protected final WamInterpreter interpreter;
 	private int queryStartAddress;
-	private final ImmutableState startState;
+	protected final ImmutableState startState;
 	private int[] variableIds;
 	private Map<Feature,Double> trueLoopFD;
 	private Feature restartFeature;
@@ -65,7 +65,9 @@ public abstract class ProofGraph {
 		
 		this.trueLoopFD = new HashMap<Feature,Double>(); this.trueLoopFD.put(TRUELOOP,1.0);
 		this.restartFeature = RESTART;
+		this.init(featureTab);
 	}
+	protected abstract void init(SymbolTable<Feature> featureTab);
 	private ImmutableState createStartState() throws LogicProgramException {
 		// execute to the first call
 		this.example.getQuery().variabilize();

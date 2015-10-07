@@ -34,7 +34,9 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		super(query, apr, program, plugins);
 	}
 	public CachingIdProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
-		super(ex, apr, featureTab, program, plugins);
+		super(ex,apr,featureTab,program,plugins);
+	}
+	protected void init(SymbolTable<Feature> featureTab) {
 		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
 		this.featureTab = featureTab;
 		nodeTab = new ConcurrentSymbolTable<State>(new ConcurrentSymbolTable.HashingStrategy<State>() {
@@ -44,7 +46,10 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			}
 			@Override
 			public boolean equals(State s1, State s2) {
-				return s1.canonicalHash() == s2.canonicalHash();
+				if (s1.canonicalHash() != s2.canonicalHash()) return false;
+				s1.setCanonicalForm(interpreter, startState);
+				s2.setCanonicalForm(interpreter, startState);
+				return s1.canonicalForm().equals(s2.canonicalForm());
 			}});
 		this.nodeTab.insert(this.getStartState());
 	}

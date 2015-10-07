@@ -24,13 +24,16 @@ public class StateProofGraph extends ProofGraph {
 	private static final Logger log = Logger.getLogger(ProofGraph.class);
 	private LightweightStateGraph graph;
 	public StateProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException { 
-		this(new InferenceExample(query,null,null), apr, program, plugins);
+		super(query,apr,program,plugins);//this(new InferenceExample(query,null,null), apr, program, plugins);
 	}
-	public StateProofGraph(InferenceExample ex, APROptions apr, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
-		this(ex, apr, new SimpleSymbolTable<Feature>(), program, plugins);
+	public StateProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
+		super(ex,apr,featureTab,program,plugins);
 	}
-	public StateProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
-		super(ex, apr, featureTab, program, plugins);
+//	public StateProofGraph(InferenceExample ex, APROptions apr, WamProgram program, WamPlugin[] plugins) throws LogicProgramException {
+//		this(ex, apr, new SimpleSymbolTable<Feature>(), program, plugins);
+//	}
+	@Override
+	protected void init(SymbolTable<Feature> featureTab) {
 		this.graph = new LightweightStateGraph(new HashingStrategy<State>() {
 			@Override
 			public int computeHashCode(State s) {
@@ -39,7 +42,10 @@ public class StateProofGraph extends ProofGraph {
 
 			@Override
 			public boolean equals(State s1, State s2) {
-				return s1.canonicalHash() == s2.canonicalHash();
+				if (s1.canonicalHash() != s2.canonicalHash()) return false;
+				s1.setCanonicalForm(interpreter, startState);
+				s2.setCanonicalForm(interpreter, startState);
+				return s1.canonicalForm().equals(s2.canonicalForm());
 			}},
 			featureTab);
 	}
