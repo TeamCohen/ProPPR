@@ -19,7 +19,6 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.examples.PprExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.tools.ClippedExp;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
@@ -64,7 +63,7 @@ public class SRW {
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
 	protected RegularizationSchedule regularizer;
-	protected LossFunction lossf= new L2SqLOss();//new PosNegLoss();//
+	protected LossFunction lossf=new PairwiseL2SqLoss();// new PosNegLoss();//
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
