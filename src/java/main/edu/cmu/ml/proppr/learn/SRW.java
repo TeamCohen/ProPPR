@@ -63,11 +63,7 @@ public class SRW {
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
 	protected RegularizationSchedule regularizer;
-<<<<<<< HEAD
-	protected LossFunction lossf=new PairwiseL2SqLoss();// new PosNegLoss();//
-=======
 	protected LossFunction lossf=new PosNegLoss();
->>>>>>> a312e4a5be3efe1d3ac5240a237c43f3e437d726
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
