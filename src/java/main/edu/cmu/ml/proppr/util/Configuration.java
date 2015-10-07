@@ -153,7 +153,7 @@ public class Configuration {
 					if (i+1 < args.length && !args[i+1].startsWith("--")) {
 						props.setProperty(args[i], args[i+1]);
 						i++;
-					} else props.put(args[i], true);
+					} else props.setProperty(args[i], "true");
 				}
 			}
 
@@ -627,14 +627,14 @@ public class Configuration {
 	}
 
 	protected String[] combinedArgs(String[] origArgs) {
-		// if the user specified a properties file, add those values at the end
+		// if the user specified a properties file, add those values at the beginning
 		// (so that command line args override them)
 		if (System.getProperty(PROPFILE) != null) {
 			String[] propArgs = fakeCommandLine(System.getProperty(PROPFILE));
 			String[] args = new String[origArgs.length + propArgs.length];
 			int i = 0;
-			for (int j = 0; j < origArgs.length; j++) args[i++] = origArgs[j];
 			for (int j = 0; j < propArgs.length; j++) args[i++] = propArgs[j];
+			for (int j = 0; j < origArgs.length; j++) args[i++] = origArgs[j];
 			return args;
 		}
 		return origArgs;
@@ -655,7 +655,7 @@ public class Configuration {
 		StringBuilder sb = new StringBuilder();
 		for (String name : props.stringPropertyNames()) {
 			sb.append(" --").append(name);
-			if (props.getProperty(name) != null) {
+			if (props.getProperty(name) != null && !props.getProperty(name).equals("")) {
 				sb.append(" ").append(props.getProperty(name));
 			}
 		}
