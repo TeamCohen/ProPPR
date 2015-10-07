@@ -16,6 +16,10 @@ public class NormalizedPosLoss extends LossFunction {
 		int nonzero = 0;
 		double mag = 0;
 
+		//if there are no negative nodes or no positive nodes, the probability of positive nodes
+		//is zero or 1, and the empirical loss gradient is zero.
+		if (ex.getNegList().length ==0 || ex.getPosList().length ==0) return nonzero;
+		
 		double sumPos = 0;
 		for (int a : ex.getPosList()) {
 			sumPos += clip(ex.p[a]);
@@ -37,11 +41,11 @@ public class NormalizedPosLoss extends LossFunction {
 		lossdata.add(LOSS.LOG, -Math.log(sumPos));
 		
 		double sumPosNeg = 0;
-		for (double pa : ex.getPosList()) {
-			sumPosNeg += clip(pa);
+		for (int pa : ex.getPosList()) {
+			sumPosNeg += clip(ex.p[pa]);
 		}
-		for (double pa : ex.getNegList()) {
-			sumPosNeg += clip(pa);
+		for (int pa : ex.getNegList()) {
+			sumPosNeg += clip(ex.p[pa]);
 		}
 		sumPosNeg = clip(sumPosNeg);
 		
