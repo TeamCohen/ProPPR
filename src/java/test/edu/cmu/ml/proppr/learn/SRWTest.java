@@ -48,7 +48,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	@Override
 	public void moreSetup(LearningGraphBuilder lgb) {
-		uniformParams = makeParams(new ConcurrentHashMap<String,Double>());
+		uniformParams = srw.getRegularizer().setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>()));
 		for (String n : new String[] {"fromb","tob","fromr","tor"}) uniformParams.put(n,srw.getSquashingFunction().defaultValue());
 		startVec = new TIntDoubleHashMap();
 		startVec.put(nodes.getId("r0"),1.0);
@@ -140,14 +140,14 @@ public class SRWTest extends RedBlueGraph {
 //		equalScores(baseLineVec,newVec);
 //	}
 	
-	
-	public ParamVector<String,?> makeParams(Map<String,Double> foo) {
-		return new SimpleParamVector(foo);
-	}
-	
-	public ParamVector<String,?> makeParams() {
-		return new SimpleParamVector();
-	}
+//	
+//	public ParamVector<String,?> makeParams(Map<String,Double> foo) {
+//		return new SimpleParamVector(foo);
+//	}
+//	
+//	public ParamVector<String,?> makeParams() {
+//		return new SimpleParamVector();
+//	}
 	
 	public ParamVector<String,?> makeGradient(SRW srw, ParamVector<String,?> paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		ParamVector<String,?> grad = new SimpleParamVector<String>();
@@ -190,7 +190,8 @@ public class SRWTest extends RedBlueGraph {
 		return makeBiasedVec(new String[] {"tob"}, new String[] {"tor"});
 	}
 	protected ParamVector<String,?> makeBiasedVec(String[] upFeatures, String[] downFeatures) {
-		ParamVector<String,?> biasedWeightVec = makeParams(); biasedWeightVec.putAll(uniformParams);
+		ParamVector<String,?> biasedWeightVec = srw.getRegularizer().setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>()));
+		biasedWeightVec.putAll(uniformParams);
 		if (biasedWeightVec.get(upFeatures[0]).equals(1.0)) {
 			for (String f : upFeatures)
 				biasedWeightVec.put(f, 10.0);
