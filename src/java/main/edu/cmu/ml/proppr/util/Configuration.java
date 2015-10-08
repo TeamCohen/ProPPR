@@ -66,6 +66,7 @@ public class Configuration {
 	public static final int USE_ORDER = 0x20;
 	public static final int USE_DUPCHECK = 0x40;
 	public static final int USE_THROTTLE = 0x80;
+	public static final int USE_EMPTYGRAPHS = 0x100;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
 	private static final String APR_CONST_OPTION = "apr";
@@ -76,7 +77,8 @@ public class Configuration {
 	private static final String ORDER_CONST_OPTION = "order";
 	private static final String DUPCHECK_CONST_OPTION = "duplicateCheck";
 	private static final String THROTTLE_CONST_OPTION = "throttle";
-	
+	private static final String EMPTYGRAPHS_CONST_OPTION = "includeEmptyGraphs";
+
 
 	/* set class for module. Options for this section are handled in ModuleConfiguration.java. */
 	/** module. */
@@ -89,7 +91,7 @@ public class Configuration {
 	/** */
 	public static final String PROPFILE = "config.properties";
 	private static final boolean DEFAULT_COMBINE = true;
-	
+
 	private static final int USE_APR = USE_WAM | USE_PROVER | USE_SRW;
 
 	public File queryFile = null;
@@ -104,12 +106,13 @@ public class Configuration {
 	public WamPlugin[] plugins = null;
 	public String[] programFiles = null;
 	public int nthreads = -1;
-    public APROptions apr = new APROptions();
+	public APROptions apr = new APROptions();
 	public int epochs = 5;
 	public boolean traceLosses = false;
 	public boolean force = false;
 	public boolean ternaryIndex = false;
 	public boolean maintainOrder = true;
+	public boolean includeEmptyGraphs = false;
 	public int duplicates = (int) 1e6;
 	public int throttle = Multithreading.DEFAULT_THROTTLE;
 
@@ -129,7 +132,7 @@ public class Configuration {
 	public Configuration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		boolean combine = DEFAULT_COMBINE;
 		int[] flags = {inputFiles, outputFiles, constants, modules};
-		
+
 		Options options = new Options();
 		options.addOption(Option.builder().longOpt("profile")
 				.desc("Holds all computation & loading until the return key is pressed.")
@@ -140,10 +143,14 @@ public class Configuration {
 		CommandLine line = null;
 		try {
 			DefaultParser parser = new DefaultParser();
-			Properties props = new Properties();
 			// if the user specified a properties file, add those values at the beginning
 			// (so that command line args override them)
 			if(combine) args = combinedArgs(args);
+
+			// this is terrible: we just read a Properties from a file and serialized it to String[],
+			// and now we're going to put it back into a Properties object. But Commons CLI 
+			// doesn't know how to handle unrecognized options, so ... that's what we gotta do.
+			Properties props = new Properties();
 			for (int i=0; i<args.length; i++) {
 				if (args[i].startsWith("--")) {
 					if (!options.hasOption(args[i])) {
@@ -160,10 +167,6 @@ public class Configuration {
 
 			// parse the command line arguments
 			line = parser.parse(options, new String[0], props);
-//			if (parser.hasUnrecognizedOptions()) {
-//				System.err.println("WARNING: unrecognized options detected:");
-//				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
-//			}
 			if (line.hasOption("profile")) {
 				System.out.println("Holding for profiler setup; press any key to proceed.");
 				System.in.read();
@@ -184,7 +187,7 @@ public class Configuration {
 	}
 	protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
 		int flags;
-		
+
 		if (line.hasOption("help")) usageOptions(options, allFlags);
 
 		// input files: must exist already
@@ -197,7 +200,7 @@ public class Configuration {
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))           this.paramsFile = getExistingFile(line.getOptionValue(PARAMS_FILE_OPTION));
 		if (isOn(flags,USE_INIT_PARAMS) && line.hasOption(INIT_PARAMS_FILE_OPTION)) this.initParamsFile = getExistingFile(line.getOptionValue(INIT_PARAMS_FILE_OPTION));
 		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION))       this.gradientFile = getExistingFile(line.getOptionValue(GRADIENT_FILE_OPTION));
-		
+
 		// output & intermediate files: may not exist yet
 		flags = outputFiles(allFlags);
 		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))         this.queryFile = new File(line.getOptionValue(QUERIES_FILE_OPTION));
@@ -226,8 +229,10 @@ public class Configuration {
 			else this.maintainOrder = false;
 		}
 		if (anyOn(flags,USE_DUPCHECK|USE_WAM) && line.hasOption(DUPCHECK_CONST_OPTION)) this.duplicates = (int) Double.parseDouble(line.getOptionValue(DUPCHECK_CONST_OPTION));
-		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION)) this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
-		
+		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION))          this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
+		if (isOn(flags,USE_EMPTYGRAPHS) && line.hasOption(EMPTYGRAPHS_CONST_OPTION))    this.includeEmptyGraphs = true;
+
+
 		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
 	}
 
@@ -297,7 +302,7 @@ public class Configuration {
 				.withLongOpt("help")
 				.withDescription("Print usage syntax.")
 				.create());
-		
+
 		// input files
 		flags = inputFiles(allFlags);
 		if(isOn(flags, USE_QUERIES))
@@ -439,32 +444,32 @@ public class Configuration {
 		}		
 		if (isOn(flags, USE_THREADS)) 
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(THREADS_CONST_OPTION)
-				.withArgName("integer")
-				.hasArg()
-				.withDescription("Use x worker threads. (Pls ensure x < #cores)")
-				.create());
+					OptionBuilder
+					.withLongOpt(THREADS_CONST_OPTION)
+					.withArgName("integer")
+					.hasArg()
+					.withDescription("Use x worker threads. (Pls ensure x < #cores)")
+					.create());
 		if (isOn(flags, USE_EPOCHS))
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(EPOCHS_CONST_OPTION)
-				.withArgName("integer")
-				.hasArg()
-				.withDescription("Use x training epochs (default = 5)")
-				.create());
+					OptionBuilder
+					.withLongOpt(EPOCHS_CONST_OPTION)
+					.withArgName("integer")
+					.hasArg()
+					.withDescription("Use x training epochs (default = 5)")
+					.create());
 		if (isOn(flags, USE_TRACELOSSES))
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(TRACELOSSES_CONST_OPTION)
-				.withDescription("Print training loss at each epoch")
-				.create());
+					OptionBuilder
+					.withLongOpt(TRACELOSSES_CONST_OPTION)
+					.withDescription("Print training loss at each epoch")
+					.create());
 		if (isOn(flags, USE_FORCE))
 			options.addOption(
-				OptionBuilder
-				.withLongOpt("force")
-				.withDescription("Ignore errors and run anyway")
-				.create());
+					OptionBuilder
+					.withLongOpt("force")
+					.withDescription("Ignore errors and run anyway")
+					.create());
 		if (anyOn(flags, USE_APR))
 			options.addOption(
 					OptionBuilder
@@ -476,7 +481,7 @@ public class Configuration {
 							+ "Syntax: param=value:param=value...\n"
 							+ "Available parameters:\n"
 							+ "eps, alph, depth")
-					.create());
+							.create());
 		if (isOn(flags, USE_ORDER))
 			options.addOption(
 					OptionBuilder
@@ -486,7 +491,7 @@ public class Configuration {
 					.withDescription("Set ordering of outputs wrt inputs. Valid options:\n"
 							+"same, maintain (keep input ordering)\n"
 							+"anything else (reorder outputs to save time/memory)")
-					.create()
+							.create()
 					);
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM))
 			options.addOption(
@@ -496,31 +501,36 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Default: "+duplicates+"\nCheck for duplicates, expecting <size> values. Increasing <size> is cheap.\n"
 							+"To turn off duplicate checking, set to -1.")
-					.create());
+							.create());
 		if (isOn(flags, USE_THROTTLE)) 
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(THROTTLE_CONST_OPTION)
-				.withArgName("integer")
-				.hasArg()
-				.withDescription("Default: -1\nPause buffering of new jobs if unfinished queue grows beyond x. -1 to disable.")
-				.create());
+					OptionBuilder
+					.withLongOpt(THROTTLE_CONST_OPTION)
+					.withArgName("integer")
+					.hasArg()
+					.withDescription("Default: -1\nPause buffering of new jobs if unfinished queue grows beyond x. -1 to disable.")
+					.create());
+		if (isOn(flags, USE_EMPTYGRAPHS))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(EMPTYGRAPHS_CONST_OPTION)
+					.withDescription("Include examples with no pos or neg labeled solutions")
+					.create());
 
-
-//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
-//			options.addOption(
-//					OptionBuilder
-//					.withLongOpt("complexFeatures")
-//					.withArgName("file")
-//					.hasArg()
-//					.withDescription("Properties file for complex features")
-//					.create());
-//		}
+		//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
+		//			options.addOption(
+		//					OptionBuilder
+		//					.withLongOpt("complexFeatures")
+		//					.withArgName("file")
+		//					.hasArg()
+		//					.withDescription("Properties file for complex features")
+		//					.create());
+		//		}
 	}
 
 	protected void constructUsageSyntax(StringBuilder syntax, int[] allFlags) {
 		int flags;
-		
+
 		//input files
 		flags = inputFiles(allFlags);
 		if (isOn(flags, USE_QUERIES)) syntax.append(" --").append(QUERIES_FILE_OPTION).append(" inputFile");
@@ -540,7 +550,7 @@ public class Configuration {
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" params.wts");
 		if (isOn(flags, USE_GRADIENT)) syntax.append(" --").append(GRADIENT_FILE_OPTION).append(" gradient.dwts");
-		
+
 		//constants
 		flags = constants(allFlags);
 		if (isOn(flags, USE_WAM)) syntax.append(" --").append(PROGRAMFILES_CONST_OPTION).append(" file.wam:file.cfacts:file.graph");
@@ -552,15 +562,16 @@ public class Configuration {
 		if (isOn(flags, USE_ORDER)) syntax.append(" [--").append(ORDER_CONST_OPTION).append(" same|reorder]");
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM)) syntax.append(" [--").append(DUPCHECK_CONST_OPTION).append(" -1|integer]");
 		if (isOn(flags, USE_THROTTLE)) syntax.append(" [--").append(THROTTLE_CONST_OPTION).append(" integer]");
+		if (isOn(flags, USE_EMPTYGRAPHS)) syntax.append(" [--").append(EMPTYGRAPHS_CONST_OPTION).append("]");
 	}
-	
+
 	/**
 	 * Calls System.exit()
 	 */
 	protected void usageOptions(Options options, int inputFile, int outputFile, int constants, int modules, String msg) {
 		usageOptions(options,new int[] {inputFile, outputFile, constants, modules},msg);
 	}
-	
+
 
 	/**
 	 * Calls System.exit()

@@ -234,6 +234,7 @@ public class ModuleConfiguration extends Configuration {
 				if (values.length>2) throttle = Integer.parseInt(values[2]);
 				this.grounder = new Grounder(threads,throttle,apr,prover,program,plugins);
 			}
+			this.grounder.includeUnlabeledGraphs(includeEmptyGraphs);
 		}
 		if (isOn(flags,USE_TRAIN)) {
 			this.setupSRW(line, flags, options);
