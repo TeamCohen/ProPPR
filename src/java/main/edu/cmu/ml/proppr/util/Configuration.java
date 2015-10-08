@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PermissiveParser;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
@@ -139,7 +139,7 @@ public class Configuration {
 
 		CommandLine line = null;
 		try {
-			PermissiveParser parser = new PermissiveParser(true);
+			DefaultParser parser = new DefaultParser();
 
 			// if the user specified a properties file, add those values at the beginning
 			// (so that command line args override them)
@@ -165,10 +165,6 @@ public class Configuration {
 
 			// parse the command line arguments
 			line = parser.parse(options, new String[0], props);
-			if (parser.hasUnrecognizedOptions()) {
-				System.err.println("WARNING: unrecognized options detected:");
-				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
-			}
 			if (line.hasOption("profile")) {
 				System.out.println("Holding for profiler setup; press any key to proceed.");
 				System.in.read();
