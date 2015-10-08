@@ -9,7 +9,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PermissiveParser;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
@@ -143,6 +142,7 @@ public class Configuration {
 		CommandLine line = null;
 		try {
 			DefaultParser parser = new DefaultParser();
+
 			// if the user specified a properties file, add those values at the beginning
 			// (so that command line args override them)
 			if(combine) args = combinedArgs(args);
