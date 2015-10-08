@@ -94,7 +94,11 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 		Integer[] ids = symbol2Id.get(h);
 		for (int i=ids.length-1-ids[0];i>0;i--) {
 			T candidate = id2symbol.get(ids[i]);
-			if (candidate == null) throw new IllegalStateException("Found null symbol at hash "+h+":"+i+" of "+Dictionary.buildString(ids, new StringBuilder(), ",").toString());
+			if (candidate == null) 
+				throw new IllegalStateException("Found null symbol at hash "+h+":"+i+" of "
+			+Dictionary.buildString(ids, new StringBuilder(), ",").toString()
+			+" in "
+			+Dictionary.buildString(id2symbol, new StringBuilder(), "; ").toString());
 			if (hashingStrategy.equals(candidate, symbol)) return true;
 		}
 		return false;

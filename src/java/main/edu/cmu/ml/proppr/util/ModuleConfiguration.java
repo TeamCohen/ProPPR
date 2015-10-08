@@ -137,7 +137,7 @@ public class ModuleConfiguration extends Configuration {
 							 + "Available srws: ppr,dpr,adagrad\n"
 							 + "Available [reg]ularizers: l1,l1laplacian,l1grouplasso,l2\n"
 							 + "Available [sched]ules: global,local\n"
-							 + "Available [loss] functions: posneg\n"
+							 + "Available [loss] functions: "+Dictionary.buildString(LOSSFUNCTIONS.values(),new StringBuilder(),",").toString()+"\n"
 							 + "Other parameters:\n"
 							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
