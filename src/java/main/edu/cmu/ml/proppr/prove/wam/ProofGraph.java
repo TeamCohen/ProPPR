@@ -49,6 +49,7 @@ public abstract class ProofGraph {
 	private Map<Feature,Double> trueLoopFD;
 	private Feature restartFeature;
 	private APROptions apr;
+	protected ProofGraph() { startState = null; interpreter = null; }
 	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this(query,apr,new SimpleSymbolTable<Feature>(),program,plugins);
 	}
