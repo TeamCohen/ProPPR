@@ -138,12 +138,30 @@ public class Configuration {
 		try {
 			PermissiveParser parser = new PermissiveParser(true);
 
-			// if the user specified a properties file, add those values at the end
+			// if the user specified a properties file, add those values at the beginning
 			// (so that command line args override them)
 			if(combine) args = combinedArgs(args);
 
+			// this is terrible: we just read a Properties from a file and serialized it to String[],
+			// and now we're going to put it back into a Properties object. But Commons CLI 
+			// doesn't know how to handle unrecognized options, so ... that's what we gotta do.
+			Properties props = new Properties();
+			for (int i=0; i<args.length; i++) {
+				if (args[i].startsWith("--")) {
+					if (!options.hasOption(args[i])) {
+						System.err.println("Unrecognized option: "+args[i]);
+						continue; // skip unrecognized options
+					}
+					if (i+1 < args.length && !args[i+1].startsWith("--")) {
+						props.setProperty(args[i], args[i+1]);
+						i++;
+					} else props.setProperty(args[i], "true");
+				}
+			}
+
+
 			// parse the command line arguments
-			line = parser.parse( options, args );
+			line = parser.parse(options, new String[0], props);
 			if (parser.hasUnrecognizedOptions()) {
 				System.err.println("WARNING: unrecognized options detected:");
 				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
@@ -611,14 +629,14 @@ public class Configuration {
 	}
 
 	protected String[] combinedArgs(String[] origArgs) {
-		// if the user specified a properties file, add those values at the end
+		// if the user specified a properties file, add those values at the beginning
 		// (so that command line args override them)
 		if (System.getProperty(PROPFILE) != null) {
 			String[] propArgs = fakeCommandLine(System.getProperty(PROPFILE));
 			String[] args = new String[origArgs.length + propArgs.length];
 			int i = 0;
-			for (int j = 0; j < origArgs.length; j++) args[i++] = origArgs[j];
 			for (int j = 0; j < propArgs.length; j++) args[i++] = propArgs[j];
+			for (int j = 0; j < origArgs.length; j++) args[i++] = origArgs[j];
 			return args;
 		}
 		return origArgs;
@@ -639,7 +657,7 @@ public class Configuration {
 		StringBuilder sb = new StringBuilder();
 		for (String name : props.stringPropertyNames()) {
 			sb.append(" --").append(name);
-			if (props.getProperty(name) != null) {
+			if (props.getProperty(name) != null && !props.getProperty(name).equals("")) {
 				sb.append(" ").append(props.getProperty(name));
 			}
 		}

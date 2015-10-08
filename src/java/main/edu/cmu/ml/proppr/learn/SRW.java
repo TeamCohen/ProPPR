@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.examples.PprExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
@@ -461,5 +462,11 @@ public class SRW {
 		}
 		throw new UnsupportedOperationException("Programmer error in SRW subclass "+clazz.getName()
 				+": Must provide the standard SRW constructor signature, or else override copy()");
+	}
+	public RegularizationSchedule getRegularizer() {
+		return this.regularizer;
+	}
+	public LossFunction getLossFunction() {
+		return this.lossf;
 	}
 }

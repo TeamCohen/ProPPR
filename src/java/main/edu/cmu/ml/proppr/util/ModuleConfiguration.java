@@ -46,7 +46,7 @@ public class ModuleConfiguration extends Configuration {
 	private enum SRWS { ppr, dpr, adagrad }
 	private enum REGULARIZERS { l1, l1laplacian, l1grouplasso, l2 };
 	private enum REGULARIZERSCHEDULES { synch, global, lazy, local };
-	private enum LOSSFUNCTIONS { posneg, normpos, l2square };
+	private enum LOSSFUNCTIONS { posneg, normpos, pair };
 	
 	public Grounder<?> grounder;
 	public SRW srw;
@@ -385,7 +385,7 @@ public class ModuleConfiguration extends Configuration {
 			case normpos:
 				this.srw.setLossFunction(new NormalizedPosLoss());
 				break;
-			case l2square:
+			case pair:
 				this.srw.setLossFunction(new PairwiseL2SqLoss());
 				break;
 			}
@@ -404,8 +404,11 @@ public class ModuleConfiguration extends Configuration {
 			sb.append(String.format(FORMAT_STRING, "Trainer")).append(": ").append(trainer.getClass().getCanonicalName()).append("\n");
 		if (prover != null)
 			sb.append(String.format(FORMAT_STRING, "Prover")).append(": ").append(prover.getClass().getCanonicalName()).append("\n");
-		if (srw != null)
+		if (srw != null) {
 			sb.append(String.format(FORMAT_STRING, "Walker")).append(": ").append(srw.getClass().getCanonicalName()).append("\n");
+			sb.append(String.format(FORMAT_STRING, "Regularizer")).append(": ").append(srw.getRegularizer().description()).append("\n");
+			sb.append(String.format(FORMAT_STRING, "Loss Function")).append(": ").append(srw.getLossFunction().getClass().getCanonicalName()).append("\n");
+		}
 		if (squashingFunction != null)
 			sb.append(String.format(FORMAT_STRING, "Squashing function")).append(": ").append(squashingFunction.getClass().getCanonicalName()).append("\n");
 		sb.append(String.format(FORMAT_STRING, "APR Alpha")).append(": ").append(apr.alpha).append("\n");

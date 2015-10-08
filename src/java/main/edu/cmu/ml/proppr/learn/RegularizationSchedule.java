@@ -32,4 +32,8 @@ public class RegularizationSchedule {
 	public RegularizationSchedule copy(SRW srw) {
 		return new RegularizationSchedule(srw,this.reg);
 	}
+	
+	public String description() {
+		return this.getClass().getCanonicalName()+", "+this.reg.getClass().getCanonicalName();
+	}
 }
