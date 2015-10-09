@@ -49,14 +49,19 @@ class Labels(object):
             parts = line.strip().split("\t")
             query = parts[0]
             intVarQuery = queryWithIntVars(query)
-            self.queries.add(intVarQuery)
-            for p in parts[1:]:
-                if p.startswith('+'):
-                    self.pos[intVarQuery].add(p[1:])
-                elif p.startswith('-'):
-                    self.neg[intVarQuery].add(p[1:])
-                else:
-                    assert 'somethings wrong at line ' + line
+            if intVarQuery in self.queries:
+                for p in parts[1:]:
+                    if (p.startswith('+') and p[1:] not in self.pos[intVarQuery]) or (p.startswith('-') and p[1:] not in self.neg[intVarQuery]):
+                        assert "Duplicate query %s at line %d with different labels. Not sure what you want me to do here, since solution files may not be in query file order." % (query,line)
+            else:
+                self.queries.add(intVarQuery)
+                for p in parts[1:]:
+                    if p.startswith('+'):
+                        self.pos[intVarQuery].add(p[1:])
+                    elif p.startswith('-'):
+                        self.neg[intVarQuery].add(p[1:])
+                    else:
+                        assert 'somethings wrong at line ' + line
         
     def __str__(self):
         return 'Labels(%s,%s)' % (str(self.pos),str(self.neg))
@@ -128,21 +133,25 @@ class Answers(object):
         self.answers = collections.defaultdict(list)
         self.solutions = collections.defaultdict(set)
         self.queryTime = {}
+        done = {}
         intVarQuery = None
         totQueries = 0
         totAnswers = 0
         totLabeledAnswers = 0
         for line in open(self.answerFile):        
             if line.startswith('#'):
-                totQueries += 1
+            	done[intVarQuery] = True
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
                 intVarQuery = answerWithIntVars(intVarQuery[:(intVarQuery.rindex("."))])
+                if intVarQuery in done: continue #skip duplicate queries
+                totQueries += 1
                 self.queryTime[intVarQuery] = int(timeStr.split(" ")[0])
                 #print line
                 #print intVarQuery
                 #print "+",labels.pos[intVarQuery]
                 #print "-",labels.neg[intVarQuery]
             else:
+            	if intVarQuery in done: continue #skip duplicate queries
                 totAnswers += 1
                 (rankStr,scoreStr,solution) = line.strip().split("\t")
                 score = float(scoreStr)
