@@ -14,6 +14,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.LongDense;
 import edu.cmu.ml.proppr.util.math.SimpleSparse;
@@ -35,6 +36,12 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	}
 	public CachingIdProofGraph(InferenceExample ex, APROptions apr, SymbolTable<Feature> featureTab, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		super(ex,apr,featureTab,program,plugins);
+	}
+	public CachingIdProofGraph(ConcurrentSymbolTable.HashingStrategy<State> strat) {
+		super();
+		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
+		this.featureTab = new SimpleSymbolTable<Feature>();
+		nodeTab = new ConcurrentSymbolTable<State>(strat);
 	}
 	protected void init(SymbolTable<Feature> featureTab) {
 		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
@@ -106,10 +113,14 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			State u = nodeTab.getSymbol(uid);
 			if (u!=null) {
 				List<Outlink> outlinks = this.computeOutlinks(u,true);
-				edgeCount += outlinks.size();
-				nodeVec.set(uid, outlinksAsMatrix(outlinks));
+				setOutlinks(uid,outlinks);
 			}
 		}
+	}
+
+	public void setOutlinks(int uid, List<Outlink> outlinks) {
+		edgeCount += outlinks.size();
+		nodeVec.set(uid, outlinksAsMatrix(outlinks));
 	}
 
 	public SimpleSparse.FloatMatrix outlinksAsMatrix(List<Outlink> outlinks) {
