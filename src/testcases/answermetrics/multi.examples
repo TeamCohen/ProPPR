@@ -1,0 +1,2 @@
+foo(first,A)	+foo(first,a)	+foo(first,b)	+foo(first,c)	+foo(first,d)	+foo(first,e)	-foo(first,v)	-foo(first,w) -foo(first,x) -foo(first,y) -foo(first,z)
+foo(second,A)	+foo(second,a)	-foo(second,v)

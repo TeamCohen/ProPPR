@@ -1,0 +1,6 @@
+# proved 1	foo(X1).	0 msec
+1	.20	foo(v).
+1	.20	foo(w).
+1	.20	foo(x).
+1	.20	foo(y).
+1	.20	foo(z).
