@@ -69,13 +69,14 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: clipExp\n"
 							+ "Available options:\n"
-							+ "linear\n"
-							+ "sigmoid\n"
-							+ "tanh\n"
-							+ "ReLU\n"
-							+ "LReLU (leaky ReLU)\n"
-							+ "exp\n"
-							+ "clipExp (clipped to e*x @x=1)")
+							+ Dictionary.buildString(SQUASHFUNCTIONS.values(),new StringBuilder(),", ").toString())
+//							+ "linear\n"
+//							+ "sigmoid\n"
+//							+ "tanh\n"
+//							+ "ReLU\n"
+//							+ "LReLU (leaky ReLU)\n"
+//							+ "exp\n"
+//							+ "clipExp (clipped to e*x @x=1)")
 							.create());
 		}
 		if(isOn(flags, USE_PROVER))
@@ -86,14 +87,15 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: dpr\n"
 							+ "Available options:\n"
-							+ "ippr\n"
-							+ "ppr\n"
-							+ "dpr\n"
-							+ "idpr\n"
-							+ "qpr\n"
-							+ "pdpr\n"
-							+ "dfs\n"
-							+ "tr")
+							+ Dictionary.buildString(PROVERS.values(),new StringBuilder(),", ").toString())
+//							+ "ippr\n"
+//							+ "ppr\n"
+//							+ "dpr\n"
+//							+ "idpr\n"
+//							+ "qpr\n"
+//							+ "pdpr\n"
+//							+ "dfs\n"
+//							+ "tr")
 							.create());
 		if (isOn(flags, USE_GROUNDER))
 			options.addOption(
@@ -195,6 +197,8 @@ public class ModuleConfiguration extends Configuration {
 					break;
 				case tr:
 					this.prover = new TracingDfsProver(apr);
+					if (this.nthreads > 1) 
+						usageOptions(options, allFlags, "Tracing prover is not multithreaded. Remove --threads option or use --threads 1.");
 					break;
 				default:
 					usageOptions(options,allFlags,"No prover definition for '"+values[0]+"'");
