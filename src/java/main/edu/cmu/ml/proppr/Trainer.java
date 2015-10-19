@@ -163,7 +163,7 @@ public class Trainer {
 	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0)
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0);//this.masterLearner.getSquashingFunction().defaultValue());
+			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0);
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
 		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
