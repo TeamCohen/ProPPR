@@ -12,11 +12,11 @@ def gradient_to_rules(gradFile):
             if score>=0: continue
             feature = re.split("[(),]",sfeature)[:-1]
             if feature[0] == "if":
-                newrule = "interp0(%s,X,Y) :- rel(%s,X,Y) {%s}." % (feature[1],feature[2],sfeature)
+                newrule = "interp(%s,X,Y) :- rel(%s,X,Y) {%s}." % (feature[1],feature[2],sfeature)
             elif feature[0] == "ifInv":
-                newrule = "interp0(%s,X,Y) :- rel(%s,Y,X) {%s}." % (feature[1],feature[2],sfeature)
+                newrule = "interp(%s,X,Y) :- rel(%s,Y,X) {%s}." % (feature[1],feature[2],sfeature)
             elif feature[0] == "chain":
-                newrule = "interp0(%s,X,Y) :- rel(%s,X,Z),rel(%s,Z,Y) {%s}." % (feature[1],feature[2],feature[3],sfeature)
+                newrule = "interp(%s,X,Y) :- rel(%s,X,Z),rel(%s,Z,Y) {%s}." % (feature[1],feature[2],feature[3],sfeature)
             else:
                 print "#?? unparsed feature",feature
                 continue
