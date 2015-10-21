@@ -7,6 +7,7 @@ import java.util.Map;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
+import edu.cmu.ml.proppr.learn.tools.FixedWeightFilter;
 import edu.cmu.ml.proppr.prove.DprProver;
 
 public class SRWOptions {
@@ -25,7 +26,8 @@ public class SRWOptions {
 		zeta,
 		affinityFile,
 		squashingFunction,
-		apr
+		apr,
+		fixedWeights
 	}
 	
 	/** regularization */
@@ -51,6 +53,8 @@ public class SRWOptions {
 	public SquashingFunction squashingFunction;
 	/** minalpha projection */
 	public APROptions apr;
+	/** specification for which features are fixed **/
+	public FixedWeightFilter fixedWeights;
 	
 	/** */
 	public SRWOptions(APROptions options, SquashingFunction fn) {
@@ -61,7 +65,8 @@ public class SRWOptions {
 				DEFAULT_DELTA, 
 				DEFAULT_AFFGRAPH, 
 				DEFAULT_ZETA, 
-				options);
+				options,
+				new FixedWeightFilter());
 	}
 	public SRWOptions() {
 		this(
@@ -71,7 +76,8 @@ public class SRWOptions {
 				DEFAULT_DELTA, 
 				DEFAULT_AFFGRAPH, 
 				DEFAULT_ZETA, 
-				new APROptions()); 
+				new APROptions(),
+				new FixedWeightFilter()); 
 	}
 	public SRWOptions(
 			double mu, 
@@ -80,7 +86,8 @@ public class SRWOptions {
 			double delta, 
 			File affgraph, 
 			double zeta,
-			APROptions options) {
+			APROptions options,
+			FixedWeightFilter fixedWeights) {
 		this.mu = mu;
 		this.eta = eta;
 		this.delta = delta;
@@ -88,6 +95,7 @@ public class SRWOptions {
 		this.squashingFunction = f;
 		this.apr = options;
 		this.affinityFile = affgraph;
+		this.fixedWeights = fixedWeights;
 	}
 
 	public void init() {
@@ -101,16 +109,18 @@ public class SRWOptions {
 	}
 	public void set(String...setting) {
 		switch(names.valueOf(setting[0])) {
-		case mu: this.mu = Double.parseDouble(setting[1]); return;
-		case eta: this.eta = Double.parseDouble(setting[1]); return;
-		case delta: this.delta = Double.parseDouble(setting[1]); return;
-		case zeta: this.zeta = Double.parseDouble(setting[1]); return;
-		case affinityFile: 
-			File value = new File(setting[1]);
-			if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
-			this.affinityFile = value; 
-			return;
-		case apr: this.apr.set(new String[] { setting[1], setting[2] });
+			case mu: this.mu = Double.parseDouble(setting[1]); return;
+			case eta: this.eta = Double.parseDouble(setting[1]); return;
+			case delta: this.delta = Double.parseDouble(setting[1]); return;
+			case zeta: this.zeta = Double.parseDouble(setting[1]); return;
+			case affinityFile: 
+				File value = new File(setting[1]);
+				if (!value.exists()) throw new IllegalArgumentException("File '"+value.getName()+"' must exist");
+				this.affinityFile = value; 
+				return;
+			case apr: this.apr.set(new String[] { setting[1], setting[2] });
+				return;
+			case fixedWeights: this.fixedWeights = new FixedWeightFilter( setting[1] );
 		}
 	}
 }

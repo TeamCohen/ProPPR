@@ -27,6 +27,7 @@ import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
+import edu.cmu.ml.proppr.learn.tools.FixedWeightFilter;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SRWOptions;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
@@ -62,10 +63,9 @@ public class SRW {
 	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
 	private static final int MAX_ZERO_LOGS = 10;
 	private static Random random = new Random();
-	public static final String FIXED_WEIGHT_FUNCTOR="fixedWeight";
 	public static void seed(long seed) { random.setSeed(seed); }
 	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ClippedExp(); }
-	protected Set<String> untrainedFeatures;
+	protected Set<String> untrainedFeatures; // wwc: made private, access now is through protected trainable() method
 	protected int epoch;
 	protected SRWOptions c;
 	protected LossData cumloss;
@@ -419,8 +419,12 @@ public class SRW {
 	}
 
 	public boolean trainable(String feature) {
-		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));
+		if (untrainedFeatures.contains(feature)) return false;
+		else if (c.fixedWeights.isFixedWeight(feature)) return false;
+		else return true;
 	}
+
+	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
 
 	/** Allow subclasses to filter feature list **/
 	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
@@ -437,7 +441,6 @@ public class SRW {
 	public void cleanupParams(ParamVector<String,?> params, ParamVector<String,?> apply) {}
 
 
-	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
 	public SquashingFunction getSquashingFunction() {
 		return c.squashingFunction;
 	}
