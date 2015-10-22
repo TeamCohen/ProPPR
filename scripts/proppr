@@ -190,9 +190,15 @@ def doGradient(o):
 shortHelpMsg['gradient'] = ' INPUT.examples.grounded [OUTPUT.gradient]: measure gradient with respect to parameters'
 
 def doHelp(o):
-   print 'ProPPR v2: commands are:'
+   print
+   print 'ProPPR v2: proppr [-n] [-Cdir] {command} {args}'
+   print '  -n   dry-run: Print, but do not execute, all shell commands'
+   print '  -C   change-directory: Place all output in the specified directory instead of in (.)'
+   print
+   print 'commands are:'
    for com in shortHelpMsg:
       print '  proppr '+ com + shortHelpMsg[com]
+   print
    print 'other tips:'
    print '  (1) for all commands that invoke Java mains, options can be passed in by appending them,'
    print '      e.g. "proppr answer test.examples --prover tr"'
@@ -200,6 +206,9 @@ def doHelp(o):
    print '      on available additional options'
    print '  (3) the environment variable PROPPR_JAVA_ARGS can be used to specify additional'
    print '      arguments to java, i.e. "export PROPPR_JAVA_ARGS=-Xmx32g" increases the heap size'
+   print '  (4) the environment variable PROPPR_OUTPUT can also be used to tell proppr to place '
+   print '      output file in another directory, i.e. "export PROPPR_OUTPUT=~/regression-output"'
+   print '      The PROPPR_OUTPUT variable is overridden by the -C option.'
 shortHelpMsg['help'] = ': this help message'
 
 ## helpers
