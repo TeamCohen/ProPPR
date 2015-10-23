@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
@@ -11,6 +13,8 @@ import edu.cmu.ml.proppr.learn.tools.FixedWeightFilter;
 import edu.cmu.ml.proppr.prove.DprProver;
 
 public class SRWOptions {
+	protected static final Logger log = Logger.getLogger(SRWOptions.class);
+
 	public static final double DEFAULT_MU=.001;
 	public static final double DEFAULT_ETA=1.0;
 	public static final double DEFAULT_DELTA=0.5;
@@ -27,7 +31,7 @@ public class SRWOptions {
 		affinityFile,
 		squashingFunction,
 		apr,
-		fixedWeights
+		fix
 	}
 	
 	/** regularization */
@@ -120,7 +124,10 @@ public class SRWOptions {
 				return;
 			case apr: this.apr.set(new String[] { setting[1], setting[2] });
 				return;
-			case fixedWeights: this.fixedWeights = new FixedWeightFilter( setting[1] );
+			case fix: 
+				this.fixedWeights = new FixedWeightFilter( setting[1] );
+				log.info("fixed-weight rule: "+setting[1]+" i.e. " + this.fixedWeights.toString());
+				return;
 		}
 	}
 }

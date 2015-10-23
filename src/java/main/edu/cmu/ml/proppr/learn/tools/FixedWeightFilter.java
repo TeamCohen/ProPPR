@@ -3,7 +3,7 @@ package edu.cmu.ml.proppr.learn.tools;
 /** A simple programmable procedure to determine if a feature is fixed
 		(i.e., the weight will not be changed in training) or not.  The
 		procedure is specified by a single string, which is a
-		comma-separated list of pairs PREFIX=DECISION where PREFIX is any
+		comma-separated list of pairs PREFIX~DECISION where PREFIX is any
 		string and DECISION is 'y' or 'n'.  To make a decision of a
 		feature with name S, you go through the rules, and take the
 		DECISION associated with the first prefix of S that matches.
@@ -11,10 +11,10 @@ package edu.cmu.ml.proppr.learn.tools;
 		
 		For example: 
 
-		"fixedWeight=y,=n" means tune all features that don't start with
+		"fixedWeight~y,~n" means tune all features that don't start with
 		"fixedWeight".
 
-		"f(=n,=y" means tune only features that start with "f("
+		"f(~n,~y" means tune only features that start with "f("
 		
 		If no prefix matches then the decision return is false.
 **/
@@ -33,14 +33,14 @@ public class FixedWeightFilter {
 	}
 
 	public FixedWeightFilter() {
-		this("fixedWeight=y");
+		this("fixedWeight~y");
 	}
 
 	public FixedWeightFilter(String specification) {
 		String[] parts = specification.split(",");
 		ruleList = new DecisionRule[parts.length];
 		for (int i=0; i<parts.length; i++) {
-			String[] subparts = parts[i].split("=");
+			String[] subparts = parts[i].split("~");
 			ruleList[i] = new DecisionRule(subparts[0], subparts[1].startsWith("y"));
 		}
 	}
