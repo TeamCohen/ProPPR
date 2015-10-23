@@ -26,10 +26,10 @@ public class FixedWeightRules {
 		exact.add(feature);
 	}
 	
-	public void initializeFixed(ParamVector<String,?> params) {
+	public void initializeFixed(ParamVector<String,?> params, String feature) {
 		/* 
 		 * Future work: Could add syntax to fix features at arbitrary values here.
 		 */
-		for (String f : exact) params.put(f, 1.0);
+		params.put(feature, 1.0);
 	}
 }

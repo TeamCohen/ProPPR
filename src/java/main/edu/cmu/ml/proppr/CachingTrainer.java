@@ -59,8 +59,6 @@ public class CachingTrainer extends Trainer {
 	
 	public ParamVector<String,?> trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
-		if (paramVec.size() == 0)
-			this.masterLearner.fixedWeightRules().initializeFixed(paramVec);
 		NamedThreadFactory trainThreads = new NamedThreadFactory("work-");
 		ExecutorService trainPool;
 		ExecutorService cleanPool; 

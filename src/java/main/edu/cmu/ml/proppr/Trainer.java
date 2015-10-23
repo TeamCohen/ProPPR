@@ -162,8 +162,6 @@ public class Trainer {
 
 	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
-		if (paramVec.size() == 0)
-			this.masterLearner.fixedWeightRules().initializeFixed(paramVec);
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
 		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
@@ -346,7 +344,6 @@ public class Trainer {
 		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			this.masterLearner.fixedWeightRules().initializeFixed(paramVec);
 		}
 		paramVec = this.masterLearner.setupParams(paramVec);
 		if (masterFeatures != null && masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);

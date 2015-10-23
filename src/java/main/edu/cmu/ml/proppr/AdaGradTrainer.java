@@ -48,9 +48,6 @@ public class AdaGradTrainer extends Trainer {
 	@Override
 	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
-		if (paramVec.size() == 0){
-			this.masterLearner.fixedWeightRules().initializeFixed(paramVec);
-		}
 
 		//@rck AG
 		//create a concurrent hash map to store the running total of the squares of the gradient
@@ -137,7 +134,6 @@ public class AdaGradTrainer extends Trainer {
 		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			this.masterLearner.fixedWeightRules().initializeFixed(paramVec);
 		}
 		paramVec = this.masterLearner.setupParams(paramVec);
 		if (masterFeatures != null && masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);

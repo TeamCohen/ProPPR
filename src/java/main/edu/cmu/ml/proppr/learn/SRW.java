@@ -206,7 +206,8 @@ public class SRW {
 	public void initializeFeatures(ParamVector<String,?> params, LearningGraph graph) {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
-				params.put(f,c.squashingFunction.defaultValue()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
+				if (trainable(f)) params.put(f,c.squashingFunction.defaultValue()+0.01*random.nextDouble());
+				else fixedWeightRules.initializeFixed(params,f);
 			}
 		}
 	}
