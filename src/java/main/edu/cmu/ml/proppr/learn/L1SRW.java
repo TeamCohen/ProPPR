@@ -37,7 +37,7 @@ public class L1SRW extends SRW {
 		for (String f : localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
 			// want to take theta toward zero, but not past it: gradient can't be bigger than theta
-			double ret = untrainedFeatures.contains(f) ? 0.0 : Math.signum(value) * Math.min( Math.abs(value), c.mu);
+			double ret = fixedWeightRules.isFixed(f) ? 0.0 : Math.signum(value) * Math.min( Math.abs(value), c.mu);
 			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.abs(value));
 			gradient.adjustOrPutValue(ex.getGraph().featureLibrary.getId(f), ret, ret);
 		}

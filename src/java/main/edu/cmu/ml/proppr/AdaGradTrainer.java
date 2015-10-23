@@ -49,7 +49,7 @@ public class AdaGradTrainer extends Trainer {
 	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (paramVec.size() == 0){
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0);//this.masterLearner.getSquashingFunction().defaultValue());
+			this.masterLearner.fixedWeightRules().initializeFixed(paramVec);
 		}
 
 		//@rck AG
@@ -137,7 +137,7 @@ public class AdaGradTrainer extends Trainer {
 		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f,  this.masterLearner.getSquashingFunction().defaultValue());
+			this.masterLearner.fixedWeightRules().initializeFixed(paramVec);
 		}
 		paramVec = this.masterLearner.setupParams(paramVec);
 		if (masterFeatures != null && masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);

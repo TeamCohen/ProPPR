@@ -23,6 +23,7 @@ import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.learn.SRW.ZeroGradientData;
 import edu.cmu.ml.proppr.learn.tools.ClippedExp;
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
@@ -65,7 +66,8 @@ public class SRW {
 	public static final String FIXED_WEIGHT_FUNCTOR="fixedWeight";
 	public static void seed(long seed) { random.setSeed(seed); }
 	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ClippedExp(); }
-	protected Set<String> untrainedFeatures;
+	protected FixedWeightRules fixedWeightRules;
+//	protected Set<String> untrainedFeatures;
 	protected int epoch;
 	protected SRWOptions c;
 	protected LossData cumloss;
@@ -75,7 +77,8 @@ public class SRW {
 	public SRW(SRWOptions params) {
 		this.c = params;
 		this.epoch = 1;
-		this.untrainedFeatures = new TreeSet<String>();
+//		this.untrainedFeatures = new TreeSet<String>();
+		this.fixedWeightRules = new FixedWeightRules();
 		this.cumloss = new LossData();
 		this.zeroGradientData = new ZeroGradientData();
 	}
@@ -419,7 +422,8 @@ public class SRW {
 	}
 
 	public boolean trainable(String feature) {
-		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));
+//		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));
+		return !fixedWeightRules.isFixed(feature);
 	}
 
 	/** Allow subclasses to filter feature list **/
@@ -437,7 +441,8 @@ public class SRW {
 	public void cleanupParams(ParamVector<String,?> params, ParamVector<String,?> apply) {}
 
 
-	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
+	public FixedWeightRules fixedWeightRules() { return this.fixedWeightRules; }
+	public void setFixedWeightRules(FixedWeightRules f) { this.fixedWeightRules = f; }
 	public SquashingFunction getSquashingFunction() {
 		return c.squashingFunction;
 	}
@@ -473,7 +478,7 @@ public class SRW {
 		Class<? extends SRW> clazz = this.getClass();
 		try {
 			SRW copy = clazz.getConstructor(SRWOptions.class).newInstance(this.c);
-			copy.untrainedFeatures = this.untrainedFeatures;
+			copy.fixedWeightRules = this.fixedWeightRules;
 			return copy;
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block

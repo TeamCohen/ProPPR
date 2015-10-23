@@ -363,6 +363,9 @@ public class ModuleConfiguration extends Configuration {
 		} else {
 			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
 		}
+		
+		if (this.fixedWeightRules != null) this.srw.setFixedWeightRules(fixedWeightRules);
+			
 	}
 
 	@Override

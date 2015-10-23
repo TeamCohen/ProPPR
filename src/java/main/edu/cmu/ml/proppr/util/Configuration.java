@@ -11,6 +11,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -66,6 +67,7 @@ public class Configuration {
 	public static final int USE_DUPCHECK = 0x40;
 	public static final int USE_THROTTLE = 0x80;
 	public static final int USE_EMPTYGRAPHS = 0x100;
+	public static final int USE_FIXEDWEIGHTS = 0x200;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
 	private static final String APR_CONST_OPTION = "apr";
@@ -77,6 +79,7 @@ public class Configuration {
 	private static final String DUPCHECK_CONST_OPTION = "duplicateCheck";
 	private static final String THROTTLE_CONST_OPTION = "throttle";
 	private static final String EMPTYGRAPHS_CONST_OPTION = "includeEmptyGraphs";
+	private static final String FIXEDWEIGHTS_CONST_OPTION = "fixedWeights";
 
 
 	/* set class for module. Options for this section are handled in ModuleConfiguration.java. */
@@ -114,6 +117,7 @@ public class Configuration {
 	public boolean includeEmptyGraphs = false;
 	public int duplicates = (int) 1e6;
 	public int throttle = Multithreading.DEFAULT_THROTTLE;
+	public FixedWeightRules fixedWeightRules = null;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -231,6 +235,7 @@ public class Configuration {
 		if (anyOn(flags,USE_DUPCHECK|USE_WAM) && line.hasOption(DUPCHECK_CONST_OPTION)) this.duplicates = (int) Double.parseDouble(line.getOptionValue(DUPCHECK_CONST_OPTION));
 		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION))          this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
 		if (isOn(flags,USE_EMPTYGRAPHS) && line.hasOption(EMPTYGRAPHS_CONST_OPTION))    this.includeEmptyGraphs = true;
+		if (isOn(flags,USE_FIXEDWEIGHTS) && line.hasOption(FIXEDWEIGHTS_CONST_OPTION))  this.fixedWeightRules = new FixedWeightRules(line.getOptionValues(FIXEDWEIGHTS_CONST_OPTION));
 
 
 		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
@@ -516,6 +521,14 @@ public class Configuration {
 					.withLongOpt(EMPTYGRAPHS_CONST_OPTION)
 					.withDescription("Include examples with no pos or neg labeled solutions")
 					.create());
+		if (isOn(flags, USE_FIXEDWEIGHTS))
+			options.addOption(Option.builder(FIXEDWEIGHTS_CONST_OPTION)
+					.hasArgs()
+					.argName("feature1:feature2()")
+					.valueSeparator(':')
+					.desc("Do not train this set of features. Bare functors and complete feature strings will be added to an exact match list; anything ending with '*' will be matched against startsWith().")
+					.build());
+					
 
 		//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
 		//			options.addOption(
@@ -563,6 +576,7 @@ public class Configuration {
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM)) syntax.append(" [--").append(DUPCHECK_CONST_OPTION).append(" -1|integer]");
 		if (isOn(flags, USE_THROTTLE)) syntax.append(" [--").append(THROTTLE_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_EMPTYGRAPHS)) syntax.append(" [--").append(EMPTYGRAPHS_CONST_OPTION).append("]");
+		if (isOn(flags, USE_FIXEDWEIGHTS)) syntax.append(" [--").append(FIXEDWEIGHTS_CONST_OPTION).append(" featureA:featureB()]");
 	}
 
 	/**
