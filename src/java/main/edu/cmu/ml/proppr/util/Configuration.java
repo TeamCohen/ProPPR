@@ -524,9 +524,9 @@ public class Configuration {
 		if (isOn(flags, USE_FIXEDWEIGHTS))
 			options.addOption(Option.builder(FIXEDWEIGHTS_CONST_OPTION)
 					.hasArgs()
-					.argName("feature1:feature2()")
+					.argName("exact[={y|n}]:prefix*")
 					.valueSeparator(':')
-					.desc("Do not train this set of features. Bare functors and complete feature strings will be added to an exact match list; anything ending with '*' will be matched against startsWith().")
+					.desc("Specify patterns of features to keep fixed at 1.0 or permit tuning. End in * for a prefix, otherwise uses exact match. Fixed by default; specify '=n' to permit tuning. First matching rule decides.")
 					.build());
 					
 

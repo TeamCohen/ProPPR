@@ -23,5 +23,13 @@ public class FixedWeightRulesTest {
 		assertTrue("Raw fixedWeightRules", c.fixedWeightRules.isFixed("f(thing,pos)"));
 		assertFalse("in an SRW", c.srw.trainable("f(thing,pos)"));
 	}
+	
+	@Test
+	public void testCascade() {
+		Configuration c = new Configuration("--fixedWeights f(*=n:*=y".split(" "),
+				0, 0, Configuration.USE_FIXEDWEIGHTS,0);
+		assertTrue("Most rules", c.fixedWeightRules.isFixed("id(x,12,15)"));
+		assertFalse("f(* rules", c.fixedWeightRules.isFixed("f(x,12,15)"));
+	}
 
 }
