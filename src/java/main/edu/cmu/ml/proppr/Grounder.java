@@ -24,6 +24,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
@@ -228,6 +229,7 @@ public class Grounder<P extends ProofGraph> {
 
 	public GroundedExample groundExample(Prover<P> p,
 			InferenceExample inferenceExample) throws LogicProgramException {
+		validateExample(inferenceExample);
 		return this.groundExample(p, p.makeProofGraph(inferenceExample,apr,featureTable,masterProgram, masterPlugins));
 	}
 
@@ -287,6 +289,19 @@ public class Grounder<P extends ProofGraph> {
 		log.info("Using graph key file "+keyFile.getName());
 		this.graphKeyFile = keyFile;
 	}
+	
+	public void validateExample(InferenceExample in) {
+		for (Query[] labels: new Query[][]{in.getPosSet(),in.getNegSet()}) {
+			for (Query q: labels) {
+				for (Goal g : q.getRhs()) {
+					for (Argument a: g.getArgs()) {
+						if (a.isVariableAtom()) 
+							throw new IllegalArgumentException("Malformed query label (all arguments must be bound; must start with lowercase): "+q.toString());
+					}
+				}
+			}
+		}
+	}
 
 	///////////////////////////////// Multithreading scaffold //////////////////////////
 
@@ -298,6 +313,7 @@ public class Grounder<P extends ProofGraph> {
 		InferenceExample inf;
 		int id;
 		public Ground(InferenceExample in, int id) {
+			validateExample(in);
 			this.inf = in;
 			this.id = id;
 		}

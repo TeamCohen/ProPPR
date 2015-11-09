@@ -112,6 +112,20 @@ public class GrounderTest {
 		Map<State,Double> sols = p.prove(pg);
 		System.out.println(pg.serialize(ex));
 	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void unboundLabelsTest() throws IOException, LogicProgramException {
+		APROptions apr = new APROptions();
+		WamProgram program = WamBaseProgram.load(new File(RULES));
+		WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, new File(FACTS), false)};
+		Prover p = new DprProver(apr);
+		Grounder grounder = new Grounder(apr, p, program, plugins);
+		
+		InferenceExample ix = new InferenceExample(Query.parse("predict(howard,Bird)"), 
+				new Query[] {Query.parse("predict(howard,Bird)")}, 
+				new Query[] {});
+		GroundedExample ex = grounder.groundExample(p, ix);
+	}
 
 	
 	private void makeAssertions(GroundedExample ex, String msg,
