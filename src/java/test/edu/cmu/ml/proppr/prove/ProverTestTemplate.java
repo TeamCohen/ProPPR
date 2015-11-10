@@ -91,6 +91,9 @@ public abstract class ProverTestTemplate {
 //		assertTrue("query should retain most weight",query > Math.max(platypus,others));
 		assertTrue("milk-featured paths should score higher than others",platypus>others);
 		assertEquals("Total weight of all states should be around 1.0",1.0,all,10*this.apr.epsilon);
+		
+		assertEquals("Known features",1,prover.weighter.numKnownFeatures);
+		assertEquals("Unknown features",5,prover.weighter.numUnknownFeatures);
 	}
 	
 //	@Test

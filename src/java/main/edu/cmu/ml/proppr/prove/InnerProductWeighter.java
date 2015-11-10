@@ -23,11 +23,7 @@ import edu.cmu.ml.proppr.util.Dictionary;
  */
 public class InnerProductWeighter extends FeatureDictWeighter {
 	private static final int MAX_UNKNOWN_FEATURE_WARNINGS = 10;
-	private int numUnknownFeatures = 0;
-	private int numKnownFeatures = 0;
 	private static final Logger log = Logger.getLogger(InnerProductWeighter.class);
-	protected final BloomFilter<Feature> unknownFeatures;
-	protected final BloomFilter<Feature> knownFeatures;
 	private static SquashingFunction DEFAULT_SQUASHING_FUNCTION() {
 		return new Linear();
 	}
@@ -41,22 +37,12 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	public InnerProductWeighter(SquashingFunction f, Map<Feature,Double> weights) {
 		super(f);
 		this.weights = weights;
-		this.unknownFeatures = new BloomFilter<Feature>(.01,Math.max(100, weights.size()));
-		this.knownFeatures = new BloomFilter<Feature>(.01,Math.max(100, weights.size()));
 	}
 	@Override
 	public double w(Map<Feature, Double> featureDict) {
 		// track usage of known & unknown features
 		for (Feature g : featureDict.keySet()) {
-			if (!this.weights.containsKey(g)) {
-				if (!unknownFeatures.contains(g)) {
-					unknownFeatures.add(g);
-					numUnknownFeatures++;
-				}
-			} else if (!knownFeatures.contains(g)) {
-				knownFeatures.add(g);
-				numKnownFeatures++;
-			}
+			countFeature(g);
 		}
 		return this.squashingFunction.edgeWeight(this.weights, featureDict);
 	}

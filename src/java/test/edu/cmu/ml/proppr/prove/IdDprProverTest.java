@@ -17,10 +17,5 @@ public class IdDprProverTest extends ProverTestTemplate {
 		super.setup();
 		this.prover = new IdDprProver(new APROptions(new String[] {"eps=.00001","alph=.03"}));
 	}
-	
-	@Override @Test
-	public void testProveState() throws LogicProgramException {
-		super.testProveState();
-	}
 
 }

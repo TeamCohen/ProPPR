@@ -23,7 +23,7 @@ public class InnerProductWeighterTest {
 		weights.put(new Feature("feathers"), 0.5);
 		weights.put(new Feature("scales"), 0.3);
 		weights.put(new Feature("fur"), 0.7);
-		InnerProductWeighter w = new InnerProductWeighter(weights);
+		FeatureDictWeighter w = new InnerProductWeighter(weights);
 		Feature ng = new Feature("hair");
 		HashMap<Feature,Double> featureDict = new HashMap<Feature,Double>();
 		featureDict.put(ng, 0.9);
