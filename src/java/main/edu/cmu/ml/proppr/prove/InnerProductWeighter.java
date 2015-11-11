@@ -32,11 +32,9 @@ public class InnerProductWeighter extends FeatureDictWeighter {
 	}
 	public InnerProductWeighter(Map<Feature,Double> weights) {
 		this(DEFAULT_SQUASHING_FUNCTION(), weights);
-
 	}
-	public InnerProductWeighter(SquashingFunction f, Map<Feature,Double> weights) {
-		super(f);
-		this.weights = weights;
+	public InnerProductWeighter(SquashingFunction f, Map<Feature,Double> w) {
+		super(f,w);
 	}
 	@Override
 	public double w(Map<Feature, Double> featureDict) {

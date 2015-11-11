@@ -137,7 +137,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			float[] featVal = new float[numFeats];
 			int j=0;
 			for (Map.Entry<Feature,Double> e : o.fd.entrySet()) {
-				if (weighter != null) weighter.countFeature(e.getKey());
+				weighter.countFeature(e.getKey());
 				featBuf[j] = featureTab.getId(e.getKey());
 				featVal[j] = e.getValue().floatValue();
 				j++;

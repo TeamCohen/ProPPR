@@ -11,14 +11,18 @@ import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.util.Dictionary;
 
 public abstract class FeatureDictWeighter {
-	protected Map<Feature, Double> weights = new HashMap<Feature,Double>();
+	protected Map<Feature, Double> weights;
 	protected SquashingFunction squashingFunction;
 	protected int numUnknownFeatures = 0;
 	protected int numKnownFeatures = 0;
-	protected final BloomFilter<Feature> unknownFeatures;
-	protected final BloomFilter<Feature> knownFeatures;
+	protected BloomFilter<Feature> unknownFeatures;
+	protected BloomFilter<Feature> knownFeatures;
 	public FeatureDictWeighter(SquashingFunction ws) {
+		this(ws,new HashMap<Feature,Double>());
+	}
+	public FeatureDictWeighter(SquashingFunction ws, Map<Feature,Double> w) {
 		this.squashingFunction = ws;
+		this.weights = w;
 		this.unknownFeatures = new BloomFilter<Feature>(.01,Math.max(100, weights.size()));
 		this.knownFeatures = new BloomFilter<Feature>(.01,Math.max(100, weights.size()));
 	}
