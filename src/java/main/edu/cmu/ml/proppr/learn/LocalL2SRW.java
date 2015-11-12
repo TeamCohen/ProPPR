@@ -87,6 +87,15 @@ public class LocalL2SRW extends L2SRW {
 	private void prepareFeature(ParamVector<String,?> paramVec, String f, ParamVector<String,?> apply) {
 		if (!trainable(f)) return;
 		int gap = ((MuParamVector)paramVec).getLast(f);
+		int tries = 0;
+		while (gap < 0) { // Can't figure out why gap is showing up < 0 :(
+			try {
+				Thread.sleep(10);
+				gap = ((MuParamVector)paramVec).getLast(f);
+				tries++;
+			} catch(InterruptedException e) {}
+		}
+		if (tries>1 && log.isInfoEnabled()) { log.info("Took "+(tries+1)+" tries to get a valid gap measure @ "+f); }
 		if (gap==0) return;
 		double value = Dictionary.safeGet(paramVec,f);
 		double powerTerm = Math.pow(1 - 2 * c.mu * this.learningRate(), gap);
@@ -94,7 +103,7 @@ public class LocalL2SRW extends L2SRW {
 		//FIXME: opportunity for out-of-date `value`; probably ought to convert to a try loop
 		if (log.isDebugEnabled()) log.debug("Regularizing "+f+" += "+ -weightDecay);
 		double loss = gap * c.mu * Math.pow(value, 2);
-//		if (loss<0 && log.isInfoEnabled()) log.info("gap: "+gap+" mu: "+c.mu+" value: "+value+" value**2: "+Math.pow(value, 2));
+		if (loss<0 && log.isInfoEnabled()) log.info("gap: "+gap+" mu: "+c.mu+" value: "+value+" value**2: "+Math.pow(value, 2));
 		this.cumloss.add(LOSS.REGULARIZATION, loss);
 		apply.adjustValue(f, weightDecay);
 	}

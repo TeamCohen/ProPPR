@@ -54,7 +54,7 @@ public class MuParamVector<F> extends ParamVector<F,TimestampedWeight> {
 	public int getLast(F key) {
 		if (!this.backingStore.containsKey(key)) 
 			return 0;
-		return (int) -(this.backingStore.get(key).k - count);
+		return (int) -(this.backingStore.get(key).k - this.count);
 	}
 	
 	public void setLast(Set<F> keys) {

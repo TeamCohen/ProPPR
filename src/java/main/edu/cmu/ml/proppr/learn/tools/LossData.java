@@ -22,7 +22,7 @@ public class LossData {
 	}
 	public synchronized void add(LOSS type, double loss) {
 		if (loss<0) {
-			log.warn("SUSPICIOUS: decreasing "+type+" loss? "+loss);
+			log.warn("SUSPICIOUS: decreasing "+type+" loss? "+loss,new RuntimeException());
 		}
 		if (log.isDebugEnabled()) log.debug("Adding "+loss+" to "+type);
 		Dictionary.increment(this.loss, type, loss);
