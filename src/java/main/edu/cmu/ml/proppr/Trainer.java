@@ -365,7 +365,10 @@ public class Trainer {
 		// run examples
 		int id=1;
 		int countdown=-1; Trainer notify = null;
+		long start = System.currentTimeMillis(),now;
 		for (String s : examples) {
+			now = System.currentTimeMillis();
+			if ( (now-start) > 5000) { log.info(id+" examples read..."); start = now; }
 			long queueSize = (((ThreadPoolExecutor) workPool).getTaskCount()-((ThreadPoolExecutor) workPool).getCompletedTaskCount());
 			if (log.isDebugEnabled()) log.debug("Queue size "+queueSize);
 			if (countdown>0) {
@@ -394,6 +397,7 @@ public class Trainer {
 			Future<PosNegRWExample> parsed = workPool.submit(new Parse(s, builder, id));
 			Future<ExampleStats> gradfound = workPool.submit(new Grad(parsed, paramVec, sumGradient, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
+			id++;
 		}
 		workPool.shutdown();
 		try {
