@@ -33,6 +33,7 @@ import gnu.trove.map.TIntDoubleMap;
  */
 public class AdaGradSRW extends SRW {	
 	private static final Logger log = Logger.getLogger(AdaGradSRW.class);
+	private static final double MIN_GRADIENT = Math.sqrt(Double.MIN_VALUE)*10;
 	public AdaGradSRW() {
 		super(new SRWOptions());
 	}
@@ -72,7 +73,8 @@ public class AdaGradSRW extends SRW {
 		// apply gradient to param vector
 		for (TIntDoubleIterator grad = gradient.iterator(); grad.hasNext(); ) {
 			grad.advance();
-			if (grad.value()==0) continue;
+			// avoid underflow since we're summing the square
+			if (Math.abs(grad.value())<MIN_GRADIENT) continue;
 			String feature = ex.getGraph().featureLibrary.getSymbol(grad.key());
 
 			if (trainable(feature)){
@@ -89,6 +91,10 @@ public class AdaGradSRW extends SRW {
 				Double descentVal = - c.eta * g / Math.sqrt(rt);
 
 				params.adjustValue(feature, descentVal);
+				
+				if (params.get(feature).isInfinite()) {
+					log.warn("Infinity at "+feature+"; gradient "+grad.value()+"; rt "+rt);
+				}
 			}
 		}
 	}
