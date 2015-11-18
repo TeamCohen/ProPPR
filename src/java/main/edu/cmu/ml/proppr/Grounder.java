@@ -66,6 +66,7 @@ public class Grounder<P extends ProofGraph> {
 	protected int nthreads=1;
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
+	protected boolean includeUnlabeledGraphs = false;
 	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>(ConcurrentSymbolTable.HASHING_STRATEGIES.identity);
 
 
@@ -83,6 +84,9 @@ public class Grounder<P extends ProofGraph> {
 
 	public void addParams(ParamVector<String,?> params, SquashingFunction<Goal> f) {
 		this.prover.setWeighter(InnerProductWeighter.fromParamVec(params, f));
+	}
+	public void includeUnlabeledGraphs(boolean includeThem) {
+		this.includeUnlabeledGraphs = includeThem;
 	}
 
 	public class GroundingStatistics {
@@ -306,7 +310,7 @@ public class Grounder<P extends ProofGraph> {
 					ix.getPosSet().length,ix.getNegSet().length,
 					gx.getPosList().size(),gx.getNegList().size());
 			if (gx.getGraph().edgeSize() > 0) {
-				if (gx.length() > 0) {
+				if (gx.length() > 0 || includeUnlabeledGraphs) {
 					return (serializeGroundedExample(pg, gx));
 				} else {
 					statistics.noPosNeg();
@@ -322,7 +326,7 @@ public class Grounder<P extends ProofGraph> {
 		try {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GROUNDED;
-			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
+			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER | Configuration.USE_EMPTYGRAPHS;
 			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_SQUASHFUNCTION;
 
 			ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);

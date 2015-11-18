@@ -13,7 +13,7 @@ import java.util.HashSet;
  * Created by kavyasrinet on 9/26/15.
  */
 public class PairwiseL2SqLoss extends LossFunction{
-    protected double margin=0.001;
+    protected double margin=0.01;
     @Override
     public int computeLossGradient(ParamVector params, PosNegRWExample example,
                                    TIntDoubleMap gradient, LossData lossdata, SRWOptions c) {
