@@ -13,6 +13,7 @@ public abstract class SquashingFunction<F> {
 	public abstract double compute(double x);
 	public abstract double computeDerivative(double weight);
 	public abstract double defaultValue();
+//	public abstract double fixedValue();
 	
 	/** Support method for proving
 	 * 

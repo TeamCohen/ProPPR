@@ -53,7 +53,7 @@ public class RegularizeL1 extends Regularize {
 	protected void lazyUpdate(SRWOptions c, MuParamVector<String> params, ParamVector<String,?> apply, String f,
 			LossData loss, double learningRate) {
 //		if (!parent.trainable(f)) return;
-		int gap = ((MuParamVector<String>)params).getLast(f);
+		int gap = getGap(params,f);
 		if (gap==0) return;
 
 		//L1 with a proximal operator

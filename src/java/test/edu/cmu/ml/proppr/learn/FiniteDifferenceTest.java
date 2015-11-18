@@ -48,39 +48,39 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		srw.accumulateGradient(paramVec, f.makeExample("gradient", brGraph, query, pos,neg), grad);
 		return grad;
 	}
-	public void test(SRW srw, ParamVector<String,?> uniformParams, ExampleFactory f) {
-
+	public void test(SRW srw, ParamVector<String,?> w, ExampleFactory f) {
+		/*
+		 * This form of the finite difference test taken from 
+		 * Leon Bottou's "Stochasitc Gradient Descent Tricks"
+		 * Microsoft Research, Redmond, WA
+		 */
 		int[] pos = new int[blues.size()]; { int i=0; for (String k : blues) pos[i++] = nodes.getId(k); }
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
 
-		double baselineLoss = makeLoss(srw, uniformParams, startVec, pos, neg, f);
-		ParamVector<String,?> baselineGrad = makeGradient(srw, uniformParams, startVec, pos, neg, f);
+		double q = makeLoss(srw, w, startVec, pos, neg, f);
+		ParamVector<String,?> g = makeGradient(srw, w, startVec, pos, neg, f);
 
-		double perturb_epsilon = 1e-10;
-		for (String feature : new String[]{"tob","fromb","tor","fromr"}) {
-			
-			ParamVector<String,?> pert = uniformParams.copy();
-			pert.put(feature, pert.get(feature)+perturb_epsilon);
-			
-			srw.clearLoss();
-			ParamVector<String,?> epsGrad = makeGradient(srw, pert, startVec, pos, neg, f);
-			double newLoss = srw.cumulativeLoss().total();
-			
-
-			double truediff = (newLoss-baselineLoss);
-			double approxdiff = (perturb_epsilon*baselineGrad.get(feature));
-			double percdiff = (truediff) != 0 ? Math.abs(((approxdiff) / (truediff))-1)*100 : 0;
-			System.err.println(String.format("%5s  true: %+1.8e  approx: %+1.8e  %%diff: %3.2f%%",
-					feature,
-					truediff,
-					approxdiff, 
-					percdiff));
-			
-			assertEquals(srw.getClass().getName()+" finite difference approximation on "+feature,
-					0,
-					percdiff,
-					10);
+		double gamma = 1e-10;
+		ParamVector<String,?> delta = new SimpleParamVector<String>();
+		ParamVector<String,?> w0 = w.copy();
+		double deltag = 0.0;
+		for (String feat : g.keySet()) {
+			delta.adjustValue(feat, -gamma*g.get(feat));
+			w0.adjustValue(feat,delta.get(feat));
+			deltag += delta.get(feat)*g.get(feat);
 		}
+
+		srw.clearLoss();
+		ParamVector<String,?> g0 = makeGradient(srw, w0, startVec, pos, neg, f);
+		double q0 = srw.cumulativeLoss().total();
+		
+		System.err.println(srw.getClass().getName()+":");
+		System.err.println("         q0 = "+q0);
+		System.err.println("q + delta*g = "+(q+deltag));
+		assertEquals(srw.getClass().getName()+" finite difference approximation",
+				0,
+				q0 - (q + deltag),
+				0.001*q0);
 	}
 	public void setupSrw(SRW srw) {
 		srw.setMu(0);
@@ -100,6 +100,7 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		SRW srw = new DprSRW();
 		setupSrw(srw);
 		srw.getOptions().set("apr","epsilon","1e-7");
+		srw.setRegularizer(new RegularizationSchedule(srw, new RegularizeL2()));
 		ParamVector<String,?> p = defaultParams();
 		fillParams(srw,p);
 		test(srw,p, new DprExampleFactory());

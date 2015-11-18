@@ -68,9 +68,9 @@ public class Query extends Rule implements Comparable<Query> {
 		for (int i=cursor; i<array.length; i++) {
 			char c = array[i];
 			switch(c) {
-			case ' ': continue;
 			case ',': //fallthrough
 			case ')': return i+1;
+			case ' ': if (argument.length()==0) continue; //fallthrough
 			default: argument.append(c);
 			}
 		}

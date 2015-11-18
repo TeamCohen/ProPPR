@@ -20,6 +20,7 @@ import edu.cmu.ml.proppr.learn.tools.Sigmoid;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.learn.tools.Tanh;
+import edu.cmu.ml.proppr.learn.tools.Tanh1;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.IdDprProver;
@@ -30,6 +31,7 @@ import edu.cmu.ml.proppr.prove.PriorityQueueProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
+import org.apache.log4j.Logger;
 
 public class ModuleConfiguration extends Configuration {
 	private static final String SEED_CONST_OPTION = "seed";
@@ -41,7 +43,7 @@ public class ModuleConfiguration extends Configuration {
 	private static final String PROVER_MODULE_OPTION = "prover";
 
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
-	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, ReLU, LReLU, exp, clipExp };
+	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, tanh1, ReLU, LReLU, exp, clipExp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { ppr, dpr, adagrad }
 	private enum REGULARIZERS { l1, l1laplacian, l1grouplasso, l2 };
@@ -72,13 +74,14 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: clipExp\n"
 							+ "Available options:\n"
-							+ "linear\n"
-							+ "sigmoid\n"
-							+ "tanh\n"
-							+ "ReLU\n"
-							+ "LReLU (leaky ReLU)\n"
-							+ "exp\n"
-							+ "clipExp (clipped to e*x @x=1)")
+							+ Dictionary.buildString(SQUASHFUNCTIONS.values(),new StringBuilder(),", ").toString())
+//							+ "linear\n"
+//							+ "sigmoid\n"
+//							+ "tanh\n"
+//							+ "ReLU\n"
+//							+ "LReLU (leaky ReLU)\n"
+//							+ "exp\n"
+//							+ "clipExp (clipped to e*x @x=1)")
 							.create());
 		}
 		if(isOn(flags, USE_PROVER))
@@ -89,14 +92,15 @@ public class ModuleConfiguration extends Configuration {
 					.hasArg()
 					.withDescription("Default: dpr\n"
 							+ "Available options:\n"
-							+ "ippr\n"
-							+ "ppr\n"
-							+ "dpr\n"
-							+ "idpr\n"
-							+ "qpr\n"
-							+ "pdpr\n"
-							+ "dfs\n"
-							+ "tr")
+							+ Dictionary.buildString(PROVERS.values(),new StringBuilder(),", ").toString())
+//							+ "ippr\n"
+//							+ "ppr\n"
+//							+ "dpr\n"
+//							+ "idpr\n"
+//							+ "qpr\n"
+//							+ "pdpr\n"
+//							+ "dfs\n"
+//							+ "tr")
 							.create());
 		if (isOn(flags, USE_GROUNDER))
 			options.addOption(
@@ -116,7 +120,7 @@ public class ModuleConfiguration extends Configuration {
 					.withArgName("class")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: cached:shuff=true:pct=0.1:stableEpochs=3\n"
+					.withDescription("Default: cached:shuff=true:pct=1.0:stableEpochs=3\n"
 							+ "Available trainers:\n"
 							+ "cached[:shuff={true|false}] (faster)\n"
 							+ "streaming                   (large dataset)\n"
@@ -197,6 +201,8 @@ public class ModuleConfiguration extends Configuration {
 					break;
 				case tr:
 					this.prover = new TracingDfsProver(apr);
+					if (this.nthreads > 1) 
+						usageOptions(options, allFlags, "Tracing prover is not multithreaded. Remove --threads option or use --threads 1.");
 					break;
 				default:
 					usageOptions(options,allFlags,"No prover definition for '"+values[0]+"'");
@@ -213,6 +219,7 @@ public class ModuleConfiguration extends Configuration {
 				case linear: squashingFunction = new Linear(); break;
 				case sigmoid: squashingFunction = new Sigmoid(); break;
 				case tanh: squashingFunction = new Tanh(); break;
+				case tanh1: squashingFunction = new Tanh1(); break;
 				case ReLU: squashingFunction = new ReLU(); break;
 				case LReLU: squashingFunction = new LReLU(); break;
 				case exp: squashingFunction = new Exp(); break;
@@ -394,6 +401,9 @@ public class ModuleConfiguration extends Configuration {
 			this.srw = new SRW(sp);
 			this.srw.setRegularizer(new RegularizationSchedule(this.srw, new RegularizeL2()));
 		}
+		
+		if (this.fixedWeightRules != null) this.srw.setFixedWeightRules(fixedWeightRules);
+			
 	}
 
 	@Override

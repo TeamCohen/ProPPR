@@ -102,6 +102,7 @@ public class FactsPlugin extends WamPlugin {
 		if (returnWeights && argConst[arity-1] != null) {
 			throw new LogicProgramException("predicate "+state.getJumpTo()+" called with bound last argument!");
 		}
+		if (log.isDebugEnabled()) log.debug("Fetching outlinks for "+jumpTo+": "+Dictionary.buildString(argConst,new StringBuilder(),", ").toString());
 		List<WeightedArgs> values = null;
 		// fill values according to the query
 		if (argConst[0] == null && (argConst.length == 1 || argConst[1] == null)) {

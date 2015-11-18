@@ -61,13 +61,13 @@ public class Trainer {
 		this.nthreads = Math.max(1, nthreads);
 		this.throttle = throttle;
 
-		learner.untrainedFeatures().add("id(trueLoop)");
-		learner.untrainedFeatures().add("id(trueLoopRestart)");
-		learner.untrainedFeatures().add("id(restart)");
+		this.masterLearner.fixedWeightRules().addExact("id(trueLoop)");
+		this.masterLearner.fixedWeightRules().addExact("id(trueLoopRestart)");
+		this.masterLearner.fixedWeightRules().addExact("id(restart)");
 
 		this.learners = new HashMap<String,SRW>();
 		for (int i=0;i<this.nthreads;i++) {
-			this.learners.put("work-"+(i+1), learner.copy());
+			this.learners.put("work-"+(i+1), this.masterLearner.copy());
 		}
 	}
 
@@ -162,8 +162,6 @@ public class Trainer {
 
 	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
-		if (paramVec.size() == 0)
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0);
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
 		NamedThreadFactory cleaningThreads = new NamedThreadFactory("cleanup-");
@@ -278,6 +276,7 @@ public class Trainer {
 	 */
 	protected void cleanEpoch(ExecutorService workingPool, ExecutorService cleanPool,
 			ParamVector<String,?> paramVec, boolean traceLosses, StoppingCriterion stopper, int n, TrainingStatistics stats) {
+		n = n-1;
 		workingPool.shutdown();
 		try {
 			workingPool.awaitTermination(7, TimeUnit.DAYS);
@@ -341,14 +340,14 @@ public class Trainer {
 			System.out.println();
 	}
 
-	public ParamVector<String,?> findGradient(Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> paramVec) {
+	public ParamVector<String,?> findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> paramVec) {
 		log.info("Computing gradient on cooked examples...");
 		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
 			paramVec = createParamVector();
-			for (String f : this.masterLearner.untrainedFeatures()) paramVec.put(f, 1.0); // FIXME: should this use the weighter default?
 		}
 		paramVec = this.masterLearner.setupParams(paramVec);
+		if (masterFeatures != null && masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 
 		//		
 		//		//WW: accumulate example-size normalized gradient
@@ -367,7 +366,10 @@ public class Trainer {
 		// run examples
 		int id=1;
 		int countdown=-1; Trainer notify = null;
+		long start = System.currentTimeMillis(),now;
 		for (String s : examples) {
+			now = System.currentTimeMillis();
+			if ( (now-start) > 5000) { log.info(id+" examples read..."); start = now; }
 			long queueSize = (((ThreadPoolExecutor) workPool).getTaskCount()-((ThreadPoolExecutor) workPool).getCompletedTaskCount());
 			if (log.isDebugEnabled()) log.debug("Queue size "+queueSize);
 			if (countdown>0) {
@@ -396,6 +398,7 @@ public class Trainer {
 			Future<PosNegRWExample> parsed = workPool.submit(new Parse(s, builder, id));
 			Future<ExampleStats> gradfound = workPool.submit(new Grad(parsed, paramVec, sumGradient, id, notify));
 			cleanPool.submit(new TraceLosses(gradfound, id));
+			id++;
 		}
 		workPool.shutdown();
 		try {
@@ -475,6 +478,9 @@ public class Trainer {
 			long start = System.currentTimeMillis();
 			learner.trainOnExample(paramVec, ex);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
+			if (paramVec.get("id(restart)")!= 1.0) {
+				log.warn("Non-unit restart weight");
+			}
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 			return new ExampleStats(ex.length(),ex.getGraph().nodeSize());
 		}
@@ -542,7 +548,7 @@ public class Trainer {
 		try {
 			int inputFiles = Configuration.USE_TRAIN | Configuration.USE_INIT_PARAMS;
 			int outputFiles = Configuration.USE_PARAMS;
-			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS;
+			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS | Configuration.USE_FIXEDWEIGHTS;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
 			ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
 			log.info(c.toString());
@@ -585,8 +591,4 @@ public class Trainer {
 		this.stoppingPercent = percent;
 
 	}
-
-
-
-
 }

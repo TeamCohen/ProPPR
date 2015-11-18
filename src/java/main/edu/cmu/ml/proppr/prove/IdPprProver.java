@@ -105,11 +105,11 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 			for (int uid=cg.getRootId(); uid<vec.size(); uid++) {
 				double vu = vec.get(uid);
 				if (vu >= 0.0) {
-					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
-					int d = cg.getDegreeById(uid);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter);
+					int d = cg.getDegreeById(uid, this.weighter);
 					for (int i=0; i<d; i++) {
-						double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
-						int vid = cg.getIthNeighborById(uid,i);
+						double wuv = cg.getIthWeightById(uid,i,params, this.weighter);
+						int vid = cg.getIthNeighborById(uid,i,this.weighter);
 						nextVec.inc(vid, vu*(1.0-apr.alpha)*(wuv/z));
 					}
 				}
@@ -130,11 +130,11 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 			for (int uid=cg.getRootId(); uid<vec.size(); uid++) {
 				double vu = vec.get(uid);
 				if (vu >= 0.0) {
-					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
-					int d = cg.getDegreeById(uid);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter);
+					int d = cg.getDegreeById(uid, this.weighter);
 					for (int i=0; i<d; i++) {
-						double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
-						int vid = cg.getIthNeighborById(uid,i);
+						double wuv = cg.getIthWeightById(uid,i,params, this.weighter);
+						int vid = cg.getIthNeighborById(uid,i,this.weighter);
 						nextVec.inc(vid, vu*(1.0-apr.alpha)*(wuv/z));
 					}
 				}

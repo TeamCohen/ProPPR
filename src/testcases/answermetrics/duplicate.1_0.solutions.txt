@@ -1,0 +1,4 @@
+# proved 1	foo(second,X1).	0 msec
+1	.99	foo(second,a).
+# proved 2	foo(second,X1).	0 msec
+1	.99	foo(second,a).

@@ -1,0 +1,14 @@
+# proved 1	foo(first,X1).	0 msec
+1	.19	foo(first,a).
+1	.19	foo(first,b).
+1	.19	foo(first,c).
+1	.19	foo(first,d).
+1	.19	foo(first,e).
+2	.01	foo(first,v).
+2	.01	foo(first,w).
+2	.01	foo(first,x).
+2	.01	foo(first,y).
+2	.01	foo(first,z).
+# proved 2	foo(second,X1).	0 msec
+1	.99	foo(second,a).
+2	.01	foo(second,v).

@@ -9,7 +9,7 @@ import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.graph.InferenceGraph;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
-import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
+import edu.cmu.ml.proppr.prove.FeatureDictWeighter;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.ConcurrentSymbolTable;
@@ -40,7 +40,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	public CachingIdProofGraph(ConcurrentSymbolTable.HashingStrategy<State> strat) {
 		super();
 		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
-		this.featureTab = new SimpleSymbolTable<Feature>();
+		this.featureTab = new ConcurrentSymbolTable<Feature>();
 		nodeTab = new ConcurrentSymbolTable<State>(strat);
 	}
 	protected void init(SymbolTable<Feature> featureTab) {
@@ -70,25 +70,25 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	public int getId(State u) { 
 		return nodeTab.getId(u); 
 	}
-	public int getDegreeById(int ui) throws LogicProgramException { 
-		expandIfNeeded(ui);
+	public int getDegreeById(int ui, FeatureDictWeighter weighter) throws LogicProgramException { 
+		expandIfNeeded(ui, weighter);
 		return nodeVec.get(ui).index.length; 
 	}
-	public int getIthNeighborById(int ui,int i)  throws LogicProgramException {
-		expandIfNeeded(ui);
+	public int getIthNeighborById(int ui,int i, FeatureDictWeighter weighter)  throws LogicProgramException {
+		expandIfNeeded(ui, weighter);
 		return nodeVec.get(ui).index[i]; 
 	}
-	public double getIthWeightById(int ui,int i,LongDense.AbstractFloatVector params,SquashingFunction squashingFunction)  throws LogicProgramException {
-		expandIfNeeded(ui);
+	public double getIthWeightById(int ui,int i,LongDense.AbstractFloatVector params,FeatureDictWeighter weighter)  throws LogicProgramException {
+		expandIfNeeded(ui, weighter);
 		SimpleSparse.FloatVector phi = nodeVec.get(ui).val[i]; 
-		return Math.max(0,squashingFunction.compute(phi.dot(params, (float) squashingFunction.defaultValue())));
+		return Math.max(0,weighter.getSquashingFunction().compute(phi.dot(params, (float) weighter.getSquashingFunction().defaultValue())));
 	}
-	public double getTotalWeightOfOutlinks(int ui,LongDense.AbstractFloatVector params,SquashingFunction squashingFunction) throws LogicProgramException {
-		expandIfNeeded(ui);
+	public double getTotalWeightOfOutlinks(int ui,LongDense.AbstractFloatVector params,FeatureDictWeighter weighter) throws LogicProgramException {
+		expandIfNeeded(ui, weighter);
 		double z = 0.0;
-		int d = getDegreeById(ui);
+		int d = getDegreeById(ui, weighter);
 		for (int i=0; i<d; i++) {
-			z += getIthWeightById(ui,i,params,squashingFunction);
+			z += getIthWeightById(ui,i,params,weighter);
 		}
 		return z;
 	}
@@ -108,22 +108,24 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	}
 
 	/* produce and cache outlinks if you haven't yet */
-	private void expandIfNeeded(int uid) throws LogicProgramException {
+	private void expandIfNeeded(int uid, FeatureDictWeighter weighter) throws LogicProgramException {
 		if (nodeVec.get(uid)==null) {
 			State u = nodeTab.getSymbol(uid);
 			if (u!=null) {
 				List<Outlink> outlinks = this.computeOutlinks(u,true);
-				setOutlinks(uid,outlinks);
+				setOutlinks(uid,outlinks,weighter);
 			}
 		}
 	}
 
-	public void setOutlinks(int uid, List<Outlink> outlinks) {
+
+	public void setOutlinks(int uid, List<Outlink> outlinks) { setOutlinks(uid,outlinks,null); }
+	public void setOutlinks(int uid, List<Outlink> outlinks, FeatureDictWeighter weighter) {
 		edgeCount += outlinks.size();
-		nodeVec.set(uid, outlinksAsMatrix(outlinks));
+		nodeVec.set(uid, outlinksAsMatrix(outlinks, weighter));
 	}
 
-	public SimpleSparse.FloatMatrix outlinksAsMatrix(List<Outlink> outlinks) {
+	public SimpleSparse.FloatMatrix outlinksAsMatrix(List<Outlink> outlinks, FeatureDictWeighter weighter) {
 		// convert the outlinks to a sparse matrix
 		SimpleSparse.FloatMatrix mat = new SimpleSparse.FloatMatrix(outlinks.size());
 		int i = 0;
@@ -135,6 +137,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			float[] featVal = new float[numFeats];
 			int j=0;
 			for (Map.Entry<Feature,Double> e : o.fd.entrySet()) {
+				if (weighter != null) weighter.countFeature(e.getKey());
 				featBuf[j] = featureTab.getId(e.getKey());
 				featVal[j] = e.getValue().floatValue();
 				j++;

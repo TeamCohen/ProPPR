@@ -1,0 +1,544 @@
+# Text Categorization in ProPPR
+
+In this tutorial you will learn:
+
+* common ProPPR terminology
+* common ProPPR input file types
+* common ProPPR output file types
+* how a ProPPR program generates a proof graph
+* the sequence of `proppr` commands for query answering, training, and evaluation
+
+## Step 0: Install ProPPR and set up your path
+
+If you haven't already,
+
+    $ git clone git@github.com:TeamCohen/ProPPR.git
+    $ cd ProPPR
+    $ ant clean build
+    
+& then if you're using a new shell,
+    
+    $ cd ProPPR
+    $ export PROPPR=`pwd`
+    $ export PATH=$PATH:$PROPPR/scripts
+    
+We'll be working out of the `tutorials/textcat` directory.
+
+## Step 1: Building the database
+
+The problem we're solving in this tutorial is that of text classification, where we have a bunch of documents and we want to label each of them with one or more categories. The first thing we need to do then is organize the data we have about each category and each document. We'll do that by converting the raw data into a set of relational *facts*. Each fact will associate a relation name (like `hasWord` or `isLabel`) with a fixed number of arguments.
+
+Say we have the following documents:
+
+    train00001  a pricy doll house
+    train00002  a little red fire truck
+    train00003  a red wagon
+    train00004  a pricy red sports car
+    train00005  punk queen barbie and ken
+    train00006  a little red bike
+    train00007  a big 7-seater minivan with an automatic transmission
+    train00008  a big house in the suburbs with a crushing mortgage
+    train00009  a job for life at IBM
+    train00010  a huge pile of tax forms due yesterday
+    train00011  huge pile of junk mail catalogs and bills
+    test00001   a pricy barbie doll
+    test00002   a little yellow toy car
+    test00003   a red 10 speed bike
+    test00004   a red porshe convertible
+    test00005   a big pile of paperwork
+    test00006   a huge backlog of email
+    test00007   a life of woe and trouble
+
+And the following categories:
+
+    neg
+    pos
+
+We're going to list each category as a *1-ary* relation. '1-ary' means the relation has 1 argument, or variable, other than the relation name.
+
+    isLabel neg
+    isLabel pos
+
+We've stored this data in a tab-delimited file and called it `toylabels.cfacts`. The *.cfacts format is the most flexible, because it can handle relations with any number of arguments, but that means it's also the least efficient memory-wise.
+
+For the documents, we're going to associate the document name with each of the words it contains using a *2-ary* or *binary* relation (so, 2 arguments):
+
+    hasWord train00001	a
+    hasWord train00001	pricy
+    hasWord train00001	doll
+    hasWord train00001	house
+    hasWord train00002	a
+    hasWord train00002  little
+    hasWord train00002  red
+    hasWord train00002	fire
+    hasWord train00002	truck
+    ...
+
+Binary relations are very common and very useful, because you can think of them as expressing a directed graph. Each fact represents an edge from arg1 to arg2, labeled with the relation name. Because binary relations are so useful, ProPPR has special machinery for handling them more efficiently. To trigger this machinery, we've stored the word data in a tab-delimited file called `toycorpus.graph`.
+
+But! While storing the bag of words for each document gets us a lot, it doesn't quite capture all the information we know about our corpus. For example, the word 'a' is very common, and doesn't tell us much about a document, while the word 'pricy' tells us much more. To help express this intuition, we're going to move from an unweighted directed graph to a weighted directed graph, and make the weight of each edge the TF/IDF of the word:
+
+    hasWord train00001	a       0.0589
+    hasWord	train00001	house	0.5005
+    hasWord	train00001	pricy	0.5005
+    hasWord	train00001	doll	0.7040
+    hasWord	train00002	a       0.0510
+    hasWord	train00002	fire	0.6097
+    hasWord	train00002	little	0.4334
+    hasWord	train00002	truck	0.6097
+    hasWord	train00002	red     0.2572
+    ...
+
+Since *.graph files always contain binary facts, ProPPR knows that the third field of each line represents an edge weight. ProPPR supports adding weights to nonbinary relations too, but that's another tutorial.
+
+Now we have two database files: `toylabels.cfacts` and `toycorpus.graph`.
+
+## Step 2: Writing the ProPPR program
+
+A ProPPR program is a logic program that outlines how queries should be answered using facts in the database. We use an annotated Prolog syntax that allows us to attach features to each rule. When the program is run on a query, the resulting *proof graph* is made up of logical states, with each edge representing a rule application or database lookup, starting with the query state and ending with solution states. For now, let's look at a program for doing text classification of a document. 
+
+We want to answer queries that take the form `predict(Document,Label)`. Just like the facts in the database, each query is a relation consisting of a name and a set of arguments. Unlike the facts in the database, at query time some of the arguments ('Label' in this case) will be *ungrounded* -- that is, they won't have a value attached. This type of relation is called a *goal*. In ProPPR, just like in Prolog, an argument starting with an uppercase letter is considered a variable, while arguments starting with a lowercase letter are constants. You'll notice that in our database, all the arguments start with lowercase letters -- that's on purpose; only facts -- completely grounded goals -- can be in the database. In our program, most of the arguments will start with uppercase letters, with each variable taking on appropriate values based on the query being executed.
+
+Let's take a look at the program in `textcat.ppr`:
+
+    predict(Document,Label) :- isLabel(Label),ab_classify(Document,Label).
+    ab_classify(Document,Label) :- { f#(Word,Label,Weight) : hasWord#(Document,Word,Weight) }.
+
+Each line of the program is a *rule*. A rule is composed of a *head* goal, the ":-" delimiter (the *neck*), a *tail* list of zero or more goals, and an optional *feature annotation*. A rule reads like a then-if statement, as if the ":-" were actually a left-pointing arrow. When we answer a query, we "prove" it to be true for a particular set of variable assignments.
+
+The first line reads, in english: "**Predict** a particular label for a particular document **if** that label is in the list of labels in the database, **and if** `ab_classify` of that document and that label is true."
+
+The second line reads, in english: "**ab_classify** of a particular document and a particular label is always true. In addition, when this rule is executed, apply a feature `f` associating each word in the document with that label, with a weight of that word's TF/IDF."
+
+If this doesn't make any sense, see if the next section helps -- ProPPR programs can be pretty abstract on their own.
+
+## Step 3: Answering queries
+
+
+### Simulating a query by hand
+
+To show how ProPPR uses a program and a database to actually answer queries, let's walk through an example query and build the proof graph by hand. Say we have the query `predict(train00001,Y)`. We start with a state that has only that goal, and call it state #1:
+
+    1 predict(train00001,Y).
+    
+ProPPR then looks to see whether it knows any rules or facts with relation `predict` that take 2 arguments. It does! Our rule #1 matches. ProPPR applies the rule, and generates the next logic state by replacing the head goal in its previous state with the tail goals from the rule:
+
+    2 isLabel(Label),ab_classify(train00001,Label).
+    
+Now we have a proof graph with 2 states in it, with an edge from 1 -> 2. Rule #1 doesn't specify any features, so ProPPR automatically generates one (just so it can keep track). It winds up being `id(predict,2,22)` but don't worry about the numbers for now. That edge label takes on a default weight of 1.0.
+
+Next, ProPPR looks to see whether it knows any rules or facts with relation `isLabel` that take 1 argument. It does! Our database file 'toylabels.cfacts' matches. ProPPR performs the lookup, and generates the set of next logic states by setting the value of the 'Label' variable to the results, then popping the head goal off the list. We wind up with two states, one for each label:
+
+    3 (Label=pos) ab_classify(train00001,pos).
+    4 (Label=neg) ab_classify(train00001,neg).
+
+Now we have a proof graph with 4 states in it, with a new edge from 2 -> 3 and one from 2 -> 4. Both of those edges are labeled with the name of the database file where the lookup was found: `db(FactsPlugin,toylabels.cfacts)`. Each of those edge labels takes on a default weight of 1.0.
+
+Let's move on, following state 3. Next, ProPPR looks to see whether it knows any rules or facts with relation `ab_classify` that take 2 arguments. It does! Our rule #2 matches. ProPPR applies the rule, and generates the next logic state by replacing the head goal in its previous state with the tail goals from the rule. In this case, there are no tail goals, so our goal list is empty:
+
+    5 (Label=pos)
+    
+Now we have a proof graph with 5 states in it, with a new edge from 3 -> 5. But! Our `ab_classify` rule specifies features. ProPPR runs the tiny program in the feature annotation to figure out what they should be. It finds `hasWord/2` in toycorpus.graph, and generates the following labels and weights to stick on the edge 3 -> 5:
+
+    f(a,pos)     0.0589
+    f(pricy,pos) 0.5005
+    f(doll,pos)  0.7040
+    f(house,pos) 0.5005
+
+Next, ProPPR looks at its state, and finds there are no more goals to solve, so it marks that state as a solution. It then returns to the previous branch point, back at state 4:
+
+    4 (Label=neg) ab_classify(train00001,neg).
+
+Next, ProPPR looks to see whether it knows any rules or facts with relation `ab_classify` that take 2 arguments (sound familiar?). It does! Our rule #2 matches. ProPPR applies the rule, and generates the next logic state by replacing the head goal in its previous state with the tail goals from the rule. In this case, there are no tail goals, so our goal list is empty:
+
+    6 (Label=neg)
+    
+This should look familiar -- it's the same as state 5, just with a different assignment to Label. Now we have a proof graph with 6 states in it, with a new edge from 4 -> 6. But! Our `ab_classify` rule specifies features. ProPPR runs the tiny program in the feature annotation to figure out what they should be. It finds `hasWord/2` in toycorpus.graph, and generates the following labels and weights to stick on the edge 4 -> 6:
+
+    f(a,neg)     0.0589
+    f(pricy,neg) 0.5005
+    f(doll,neg)  0.7040
+    f(house,neg) 0.5005
+
+This should look familiar -- it's the same as the features on edge 3 -> 5, just with a different assignment to Label. And just like before, ProPPR looks at its state, and finds there are no more goals to solve, so it marks that state as a solution.
+
+There are no more branch points to resolve, and the proof graph is complete:
+
+    * 1 predict(train00001,Y).
+      |
+      |= id(predict,2,22)@1.0
+      |
+      * 2 isLabel(Label),ab_classify(train00001,Label).
+        |
+        |= db(FactsPlugin,toylabels.cfacts)@1.0
+        |
+        |* 3 (Label=pos) ab_classify(train00001,pos).
+        |  |
+        |  |= f(a,pos)@0.0589
+        |  |= f(pricy,pos)@0.5005
+        |  |= f(doll,pos)@0.7040
+        |  |= f(house,pos)@0.5005
+        |  |
+        |  * 5 (Label=pos) <SOLUTION>
+        |
+        * 4 (Label=neg) ab_classify(train00001,neg).
+          |
+          |= f(a,neg)@0.0589
+          |= f(pricy,neg)@0.5005
+          |= f(doll,neg)@0.7040
+          |= f(house,neg)@0.5005
+          |
+          * 6 (Label=neg) <SOLUTION>
+    
+Now if we look back at the program, hopefully it will make a bit more sense:
+
+    predict(Document,Label) :- isLabel(Label),ab_classify(Document,Label).
+    ab_classify(Document,Label) :- { f#(Word,Label,Weight) : hasWord#(Document,Word,Weight) }.
+
+All it does is generate a feature for every word-label pairing relevant to a document, and uses the graph structure to make the solution state for a particular labeling dependent on the relevant features. ProPPR uses Personalized PageRank(random-walk-with-reset) to score each solution, starting with a unit weight on the query node and filtering through the features on each edge of the graph until it reaches the solutions. With an untrained model, this gives the weights just as you see them above. The solution scores are then normalized to show a relative ranking of just the solution nodes. 
+
+### Answering queries with ProPPR
+
+First, we have to compile the program. Prolog is nice and human-readable but it's not very efficient. Thankfully, David H. D. Warren designed the Warren Abstract Machine back in the 80s. It's far more machine-friendly, and runs on a sortof Prolog bytecode. ProPPR has its own compiler, which allows us to include our special feature annotation syntax.
+
+    $ proppr compile textcat.ppr
+    INFO:root:ProPPR v2
+    INFO:root:subprocess call options: {'stdout': <open file 'textcat.wam', mode 'w' at 0x1827c00>}
+    INFO:root:calling: python /usr0/home/krivard/workspace/ProPPR-2.0/src/scripts/compiler.py serialize textcat.ppr
+    INFO:root:compiled textcat.ppr to textcat.wam
+
+If you're really into compilers, feel free to peruse the .wam file. Otherwise, we'll move on.
+
+Next, we're going to tell the `proppr` utility about our program and database files:
+
+    $ proppr set --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
+
+This setting gets saved to a file in the current directory, so you only have to do it when you're switching programs.
+
+Next, the query file. For now, we're going to piggyback on to the list of training queries, but you really only need the first field:
+
+    $ cat toytrain.examples
+    predict(train00004,Y)    -predict(train00004,neg)	+predict(train00004,pos)
+    predict(train00009,Y)	+predict(train00009,neg)	-predict(train00009,pos)
+    predict(train00003,Y)	-predict(train00003,neg)	+predict(train00003,pos)
+    predict(train00006,Y)	-predict(train00006,neg)	+predict(train00006,pos)
+    predict(train00001,Y)	-predict(train00001,neg)	+predict(train00001,pos)
+    predict(train00011,Y)	+predict(train00011,neg)	-predict(train00011,pos)
+    predict(train00008,Y)	+predict(train00008,neg)	-predict(train00008,pos)
+    predict(train00010,Y)	+predict(train00010,neg)	-predict(train00010,pos)
+    predict(train00005,Y)	-predict(train00005,neg)	+predict(train00005,pos)
+    predict(train00007,Y)	+predict(train00007,neg)	-predict(train00007,pos)
+    predict(train00002,Y)	-predict(train00002,neg)	+predict(train00002,pos)
+
+Finally, we'll get some answers:
+
+    $ proppr answer toytrain.examples
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:/usr0/home/krivard/workspace/ProPPR-2.0/conf/:/usr0/home/krivard/workspace/ProPPR-2.0/bin:/usr0/home/krivard/workspace/ProPPR-2.0/lib/* edu.cmu.ml.proppr.QueryAnswerer --queries toytrain.examples --solutions toytrain.solutions.txt --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00001,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00002,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00003,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00004,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00005,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00006,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00007,a) with weight 0.0
+    
+    edu.cmu.ml.proppr.QueryAnswerer.QueryAnswererConfiguration
+          queries file: toytrain.examples
+        solutions file: toytrain.solutions.txt
+    Duplicate checking: up to 1000000
+               threads: -1
+                Prover: edu.cmu.ml.proppr.prove.DprProver
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ReLU
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [QueryAnswerer] Running queries from toytrain.examples; saving results to toytrain.solutions.txt
+     INFO [QueryAnswerer] executeJob: threads 1 streamer: edu.cmu.ml.proppr.QueryAnswerer.QueryStreamer transformer: null throttle: -1
+    Query-answering time: 89
+    INFO:root:answers in toytrain.solutions.txt
+
+This is fairly normal output. We do see some error messages:
+
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00001,a) with weight 0.0
+
+This happened because our TF/IDF calculations only went out to 4 decimal places, so we accidentally assigned a weight of 0 to some of the edges. Oops. This is not crucial; they were all for the word 'a' anyway.
+
+Most of the figures in the config block can be adjusted; see `proppr answer toytrain --help` for details. Fair warning: This is an active research project, so there are LOTS of possible parameters.
+
+Anyhow, what we're really concerned with is the output.
+
+    $ cat toytrain.solutions.txt
+    # proved 1    predict(train00004,X1)  #v:[?].	21 msec
+    1	0.5	predict(train00004,neg).
+    1	0.5	predict(train00004,pos).
+    # proved 2	predict(train00009,X1)  #v:[?].	7 msec
+    1	0.5	predict(train00009,neg).
+    1	0.5	predict(train00009,pos).
+    # proved 3	predict(train00003,X1)  #v:[?].	5 msec
+    1	0.5	predict(train00003,neg).
+    1	0.5	predict(train00003,pos).
+    ...
+
+Each query has a header line which is prefixed with the '#' character. This is followed by a ranked list of solutions with format rank TAB score TAB solution. Some programs generate interesting untrained output, but text categorization is not one of them. Since we're depending on trained weights to adjust the rankings of the solutions, it's not surprising that the untrained model ranks all possible solutions equally.
+
+## Step 4: Training
+
+Now we're going to use the other fields in the examples file. Again, that file looks like this:
+
+    $ cat toytrain.examples
+    predict(train00004,Y)    -predict(train00004,neg)    +predict(train00004,pos)
+    predict(train00009,Y)    +predict(train00009,neg)    -predict(train00009,pos)
+    predict(train00003,Y)    -predict(train00003,neg)    +predict(train00003,pos)
+    ...
+
+The first field is the query. The remaining fields are the *labels*, each prefixed with `+` (for desirable solutions) or `-` (for undesirable solutions). Here we have an unfortunate collision between directed-graphs vocabulary (where labels are on edges) and machine-learning vocabulary (where labels show ground truth, more-or-less). In the context of training, we're using the latter meaning. 
+
+ProPPR uses SGD to push the probabiliy of positive-labeled solutions to 1.0, and negative-labeled solutions to 0.0. It's important to note that ProPPR training really only adjusts the **ranking** of solutions, and not whether or not a particular solution is retrieved at all. If you're having trouble with recall, you need to adjust your program, not your training.
+
+The first step of training is *grounding*. This just means converting each labeled query to a similarly labeled proof graph:
+
+    $ proppr ground toytrain.examples
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:/usr0/home/krivard/workspace/ProPPR-2.0/conf/:/usr0/home/krivard/workspace/ProPPR-2.0/bin:/usr0/home/krivard/workspace/ProPPR-2.0/lib/* edu.cmu.ml.proppr.Grounder --queries toytrain.examples --grounded toytrain.grounded --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00001,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00002,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00003,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00004,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00005,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00006,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00007,a) with weight 0.0
+     INFO [Grounder] Resetting grounding statistics...
+    
+    edu.cmu.ml.proppr.Grounder.ExampleGrounderConfiguration
+          queries file: toytrain.examples
+         grounded file: toytrain.grounded
+    Duplicate checking: up to 1000000
+               threads: -1
+                Prover: edu.cmu.ml.proppr.prove.DprProver
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ReLU
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [Grounder] Resetting grounding statistics...
+     INFO [Grounder] executeJob: threads 1 streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
+     INFO [Grounder] Grounded 1 examples...
+     INFO [Grounder] Grounded all 11 examples
+     INFO [Grounder] totalPos: 11 totalNeg: 11 coveredPos: 11 coveredNeg: 11
+     INFO [Grounder] For positive examples 11/11 proveable [100.0%]
+     INFO [Grounder] For negative examples 11/11 proveable [100.0%]
+    Grounding time: 96
+    Done.
+    INFO:root:grounded to toytrain.grounded
+
+First, we see an error message. This is the same one we saw in answering, and again, it isn't important.
+
+Second, we'll look at the summary output:
+
+     INFO [Grounder] totalPos: 11 totalNeg: 11 coveredPos: 11 coveredNeg: 11
+     INFO [Grounder] For positive examples 11/11 proveable [100.0%]
+     INFO [Grounder] For negative examples 11/11 proveable [100.0%]
+
+In this example, we're seeing full *coverage* of all the labeled solutions: this means that ProPPR was able to find all of them in the proof graphs. That doesn't always happen. In particular, it's common to try and generate "intuitive" negative solutions, that just never show up in the actual proof graphs, and thus have no effect on the results. Again, ProPPR training can't do anything about the set of solutions retrieved -- it can't add any, and it can't kick any out*. It can only adjust their relative ranking.
+
+Next, we'll train the model:
+
+    $ proppr train toytrain.grounded
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:/usr0/home/krivard/workspace/ProPPR-2.0/conf/:/usr0/home/krivard/workspace/ProPPR-2.0/bin:/usr0/home/krivard/workspace/ProPPR-2.0/lib/* edu.cmu.ml.proppr.Trainer --train toytrain.grounded --params toytrain.params --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
+    Unrecognized option: --programFiles
+     INFO [Trainer] 
+    edu.cmu.ml.proppr.util.ModuleConfiguration
+          queries file: toytrain.grounded
+           params file: toytrain.params
+               threads: -1
+               Trainer: edu.cmu.ml.proppr.CachingTrainer
+                Walker: edu.cmu.ml.proppr.learn.L2SRW
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ReLU
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [Trainer] Reading feature index from toytrain.grounded.features...
+     INFO [Trainer] Training model parameters on toytrain.grounded...
+     INFO [CachingTrainer] epoch 1 ...
+     INFO [CachingTrainer] Dataset size stats: 66 total nodes / max 6 / avg 5
+     INFO [CachingTrainer] epoch 2 ...
+     INFO [CachingTrainer] epoch 3 ...
+     INFO [CachingTrainer] epoch 4 ...
+     INFO [CachingTrainer] epoch 5 ...
+     INFO [CachingTrainer] Reading: 5 Parsing: 14 Training: 76
+    Training time: 115
+     INFO [Trainer] Saving parameters to toytrain.params...
+
+All those messages are basically what they say they are -- the default number of training epochs is 5, but you can set it to whatever you want using `--epochs`, or turn on adaptive convergence detection using `--traceLosses`.
+
+Let's get a feel for the results:
+
+    $ sort -k 2rg toytrain.params | head
+    id(predict,2,22)    2.31073
+    db(FactsPlugin,toylabels.cfacts)	2.27937
+    f(wagon,pos)	1.30992
+    f(red,pos)	1.30638
+    f(little,pos)	1.21640
+    f(pricy,pos)	1.19521
+    f(bike,pos)	1.18411
+    f(doll,pos)	1.16643
+    f(truck,pos)	1.11114
+    f(sports,pos)	1.11113
+
+Features with a high trained weight are considered the most useful for a positively labeled solution, so this looks pretty good -- lots of fairly meaningful words there.
+
+
+*: ...not on purpose, anyway. Because of the pagerank approximation we're using, we sometimes see changes in recall after training, because something in the way the weights changed altered the convergence criteria during the walk. Unfortunately, when this happens it's almost never helpful.
+
+## Step 5: Testing & Evaluation
+
+Now we want to answer queries using the trained model. Just to make sure training worked, we'll answer the same queries we did before.
+
+    $ proppr answer toytrain.examples --params toytrain.params
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:/usr0/home/krivard/workspace/ProPPR-2.0/conf/:/usr0/home/krivard/workspace/ProPPR-2.0/bin:/usr0/home/krivard/workspace/ProPPR-2.0/lib/* edu.cmu.ml.proppr.QueryAnswerer --queries toytrain.examples --solutions toytrain.solutions.txt --params toytrain.params --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00001,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00002,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00003,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00004,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00005,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00006,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00007,a) with weight 0.0
+    
+    edu.cmu.ml.proppr.QueryAnswerer.QueryAnswererConfiguration
+          queries file: toytrain.examples
+           params file: toytrain.params
+        solutions file: toytrain.solutions.txt
+    Duplicate checking: up to 1000000
+               threads: -1
+                Prover: edu.cmu.ml.proppr.prove.DprProver
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ReLU
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [QueryAnswerer] Running queries from toytrain.examples; saving results to toytrain.solutions.txt
+     INFO [QueryAnswerer] executeJob: threads 1 streamer: edu.cmu.ml.proppr.QueryAnswerer.QueryStreamer transformer: null throttle: -1
+    Query-answering time: 112
+    INFO:root:answers in toytrain.solutions.txt
+
+Looks good. And the qualitative results:
+
+    $ head toytrain.solutions.txt
+    # proved 1    predict(train00004,X1)  #v:[?].	23 msec
+    1	0.5164703085193008	predict(train00004,pos).
+    2	0.48352969148069913	predict(train00004,neg).
+    # proved 2	predict(train00009,X1)  #v:[?].	10 msec
+    1	0.5066342155946736	predict(train00009,neg).
+    2	0.49336578440532636	predict(train00009,pos).
+    # proved 3	predict(train00003,X1)  #v:[?].	6 msec
+    1	0.5343474865065095	predict(train00003,pos).
+    2	0.4656525134934904	predict(train00003,neg).
+    # proved 4	predict(train00006,X1)  #v:[?].	5 msec
+
+Contrary to the untrained model, we now see some separation between the two possible categories. To evaulate these more quantitatively, we can compute some common ML & IR metrics:
+
+    $ proppr eval toytrain.examples toytrain.solutions.txt --metric auc --metric map --metric mrr
+    INFO:root:ProPPR v2
+    INFO:root:calling: python /usr0/home/krivard/workspace/ProPPR-2.0/scripts/answermetrics.py --data toytrain.examples --answers toytrain.solutions.txt --metric auc --metric map --metric mrr
+    queries 11 answers 22 labeled answers 22
+    ==============================================================================
+    metric auc (AUC): The probability of a positive example scoring higher than a negative example; or the area under the ROC curve
+    . micro: 1.0
+    . macro: 0.772727272727
+    ==============================================================================
+    metric map (MAP): The average precision after each relevant solution is retrieved
+    . micro: 1.0
+    . macro: 1.0
+    ==============================================================================
+    metric mrr (Mean Reciprocal Rank): averages 1/rank for all positive answers
+    . micro: 1.0
+    . macro: 1.0
+
+So training definitely helped on the training set. But did we overfit? To tell, we'll have to use the trained model on some other data. Conveniently, we've included a test set in this tutorial. We'll answer and evaluate it just like we did with the training set.
+
+    $ proppr answer toytest.examples --params toytrain.params
+    INFO:root:ProPPR v2
+    INFO:root:calling: java -cp .:/usr0/home/krivard/workspace/ProPPR-2.0/conf/:/usr0/home/krivard/workspace/ProPPR-2.0/bin:/usr0/home/krivard/workspace/ProPPR-2.0/lib/* edu.cmu.ml.proppr.QueryAnswerer --queries toytest.examples --solutions toytest.solutions.txt --params toytrain.params --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00001,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00002,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00003,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00004,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00005,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00006,a) with weight 0.0
+    ERROR [LightweightGraphPlugin] Weights must be positive. Discarded graph edge hasWord(test00007,a) with weight 0.0
+    
+    edu.cmu.ml.proppr.QueryAnswerer.QueryAnswererConfiguration
+          queries file: toytest.examples
+           params file: toytrain.params
+        solutions file: toytest.solutions.txt
+    Duplicate checking: up to 1000000
+               threads: -1
+                Prover: edu.cmu.ml.proppr.prove.DprProver
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ReLU
+             APR Alpha: 0.1
+           APR Epsilon: 1.0E-4
+             APR Depth: 20
+    
+     INFO [QueryAnswerer] Running queries from toytest.examples; saving results to toytest.solutions.txt
+     INFO [QueryAnswerer] executeJob: threads 1 streamer: edu.cmu.ml.proppr.QueryAnswerer.QueryStreamer transformer: null throttle: -1
+    Query-answering time: 88
+    INFO:root:answers in toytest.solutions.txt
+    
+    
+    $ proppr eval toytest.examples toytest.solutions.txt --metric auc --metric map --metric mrr
+    INFO:root:ProPPR v2
+    INFO:root:calling: python /usr0/home/krivard/workspace/ProPPR-2.0/scripts/answermetrics.py --data toytest.examples --answers toytest.solutions.txt --metric auc --metric map --metric mrr
+    queries 7 answers 14 labeled answers 14
+    ==============================================================================
+    metric auc (AUC): The probability of a positive example scoring higher than a negative example; or the area under the ROC curve
+    . micro: 1.0
+    . macro: 0.785714285714
+    ==============================================================================
+    metric map (MAP): The average precision after each relevant solution is retrieved
+    . micro: 1.0
+    . macro: 1.0
+    ==============================================================================
+    metric mrr (Mean Reciprocal Rank): averages 1/rank for all positive answers
+    . micro: 1.0
+    . macro: 1.0
+
+Nope -- no, we did not. Looks great!
+
+
+## Vocabulary Review
+
+ - **fact** - a special kind of goal where all arguments refer to specific values.
+ - **1-ary, 2-ary, n-ary** - the number of arguments for a relation
+ - **facts file, .cfacts file** - a tab-delimited file listing one fact (any arity) per line
+ - **graph file** - a tab-delimited file listing one binary fact per line
+ - **weighted edge** - the default edge weight is 1.0, but a fourth field in a line of a graph file may contain an alternate weight
+ - **proof graph** - a directed tree rooted at the query state, whose leaves are solution states or abandoned paths, and whose edges represent rules executed or files where facts were looked up. Distinct from the "graph" represented by a "graph file". Proof graphs are stored in ground files.
+ - **feature** - a string which may be used to flavor one or more edges in one or more proof graphs
+ - **label** (re:edge) - an (edge,feature,weight) triple
+ - **grounded, ungrounded argument/variable** - ungrounded = currently variable. grounded = currently bound to some value.
+ - **rule** - a logical statement composed of a head and a tail. If the tail is true of some variable binding, then the head is true.
+ - **goal** - a named relationship between zero or more entities (we didn't cover 0-ary goals, but they're allowed)
+ - **head goal** - the lefthand side of a rule, or the first goal in a list
+ - **tail goals** - the righthand side of a rule, or the 2..n goals in a list (can you tell this vocab was invented while Lisp was still sota?)
+ - **feature annotation** - a ProPPR expression (list of goals, or goal-foreach-goal) enclosed in curly brackets, after the tail goals and before the closing '.', in a rule. The resulting feature values will be applied to the operative edge when the rule is applied.
+ - **.ppr file** - the human-readable source file containing the ProPPR program
+ - **.wam file** - the machine-readable source file containing the ProPPR program, compiled to WAM instructions
+ - `proppr set` - the command to set a ProPPR command line parameter such as `--programFiles`
+ - `proppr compile`- the command to compile a .ppr file to a .wam file
+ - `proppr answer` - the command to take in a list of queries and output the ranked solutions for each query
+ - **.examples file** - a tab-delimited file with first field the query and remaining fields +/- labeled solutions
+ - **label (re:example), positive label, negative label** - a +/- labeled solution to a query
+ - `proppr ground` - the command to take in a list of labeled queries and output the set of proof graphs
+ - **grounded query, ground file** - a query is ground if all its variables have been bound to values according to the program. The proof graph encodes all the details of such a binding. The ground file contains all the proof graphs for a set of labeled queries, plus metadata about which nodes are labeled +/-.
+ - **label coverage** - the degree to which the labeled in an examples file are actually generated by the ProPPR program
+ - `proppr train` - the command to take in a ground file, perform SGD to minimize the loss of each labeled solution, and output the learned feature values.
+ - **feature weight** - this weight is used everywhere the feature appears
+ - **label weight** - this weight is used only on that particular edge
+ - `proppr answer --params` - the command to answer queries using a trained model
+ - `proppr eval` - the command to take in a set of labeled examples and ranked solutions and compute one or more evaluation metrics
+

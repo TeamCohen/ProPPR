@@ -17,4 +17,4 @@ r8:
 	proppr eval r8test.examples r8test.solutions.txt --metric recall --metric acc1 --metric map
 
 clean:
-	rm -f proppr.settings *.wam *.solutions.txt tmp.txt
+	rm -f proppr.settings *.wam *.solutions.txt *.grounded *.grounded.features

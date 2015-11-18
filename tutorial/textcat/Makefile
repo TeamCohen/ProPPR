@@ -26,5 +26,5 @@ r8:
 	proppr eval r8test --metric acc2
 
 clean:
-	rm -f proppr.settings *.wam *.solutions.txt *.examples.grounded *.params
+	rm -f proppr.settings *.wam *.solutions.txt *.examples.grounded *.examples.grounded.features *.params
 

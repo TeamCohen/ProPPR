@@ -1,4 +1,4 @@
-# proved 1	foo(X1)  #v:[?].	0 msec
+# proved 1	foo(X1).	0 msec
 1	.19	foo(a).
 1	.19	foo(b).
 1	.19	foo(c).

@@ -58,8 +58,9 @@ public class RegularizeL2 extends Regularize {
 	@Override
 	protected void lazyUpdate(SRWOptions c, MuParamVector<String> params, ParamVector<String,?> apply,
 			String f, LossData loss, double learningRate) {
-		int gap = params.getLast(f);
+		int gap = getGap(params,f);
 		if (gap==0) return;
+
 		double value = Dictionary.safeGet(params,f);
 		double powerTerm = Math.pow(1 - 2 * c.mu * learningRate, gap);
 		double weightDecay = value * (powerTerm - 1);
