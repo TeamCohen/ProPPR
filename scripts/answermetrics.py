@@ -13,8 +13,9 @@ def answerWithIntVars(query):
 def queryWithIntVars(query):
     """Convert from format p(foo,Y,Z) to p(foo,-1,-2)."""
     result = query[:]
-    # bugfix: variables must start with _A-Z, which means they must be preceded by a nonword character
-    matches = list(re.finditer(r"(\W)[_A-Z]\w*", query))
+    # bugfix: variables must start with _A-Z, which means they must be preceded by ^H^Ha nonword character
+    # bugfix: variables must start with _A-Z, which means they must be preceded by a comma , or open paren (
+    matches = list(re.finditer(r"([,(])[_A-Z]\w*", query))
     k = -len(matches)
     for m in reversed(matches):
         result = result[:m.start()] + m.groups()[0] + str(k) + result[m.end():]
@@ -45,14 +46,16 @@ class Labels(object):
         self.pos = collections.defaultdict(set)
         self.neg = collections.defaultdict(set)
         self.queries = set()
+        linenum=0
         for line in open(self.dataFile):
+            linenum += 1
             parts = line.strip().split("\t")
             query = parts[0]
             intVarQuery = queryWithIntVars(query)
             if intVarQuery in self.queries:
                 for p in parts[1:]:
                     if (p.startswith('+') and p[1:] not in self.pos[intVarQuery]) or (p.startswith('-') and p[1:] not in self.neg[intVarQuery]):
-                        assert "Duplicate query %s at line %d with different labels. Not sure what you want me to do here, since solution files may not be in query file order." % (query,line)
+                        assert "Duplicate query %s at line %d with different labels. Not sure what you want me to do here, since solution files may not be in query file order." % (query,linenum)
             else:
                 self.queries.add(intVarQuery)
                 for p in parts[1:]:
@@ -104,7 +107,7 @@ class Answer(object):
         self.isNeg = None
 
     def asFields(self,sep="\t"):
-        return sep.join(map(str,[self.rank,self.score,self.solution,"+=",self.isPos,"-=",self.isNeg]))        
+        return sep.join(map(str,[self.rank,self.score,self.solution,["","+"][self.isPos],["","-"][self.isNeg]]))        
 
     def __repr__(self):
         return 'Answer(rank=%d,score=%f,isPos=%s,isNeg=%s,solution=%s)' \
@@ -345,8 +348,8 @@ class Accuracy(Metric):
         return numCorrect/float(totExamples)
 
     def dissectSolution(self,solution):
-        functor,args = solution[:-1].split("(")
-        arg1,arg2 = args.split(",")
+        functor,delim,args = solution[:-1].partition("(")
+        arg1,delim,arg2 = args.partition(",")
         return functor,arg1,arg2
 
 class AccuracyL1(Accuracy):            
