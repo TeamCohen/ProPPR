@@ -117,7 +117,7 @@ public class ModuleConfiguration extends Configuration {
 					.withArgName("class")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: cached:shuff=true:pct=0.1:stableEpochs=3\n"
+					.withDescription("Default: cached:shuff=true:pct=1.0:stableEpochs=3\n"
 							+ "Available trainers:\n"
 							+ "cached[:shuff={true|false}] (faster)\n"
 							+ "streaming                   (large dataset)\n"
