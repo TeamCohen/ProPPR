@@ -35,6 +35,7 @@ public abstract class FeatureDictWeighter {
 	}
 	public SquashingFunction getSquashingFunction() { return squashingFunction; }
 	public void countFeature(Feature g) {
+		if (this.weights.size() == 0) return;
 		if (!this.weights.containsKey(g)) {
 			if (!unknownFeatures.contains(g)) {
 				unknownFeatures.add(g);
