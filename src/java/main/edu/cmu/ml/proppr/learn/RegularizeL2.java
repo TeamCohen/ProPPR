@@ -17,6 +17,8 @@ public class RegularizeL2 extends Regularize {
 	private static final Logger log = Logger.getLogger(RegularizeL2.class);
 
 	/**
+	 * Remember - this update modifies the GRADIENT, which is applied later with learningRate() automatically.
+	 * 
 	 * L2 loss is mu * theta_f^2
 	 * d/df L2 loss is then 2 * mu * theta_f
 	 * @param f
@@ -34,6 +36,8 @@ public class RegularizeL2 extends Regularize {
 		gradient.adjustOrPutValue(featureLibrary.getId(f), ret, ret);
 	}
 	/**
+	 * Remember - this update modifies the PARAMETER VECTOR, so we have to include learningRate() by hand.
+	 * 
 	 * We want to do g regularization updates simultaneously, as if they had been applied in previous gradients.
 	 * 
 	 * A single full regularization update is:
