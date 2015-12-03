@@ -119,7 +119,8 @@ public class DprProver extends Prover<StateProofGraph> {
 					double z = 0.0;
 					for (Outlink o : outs) {
 						o.wt = this.weighter.w(o.fd);
-						if (Double.isInfinite(o.wt)) log.warn("Infinite weight at outlink "+o.child+";"
+						if (Double.isInfinite(o.wt) || Double.isNaN(o.wt)) 
+							log.warn("Illegal weight ("+Double.toString(o.wt)+") at outlink "+o.child+";"
 								+Dictionary.buildString(o.fd,new StringBuilder(),"\n\t").toString());
 						z += o.wt;
 					}
