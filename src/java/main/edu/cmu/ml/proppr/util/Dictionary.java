@@ -504,6 +504,7 @@ public class Dictionary {
 	public static <K> Map<K, Double> normalize(Map<K, Double> map) {
 		double z = 0.0;
 		for (Double d : map.values()) z += d;
+		if (z==0) return map;
 		for (Map.Entry<K,Double> e : map.entrySet()) e.setValue(e.getValue()/z);
 		return map;
 	}
