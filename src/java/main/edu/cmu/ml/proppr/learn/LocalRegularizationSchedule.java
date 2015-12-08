@@ -26,7 +26,7 @@ public class LocalRegularizationSchedule extends RegularizationSchedule {
 		if (!(params instanceof MuParamVector)) throw new IllegalArgumentException("LocalRegularizationSchedule requires a MuParamVector");
 		for (String f : localFeatures(params, graph)) {
 			if (!parent.trainable(f)) continue;
-			this.reg.lazyUpdate(parent.c, (MuParamVector<String>) params, apply, f, parent._cumulativeLoss(), parent.learningRate());
+			this.reg.lazyUpdate(parent.c, (MuParamVector<String>) params, apply, f, parent._cumulativeLoss(), parent.learningRate(f));
 		}
 	}
 	public void prepareForSgd(ParamVector<String,?> params, PosNegRWExample ex) {
@@ -39,7 +39,7 @@ public class LocalRegularizationSchedule extends RegularizationSchedule {
 		for(String f : (Set<String>) params.keySet()) {
 			// finish catching up the regularization:
 			// Bj = Bj - lambda * (Rj)
-			this.reg.lazyUpdate(parent.c, (MuParamVector<String>) params, apply, f, parent.cumulativeLoss(), parent.learningRate());
+			this.reg.lazyUpdate(parent.c, (MuParamVector<String>) params, apply, f, parent.cumulativeLoss(), parent.learningRate(f));
 		}
 		((MuParamVector)params).setLast(params.keySet());
 	}

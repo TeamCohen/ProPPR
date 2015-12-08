@@ -34,6 +34,8 @@ import gnu.trove.map.TIntDoubleMap;
 public class AdaGradSRW extends SRW {	
 	private static final Logger log = Logger.getLogger(AdaGradSRW.class);
 	private static final double MIN_GRADIENT = Math.sqrt(Double.MIN_VALUE)*10;
+	// This makes AdaGradSRW stateful, but SRW should only ever be used by one thread at a time
+	private ParamVector<String,?> totSqGrad = null;
 	public AdaGradSRW() {
 		super(new SRWOptions());
 	}
@@ -49,17 +51,21 @@ public class AdaGradSRW extends SRW {
 	 * @param params
 	 * @param example
 	 */
-	public void trainOnExample(ParamVector params, SimpleParamVector<String> totSqGrad, PosNegRWExample example) {
+	public void trainOnExample(ParamVector<String,?> params, ParamVector<String,?> t, PosNegRWExample example) {
 		log.info("Training on "+example);
 
+		if (totSqGrad == null) totSqGrad = t; 
+		
 		initializeFeatures(params, example.getGraph());
 		regularizer.prepareForExample(params, example.getGraph(), params);
 		load(params, example);
 		inference(params, example);
-		agd(params, totSqGrad, example);
+		agd(params, example);
 	}
 
-
+	protected double learningRate(String feature) {
+		return c.eta / Math.sqrt(totSqGrad.get(feature));
+	}
 
 	/**
 	 * AdaGrad Descent Algo
@@ -68,7 +74,7 @@ public class AdaGradSRW extends SRW {
 	 * 
 	 * @author rosecatherinek
 	 */
-	protected void agd(ParamVector params, SimpleParamVector<String> totSqGrad, PosNegRWExample ex) {
+	protected void agd(ParamVector<String,?> params, PosNegRWExample ex) {
 		TIntDoubleMap gradient = gradient(params,ex);
 		// apply gradient to param vector
 		for (TIntDoubleIterator grad = gradient.iterator(); grad.hasNext(); ) {
@@ -84,16 +90,16 @@ public class AdaGradSRW extends SRW {
 				totSqGrad.adjustValue(feature, g * g);
 				
 				//now get the running total
-				Double rt = totSqGrad.get(feature);
+//				Double rt = totSqGrad.get(feature);
 				
 				//w_{t+1, i} = w_{t, i} - \eta * g_{t,i} / \sqrt{ G,i }
 				
-				Double descentVal = - c.eta * g / Math.sqrt(rt);
+//				Double descentVal = - c.eta * g / Math.sqrt(rt);
 
-				params.adjustValue(feature, descentVal);
+				params.adjustValue(feature, - learningRate(feature) * g);
 				
 				if (params.get(feature).isInfinite()) {
-					log.warn("Infinity at "+feature+"; gradient "+grad.value()+"; rt "+rt);
+					log.warn("Infinity at "+feature+"; gradient "+grad.value()+"; rt "+totSqGrad.get(feature));
 				}
 			}
 		}

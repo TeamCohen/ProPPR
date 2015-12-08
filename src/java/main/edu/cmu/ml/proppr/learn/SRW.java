@@ -288,7 +288,7 @@ public class SRW {
 			if (grad.value()==0) continue;
 			String feature = ex.getGraph().featureLibrary.getSymbol(grad.key());
 			if (trainable(feature)) {
-				params.adjustValue(feature, - learningRate() * grad.value());
+				params.adjustValue(feature, - learningRate(feature) * grad.value());
 				if (params.get(feature).isInfinite()) {
 					log.warn("Infinity at "+feature+"; gradient "+grad.value());
 				}
@@ -377,7 +377,7 @@ public class SRW {
 	}
 
 
-	protected double learningRate() {
+	protected double learningRate(String feature) {
 		return Math.pow(this.epoch,-2) * c.eta;
 	}
 
