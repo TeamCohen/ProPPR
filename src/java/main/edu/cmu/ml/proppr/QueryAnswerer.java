@@ -132,7 +132,13 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 		Map<Query,Double> solutions = new TreeMap<Query,Double>();
 		for (Map.Entry<State, Double> s : dist.entrySet()) {
 			if (s.getKey().isCompleted()) {
-				solutions.put(pg.fill(s.getKey()), s.getValue());
+			    Query x = pg.fill(s.getKey());
+				solutions.put(x, s.getValue());
+				if (log.isDebugEnabled()) {
+				    log.debug(x.toString()+"\t"+s.getValue());
+				}
+			} else if (log.isDebugEnabled()) {
+			    log.debug(s.toString()+"\t"+s.getValue());
 			}
 		}
 		if (normalize) {

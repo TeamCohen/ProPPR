@@ -42,6 +42,9 @@ public class AdaGradSRW extends SRW {
 	public AdaGradSRW(SRWOptions params) {
 		super(params);
 	}
+    public void setTotSqGrad(ParamVector<String,?> t) {
+	this.totSqGrad = t;
+    }
 
 	/**
 	 * Modify the parameter vector by taking a gradient step along the dir suggested by this example.
@@ -64,7 +67,8 @@ public class AdaGradSRW extends SRW {
 	}
 
 	protected double learningRate(String feature) {
-		return c.eta / Math.sqrt(totSqGrad.get(feature));
+	    if (!totSqGrad.containsKey(feature)) return 0.0;
+		return c.eta / Math.sqrt(this.totSqGrad.get(feature));
 	}
 
 	/**

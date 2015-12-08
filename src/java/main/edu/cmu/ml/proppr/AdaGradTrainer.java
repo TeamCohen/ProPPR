@@ -52,6 +52,8 @@ public class AdaGradTrainer extends Trainer {
 		//@rck AG
 		//create a concurrent hash map to store the running total of the squares of the gradient
 		SimpleParamVector<String> totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(DEFAULT_CAPACITY,DEFAULT_LOAD,this.nthreads)); 
+		((AdaGradSRW) this.masterLearner).setTotSqGrad(totSqGrad);
+
 
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
