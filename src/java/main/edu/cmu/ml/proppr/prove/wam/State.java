@@ -169,6 +169,10 @@ public abstract class State {
 	public String canonicalForm() {
 		return canonF;
 	}
+	public String canonicalForm(WamInterpreter interpreter, State startState) {
+		if (this.canonF == null) this.setCanonicalForm(interpreter, startState);
+		return canonF;
+	}
 	public void setCanonicalHash(WamInterpreter interpreter, State startState) {
 		try {
 //			this.canon = interpreter.canonicalForm(startState, this).hashCode();

@@ -177,7 +177,11 @@ public class Grounder<P extends ProofGraph> {
 			.append("\t")
 			.append(i+1)
 			.append("\t")
-			.append((State) ex.getGraph().getState(i+1))
+			//.append((State) ex.getGraph().getState(i+1))
+			.append("canonState<")
+			.append(ex.getGraph().getState(i+1).canonicalForm(pg.getInterpreter(),pg.getStartState()))
+			.append(">")
+			.append(ex.getGraph().getState(i+1).isCompleted() ? "*" : "")
 			.append("\n");
 		}
 		return key.toString();

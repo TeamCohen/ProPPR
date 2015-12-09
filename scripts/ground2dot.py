@@ -3,6 +3,7 @@
 import sys
 from os import write
 from os import path
+import groundUtils
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -18,39 +19,29 @@ if __name__ == '__main__':
     if len(sys.argv)>2:
         with open(sys.argv[2],'r') as key:
             for k in key:
-                k = k.replace("\n","")
-                (query,id,state) = k.split("\t")
+                (query, state_id, state_version, (state_metadata), isQuery, isCompleted) = groundUtils.parseGraphKeyLine(k)
                 if len(Q)>0 and Q != query:
                     break
-                if state.startswith("state"): # 2.0 notation
-                    state = state.replace("state<","")
-                    state = state.replace(">","")
-                    (heap,reg,calls,rest) = state.split("] ")
-                    calls = calls.replace("c[","").replace("sf:","\\lsf:")
-                    if "*" in rest or id=="1":
-                        print "%s [fillcolor=gray,style=filled,label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (id,id,heap,reg,rest,calls)
+                if state_version is groundUtils.VERSION_2WAM:
+                	(heap,reg,rest,calls) = state_metadata
+                	if isCompleted or isQuery:
+                        print "%s [fillcolor=gray,style=filled,label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (state_id,state_id,heap,reg,rest,calls)
                     else:
-                        print "%s [label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (id,id,heap,reg,rest,calls)
+                        print "%s [label=\"%s| %s] %s] %s\\lcallstack:%s\\l\"];" % (state_id,state_id,heap,reg,rest,calls)
+                elif state.startswith("canonState"): # 2.0+ notation
+                	canon = state_metadata
+                	if isCompleted or isQuery:
+                		print "%s [fillcolor=gray,style=filled,label=\"%s\\l\"];" % (state_id,canon)
+            		else:
+            			print "%s [label=\"%s\\l\"];" % (state_id,canon)
                 elif state.startswith("lpState"): # 1.0 notation
-                    state = state.replace("lpState: ","")
-                    state = state.replace("c[","")
-                    state = state.replace("v[-","X")
-                    state = state.replace("]","")
-                    (head,tail) = state.split(" ... ")
-                    tail = tail.replace(" ","\\l")
-                    if tail is "" or id is "1":
-                        print "%s [fillcolor=gray,style=filled,label=\"%s| %s\\l\"];" % (id,id,head)
+                	(head,tail)	= state_metadata
+                    if isCompleted or isQuery:
+                        print "%s [fillcolor=gray,style=filled,label=\"%s| %s\\l\"];" % (state_id,state_id,head)
                     else:
-                        print "%s [label=\"%s| %s ...\\l%s\\l\"];" % (id,id,head,tail)
-                else:
-                    write(2, "Didn't recognize key file syntax :(\n")
+                        print "%s [label=\"%s| %s ...\\l%s\\l\"];" % (state_id,state_id,head,tail)
                 Q = query
-    masterFeatures=[""]
-    masterFeaturesFile = "%s.features"%sys.argv[1]
-    if path.isfile(masterFeaturesFile):
-    	with open(masterFeaturesFile,'r') as featureFile:
-    		for f in featureFile:
-    			masterFeatures.append(f.strip())
+    masterFeatures=groundUtils.fetchMasterFeatures(sys.argv[1])
     N=1;
     with open(sys.argv[1],'r') as grounded:
         for g in grounded:
