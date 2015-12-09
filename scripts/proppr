@@ -49,7 +49,7 @@ def doMain():
    elif com.startswith("sg-"):
       doSGSubcommand(opts,com[len("sg-"):])
    else:
-      doHelp(opts)
+      logging.warn("illegal command - use 'proppr help' for help")
       
 # subcommands
 
@@ -127,36 +127,54 @@ def doSGSubcommand(o,subcommand):
       dst = makeOutput(getArg(2),o)
       #no default stem+extension here so we need to add .cfacts extension if it's missing
       if not dst.endswith(".cfacts"): dst = dst+".cfacts"
-      invokeHelper(o,'structured-gradient.py',subcommand,src,dst)
+      invokeHelper(o,'structured-gradient.py','--com',subcommand,'--src',src,'--dst',dst)
    elif subcommand=="rel2ex":
       stem,src = stemExt(getArg(1),'.cfacts')
       src = getFile(src,o)
       dst = makeOutput(getArg(2,stem+'.examples'),o)
       if not dst.endswith(".examples"): dst = dst+".examples"
-      invokeHelper(o,'structured-gradient.py',subcommand,src,dst,*getArgvOptions())
+      invokeHelper(o,'structured-gradient.py','--com',subcommand,'--src',src,'--dst',dst)
    elif subcommand=="grad2ppr":
       stem,src = stemExt(getArg(1),'.cfacts')
       src = getFile(src,o)
       dst = makeOutput(getArg(2,stem+'.ppr'),o)
-      invokeHelper(o,'structured-gradient.py',subcommand,src,dst,*getArgvOptions())
-   elif subcommand=="train":
+      invokeHelper(o,'structured-gradient.py','--com',subcommand,'--src',src,'--dst',dst)
+   elif subcommand=="train1":
+      #work out input file names
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
       exampleFile = getFile(exampleFile,o)
       backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
       backgroundFile = getFile(backgroundFile,o)
+      #output and tmp files
+      learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
+      gradientFile = makeOutput(exampleStem+'.gradient', o)
       interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp-n00.ppr")
       invokeMyself(o,'compile','sg-interp-n00.ppr')
-      opts = loadOptionDict(o)
-      opts['--programFiles'] = 'sg-interp-n00.wam:'+backgroundFile
-      saveOptionDict(opts,o)
       invokeMyself(o,'ground',exampleFile,exampleFile+".grounded")
-      invokeMyself(o,'gradient',exampleFile+".grounded",exampleStem+".gradient",'--epochs','0')
+      invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0','--programFiles','sg-interp-n00.wam:'+backgroundFile)
+      invokeHelper(o,'structured-gradient.py','--com','grad2ppr','--src',gradientFile,'--dst',learnedRuleFile,'--lhs','interp','--rhs','rel')
+      logging.info('Created rule file ' + learnedRuleFile)
+   elif subcommand=="answer1":
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
+      backgroundFile = getFile(backgroundFile,o)
+      learnedRuleStem,learnedRuleFile = stemExt(getArg(3),'.ppr')
+      learnedRuleFile = getFile(learnedRuleFile,o)
+      solutionsFile = makeOutput(getArg(4,exampleStem+'.solutions.txt'),o)
+      invokeMyself(o,'compile',learnedRuleFile)
+      invokeMyself(o,'answer',exampleFile,solutionsFile,'--programFiles',learnedRuleStem+'.wam:'+backgroundFile)
+   else:
+      logging.warn("illegal command - use 'proppr help' for help")
 
 shortHelpMsg['sg-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
 shortHelpMsg['sg-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
 shortHelpMsg['sg-rel2ex'] = ' INPUT.cfacts [OUTPUT.examples]: convert from the 2nd-order format to a set of training/test examples'
 shortHelpMsg['sg-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features from gradient into rules'
-shortHelpMsg['sg-train'] = ' INPUT1.examples INPUT2.cfacts: ...'
+shortHelpMsg['sg-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
+         Also creates an intermediate file INPUT1.gradient. This is the (non-iterated) structural gradient algorithm."""
+shortHelpMsg['sg-answer1'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
+         One expected training/test sequence is: proppr train1 train.examples train.cfacts; proppr answer1 train1 train.examples train.cfacts; proppr eval test"""
 
 def doHelp(o):
    print 'ProPPR v2: commands are:'
@@ -217,11 +235,7 @@ def invokeHelper(o,main,*mainProgArgs):
    """
    root = getRoot()
    helperFile = '%s/scripts/proppr-helpers/%s' % (root,main)
-   optArgs = []
-   for (key,val) in loadOptionDict(o).items():
-      optArgs.append(key)
-      optArgs.append(val)
-   callProcess(o,['python',helperFile] + list(mainProgArgs) + optArgs)
+   callProcess(o,['python',helperFile] + list(mainProgArgs))
 
 def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""

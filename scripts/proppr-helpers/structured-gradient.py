@@ -3,12 +3,13 @@
 
 import sys
 import re
+import getopt
 import random
 import logging
 import collections
 
 
-def lift(src,dst):
+def lift(src,dst,opts):
     """Convert arity-two facts P(X,Y) to second-order representation rel(P,X,Y)."""
     fp = open(dst,'w')
     for line in open(src):
@@ -22,7 +23,7 @@ def lift(src,dst):
                 fp.write('rel\t' + line + '\n')
     logging.info('second-order version of facts from '+ src + ' stored in ' + dst)
     
-def lower(src,dst):
+def lower(src,dst,opts):
     """Convert second-order representation rel(P,X,Y) back to arity-two facts P(X,Y)."""
     fp = open(dst,'w')
     for line in open(src):
@@ -34,7 +35,8 @@ def lower(src,dst):
             fp.write("\t".join(parts[1:]) + "\n")
     logging.info('first-order version of facts from '+ src + ' stored in ' + dst)
 
-def relationsToExamples(src,dst):
+def relationsToExamples(src,dst,opts):
+    #TODO sampling options
     rnd = random.Random()
     trueYs = collections.defaultdict(set)
     pairedWith = collections.defaultdict(set)
@@ -63,40 +65,53 @@ def relationsToExamples(src,dst):
         fp.write(query + '\t' + '\t'.join(posParts) + '\t' + '\t'.join(negParts) + '\n')
     logging.info('example version of facts from '+ src + ' stored in ' + dst)            
 
-def gradientToRules(src,dst):
+def gradientToRules(src,dst,opts):
     rules = []
+    rhs = opts.get('--rhs','learnedPred')
+    lhs = opts.get('--lhs','learnedPred')
+
     for line in open(src):
         if not line.startswith("#"):
             (feature,weightStr) = line.strip().split("\t")
             weight = float(weightStr)
             if weight<0:
                 parts = filter(lambda x:x, re.split('\W+', feature))
-                print "feature",feature,'parts',parts
                 if len(parts)==3:
                     (iftype,p,q) = parts
                     if iftype=='if':
-                        rules.append( "learnedPred(%s,X,Y) :- learnedPred(%s,X,Y)." % (p,q))
+                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Y)." % (lhs,p,rhs,q))
                     elif iftype=='ifInv':
-                        rules.append( "learnedPred(%s,X,Y) :- learnedPred(%s,Y,X)." % (p,q))
+                        rules.append( "%s(%s,X,Y) :- %s(%s,Y,X)." % (lhs,p,rhs,q))
                 elif len(parts)==4:
                     (chaintype,p,q,r) = parts                
                     if chaintype=='chain':
-                        rules.append( "learnedPred(%s,X,Y) :- learnedPred(%s,X,Z), learnedPred(%s,Z,Y)." % (p,q,r))
+                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y)." % (lhs,p,rhs,q,rhs,r))
     fp = open(dst,'w')
     fp.write("\n".join(rules) + "\n")
 
 if __name__=="__main__":
     logging.basicConfig(level=logging.INFO)
-    subcommand = sys.argv[1]
+    argspec = ["com=","src=", "dst=",
+               "lhs=", "rhs=", #for gradientToRules
+    ]
+    try:
+        optlist,args = getopt.getopt(sys.argv[1:], 'x', argspec)
+    except getopt.GetoptError as err:
+        print str(err)
+        usage()
+        system.exit(-1)
+    optdict = dict(optlist)
+
+    subcommand = optdict['--com']
+    src = optdict['--src']
+    dst = optdict['--dst']
     if subcommand=='lift':
-        lift(sys.argv[2],sys.argv[3])
+        lift(src,dst,optdict)
     elif subcommand=='lower':
-        lower(sys.argv[2],sys.argv[3])
+        lower(src,dst,optdict)
     elif subcommand=='rel2ex':
-        #TODO options
-        relationsToExamples(sys.argv[2],sys.argv[3])
+        relationsToExamples(src,dst,optdict)
     elif subcommand=='grad2ppr':
-        #TODO options
-        gradientToRules(sys.argv[2],sys.argv[3])
+        gradientToRules(src,dst,optdict)
     else:
         assert False,'does not compute '+subcommand
