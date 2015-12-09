@@ -78,7 +78,7 @@ def gradientToRules(src,dst,opts):
                 parts = filter(lambda x:x, re.split('\W+', feature))
                 if len(parts)==3:
                     (iftype,p,q) = parts
-                    if iftype=='if':
+                    if iftype=='if' and p!=q:
                         rules.append( "%s(%s,X,Y) :- %s(%s,X,Y)." % (lhs,p,rhs,q))
                     elif iftype=='ifInv':
                         rules.append( "%s(%s,X,Y) :- %s(%s,Y,X)." % (lhs,p,rhs,q))

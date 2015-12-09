@@ -1,9 +1,13 @@
 #!/usr/bin/python
 
-import sys
-import subprocess
+#TODO cleanup -C
+#partition out help for subcommands?
+
 import os
+import sys
+import getopt
 import logging
+import subprocess
 
 shortHelpMsg = {}
 logging.basicConfig(level=logging.INFO)
@@ -66,6 +70,7 @@ shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 def doAnswer(o):
    stem,examples = stemExt(getArg(1),'.examples')
    solutions = makeOutput(getArg(2,stem+'.solutions.txt'),o)
+   #TODO this is ugly
    v = getArgvOptions()
    for i in range(len(v)):
       if v[i] == '--params':
@@ -99,7 +104,8 @@ shortHelpMsg['eval'] = ' INPUT.examples INPUT.solutions.txt [--metric mrr|recall
 
 def doCompile(o):
    stem,src = stemExt(getArg(1),'.ppr')
-   dst = getArg(2,stem+".wam")
+   src = getFile(src,o)
+   dst = makeOutput(getArg(2,stem+".wam"),o)
    root = getRoot()
    callProcess(o,['python',root+'/src/scripts/compiler.py','serialize',src],stdout=open(dst,'w'))
    logging.info('compiled '+ src + ' to ' + dst)
@@ -121,6 +127,9 @@ def doGradient(o):
 shortHelpMsg['gradient'] = ' INPUT.examples.grounded [OUTPUT.gradient]: measure gradient with respect to parameters'
 
 def doSGSubcommand(o,subcommand):
+   opts = loadOptionDict(o)
+   opts['--ternaryIndex'] = 'true'
+   saveOptionDict(opts,o)
    if subcommand in ['lift','lower']:
       stem,src = stemExt(getArg(1),'.cfacts')
       src = getFile(src,o)
@@ -139,26 +148,18 @@ def doSGSubcommand(o,subcommand):
       src = getFile(src,o)
       dst = makeOutput(getArg(2,stem+'.ppr'),o)
       invokeHelper(o,'structured-gradient.py','--com',subcommand,'--src',src,'--dst',dst)
-   elif subcommand=="train1":
-      #work out input file names
+   elif subcommand=="tune":
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
       exampleFile = getFile(exampleFile,o)
       backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
       backgroundFile = getFile(backgroundFile,o)
-      #output and tmp files
-      learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
-      gradientFile = makeOutput(exampleStem+'.gradient', o)
-      #get the interpreter and compile it
-      interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp.ppr")
-      invokeMyself(o,'compile','sg-interp.ppr')
-      #ground the examples using the interpreter
-      invokeMyself(o,'ground',exampleFile,exampleFile+".grounded")
-      #compute the gradient
-      invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0','--programFiles','sg-interp.wam:'+backgroundFile)
-      #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
-      invokeHelper(o,'structured-gradient.py','--com','grad2ppr','--src',gradientFile,'--dst',learnedRuleFile,'--lhs','interp','--rhs','rel')
-      logging.info('Created rule file ' + learnedRuleFile)
-   elif subcommand=="answer1":
+      learnedRuleStem,learnedRuleFile = stemExt(getArg(3),'.ppr')
+      learnedRuleFile = getFile(learnedRuleFile,o)
+      invokeMyself(o,'compile',learnedRuleFile)
+      invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles',learnedRuleStem+'.wam:'+backgroundFile)
+      paramFile = makeOutput(getArg(4,exampleStem+'.params'),o)
+      invokeMyself(o,'train',exampleFile+".grounded",paramFile)
+   elif subcommand=="answer":
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
       exampleFile = getFile(exampleFile,o)
       backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
@@ -168,8 +169,95 @@ def doSGSubcommand(o,subcommand):
       solutionsFile = makeOutput(getArg(4,exampleStem+'.solutions.txt'),o)
       invokeMyself(o,'compile',learnedRuleFile)
       invokeMyself(o,'answer',exampleFile,solutionsFile,'--programFiles',learnedRuleStem+'.wam:'+backgroundFile)
+   elif subcommand=="train1":
+      #work out input file names
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
+      backgroundFile = getFile(backgroundFile,o)
+      #output and tmp files
+      learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned1.ppr'),o)
+      gradientFile = makeOutput(exampleStem+'.gradient', o)
+      #get the interpreter and compile it
+      interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp.ppr")
+      invokeMyself(o,'compile','sg-interp.ppr')
+      #ground the examples using the interpreter
+      invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles','sg-interp.wam:'+backgroundFile)
+      #compute the gradient
+      invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0')
+      #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
+      invokeHelper(o,'structured-gradient.py','--com','grad2ppr','--src',gradientFile,'--dst',learnedRuleFile,'--lhs','interp','--rhs','rel')
+      logging.info('Created rule file ' + learnedRuleFile)
+   elif subcommand=="train":
+      #work out input file names
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
+      backgroundFile = getFile(backgroundFile,o)
+      #output and tmp files
+      learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
+      #get the initial interpreter and compile it
+      interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp.ppr")
+      learnedRuleFiles = []
+      #find the number of iterations
+      optDict = getArgvOptDict()
+      numIters = int(optDict.get('--numIters',5))
+      #iteratively learn
+      for i in range(numIters):
+         logging.info('training pass %i' % i)
+
+         #create the i-th interpreter, which contains the basic interpreter rules, plus all the learned rules
+         interpFile = 'sg-interp_n%02d.ppr' % i
+         numAddedThisRound = _appendUniqLines(['sg-interp.ppr']+learnedRuleFiles,interpFile)
+         if numAddedThisRound==0:
+            logging.info('no new rules learned in previous iteration - stopping')
+            break
+         _catfile(interpFile,'Interpreter used at round %d' % i)
+
+         #compile the interpreter
+         invokeMyself(o,'compile',interpFile)
+
+         #ground the examples using the interpreter + learned rules
+         programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
+         invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList)
+
+         #compute the gradient
+         gradientFile = makeOutput(exampleStem+'_n%02d.gradient' % i, o)
+         invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0')
+
+         #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
+         nextLearnedRuleFile = '%s-learned_n%02d.ppr' % (exampleStem,i)
+         invokeHelper(o,'structured-gradient.py','--com','grad2ppr','--src',gradientFile,'--dst',nextLearnedRuleFile)
+         logging.info('Created rule file ' + nextLearnedRuleFile)
+         _catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
+
+         learnedRuleFiles.append(nextLearnedRuleFile)
+      #concatenate all the learned rules, discarding the interpreter
+      adapterFile = getResourceFile(o, "sg-adapter.ppr", "sg-adapter.ppr")
+      _appendUniqLines(['sg-adapter.ppr'] + learnedRuleFiles,learnedRuleFile)
    else:
       logging.warn("illegal command - use 'proppr help' for help")
+
+def _appendUniqLines(inputs,output):
+   previousLines = set()
+   fp = open(output,'w')
+   for f in inputs:
+      numAddedFromLastFile = 0
+      for line in open(f): 
+         if line not in previousLines:
+            previousLines.add(line)
+            numAddedFromLastFile += 1
+            fp.write(line)
+   fp.close()
+   return numAddedFromLastFile
+
+def _catfile(fileName,msg):
+    """Print out a created file - for  debugging"""
+    print msg
+    print '+------------------------------'
+    for line in open(fileName):
+        print ' |',line,
+    print '+------------------------------'
 
 shortHelpMsg['sg-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
 shortHelpMsg['sg-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
@@ -177,7 +265,10 @@ shortHelpMsg['sg-rel2ex'] = ' INPUT.cfacts [OUTPUT.examples]: convert from the 2
 shortHelpMsg['sg-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features from gradient into rules'
 shortHelpMsg['sg-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
          Also creates an intermediate file INPUT1.gradient. This is the (non-iterated) structural gradient algorithm."""
-shortHelpMsg['sg-answer1'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
+shortHelpMsg['sg-train'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr] --numIters n: given 2nd-order examples and background facts, learn a rules file.
+         Also creates a number of intermediate files for each iteration. This is the iterated structural gradient algorithm."""
+shortHelpMsg['sg-tune'] = ' INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.params]: do parameter-tuning on a ruleset learned by sg-train or sg-train1'
+shortHelpMsg['sg-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
          One expected training/test sequence is: proppr sg-train1 train.examples train.cfacts; proppr sg-answer1 train1 train.examples train.cfacts; proppr eval test
          where train.examples, train.cfacts are 2nd-order examples and facts"""
 
@@ -319,6 +410,14 @@ def getArgvOptions():
       if sys.argv[i].startswith('--'):
          return sys.argv[i:]
    return []
+
+def getArgvOptDict():
+   try:
+      optlist,args = getopt.getopt(getArgvOptions(), 'x', ["numIters=", "help"])
+   except getopt.GetoptError as err:
+      logging.error(str(err) + ' - all options ignored!')
+      return {}
+   return dict(optlist)
 
 def setArgvOption(n,val):
    for i in range(len(sys.argv)):
