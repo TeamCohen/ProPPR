@@ -148,10 +148,14 @@ def doSGSubcommand(o,subcommand):
       #output and tmp files
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
       gradientFile = makeOutput(exampleStem+'.gradient', o)
-      interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp-n00.ppr")
-      invokeMyself(o,'compile','sg-interp-n00.ppr')
+      #get the interpreter and compile it
+      interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp.ppr")
+      invokeMyself(o,'compile','sg-interp.ppr')
+      #ground the examples using the interpreter
       invokeMyself(o,'ground',exampleFile,exampleFile+".grounded")
-      invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0','--programFiles','sg-interp-n00.wam:'+backgroundFile)
+      #compute the gradient
+      invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0','--programFiles','sg-interp.wam:'+backgroundFile)
+      #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
       invokeHelper(o,'structured-gradient.py','--com','grad2ppr','--src',gradientFile,'--dst',learnedRuleFile,'--lhs','interp','--rhs','rel')
       logging.info('Created rule file ' + learnedRuleFile)
    elif subcommand=="answer1":
@@ -174,7 +178,8 @@ shortHelpMsg['sg-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features fr
 shortHelpMsg['sg-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
          Also creates an intermediate file INPUT1.gradient. This is the (non-iterated) structural gradient algorithm."""
 shortHelpMsg['sg-answer1'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
-         One expected training/test sequence is: proppr train1 train.examples train.cfacts; proppr answer1 train1 train.examples train.cfacts; proppr eval test"""
+         One expected training/test sequence is: proppr sg-train1 train.examples train.cfacts; proppr sg-answer1 train1 train.examples train.cfacts; proppr eval test
+         where train.examples, train.cfacts are 2nd-order examples and facts"""
 
 def doHelp(o):
    print 'ProPPR v2: commands are:'
