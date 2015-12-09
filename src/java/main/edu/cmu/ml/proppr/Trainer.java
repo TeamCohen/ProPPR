@@ -286,6 +286,7 @@ public class Trainer {
 			e.printStackTrace();
 		}
 		// finish any trailing updates for this epoch
+		// finish any trailing updates for this epoch
 		this.masterLearner.cleanupParams(paramVec,paramVec);
 
 			// loss status and signalling the stopper
@@ -322,12 +323,12 @@ public class Trainer {
 	protected void printLossOutput(LossData lossThisEpoch) {
 		System.out.print("avg training loss " + lossThisEpoch.total()
 				+ " on "+ statistics.numExamplesThisEpoch +" examples");
-		System.out.print(" =log:reg " + lossThisEpoch.loss.get(LOSS.LOG));
+		System.out.print(" =*:reg " + (lossThisEpoch.total() - lossThisEpoch.loss.get(LOSS.REGULARIZATION)));
 		System.out.print(" : " + lossThisEpoch.loss.get(LOSS.REGULARIZATION));
 		if (epoch>1) {
 			LossData diff = lossLastEpoch.diff(lossThisEpoch);
 			System.out.println(" improved by " + diff.total()
-					+ " (log:reg "+diff.loss.get(LOSS.LOG) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
+					+ " (*:reg "+(diff.total() - diff.loss.get(LOSS.REGULARIZATION)) +":"+diff.loss.get(LOSS.REGULARIZATION)+")");
 			double percentImprovement = 100 * diff.total()/lossThisEpoch.total();
 			System.out.println("pct reduction in training loss "+percentImprovement);
 			// warn if there is a more than 1/2 of 1 percent increase in loss

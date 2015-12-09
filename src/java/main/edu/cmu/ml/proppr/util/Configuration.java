@@ -599,7 +599,7 @@ public class Configuration {
 	 */
 	protected void usageOptions(Options options, int[] flags, String msg) {
 		HelpFormatter formatter = new HelpFormatter();
-		int width = 80;
+		int width = 74;
 
 		String swidth = System.getenv("COLUMNS");
 		if (swidth != null) {

@@ -2,6 +2,7 @@ package edu.cmu.ml.proppr.util;
 
 import java.io.IOException;
 
+import edu.cmu.ml.proppr.learn.*;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -10,25 +11,23 @@ import edu.cmu.ml.proppr.AdaGradTrainer;
 import edu.cmu.ml.proppr.CachingTrainer;
 import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
-import edu.cmu.ml.proppr.learn.DprSRW;
-import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ClippedExp;
 import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.LReLU;
 import edu.cmu.ml.proppr.learn.tools.Linear;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.Sigmoid;
+import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
 import edu.cmu.ml.proppr.learn.tools.Tanh;
 import edu.cmu.ml.proppr.learn.tools.Tanh1;
-import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.IdDprProver;
-import edu.cmu.ml.proppr.prove.PriorityQueueProver;
-import edu.cmu.ml.proppr.prove.PathDprProver;
 import edu.cmu.ml.proppr.prove.IdPprProver;
+import edu.cmu.ml.proppr.prove.PathDprProver;
 import edu.cmu.ml.proppr.prove.PprProver;
+import edu.cmu.ml.proppr.prove.PriorityQueueProver;
 import edu.cmu.ml.proppr.prove.Prover;
 import edu.cmu.ml.proppr.prove.TracingDfsProver;
 import edu.cmu.ml.proppr.util.multithreading.Multithreading;
@@ -46,7 +45,11 @@ public class ModuleConfiguration extends Configuration {
 	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, tanh1, ReLU, LReLU, exp, clipExp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
-	private enum SRWS { l1p, l2p, dpr, adagrad, l1plocal, l2plocal, l1plaplacianlocal, l1plocalgrouplasso };
+	private enum SRWS { ppr, dpr, adagrad }
+	private enum REGULARIZERS { l1, l1laplacian, l1grouplasso, l2 };
+	private enum REGULARIZERSCHEDULES { synch, global, lazy, local };
+	private enum LOSSFUNCTIONS { posneg, normpos, pair };
+	
 	public Grounder<?> grounder;
 	public SRW srw;
 	public Trainer trainer;
@@ -133,14 +136,13 @@ public class ModuleConfiguration extends Configuration {
 					.withArgName("class")
 					.hasArgs()
 					.withValueSeparator(':')
-					.withDescription("Default: l2p (L2PosNegLossTrainedSRW)\n"
+					.withDescription("Default: ppr:reg=l2:sched=global:loss=posneg\n"
 							 + "Syntax: srw:param=value:param=value...\n"
-							 + "Available srws:\n"
-							 + "l1p, l1plocal, l1laplacianplocal, l1pgrouplassoplocal\n"
-							 + "l2p, l2plocal\n"
-							 + "dpr\n"
-							 + "adagrad\n"
-							 + "Available parameters:\n"
+							 + "Available srws: ppr,dpr,adagrad\n"
+							 + "Available [reg]ularizers: l1,l1laplacian,l1grouplasso,l2\n"
+							 + "Available [sched]ules: global,local\n"
+							 + "Available [loss] functions: "+Dictionary.buildString(LOSSFUNCTIONS.values(),new StringBuilder(),",").toString()+"\n"
+							 + "Other parameters:\n"
 							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
 							+ "Default eta=1.0")
@@ -305,14 +307,28 @@ public class ModuleConfiguration extends Configuration {
 
 		if (line.hasOption(SRW_MODULE_OPTION)) {
 			String[] values = line.getOptionValues(SRW_MODULE_OPTION);
-
+			REGULARIZERS regularizerType = REGULARIZERS.l2;
+			REGULARIZERSCHEDULES scheduleType = REGULARIZERSCHEDULES.synch;
+			LOSSFUNCTIONS lossType = LOSSFUNCTIONS.posneg;
 			boolean namedParameters = false;
 			if (values.length > 1 && values[1].contains("=")) namedParameters = true;
 
 			if (namedParameters) {
 				for (int i=1; i<values.length; i++) {
 					String[] parts = values[i].split("=");
-					sp.set(parts);
+					switch(parts[0]) {
+					case "reg":
+						regularizerType = REGULARIZERS.valueOf(parts[1]);
+						break;
+					case "sched":
+						scheduleType = REGULARIZERSCHEDULES.valueOf(parts[1]);
+						break;
+					case "loss":
+						lossType = LOSSFUNCTIONS.valueOf(parts[1]);
+						break;
+					default:
+						sp.set(parts);
+					}
 				}
 			} else {
 				if (values.length > 1) {
@@ -334,34 +350,56 @@ public class ModuleConfiguration extends Configuration {
 			
 			SRWS type = SRWS.valueOf(values[0]);
 			switch(type) {
-			case l2p:
-				this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
-				break;
-			case l1p:
-				this.srw = new edu.cmu.ml.proppr.learn.L1SRW(sp);
-				break;
-			case l1plocal:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1SRW(sp);
-				break;
-			case l1plaplacianlocal:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1LaplacianPosNegLossTrainedSRW(sp);
-				break;
-			case l1plocalgrouplasso:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL1GroupLassoPosNegLossTrainedSRW(sp);
-				break;
-			case l2plocal:
-				this.srw = new edu.cmu.ml.proppr.learn.LocalL2SRW(sp);
+			case ppr:
+				this.srw = new SRW(sp);
 				break;
 			case dpr:
-				this.srw = new edu.cmu.ml.proppr.learn.DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
+				this.srw = new DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
 				break;
 			case adagrad:
-				this.srw = new edu.cmu.ml.proppr.learn.AdaGradSRW (sp);
+				this.srw = new AdaGradSRW(sp);
 				break;
 			default: usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}
+			Regularize reg = null;
+			switch(regularizerType) {
+			case l1:
+				reg = new RegularizeL1();
+				break;
+			case l1laplacian:
+				reg = new RegularizeL1Laplacian();
+				break;
+			case l1grouplasso:
+				reg = new RegularizeL1GroupLasso();
+				break;
+			case l2:
+				reg = new RegularizeL2();
+				break;
+			}
+			switch(scheduleType) {
+			case global:
+			case synch: // fallthrough
+				this.srw.setRegularizer(new RegularizationSchedule(this.srw, reg));
+				break;
+			case local:
+			case lazy: // fallthrough
+				this.srw.setRegularizer(new LocalRegularizationSchedule(this.srw, reg));
+				break;
+			}
+			switch(lossType) {
+			case posneg:
+				this.srw.setLossFunction(new PosNegLoss());
+				break;
+			case normpos:
+				this.srw.setLossFunction(new NormalizedPosLoss());
+				break;
+			case pair:
+				this.srw.setLossFunction(new PairwiseL2SqLoss());
+				break;
+			}
 		} else {
-			this.srw = new edu.cmu.ml.proppr.learn.L2SRW(sp);
+			this.srw = new SRW(sp);
+			this.srw.setRegularizer(new RegularizationSchedule(this.srw, new RegularizeL2()));
 		}
 		
 		if (this.fixedWeightRules != null) this.srw.setFixedWeightRules(fixedWeightRules);
@@ -377,8 +415,11 @@ public class ModuleConfiguration extends Configuration {
 			sb.append(String.format(FORMAT_STRING, "Trainer")).append(": ").append(trainer.getClass().getCanonicalName()).append("\n");
 		if (prover != null)
 			sb.append(String.format(FORMAT_STRING, "Prover")).append(": ").append(prover.getClass().getCanonicalName()).append("\n");
-		if (srw != null)
+		if (srw != null) {
 			sb.append(String.format(FORMAT_STRING, "Walker")).append(": ").append(srw.getClass().getCanonicalName()).append("\n");
+			sb.append(String.format(FORMAT_STRING, "Regularizer")).append(": ").append(srw.getRegularizer().description()).append("\n");
+			sb.append(String.format(FORMAT_STRING, "Loss Function")).append(": ").append(srw.getLossFunction().getClass().getCanonicalName()).append("\n");
+		}
 		if (squashingFunction != null)
 			sb.append(String.format(FORMAT_STRING, "Squashing function")).append(": ").append(squashingFunction.getClass().getCanonicalName()).append("\n");
 		sb.append(String.format(FORMAT_STRING, "APR Alpha")).append(": ").append(apr.alpha).append("\n");
