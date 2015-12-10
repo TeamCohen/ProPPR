@@ -1,11 +1,8 @@
 #!/usr/bin/python
 
-#TODO cleanup -C ???
-#partition out help for sg subcommands?
+#TODO 
 #for train
-# keep old features in learned rules so they can be reformatted easily
 # CALL_REL_DIRECTLY_FOR_BACKGROUND_PREDICATES with rhs_i and rhs_e split
-# consider interleaved structural/non-structural gradient - run numEpochs = i+1 
 
 import os
 import sys
@@ -13,7 +10,8 @@ import getopt
 import logging
 import subprocess
 
-shortHelpMsg = {}
+shortHelpMsg = {}    #for main commands
+shortHelpMsgSG = {}  #for sg-xxx subcommands
 logging.basicConfig(level=logging.INFO)
 
 # dispatch to subcommand
@@ -133,7 +131,6 @@ shortHelpMsg['gradient'] = ' INPUT.examples.grounded [OUTPUT.gradient]: measure 
 def doSGSubcommand(o,subcommand):
    opts = loadOptionDict(o)
    opts['--ternaryIndex'] = 'true'
-   saveOptionDict(opts,o)
    if subcommand in ['lift','lower']:
       stem,src = stemExt(getArg(1),'.cfacts')
       src = getFile(src,o)
@@ -160,7 +157,7 @@ def doSGSubcommand(o,subcommand):
       learnedRuleStem,learnedRuleFile = stemExt(getArg(3),'.ppr')
       learnedRuleFile = getFile(learnedRuleFile,o)
       invokeMyself(o,'compile',learnedRuleFile)
-      invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles',learnedRuleStem+'.wam:'+backgroundFile)
+      invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles',learnedRuleStem+'.wam:'+backgroundFile,'--ternaryIndex','true')
       paramFile = makeOutput(getArg(4,exampleStem+'.params'),o)
       invokeMyself(o,'train',exampleFile+".grounded",paramFile)
    elif subcommand=="answer":
@@ -172,7 +169,7 @@ def doSGSubcommand(o,subcommand):
       learnedRuleFile = getFile(learnedRuleFile,o)
       solutionsFile = makeOutput(getArg(4,exampleStem+'.solutions.txt'),o)
       invokeMyself(o,'compile',learnedRuleFile)
-      invokeMyself(o,'answer',exampleFile,solutionsFile,'--programFiles',learnedRuleStem+'.wam:'+backgroundFile)
+      invokeMyself(o,'answer',exampleFile,solutionsFile,'--programFiles',learnedRuleStem+'.wam:'+backgroundFile,'--ternaryIndex','true')
    elif subcommand=="train1":
       #work out input file names
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
@@ -199,19 +196,25 @@ def doSGSubcommand(o,subcommand):
                    '--src',exampleFile,'--dst',learnedRuleFile,
                    '--src2',backgroundFile,'--stem',exampleStem,'--numIters', numIters)
       logging.info('Created rule file ' + learnedRuleFile)
+   elif subcommand=="help":
+      print 'ProPPR v2: The structured gradient subcommands are:'
+      for com in sorted(shortHelpMsgSG.keys()):
+         print '  proppr ' + com + shortHelpMsgSG[com]
    else:
-      logging.warn("illegal command - use 'proppr help' for help")
+      logging.warn("illegal command - use 'proppr sg-help' for help")
 
-shortHelpMsg['sg-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
-shortHelpMsg['sg-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
-shortHelpMsg['sg-rel2ex'] = ' INPUT.cfacts [OUTPUT.examples]: convert from the 2nd-order format to a set of training/test examples'
-shortHelpMsg['sg-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features from gradient into rules'
-shortHelpMsg['sg-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
+shortHelpMsg['sg-help'] = ' help on the structured-gradient subcommands, which are of the form sg-xxx'
+
+shortHelpMsgSG['sg-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
+shortHelpMsgSG['sg-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
+shortHelpMsgSG['sg-rel2ex'] = ' INPUT.cfacts [OUTPUT.examples]: convert from the 2nd-order format for facts to a set of training/test examples'
+shortHelpMsgSG['sg-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features from gradient into rules'
+shortHelpMsgSG['sg-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
          Also creates an intermediate file INPUT1.gradient. This is the (non-iterated) structural gradient algorithm."""
-shortHelpMsg['sg-train'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr] --numIters n: given 2nd-order examples and background facts, learn a rules file.
+shortHelpMsgSG['sg-train'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr] --numIters n: given 2nd-order examples and background facts, learn a rules file.
          Also creates a number of intermediate files for each iteration. This is the iterated structural gradient algorithm."""
-shortHelpMsg['sg-tune'] = ' INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.params]: do parameter-tuning on a ruleset learned by sg-train or sg-train1'
-shortHelpMsg['sg-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
+shortHelpMsgSG['sg-tune'] = ' INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.params]: do parameter-tuning on a ruleset learned by sg-train or sg-train1'
+shortHelpMsgSG['sg-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
          One expected training/test sequence is: proppr sg-train1 train.examples train.cfacts; proppr sg-answer1 train1 train.examples train.cfacts; proppr eval test
          where train.examples, train.cfacts are 2nd-order examples and facts"""
 
@@ -254,6 +257,7 @@ def invokeMyself(o,*args):
    if 'dryRun' in o and o['dryRun']:
       procArgs.append('-n')
    procArgs.extend(args)
+   procArgs.extend(getArgvOptions())
    callProcess(o,procArgs)
 
 def invokeMain(o,main,*mainProgArgs):
@@ -277,7 +281,7 @@ def invokeHelper(o,main,*mainProgArgs):
    globalPropprOpts = []
    if o['out']: globalPropprOpts.append('-C'+o['out'])
    if o['dryRun']: globalPropprOpts.append('-n')
-   callProcess(o,['python',helperFile] + list(mainProgArgs) + globalPropprOpts)
+   callProcess(o,['python',helperFile] + list(mainProgArgs) + globalPropprOpts + ['+'] + getArgvOptions())
 
 def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""

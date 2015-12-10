@@ -65,26 +65,39 @@ def relationsToExamples(src,dst,opts):
     logging.info('example version of facts from '+ src + ' stored in ' + dst)            
 
 def gradientToRules(src,dst,opts):
+    #two usages
+    # --lhs P --rhs Q: rules in body have functor Q, rules in head have functor P
+    # --lhs x --rhs_i Q1 --rhs_e Q2: rules in body have functor Q1 or Q2, depending
+    # whether or not the first-order predicate is intensional (ie, ends with _i).
+
     rules = []
-    rhs = opts.get('--rhs','learnedPred')
+    rhs_i = rhs_e = opts.get('--rhs','learnedPred')
     lhs = opts.get('--lhs','learnedPred')
+    if '--rhs_i' in opts: rhs_i = opts['--rhs_i']
+    if '--rhs_e' in opts: rhs_e = opts['--rhs_e']
+
+    def intensional(pred): return pred.startswith('i_')
+    minGradient = -1e-7
 
     for line in open(src):
         if not line.startswith("#"):
             (feature,weightStr) = line.strip().split("\t")
             weight = float(weightStr)
-            if weight<0:
+            if weight<minGradient:
                 parts = filter(lambda x:x, re.split('\W+', feature))
                 if len(parts)==3:
                     (iftype,p,q) = parts
+                    rhs = rhs_i if intensional(q) else rhs_e
                     if iftype=='if' and p!=q:
-                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Y)." % (lhs,p,rhs,q))
+                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Y) {lr_%s}." % (lhs,p,rhs,q,feature))
                     elif iftype=='ifInv':
-                        rules.append( "%s(%s,X,Y) :- %s(%s,Y,X)." % (lhs,p,rhs,q))
+                        rules.append( "%s(%s,X,Y) :- %s(%s,Y,X) {lr_%s}." % (lhs,p,rhs,q,feature))
                 elif len(parts)==4:
                     (chaintype,p,q,r) = parts                
+                    rhsq = rhs_i if intensional(q) else rhs_e
+                    rhsr = rhs_i if intensional(r) else rhs_e
                     if chaintype=='chain':
-                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y)." % (lhs,p,rhs,q,rhs,r))
+                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y) {lr_%s}." % (lhs,p,rhsq,q,rhsr,r,feature))
     fp = open(dst,'w')
     fp.write("\n".join(rules) + "\n")
 
@@ -99,11 +112,11 @@ def stucturedGradient(src,dst,opts):
     interpFile = _getResourceFile(opts, "sg-interp-train.ppr")
     invokeProppr(opts,'compile',interpFile)
     programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
-    invokeProppr(opts,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList)
+    invokeProppr(opts,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList,'--ternaryIndex','true')
 
     #store gradient in a temp file
-    gradientFile = exampleStem+'.gradient'
-    invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0')
+    gradientFile = _makeOutput(opts,exampleStem+'.gradient')
+    invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','1')
 
     #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
     gradientToRules(gradientFile, learnedRuleFile, {'--lhs':'interp','--rhs':'rel'})
@@ -118,7 +131,7 @@ def iterativeStucturedGradient(src,dst,opts):
     numIters = int(optdict['--numIters'])
 
     #copy the initial interpreter to this directory
-    interpFile = _getResourceFile(opts, "sg-interp-train.ppr")
+    baseInterpFile = _getResourceFile(opts, "sg-interp-train.ppr")
     learnedRuleFiles = []
 
     #iteratively learn
@@ -126,8 +139,8 @@ def iterativeStucturedGradient(src,dst,opts):
         logging.info('training pass %i' % i)
 
         #create the i-th interpreter, which contains the basic interpreter rules, plus all the learned rules
-        interpFile = 'sg-interp_n%02d.ppr' % i
-        numAddedThisRound = _appendUniqLines(['sg-interp-train.ppr']+learnedRuleFiles,interpFile)
+        interpFile = _makeOutput(opts,'sg-interp_n%02d.ppr' % i)
+        numAddedThisRound = _appendUniqLines([baseInterpFile]+learnedRuleFiles,interpFile)
         if numAddedThisRound==0:
             logging.info('no new rules learned in previous iteration - stopping')
             break
@@ -138,15 +151,16 @@ def iterativeStucturedGradient(src,dst,opts):
 
         #ground the examples using the interpreter + learned rules
         programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
-        invokeProppr(opts,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList)
+        groundedFile = _makeOutput(opts,exampleFile+".grounded")
+        invokeProppr(opts,'ground',exampleFile,groundedFile,'--programFiles',programFileList,'--ternaryIndex','true')
 
         #compute the gradient
-        gradientFile = exampleStem+'_n%02d.gradient' % i
-        invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0')
+        gradientFile = _makeOutput(opts,exampleStem+'_n%02d.gradient' % i)
+        invokeProppr(opts,'gradient',groundedFile,gradientFile,'--epochs',str(i+1))
 
         #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
-        nextLearnedRuleFile = '%s-learned_n%02d.ppr' % (exampleStem,i)
-        gradientToRules(gradientFile,nextLearnedRuleFile,opts)
+        nextLearnedRuleFile = _makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
+        gradientToRules(gradientFile,nextLearnedRuleFile,{'--rhs_i':'learnedPred','--rhs_e':'rel'})
         logging.info('Created rule file ' + nextLearnedRuleFile)
         _catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
 
@@ -188,6 +202,16 @@ def _catfile(fileName,msg):
         print ' |',line,
     print '+------------------------------'
 
+def _makeOutput(opts,filename):
+   """Create an output filename with the requested filename, in the -C directory if requested."""
+   outdir = opts.get('--C','')
+   if not outdir: 
+       return filename
+   elif filename.startswith(outdir): 
+       return filename
+   else:
+       os.path.join(outdir,filename)
+
 def invokeProppr(opts,*args):
     procArgs = ['%s/scripts/proppr' % os.environ['PROPPR']]
     #deal with proppr's global options
@@ -196,6 +220,7 @@ def invokeProppr(opts,*args):
     if '--n' in optdict:
         procArgs.extend(['--n'])
     procArgs.extend(args)
+    procArgs.extend(opts['PROPPR_ARGS'])
     if '--n' not in opts: #not dry run
         logging.info('calling: ' + ' '.join(procArgs))
         stat = subprocess.call(procArgs)
@@ -205,6 +230,10 @@ def invokeProppr(opts,*args):
 
 if __name__=="__main__":
     logging.basicConfig(level=logging.INFO)
+
+    #usage: the following arguments, followed by a "+" and a list 
+    #of any remaining arguments to pass back to calls of the 'proppr'
+    #script in invokeProppr
     argspec = ["com=","src=", "dst=", 
                "C=", "n", #global proppr opts
                "lhs=", "rhs=", #for gradientToRules
@@ -217,6 +246,7 @@ if __name__=="__main__":
         usage()
         system.exit(-1)
     optdict = dict(optlist)
+    optdict['PROPPR_ARGS'] = args[1:]
 
     subcommand = optdict['--com']
     src = optdict['--src']
