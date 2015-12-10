@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 import sys
-from os import path
 from os import write
 import groundUtils
+from math import exp
 
 # metadata format:
 # (query, state id, state version, metadata, isquery, iscompleted, ispos, isneg)
@@ -74,7 +74,7 @@ def declareNode(node,meta):
 		elif isNegP(meta[node]): print "fillcolor=red,",
 		else: print "fillcolor=blue,",
 	elif isQueryP(meta[node]): print "style=filled,fillcolor=gray,",
-	print "label=\"%s\\l\"];" % getData(meta[node]).replace(",","\\l")
+	print "label=\"%s| %s\\l\"];" % (node,getData(meta[node]).replace(",","\\l"))
 
 if __name__=='__main__':
 	if len(sys.argv) < 2:
@@ -152,7 +152,7 @@ if __name__=='__main__':
 				#if dst in graph[src]:
 				#	os.write(2,"duplicate edge specification %s->%s" % (src,dst))
 				if src in igraph[dst]:
-					os.write(2,"duplicate edge specification %s->%s" % (src,dst))
+					write(2,"duplicate edge specification %s->%s" % (src,dst))
 				#graph[src][dst] = (wt,labels)
 				igraph[dst][src] = (wt,labels)
 			N+=1
@@ -175,7 +175,7 @@ if __name__=='__main__':
 		for x in ret:
 			solscores.append( (x,weight(x,igraph,meta)) )
 		solscores = sorted(solscores,key=lambda e:-e[1])
-		scores.extend(solscores[0:max(len(solscores)-1,3)])
+		scores.extend(solscores[0:min(len(solscores)-1,3)])
 	scores = sorted(scores,key=lambda e:-e[1])
 	if debug: 
 		print "\n\nComplete:"
@@ -183,10 +183,19 @@ if __name__=='__main__':
 			print "%g\t%s" % (x[1],x[0])
 	print "digraph G {"
 	print "node [shape=record];"
+	print "graph [concentrate=true,ranksep=1,nodesep=1];"
 	declared={}
 	edeclared={}
+	maxcolor = 85
+	maxpen = 4.0
+	colors = [ int(float(x)/len(scores)*maxcolor) for x in range(len(scores)) ]
 	for path in scores:
 		child=""
+		# display path weight using pen color & line weight
+		cstr = "color=gray%d,fontcolor=gray%d" % (colors[0],colors[0])
+		print "node [%s];" % cstr
+		print "edge [%s,penwidth=%g];" % (cstr,maxpen*exp(-float(colors[0])/maxcolor*maxpen))
+		colors=colors[1:]
 		for node in path[0]:
 			if node not in declared:
 				declared[node]=True
@@ -197,4 +206,7 @@ if __name__=='__main__':
 					edeclared[e]=True
 					print "%s [label=\" %s\"];" % (e,igraph[child][node][1])
 			child = node
+		p = path[0]
+		p.reverse()
+		write(2,"%g\t%s\n" % (path[1],p))
 	print "}"
