@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
-#TODO cleanup -C
-#partition out help for subcommands?
+#TODO cleanup -C ???
+#partition out help for sg subcommands?
+#for train
+# keep old features in learned rules so they can be reformatted easily
+# CALL_REL_DIRECTLY_FOR_BACKGROUND_PREDICATES with rhs_i and rhs_e split
+# consider interleaved structural/non-structural gradient - run numEpochs = i+1 
 
 import os
 import sys
@@ -177,87 +181,26 @@ def doSGSubcommand(o,subcommand):
       backgroundFile = getFile(backgroundFile,o)
       #output and tmp files
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned1.ppr'),o)
-      gradientFile = makeOutput(exampleStem+'.gradient', o)
-      #get the interpreter and compile it
-      interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp.ppr")
-      invokeMyself(o,'compile','sg-interp.ppr')
-      #ground the examples using the interpreter
-      invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles','sg-interp.wam:'+backgroundFile)
-      #compute the gradient
-      invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0')
-      #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
-      invokeHelper(o,'structured-gradient.py','--com','grad2ppr','--src',gradientFile,'--dst',learnedRuleFile,'--lhs','interp','--rhs','rel')
+      invokeHelper(o,'structured-gradient.py','--com','sg-train',
+                   '--src',exampleFile,'--dst',learnedRuleFile,
+                   '--src2',backgroundFile,'--stem',exampleStem)
       logging.info('Created rule file ' + learnedRuleFile)
    elif subcommand=="train":
-      #work out input file names
+      #work out input/output file names
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
       exampleFile = getFile(exampleFile,o)
       backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
       backgroundFile = getFile(backgroundFile,o)
-      #output and tmp files
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
-      #get the initial interpreter and compile it
-      interpFile = getResourceFile(o, "sg-interp.ppr", "sg-interp.ppr")
-      learnedRuleFiles = []
-      #find the number of iterations
+      #optional arguments
       optDict = getArgvOptDict()
-      numIters = int(optDict.get('--numIters',5))
-      #iteratively learn
-      for i in range(numIters):
-         logging.info('training pass %i' % i)
-
-         #create the i-th interpreter, which contains the basic interpreter rules, plus all the learned rules
-         interpFile = 'sg-interp_n%02d.ppr' % i
-         numAddedThisRound = _appendUniqLines(['sg-interp.ppr']+learnedRuleFiles,interpFile)
-         if numAddedThisRound==0:
-            logging.info('no new rules learned in previous iteration - stopping')
-            break
-         _catfile(interpFile,'Interpreter used at round %d' % i)
-
-         #compile the interpreter
-         invokeMyself(o,'compile',interpFile)
-
-         #ground the examples using the interpreter + learned rules
-         programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
-         invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList)
-
-         #compute the gradient
-         gradientFile = makeOutput(exampleStem+'_n%02d.gradient' % i, o)
-         invokeMyself(o,'gradient',exampleFile+".grounded",gradientFile,'--epochs','0')
-
-         #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
-         nextLearnedRuleFile = '%s-learned_n%02d.ppr' % (exampleStem,i)
-         invokeHelper(o,'structured-gradient.py','--com','grad2ppr','--src',gradientFile,'--dst',nextLearnedRuleFile)
-         logging.info('Created rule file ' + nextLearnedRuleFile)
-         _catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
-
-         learnedRuleFiles.append(nextLearnedRuleFile)
-      #concatenate all the learned rules, discarding the interpreter
-      adapterFile = getResourceFile(o, "sg-adapter.ppr", "sg-adapter.ppr")
-      _appendUniqLines(['sg-adapter.ppr'] + learnedRuleFiles,learnedRuleFile)
+      numIters = optDict.get('--numIters','5')
+      invokeHelper(o,'structured-gradient.py','--com','isg-train',
+                   '--src',exampleFile,'--dst',learnedRuleFile,
+                   '--src2',backgroundFile,'--stem',exampleStem,'--numIters', numIters)
+      logging.info('Created rule file ' + learnedRuleFile)
    else:
       logging.warn("illegal command - use 'proppr help' for help")
-
-def _appendUniqLines(inputs,output):
-   previousLines = set()
-   fp = open(output,'w')
-   for f in inputs:
-      numAddedFromLastFile = 0
-      for line in open(f): 
-         if line not in previousLines:
-            previousLines.add(line)
-            numAddedFromLastFile += 1
-            fp.write(line)
-   fp.close()
-   return numAddedFromLastFile
-
-def _catfile(fileName,msg):
-    """Print out a created file - for  debugging"""
-    print msg
-    print '+------------------------------'
-    for line in open(fileName):
-        print ' |',line,
-    print '+------------------------------'
 
 shortHelpMsg['sg-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
 shortHelpMsg['sg-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
@@ -283,7 +226,7 @@ def doHelp(o):
    print '  (3) The environment variable PROPPR_JAVA_ARGS provides arguments to java itself,'
    print '      e.g. "export PROPPR_JAVA_ARGS=-Xmx32g" increases the heap size'
    print '  (4) Any global options precede the command, and the valid ones are:'
-   print '      -Cfoo cd to directory \'foo\' before processing'
+   print '      -Cfoo put all output files in directory \'foo\''
    print '      -n dry-run mode: print actions but don\'t perform them'
 shortHelpMsg['help'] = ': this help message'
 
@@ -331,7 +274,10 @@ def invokeHelper(o,main,*mainProgArgs):
    """
    root = getRoot()
    helperFile = '%s/scripts/proppr-helpers/%s' % (root,main)
-   callProcess(o,['python',helperFile] + list(mainProgArgs))
+   globalPropprOpts = []
+   if o['out']: globalPropprOpts.append('-C'+o['out'])
+   if o['dryRun']: globalPropprOpts.append('-n')
+   callProcess(o,['python',helperFile] + list(mainProgArgs) + globalPropprOpts)
 
 def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""
@@ -381,14 +327,6 @@ def makeOutput(filename,o):
    """Create an output filename with the requested filename, in the -C directory if requested."""
    if filename.startswith(o['out']): return filename
    return o['out']+filename
-
-def getResourceFile(o,srcFile,dstFile):
-   dst = makeOutput(dstFile,o)
-   src = os.path.join( '%s/scripts/proppr-helpers/%s' % (getRoot(), srcFile))
-   fp = open(dst,'w')
-   for line in open(src):
-      fp.write(line)
-   logging.info('copied %s to %s' % (src,dst))
 
 def getArg(i,defaultVal=None):
    """Get the i-th command line argument."""
