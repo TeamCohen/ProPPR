@@ -1,9 +1,5 @@
 #!/usr/bin/python
 
-#TODO 
-#for train
-# CALL_REL_DIRECTLY_FOR_BACKGROUND_PREDICATES with rhs_i and rhs_e split
-
 import os
 import sys
 import getopt
@@ -11,7 +7,7 @@ import logging
 import subprocess
 
 shortHelpMsg = {}    #for main commands
-shortHelpMsgSG = {}  #for sg-xxx subcommands
+shortHelpMsgSL = {}  #for sl-xxx subcommands
 logging.basicConfig(level=logging.INFO)
 
 # dispatch to subcommand
@@ -52,8 +48,8 @@ def doMain():
       doTrain(opts)
    elif com == "gradient":
       doGradient(opts)
-   elif com.startswith("sg-"):
-      doSGSubcommand(opts,com[len("sg-"):])
+   elif com.startswith("sl-"):
+      doSLSubcommand(opts,com[len("sl-"):])
    else:
       logging.warn("illegal command - use 'proppr help' for help")
       
@@ -128,7 +124,7 @@ def doGradient(o):
    logging.info('gradient in '+dst)
 shortHelpMsg['gradient'] = ' INPUT.examples.grounded [OUTPUT.gradient]: measure gradient with respect to parameters'
 
-def doSGSubcommand(o,subcommand):
+def doSLSubcommand(o,subcommand):
    opts = loadOptionDict(o)
    opts['--ternaryIndex'] = 'true'
    if subcommand in ['lift','lower']:
@@ -198,24 +194,24 @@ def doSGSubcommand(o,subcommand):
       logging.info('Created rule file ' + learnedRuleFile)
    elif subcommand=="help":
       print 'ProPPR v2: The structured gradient subcommands are:'
-      for com in sorted(shortHelpMsgSG.keys()):
-         print '  proppr ' + com + shortHelpMsgSG[com]
+      for com in sorted(shortHelpMsgSL.keys()):
+         print '  proppr ' + com + shortHelpMsgSL[com]
    else:
-      logging.warn("illegal command - use 'proppr sg-help' for help")
+      logging.warn("illegal command - use 'proppr sl-help' for help")
 
-shortHelpMsg['sg-help'] = ' help on the structured-gradient subcommands, which are of the form sg-xxx'
+shortHelpMsg['sl-help'] = ' help on the structure learning subcommands, which are of the form sl-xxx'
 
-shortHelpMsgSG['sg-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
-shortHelpMsgSG['sg-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
-shortHelpMsgSG['sg-rel2ex'] = ' INPUT.cfacts [OUTPUT.examples]: convert from the 2nd-order format for facts to a set of training/test examples'
-shortHelpMsgSG['sg-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features from gradient into rules'
-shortHelpMsgSG['sg-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
+shortHelpMsgSL['sl-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
+shortHelpMsgSL['sl-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
+shortHelpMsgSL['sl-rel2ex'] = ' INPUT.cfacts [OUTPUT.examples]: convert from the 2nd-order format for facts to a set of training/test examples'
+shortHelpMsgSL['sl-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features from gradient into rules'
+shortHelpMsgSL['sl-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
          Also creates an intermediate file INPUT1.gradient. This is the (non-iterated) structural gradient algorithm."""
-shortHelpMsgSG['sg-train'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr] --numIters n: given 2nd-order examples and background facts, learn a rules file.
+shortHelpMsgSL['sl-train'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr] --numIters n: given 2nd-order examples and background facts, learn a rules file.
          Also creates a number of intermediate files for each iteration. This is the iterated structural gradient algorithm."""
-shortHelpMsgSG['sg-tune'] = ' INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.params]: do parameter-tuning on a ruleset learned by sg-train or sg-train1'
-shortHelpMsgSG['sg-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
-         One expected training/test sequence is: proppr sg-train1 train.examples train.cfacts; proppr sg-answer1 train1 train.examples train.cfacts; proppr eval test
+shortHelpMsgSL['sl-tune'] = ' INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.params]: do parameter-tuning on a ruleset learned by sl-train or sl-train1'
+shortHelpMsgSL['sl-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
+         One expected training/test sequence is: proppr sl-train1 train.examples train.cfacts; proppr sl-answer1 train1 train.examples train.cfacts; proppr eval test
          where train.examples, train.cfacts are 2nd-order examples and facts"""
 
 def doHelp(o):
