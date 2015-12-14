@@ -11,6 +11,7 @@ def gradient_to_rules(gradFile):
             score = float(sscore)
             if score>=0: continue
             feature = re.split("[(),]",sfeature)[:-1]
+            if len(feature)<1: continue
             if feature[0] == "if":
                 newrule = "interp(%s,X,Y) :- rel(%s,X,Y) {%s}." % (feature[1],feature[2],sfeature)
             elif feature[0] == "ifInv":

@@ -3,6 +3,7 @@ default: k_spouse.src k_spouse.eval
 %.gradient:
 	proppr compile sl.ppr
 	proppr set --programFiles sl.wam:$*.cfacts
+	proppr set --fixedWeight fixedWeight
 	proppr ground $*.examples
 	proppr gradient $*.grounded --epochs 0
 
@@ -18,7 +19,7 @@ default: k_spouse.src k_spouse.eval
 .SECONDARY:
 
 clean:
-	rm *.wam *.grounded* *.gradient k_*.ppr *.solutions.txt *.eval
+	rm -f *.wam *.grounded* *.gradient k_*.ppr *.solutions.txt *.eval
 
 k_spouse.src:
 	grep -v -e "husband" -e "wife" kinship-train.cfacts > k_spouse-train.cfacts

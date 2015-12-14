@@ -133,6 +133,20 @@ public class Configuration {
 
 	private Configuration() {}
 	public Configuration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
+		Properties props = new Properties();
+		if (System.getProperty(PROPFILE) != null) {
+			try {
+				props.load(new BufferedReader(new FileReader(System.getProperty(PROPFILE))));
+			} catch (IOException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+		init(props, args, inputFiles, outputFiles, constants, modules);
+	}
+	public Configuration(Properties configFile, String[] args, int inputFiles, int outputFiles, int constants, int modules) {
+		init(configFile, args, inputFiles, outputFiles, constants, modules);
+	}
+	private void init(Properties configFile, String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		boolean combine = DEFAULT_COMBINE;
 		int[] flags = {inputFiles, outputFiles, constants, modules};
 
@@ -149,7 +163,7 @@ public class Configuration {
 
 			// if the user specified a properties file, add those values at the beginning
 			// (so that command line args override them)
-			if(combine) args = combinedArgs(args);
+			if(combine) args = combinedArgs(args,configFile);
 
 			// this is terrible: we just read a Properties from a file and serialized it to String[],
 			// and now we're going to put it back into a Properties object. But Commons CLI 
@@ -651,11 +665,11 @@ public class Configuration {
 		.append(String.format("%"+(FORMAT_WIDTH)+"s: %s",name,value.toString()));
 	}
 
-	protected String[] combinedArgs(String[] origArgs) {
+	protected String[] combinedArgs(String[] origArgs, Properties props) {
 		// if the user specified a properties file, add those values at the beginning
 		// (so that command line args override them)
-		if (System.getProperty(PROPFILE) != null) {
-			String[] propArgs = fakeCommandLine(System.getProperty(PROPFILE));
+		if (props.propertyNames().hasMoreElements()) {
+			String[] propArgs = fakeCommandLine(props);
 			String[] args = new String[origArgs.length + propArgs.length];
 			int i = 0;
 			for (int j = 0; j < propArgs.length; j++) args[i++] = propArgs[j];
@@ -664,18 +678,18 @@ public class Configuration {
 		}
 		return origArgs;
 	}
-
-	protected String[] fakeCommandLine(String propsFile) {
-		Properties props = new Properties();
-		try {
-			props.load(new BufferedReader(new FileReader(propsFile)));
-			return fakeCommandLine(props);
-		} catch (FileNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
-		}
-	}
+//
+//	protected String[] fakeCommandLine(String propsFile) {
+//		Properties props = new Properties();
+//		try {
+//			props.load(new BufferedReader(new FileReader(propsFile)));
+//			return fakeCommandLine(props);
+//		} catch (FileNotFoundException e) {
+//			throw new IllegalArgumentException(e);
+//		} catch (IOException e) {
+//			throw new IllegalArgumentException(e);
+//		}
+//	}
 	protected String[] fakeCommandLine(Properties props) {
 		StringBuilder sb = new StringBuilder();
 		for (String name : props.stringPropertyNames()) {
