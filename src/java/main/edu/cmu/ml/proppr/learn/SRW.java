@@ -123,7 +123,7 @@ public class SRW {
 
 
 	/** fills M, dM in ex **/
-	protected void load(ParamVector<String,?> params, PosNegRWExample example) {
+	public void load(ParamVector<String,?> params, PosNegRWExample example) {
 		PprExample ex = (PprExample) example;
 		int dM_cursor=0;
 		for (int uid = 0; uid < ex.getGraph().node_hi; uid++) {

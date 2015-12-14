@@ -169,7 +169,7 @@ public class DprSRW extends SRW {
 	}
 	
 	@Override
-	protected void load(ParamVector<String,?> params, PosNegRWExample example) {}
+	public void load(ParamVector<String,?> params, PosNegRWExample example) {}
 
 	@Override	
 	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {

@@ -46,6 +46,7 @@ public class Configuration {
 	public static final int USE_PARAMS = 0x20;
 	public static final int USE_GRADIENT = 0x40;
 	public static final int USE_INIT_PARAMS = 0x80;
+	public static final int USE_TRANSITION  = 0x100;
 	public static final String QUERIES_FILE_OPTION = "queries";
 	public static final String GROUNDED_FILE_OPTION = "grounded";
 	public static final String SOLUTIONS_FILE_OPTION = "solutions";
@@ -54,6 +55,7 @@ public class Configuration {
 	public static final String PARAMS_FILE_OPTION = "params";
 	public static final String INIT_PARAMS_FILE_OPTION = "initParams";
 	public static final String GRADIENT_FILE_OPTION = "gradient";
+	public static final String TRANSITION_FILE_OPTION = "m";
 
 	/* set constants */
 	/** constant. programFiles, ternaryIndex */
@@ -103,6 +105,7 @@ public class Configuration {
 	public File initParamsFile = null;
 	public File solutionsFile = null;
 	public File gradientFile = null;
+	public File transitionFile = null;
 
 	public WamProgram program = null;
 	public WamPlugin[] plugins = null;
@@ -228,6 +231,7 @@ public class Configuration {
 		if (isOn(flags,USE_TRAIN) && line.hasOption(TRAIN_FILE_OPTION))             this.queryFile = new File(line.getOptionValue(TRAIN_FILE_OPTION));
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))           this.paramsFile = new File(line.getOptionValue(PARAMS_FILE_OPTION));
 		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION))       this.gradientFile = new File(line.getOptionValue(GRADIENT_FILE_OPTION));
+		if (isOn(flags,USE_TRANSITION) && line.hasOption(TRANSITION_FILE_OPTION))   this.transitionFile = new File(line.getOptionValue(TRANSITION_FILE_OPTION));
 
 		// constants
 		flags = constants(allFlags);
@@ -441,6 +445,13 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Output learned walker parameters.")
 					.create());
+		if (isOn(flags, USE_TRANSITION))
+			options.addOption(Option.builder()
+					.longOpt(TRANSITION_FILE_OPTION)
+					.desc("Stores transition matrix M for all examples.")
+					.required()
+					.hasArg()
+					.build());
 
 		// constants
 		flags = constants(allFlags);
