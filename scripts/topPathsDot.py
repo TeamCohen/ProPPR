@@ -77,9 +77,10 @@ def declareNode(node,meta):
 	print "label=\"%s| %s\\l\"];" % (node,getData(meta[node]).replace(",","\\l"))
 
 if __name__=='__main__':
-	if len(sys.argv) < 2:
-		print "Usage:\n\t$ python %s queries.grounded queries.key > graph.dot" % sys.argv[0]
+	if len(sys.argv) < 4:
+		print "Usage:\n\t$ python %s queries.grounded queries.key queries.em > graph.dot" % sys.argv[0]
 		print "\nGenerate .key files by specifying '--graphKey queries.key' during grounding"
+		print "\nGenerate .em files with TransitionGenerator"
 		print "\nSmall/medium .dot files can then be exported to .png using graphViz (http://www.graphviz.org/):"
 		print "\t$ dot -Tpng graph.dot > graph.png"
 		print "\nAny size .dot file can be viewed directly using ZGRViewer (http://sourceforge.net/projects/zvtm/files/zgrviewer/) (also requires graphViz)"
@@ -162,51 +163,154 @@ if __name__=='__main__':
 		for k,v in igraph.iteritems():
 			print "\t%s -> %s" % (k,v)
 		print
+	# read the transition matrix (for correct squashing)
+	em = {}
+	N=1
+	total = 0
+	with open(sys.argv[3],'r') as emData:
+		for e in emData:
+			if N>1:
+				write(2, "No multi-query support yet :(\n")
+				break
+			e = e.replace("\n","")
+			(eid,nrows,rest) = e.split("\t",2)
+			rest = rest.split("\t")
+			for i in range(int(nrows)):
+				uid = str(i+1)
+				if uid not in em: em[uid] = {}
+				degu = int(rest[0])
+				rest = rest[1:]
+				for xvi in range(degu):
+					(vid,wt) = rest[xvi].split(" ")
+					em[uid][vid] = float(wt)
+					total += em[uid][vid]
+				rest = rest[degu:]
+
 	
 	# walk the graph and accumulate paths
 	debug = False
 	solutions = []
-	for s,m in meta.iteritems():
-		if isPosP(m) or isNegP(m): solutions.append(s)
-	scores = []
-	for s in solutions:
-		solscores = []
-		ret = walk(s,igraph,meta,{})
-		for x in ret:
-			solscores.append( (x,weight(x,igraph,meta)) )
-		solscores = sorted(solscores,key=lambda e:-e[1])
-		scores.extend(solscores[0:min(len(solscores)-1,3)])
-	scores = sorted(scores,key=lambda e:-e[1])
-	if debug: 
-		print "\n\nComplete:"
-		for x in scores:
-			print "%g\t%s" % (x[1],x[0])
+	for t,m in meta.iteritems():
+		if isPosP(m) or isNegP(m): solutions.append(t)
+	write(2, "%d solutions\n" % len(solutions))
+	edges = {}
+	for t in solutions:
+		for P in walk(t,igraph,meta,{}):
+			v=False
+			for u in P:
+				if v:
+					edges[(u,v)] = em[uid][vid]#/total
+				v = u
+	edgeList = sorted(edges.items(),key=lambda (k,v):-v)
+	requiredNodes = set(solutions + ['1'])
+	spanningTree = {}
+	units = {}
+	inunit = {}
+	unitid=0
+	def initNode(u):
+		if u not in spanningTree:
+			spanningTree[u] = []
+			if u in requiredNodes: requiredNodes.remove(u)
+	def getUnit(u):
+		if u in units:
+			return units[u]
+		return -1
+	T=0
+	debug = True
+	while len(requiredNodes)>0 or len(inunit)!=1:
+		if len(edgeList)==0: break
+		T += 1
+		nadd=0
+		for e in edgeList:
+			(u,v) = e[0]
+			uu = getUnit(u)
+			uv = getUnit(v)
+			#if uu == uv and uu != -1: continue # skip cycles
+			if uu == uv:
+				if uu == -1:
+					if len(requiredNodes)==0:continue #stop adding new components once we've hit all the targets
+					# add a new component
+					unitid += 1
+					units[u] = unitid
+					units[v] = unitid
+					inunit[unitid] = [u,v]
+					if debug: print "# new component %d with %s" % (unitid,inunit[unitid])
+				elif debug: print "# adding cycle to unit %d %s -> %s" % (uu,u,v)
+			else:
+				if uu == -1:
+					#if u not in requiredNodes: continue # don't add new parents, only new children
+					units[u] = uv
+					inunit[uv].append(u)
+					if debug: print "# added %s to unit %d" % (u,uv)
+				elif uv == -1:
+					units[v] = uu
+					inunit[uu].append(v)
+					if debug: print "# added %s to unit %d" % (v,uu)
+				else:
+					# merge two existing components into the bigger one
+					(refu,mergeu) = (uu,uv)
+					if len(inunit[uu]) < len(inunit[uv]): (refu,mergeu) = (uv,uu)
+					if debug: print "# merged %d into %d %s" % (mergeu,refu,inunit[mergeu])
+					for x in inunit[mergeu]:
+						units[x] = refu
+						inunit[refu].append(x)
+					del inunit[mergeu]
+			initNode(u)
+			initNode(v)
+			spanningTree[u].append(v)
+			nadd+=1
+			edgeList.remove(e)
+			if debug: print "# %d edges, %d targets remaining, %d components" % (len(edgeList),len(requiredNodes),len(inunit))
+			if len(requiredNodes)==0 and len(inunit)==1: break
+		if nadd==0: 
+			if debug: print "# no more valid edges %s" % inunit
+			break
+		#if T>10: break
+	
+	displayGraph = {}
+	def makeDisplayGraph(tree,displayGraph,u='1'):
+		if u in displayGraph: return
+		displayGraph[u] = []
+		for v in tree[u]:
+			displayGraph[u].append(v)
+			makeDisplayGraph(tree,displayGraph,v)
+	makeDisplayGraph(spanningTree,displayGraph)
+	
+	rlist = []
+	first=True
+	while first or len(rlist)>0:
+		first = False
+		rlist = []
+		for k,v in displayGraph.iteritems():
+			if len(v)==0 and k not in solutions: 
+				rlist.append(k)
+		for k in rlist: del displayGraph[k]
+		for k,v in displayGraph.iteritems():
+			displayGraph[k] = filter(lambda x:x in displayGraph,v)
+	
+	ndec = set()
+	edec = set()
 	print "digraph G {"
 	print "node [shape=record];"
 	print "graph [concentrate=true,ranksep=1,nodesep=1];"
-	declared={}
-	edeclared={}
-	maxcolor = 85
-	maxpen = 4.0
-	colors = [ int(float(x)/len(scores)*maxcolor) for x in range(len(scores)) ]
-	for path in scores:
-		child=""
-		# display path weight using pen color & line weight
-		cstr = "color=gray%d,fontcolor=gray%d" % (colors[0],colors[0])
-		print "node [%s];" % cstr
-		print "edge [%s,penwidth=%g];" % (cstr,maxpen*exp(-float(colors[0])/maxcolor*maxpen))
-		colors=colors[1:]
-		for node in path[0]:
-			if node not in declared:
-				declared[node]=True
-				declareNode(node,meta)
-			if child != "":
-				e = "%s -> %s" % (node,child)
-				if e not in edeclared:
-					edeclared[e]=True
-					print "%s [label=\" %s\"];" % (e,igraph[child][node][1])
-			child = node
-		p = path[0]
-		p.reverse()
-		write(2,"%g\t%s\n" % (path[1],p))
+	for k in displayGraph:
+		declareNode(k,meta)
+		ndec.add(k)
+	for k,n in displayGraph.iteritems():
+		for v in n:
+			print "%s -> %s [label=\" %s\"];" % (k,v,igraph[v][k][1])
+			edec.add( (k,v) )
+	#print "node [color=gray80,fontcolor=gray80];"
+	#print "edge [color=gray80,fontcolor=gray80];"
+	#for e in edgeList:
+	#	(u,v) = e[0]
+	#	if u not in ndec: 
+	#		declareNode(u,meta)
+	#		ndec.add(u)
+	#	if v not in ndec:
+	#		declareNode(v,meta)
+	#		ndec.add(v)
+	#	if (u,v) not in edec:
+	#		print "%s -> %s [label=\" %s\"];" % (u,v,igraph[v][u][1])
 	print "}"
+	
