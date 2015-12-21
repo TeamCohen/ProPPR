@@ -22,6 +22,7 @@ public class PosNegLoss extends LossFunction {
 		for (int a : ex.getPosList()) {
 			double pa = clip(ex.p[a]);
 			if(pa > pmax) pmax = pa;
+			/*
 			for (TIntDoubleIterator da = ex.dp[a].iterator(); da.hasNext(); ) {
 				da.advance();
 				if (da.value()==0) continue;
@@ -29,6 +30,16 @@ public class PosNegLoss extends LossFunction {
 				double aterm = -da.value() / pa;
 				gradient.adjustOrPutValue(da.key(), aterm, aterm);
 			}
+			*/
+			for (int k=0; k < ex.dp[a].index.length; k++) {
+			    if (ex.dp[a].val[k]!=0) {
+				nonzero++;
+				double aterm = -ex.dp[a].val[k] / pa;
+				gradient.adjustOrPutValue(ex.dp[a].index[k], aterm, aterm);
+			    }
+			}
+
+
 			if (log.isDebugEnabled()) log.debug("+p="+pa);
 			lossdata.add(LOSS.LOG, -Math.log(pa));
 		}
@@ -41,6 +52,7 @@ public class PosNegLoss extends LossFunction {
 		// negative examples
 		for (int b : ex.getNegList()) {
 			double pb = clip(ex.p[b]);
+			/* wwc
 			for (TIntDoubleIterator db = ex.dp[b].iterator(); db.hasNext(); ) {
 				db.advance();
 				if (db.value()==0) continue;
@@ -48,6 +60,15 @@ public class PosNegLoss extends LossFunction {
 				double bterm = beta * db.value() / (1 - pb);
 				gradient.adjustOrPutValue(db.key(), bterm, bterm);
 			}
+			*/
+			for (int k=0; k < ex.dp[b].index.length; k++) {
+			    if (ex.dp[b].val[k]!=0) {
+				nonzero++;
+				double bterm = beta * ex.dp[b].val[k] / (1 - pb);
+				gradient.adjustOrPutValue(ex.dp[b].index[k], bterm, bterm);
+			    }
+			}
+
 			if (log.isDebugEnabled()) log.debug("-p="+pb);
 			lossdata.add(LOSS.LOG, -Math.log(1.0-pb));
 		}

@@ -353,9 +353,10 @@ public class ModuleConfiguration extends Configuration {
 			case ppr:
 				this.srw = new SRW(sp);
 				break;
-			case dpr:
+				/* wwc			case dpr:
 				this.srw = new DprSRW(sp, DprSRW.DEFAULT_STAYPROB);
 				break;
+				*/
 			case adagrad:
 				this.srw = new AdaGradSRW(sp);
 				break;
@@ -393,9 +394,11 @@ public class ModuleConfiguration extends Configuration {
 			case normpos:
 				this.srw.setLossFunction(new NormalizedPosLoss());
 				break;
+				/* wwc
 			case pair:
 				this.srw.setLossFunction(new PairwiseL2SqLoss());
 				break;
+				*/
 			}
 		} else {
 			this.srw = new SRW(sp);

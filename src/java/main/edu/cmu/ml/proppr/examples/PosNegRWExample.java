@@ -3,8 +3,11 @@ package edu.cmu.ml.proppr.examples;
 
 import edu.cmu.ml.proppr.graph.LearningGraph;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.math.SimpleSparse;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.procedure.TIntProcedure;
+
+
 /**
  * A supervised random walk example which specifies a list of positive examples and a list of negative examples.
  * @author krivard
@@ -13,7 +16,8 @@ public class PosNegRWExample extends RWExample {
 	protected int[] posList;
 	protected int[] negList;
 	public double[] p;
-	public TIntDoubleMap[] dp;
+    //wwc public TIntDoubleMap[] dp;
+    public SimpleSparse.FloatVector[] dp;
 
 //	// wwc add, kmm port
 //	public PosNegRWExample<F> posOnly() {
@@ -47,7 +51,7 @@ public class PosNegRWExample extends RWExample {
 	}
 	protected void allocate() {
 		this.p = new double[graph.node_hi];
-		this.dp = new TIntDoubleMap[graph.node_hi];
+		this.dp = new SimpleSparse.FloatVector[graph.node_hi];
 	}
 
 //	public PosNegRWExample(InferenceLearningGraph<T> g, Map<T, Double> queryVec,

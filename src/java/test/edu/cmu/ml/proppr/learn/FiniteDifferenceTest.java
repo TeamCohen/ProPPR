@@ -95,6 +95,7 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		for (String n : new String[] {"fromb","tob","fromr","tor"}) uniformParams.put(n,srw.getSquashingFunction().defaultValue());
 	}
 	
+    /* wwc
 	@Test
 	public void testDprSRW() {
 		SRW srw = new DprSRW();
@@ -105,6 +106,7 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 		fillParams(srw,p);
 		test(srw,p, new DprExampleFactory());
 	}
+    */
 	
 	@Test
 	public void testL2PosNegLossSRW() {
