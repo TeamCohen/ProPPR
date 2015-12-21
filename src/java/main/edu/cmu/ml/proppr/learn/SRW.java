@@ -254,6 +254,7 @@ public class SRW {
 	PprExample ex = (PprExample) example;
 	double[] pNext = new double[ex.getGraph().node_hi];
 	// wwc TIntDoubleMap[] dNext = new TIntDoubleMap[ex.getGraph().node_hi];
+	// replaced by...
 	SimpleSparse.FloatVector[] dNext = new SimpleSparse.FloatVector[ex.getGraph().node_hi];
 	// p: 2. for each node u
 	for (int uid = 0; 
