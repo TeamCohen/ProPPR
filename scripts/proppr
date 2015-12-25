@@ -89,7 +89,7 @@ def doShow(o):
    stem,grounded = stemExt(getArg(1),'.grounded')
    eid = getArg(2,'1')
    v = getArgvOptions() or ['--maxDepth','-1']
-   invokeHelper(o,'show.py',grounded,eid,v[0],v[1])
+   invokeHelper(o,'show.py',[],grounded,eid,v[0],v[1])
 shortHelpMsg['show'] = ' INPUT.grounded [example#] [--maxDepth d]: display an ASCII representation of a grounded example'
 
 def doEval(o):
@@ -133,18 +133,18 @@ def doSLSubcommand(o,subcommand):
       dst = makeOutput(getArg(2),o)
       #no default stem+extension here so we need to add .cfacts extension if it's missing
       if not dst.endswith(".cfacts"): dst = dst+".cfacts"
-      invokeHelper(o,'structured-gradient.py','--com',subcommand,'--src',src,'--dst',dst)
+      invokeHelper(o,'structured-gradient.py',[],'--com',subcommand,'--src',src,'--dst',dst)
    elif subcommand=="rel2ex":
       stem,src = stemExt(getArg(1),'.cfacts')
       src = getFile(src,o)
       dst = makeOutput(getArg(2,stem+'.examples'),o)
       if not dst.endswith(".examples"): dst = dst+".examples"
-      invokeHelper(o,'structured-gradient.py','--com',subcommand,'--src',src,'--dst',dst)
+      invokeHelper(o,'structured-gradient.py',[],'--com',subcommand,'--src',src,'--dst',dst)
    elif subcommand=="grad2ppr":
       stem,src = stemExt(getArg(1),'.cfacts')
       src = getFile(src,o)
       dst = makeOutput(getArg(2,stem+'.ppr'),o)
-      invokeHelper(o,'structured-gradient.py','--com',subcommand,'--src',src,'--dst',dst)
+      invokeHelper(o,'structured-gradient.py',[],'--com',subcommand,'--src',src,'--dst',dst)
    elif subcommand=="tune":
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
       exampleFile = getFile(exampleFile,o)
@@ -174,7 +174,7 @@ def doSLSubcommand(o,subcommand):
       backgroundFile = getFile(backgroundFile,o)
       #output and tmp files
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned1.ppr'),o)
-      invokeHelper(o,'structured-gradient.py','--com','sg-train',
+      invokeHelper(o,'structured-gradient.py',[],'--com','sg-train',
                    '--src',exampleFile,'--dst',learnedRuleFile,
                    '--src2',backgroundFile,'--stem',exampleStem)
       logging.info('Created rule file ' + learnedRuleFile)
@@ -186,11 +186,13 @@ def doSLSubcommand(o,subcommand):
       backgroundFile = getFile(backgroundFile,o)
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
       #optional arguments
-      optDict = getArgvOptDict()
+      optDict = getSomeArgvOptsAsDict(['--numIters'])
       numIters = optDict.get('--numIters','5')
-      invokeHelper(o,'structured-gradient.py','--com','isg-train',
+      invokeHelper(o,'structured-gradient.py',['--numIters'],
+                   '--com','isg-train',
                    '--src',exampleFile,'--dst',learnedRuleFile,
-                   '--src2',backgroundFile,'--stem',exampleStem,'--numIters', numIters)
+                   '--src2',backgroundFile,'--stem',exampleStem,
+                   '--numIters', str(numIters))
       logging.info('Created rule file ' + learnedRuleFile)
    elif subcommand=="help":
       print 'ProPPR v2: The structured gradient subcommands are:'
@@ -268,16 +270,26 @@ def invokeMain(o,main,*mainProgArgs):
       optArgs.append(val)
    callProcess(o,['java','-cp',classPath] + getJavaArgs()  + [mainClass] + list(mainProgArgs) + optArgs)
 
-def invokeHelper(o,main,*mainProgArgs):
+def invokeHelper(o,main,mainArgsConsumedBeforeHelperCalled,*mainProgArgs):
    """Invoke a python program from scripts/proppr-helpers, supplying
    options from the settings file and/or the command-line options.
    """
    root = getRoot()
    helperFile = '%s/scripts/proppr-helpers/%s' % (root,main)
    globalPropprOpts = []
-   if o['out']: globalPropprOpts.append('-C'+o['out'])
-   if o['dryRun']: globalPropprOpts.append('-n')
-   callProcess(o,['python',helperFile] + list(mainProgArgs) + globalPropprOpts + ['+'] + getArgvOptions())
+   if o['out']: globalPropprOpts.append('--C'+o['out'])
+   if o['dryRun']: globalPropprOpts.append('--n')
+   otherOpts = _unconsumedArgvOptions(mainArgsConsumedBeforeHelperCalled)
+   callProcess(o,['python',helperFile] + globalPropprOpts + list(mainProgArgs) + ['+'] + otherOpts)
+
+def _unconsumedArgvOptions(consumedArgs):
+   opts = getArgvOptions()
+   result = []
+   for i in range(0,len(opts),2):
+      if opts[i] not in consumedArgs:
+         result.append(opts[i])
+         result.append(opts[i+1])
+   return result
 
 def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""
@@ -349,13 +361,13 @@ def getArgvOptions():
          return sys.argv[i:]
    return []
 
-def getArgvOptDict():
-   try:
-      optlist,args = getopt.getopt(getArgvOptions(), 'x', ["numIters=", "help"])
-   except getopt.GetoptError as err:
-      logging.error(str(err) + ' - all options ignored!')
-      return {}
-   return dict(optlist)
+def getSomeArgvOptsAsDict(targetOpts):
+   opts = getArgvOptions()
+   result = {}
+   for i in range(0,len(opts),2):
+      if opts[i] in targetOpts:
+         result[opts[i]] = opts[i+1]
+   return result
 
 def setArgvOption(n,val):
    for i in range(len(sys.argv)):

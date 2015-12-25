@@ -7,6 +7,19 @@ import logging
 import subprocess
 import collections
 
+MAX_FILE_LINES_TO_ECHO = 15
+
+# parameters for iterativeStucturedGradient and structuredGradient via
+# gradientToRules: maximum ratio W_min/W for a feature that will be
+# converted to a rule, where W_min is the most-negative feature weight
+# and W is the feature's weight
+
+MAX_WEIGHT_RATIO = 0
+
+# parameter for iterativeStucturedGradient: number of epochs of SGD
+# to perform before computing gradient
+
+def NUM_EPOCHS_AT_ROUND_I(i): return i+1
 
 def lift(src,dst,opts):
     """Convert arity-two facts P(X,Y) to second-order representation rel(P,X,Y)."""
@@ -70,20 +83,39 @@ def gradientToRules(src,dst,opts):
     # --lhs x --rhs_i Q1 --rhs_e Q2: rules in body have functor Q1 or Q2, depending
     # whether or not the first-order predicate is intensional (ie, ends with _i).
 
+    #parse options
     rules = []
     rhs_i = rhs_e = opts.get('--rhs','learnedPred')
     lhs = opts.get('--lhs','learnedPred')
     if '--rhs_i' in opts: rhs_i = opts['--rhs_i']
     if '--rhs_e' in opts: rhs_e = opts['--rhs_e']
 
+    #utilities
     def intensional(pred): return pred.startswith('i_')
-    minGradient = -1e-7
+    def interpFeature(feat): return feat.startswith("if(") or feat.startswith("ifInv(") or feat.startswith("chain(")
 
+    totFeatures = 0
+    #collect weights for all the features that correspond to rules
+    featureWeight = collections.defaultdict(float)
     for line in open(src):
         if not line.startswith("#"):
+            totFeatures += 1
             (feature,weightStr) = line.strip().split("\t")
-            weight = float(weightStr)
-            if weight<minGradient:
+            if interpFeature(feature):
+                weight = float(weightStr)
+                if weight<0:
+                    featureWeight[feature] = min(featureWeight[feature],weight)
+    
+    rules = []
+    totRuleFeatures = 0
+    totAccepted = 0
+    if featureWeight:
+        minWeight = min(featureWeight.values())
+        for (feature,weight) in sorted(featureWeight.items(), key=lambda(f,w):w):
+            totRuleFeatures += 1
+            if (MAX_WEIGHT_RATIO==0 or (minWeight/weight < MAX_WEIGHT_RATIO)):
+                logging.debug('collect '+feature + ' minWeight/weight ' + str(minWeight/weight) + ' max ratio ' + str(MAX_WEIGHT_RATIO))
+                totAccepted += 1
                 parts = filter(lambda x:x, re.split('\W+', feature))
                 if len(parts)==3:
                     (iftype,p,q) = parts
@@ -98,6 +130,7 @@ def gradientToRules(src,dst,opts):
                     rhsr = rhs_i if intensional(r) else rhs_e
                     if chaintype=='chain':
                         rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y) {lr_%s}." % (lhs,p,rhsq,q,rhsr,r,feature))
+    logging.info('gradientToRules examines %d gradients %d for second-order rules and accepted %d' % (totFeatures,totRuleFeatures,totAccepted))
     fp = open(dst,'w')
     fp.write("\n".join(rules) + "\n")
 
@@ -156,7 +189,7 @@ def iterativeStucturedGradient(src,dst,opts):
 
         #compute the gradient
         gradientFile = _makeOutput(opts,exampleStem+'_n%02d.gradient' % i)
-        invokeProppr(opts,'gradient',groundedFile,gradientFile,'--epochs',str(i+1))
+        invokeProppr(opts,'gradient',groundedFile,gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(i)))
 
         #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
         nextLearnedRuleFile = _makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
@@ -198,8 +231,13 @@ def _catfile(fileName,msg):
     """Print out a created file - for  debugging"""
     print msg
     print '+------------------------------'
+    k = 0
     for line in open(fileName):
         print ' |',line,
+        k += 1
+        if k>MAX_FILE_LINES_TO_ECHO:
+            print ' | ...'
+            break
     print '+------------------------------'
 
 def _makeOutput(opts,filename):
@@ -242,9 +280,8 @@ if __name__=="__main__":
     try:
         optlist,args = getopt.getopt(sys.argv[1:], 'x', argspec)
     except getopt.GetoptError as err:
-        print str(err)
-        usage()
-        system.exit(-1)
+        print 'option error: ',str(err)
+        sys.exit(-1)
     optdict = dict(optlist)
     optdict['PROPPR_ARGS'] = args[1:]
 
