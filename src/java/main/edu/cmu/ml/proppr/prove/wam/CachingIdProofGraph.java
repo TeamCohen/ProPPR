@@ -239,18 +239,27 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		return this.serialize(true);
 	}
 
-	/* pruning stuff
-	 */
+	/** Prune a graph by removing 'invisible states', which would
+	 * typically be states that have, on the call stack, some predicate
+	 * P, where P is used in theorem-proving but ignored in learning.
+	 * Edges between visible states are copied over.  It's assumed that
+	 * leaves and roots are visible. Edges between a visible state and
+	 * an invisible state are discarded - instead there will be edges,
+	 * with the appropriate weights, leading into each visible state
+	 * from its closest visible ancestor in the graph.
+	 **/
 
 	public CachingIdProofGraph prunedCopy(CachingIdProofGraph unpruned,
 																				LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,
 																				VisibilityTest test) {
 		try {
 			CachingIdProofGraph pruned = new CachingIdProofGraph(example,apr,featureTab,program);
+			// this is all the work of figuring out what to prune
 			EdgeCollector collector = new EdgeCollector();
 			unpruned.collectUnprunedEdges(collector,params,weighter,new HashSet(),test,unpruned.getRootId(),unpruned.getRootId(),1.0);
-			// TODO: convert collected edges to a proper CachingIdProofGraph
-			// but I need to recode the node id's into the right range for the new graph....
+			// now convert collected edges to a CachingIdProofGraph.  You
+			// need to recode the node id's into the right range for the new
+			// graph.
 			int[] virtualFeatureIndex = new int[] { pruned.featureTab.getId(new Feature("subproofSummary")) };
 			// first cycle through the src nodes for 'real' edge
 			for (Integer u : collector.realEdgeSources()) {
@@ -310,7 +319,12 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		}
 	}
 
-	public static class EdgeCollector {
+	/** Buffers up edges to add to a pruned version of this proofgraph.
+	 * Real edges are between visible nodes; virtual edges are from a
+	 * visible node through a path through invisible nodes to a visible
+	 * descendant node. */
+
+	private static class EdgeCollector {
 		HashMap<Integer, HashMap<Integer, SimpleSparse.FloatVector> > space = new HashMap<Integer, HashMap<Integer, SimpleSparse.FloatVector> >();
 		HashMap<Integer, HashMap<Integer, Double> > accum = new HashMap<Integer, HashMap<Integer, Double> >();
 		static final HashSet<Integer> EMPTYSET = new HashSet<Integer>();
@@ -370,6 +384,9 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			return accum.get(ui).get(vi).doubleValue();
 		}
 	}
+
+	/** Recursively traverse the graph and figure out what edges to
+	 * keep **/
 
 	private void collectUnprunedEdges(EdgeCollector collector,
 																		LongDense.AbstractFloatVector params,FeatureDictWeighter weighter, 
