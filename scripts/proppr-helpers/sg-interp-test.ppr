@@ -1,6 +1,13 @@
-# 'adapter' which can be added to a bunch of mutuallly recursive
-# learnedPred rules
+interp(P,X,Y) :- learnedPred(P,X,Y).
+interp(P,X,Y) :- rel(P,X,Y).
 
-interp(P,X,Y) :- learnedPred(P,X,Y) {fixedWeight}. 
-learnedPred(P,X,Y) :- rel(P,X,Y) {fixedWeight}.
+#The theory above simplies this one, which is a subset of the sg-interp-train.ppr rules,
+#without the newRule option
+#
+#interp(P,X,Y) :- oldRule(P,X,Y).
+#
+#oldRule(P,X,Y) :- learnedPred(P,X,Y).
+#oldRule(P,X,Y) :- rel(P,X,Y).
+
+learnedPred(P,X,Y) :- rel(triple,notIn,kb).
 

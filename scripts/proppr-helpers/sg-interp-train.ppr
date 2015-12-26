@@ -1,24 +1,33 @@
-# Intended calling scheme: 
-#
-# At learning time, learnedPred rules are appended to the program before 
-# compilation and:
-#   interp calls learnedPred via the three templates ONLY
-#   learnedPred calls rel (as a base case) and itself (in learned rules)
-#
-# At test time, the learnedPred rules are appended to sg-adapter and:
-#   interp calls learnedPred ONLY as a basecase
-#   learnedPred calls rel (as a base case) and itself (in learned rules)
+# At learning time, learnedPred rules are appended to the program
+# before compilation.
 
-learnedPred(P,X,Y) :- rel(P,X,Y) {fixedWeight}.
+# This is the top-level call: either use an old (previously learned)
+# rule, or try to find a new rule to explain a fact
 
-interp(P,X,Y) :- learnedPred(R,X,Y), abduce_if(P,R) {fixedWeight}.
-interp(P,X,Y) :- learnedPred(R,Y,X), abduce_ifInv(P,R) {fixedWeight}.
-#chains v1: fully recursive version
-#interp(P,X,Y) :- learnedPred(R1,X,Z), learnedPred(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight}.
-#chains v2: tail-recursive version
-interp(P,X,Y) :- rel(R1,X,Z), learnedPred(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight}.
-interp(P,X,Y) :- learnedPred(R1,X,Z), rel(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight}.
+interp(P,X,Y) :- oldRule(P,X,Y).  #disallow in training to later cycles more aggressive
+interp(P,X,Y) :- newRule(P,X,Y).
+
+# "old rules" are really "previously derivable facts", and they are
+# either rules learned in a previous iteration, or else you can look
+# and see what's explicitly stored in the KB
+
+oldRule(P,X,Y) :- learnedPred(P,X,Y).
+oldRule(P,X,Y) :- rel(P,X,Y).
+
+# new rules are based one of the templates below.
+
+newRule(P,X,Y) :- oldRule(R,X,Y), abduce_if(P,R) {fixedWeight}.
+newRule(P,X,Y) :- oldRule(R,Y,X), abduce_ifInv(P,R) {fixedWeight}.
+# chain version 1
+newRule(P,X,Y) :- oldRule(R1,X,Z), oldRule(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight}.
+# chain version 2 - try and control the search space
+#newRule(P,X,Y) :- oldRule(R1,X,Z), rel(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight}.
+#newRule(P,X,Y) :- rel(R1,X,Z), oldRule(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight}.
 
 abduce_if(P,R) :- { if(P,R) }.
 abduce_ifInv(P,R) :-  { ifInv(P,R) }.
 abduce_chain(P,R1,R2) :- { chain(P,R1,R2) }.
+
+# here's where the learned rules will be plugged in
+learnedPred(P,X,Y) :- rel(triple,notIn,kb).
+
