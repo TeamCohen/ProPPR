@@ -98,7 +98,7 @@ public class LightweightStateGraph implements InferenceGraph {
 
 	/** Return the neighbors of node u. */
 	public List<Outlink> getOutlinks(State u) {
-		// why do we need to recompute these each time?
+		// wwc: why do we need to recompute these each time?
 		List<Outlink> result = new ArrayList<Outlink>();
 		for (State v : near(u)) {
 			Map<Feature,Double> fd = getFeatures(u,v);
@@ -154,7 +154,7 @@ public class LightweightStateGraph implements InferenceGraph {
 	 * 3: featurename1:featurename2:featurename3:...:featurenameN
 	 * 4..N: srcId->dstId:fId_1,fId_2,...,fId_k
 	 * 
-	 * All IDs are 1-indexed.
+	 * All IDs are indexed starting at 1.
 	 * 
 	 * @return
 	 */

@@ -69,8 +69,9 @@ public class DprProver extends Prover<StateProofGraph> {
 	// wwc: might look at using a PriorityQueue together with r to find
 	// just the top things. 
 
-	// wwc:, could we use canonical hashes instead of states somehow, to
-	// make this smaller/faster for lookups?
+	// wwc: could we use canonical hashes instead of states somehow, to
+	// make this smaller/faster for lookups? or make hashcode for the
+	// state the canonical hash
 
 	public Map<State, Double> prove(StateProofGraph pg) {
 		if (this.current != null) throw new IllegalStateException("DprProver not threadsafe -- one instance per thread only, please!");

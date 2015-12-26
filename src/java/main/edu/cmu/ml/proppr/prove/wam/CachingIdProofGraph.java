@@ -2,8 +2,11 @@ package edu.cmu.ml.proppr.prove.wam;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
+import java.util.Iterator;
+import java.util.Arrays;
 
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
@@ -43,6 +46,8 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		this.featureTab = new ConcurrentSymbolTable<Feature>();
 		nodeTab = new ConcurrentSymbolTable<State>(strat);
 	}
+
+
 	protected void init(SymbolTable<Feature> featureTab) {
 		nodeVec = new LongDense.ObjVector<SimpleSparse.FloatMatrix>();
 		this.featureTab = featureTab;
@@ -232,5 +237,182 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	}
 	public String toString() {
 		return this.serialize(true);
+	}
+
+	/* pruning stuff
+	 */
+
+	public CachingIdProofGraph prunedCopy(CachingIdProofGraph unpruned,
+																				LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,
+																				VisibilityTest test) {
+		try {
+			CachingIdProofGraph pruned = new CachingIdProofGraph(example,apr,featureTab,program);
+			EdgeCollector collector = new EdgeCollector();
+			unpruned.collectUnprunedEdges(collector,params,weighter,new HashSet(),test,unpruned.getRootId(),unpruned.getRootId(),1.0);
+			// TODO: convert collected edges to a proper CachingIdProofGraph
+			// but I need to recode the node id's into the right range for the new graph....
+			int[] virtualFeatureIndex = new int[] { pruned.featureTab.getId(new Feature("subproofSummary")) };
+			// first cycle through the src nodes for 'real' edge
+			for (Integer u : collector.realEdgeSources()) {
+				int ui = u.intValue();
+				int uj = pruned.getId(unpruned.getState(ui));
+				int rd = collector.realEdgeDegree(ui);
+				int vd = collector.virtualEdgeDegree(ui);
+				int[] destIndex = new int[rd + vd];
+				SimpleSparse.FloatVector[] destValue = new SimpleSparse.FloatVector[rd + vd];
+				int k = 0;
+				for (Integer v : collector.realEdgeDestinations(ui)) {
+					int vi = v.intValue();
+					int vj = pruned.getId(unpruned.getState(vi));
+					destIndex[k] = vj;
+					destValue[k] = collector.realEdgeFeatures(ui,vi);
+					k++;
+				}
+				for (Integer v : collector.virtualEdgeDestinations(ui)) {
+					int vi = v.intValue();					
+					int vj = pruned.getId(unpruned.getState(vi));
+					destIndex[k] = vj;
+					double w = collector.virtualEdgeWeight(ui,vi);
+					destValue[k] = new SimpleSparse.FloatVector(virtualFeatureIndex, new float[] { (float)w });
+					k++;
+				}
+				SimpleSparse.FloatMatrix m = new SimpleSparse.FloatMatrix(destIndex,destValue);
+				m.sortIndex();
+				pruned.edgeCount += destIndex.length;
+				pruned.nodeVec.set(uj, m);
+			}
+			// now cycle through the src nodes with 'virtal' edges that we missed the first time around
+			for (Integer u : collector.virtualEdgeSources()) {
+				int ui = u.intValue();
+				if (!collector.hasRealEdge(ui)) {
+					int uj = pruned.getId(unpruned.getState(ui));					
+					int d = collector.virtualEdgeDegree(ui);
+					int[] destIndex = new int[d];
+					SimpleSparse.FloatVector[] destValue = new SimpleSparse.FloatVector[d];
+					int k = 0;
+					for (Integer v : collector.virtualEdgeDestinations(ui)) {
+						int vi = v.intValue();					
+						int vj = pruned.getId(unpruned.getState(vi));
+						destIndex[k] = vj;
+						double w = collector.virtualEdgeWeight(ui,vi);
+						destValue[k] = new SimpleSparse.FloatVector(virtualFeatureIndex, new float[] { (float)w });
+						k++;
+					}
+					SimpleSparse.FloatMatrix m = new SimpleSparse.FloatMatrix(destIndex,destValue);
+					m.sortIndex();
+					pruned.edgeCount += destIndex.length;
+					pruned.nodeVec.set(uj, m);
+				}
+			}
+			return pruned;
+		} catch (LogicProgramException ex) {
+			throw new IllegalStateException("I really shouldn't have seen a LogicProgramException here. How awkward...");
+		}
+	}
+
+	public static class EdgeCollector {
+		HashMap<Integer, HashMap<Integer, SimpleSparse.FloatVector> > space = new HashMap<Integer, HashMap<Integer, SimpleSparse.FloatVector> >();
+		HashMap<Integer, HashMap<Integer, Double> > accum = new HashMap<Integer, HashMap<Integer, Double> >();
+		static final HashSet<Integer> EMPTYSET = new HashSet<Integer>();
+		public void collectRealEdge(int ui,int vi,SimpleSparse.FloatVector featureVec) {
+			if (space.get(ui)==null) {
+				space.put(ui, new HashMap<Integer,SimpleSparse.FloatVector>());
+			}
+			space.get(ui).put(vi,featureVec);
+		}
+		public void collectVirtualEdge(int ui,int vi,double delta) {
+			if (accum.get(ui)==null) {
+				accum.put(ui, new HashMap<Integer,Double>());
+			}
+			if (accum.get(ui).get(vi)==null) {
+				accum.get(ui).put(vi, 0.0);
+			}
+			double old = accum.get(ui).get(vi).doubleValue();
+			accum.get(ui).put(vi, old + delta);
+		}
+		public boolean hasRealEdge(int ui) {
+			return space.get(ui)!=null;
+		}
+
+		public Set<Integer> realEdgeSources() {
+			return space.keySet();
+		}
+		public Set<Integer> realEdgeDestinations(int ui) {
+			return space.get(ui).keySet();
+		}
+		public int realEdgeDegree(int ui) {
+			return space.get(ui).keySet().size();
+		}
+		public SimpleSparse.FloatVector realEdgeFeatures(int ui,int vi) {
+			return space.get(ui).get(vi);
+		}
+		public boolean hasVirtualEdge(int ui) {
+			return accum.get(ui)!=null;
+		}
+		public Set<Integer> virtualEdgeSources() {
+			return accum.keySet();
+		}
+		public Set<Integer> virtualEdgeDestinations(int ui) {
+			if (accum.get(ui)==null) {
+				return EMPTYSET;
+			} else {
+				return accum.get(ui).keySet();
+			}
+		}
+		public int virtualEdgeDegree(int ui) {
+			if (accum.get(ui)==null) {
+				return 0;
+			} else {
+				return accum.get(ui).keySet().size();
+			}
+		}
+		public double virtualEdgeWeight(int ui,int vi) {
+			return accum.get(ui).get(vi).doubleValue();
+		}
+	}
+
+	private void collectUnprunedEdges(EdgeCollector collector,
+																		LongDense.AbstractFloatVector params,FeatureDictWeighter weighter, 
+																		HashSet previouslyProcessed,VisibilityTest test,
+																		int visibleAncestor,int ui,double weightOfPathFromVisibleAncestor) 
+		throws LogicProgramException
+	{
+		if (!previouslyProcessed.add(ui)) {
+			int du = getDegreeById(ui,weighter);
+			for (int i=0; i<du; i++) {
+				int vi = getIthNeighborById(ui,i,weighter);
+				double wuv = getIthWeightById(ui,i,params,weighter);
+				boolean vIsVisible = test.visible(getState(vi));
+				if (vIsVisible) {
+					if (ui==visibleAncestor) {
+						// add an edge from the ancestor to the visible node vi
+						SimpleSparse.FloatMatrix uiOutlinkMat = nodeVec.get(ui);
+						int vx = Arrays.binarySearch(uiOutlinkMat.index,vi);
+						collector.collectRealEdge(ui,vi,uiOutlinkMat.val[vx]);
+					} else if (ui!=visibleAncestor) {
+						// add a virtual edge from the ancestor to the visible node vi
+						collector.collectVirtualEdge(visibleAncestor,vi,weightOfPathFromVisibleAncestor*wuv);
+					}
+					// recurse through v
+					collectUnprunedEdges(collector,params,weighter,previouslyProcessed,test,vi,vi,1.0);
+				} else if (!vIsVisible) {
+					// recurse through children of v
+					int dv = getDegreeById(vi,weighter);
+					for (int j=0; i<dv; j++) {
+						int xi = getIthNeighborById(ui,i,weighter);
+						double wvx = getIthWeightById(ui,i,params,weighter);
+						collectUnprunedEdges(collector,params,weighter,previouslyProcessed,test,
+																 visibleAncestor,xi,
+																 weightOfPathFromVisibleAncestor*wuv*wvx*(1.0 - apr.alpha)*(1.0 - apr.alpha));
+					}
+				} else {
+					throw new IllegalStateException("impossible!");
+				}
+			}
+		}
+	}
+
+	public static interface VisibilityTest {
+		public boolean visible(State state);		
 	}
 }

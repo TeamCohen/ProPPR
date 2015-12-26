@@ -80,6 +80,11 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 
 	public Map<State, Double> prove(CachingIdProofGraph pg) {
 		LongDense.FloatVector p = new LongDense.FloatVector();
+		prove(pg,p);
+		return pg.asMap(p);
+	}
+		
+	protected void prove(CachingIdProofGraph pg,LongDense.FloatVector p) {
 		LongDense.FloatVector r = new LongDense.FloatVector();
 		LongDense.AbstractFloatVector params = getFrozenParams(pg);
 		int state0 = pg.getRootId();
@@ -96,9 +101,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 			numPushes += pushCounter;
 		}
 		if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
-		return pg.asMap(p);
 	}
-	
 	
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, double iterEpsilon,LongDense.AbstractFloatVector params) 
