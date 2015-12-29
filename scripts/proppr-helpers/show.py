@@ -1,5 +1,7 @@
 import sys
 
+#
+
 if __name__=="__main__":
    #usage: INPUT.grounded example# --maxDepth d
    grounded = sys.argv[1]

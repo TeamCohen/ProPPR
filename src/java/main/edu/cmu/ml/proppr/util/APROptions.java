@@ -1,4 +1,5 @@
 package edu.cmu.ml.proppr.util;
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 
 public class APROptions {
 	public static final double EPS_DEFAULT = 1e-4, MINALPH_DEFAULT=0.1;

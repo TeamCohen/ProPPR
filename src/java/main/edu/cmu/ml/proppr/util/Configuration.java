@@ -80,7 +80,8 @@ public class Configuration {
 	private static final String THROTTLE_CONST_OPTION = "throttle";
 	private static final String EMPTYGRAPHS_CONST_OPTION = "includeEmptyGraphs";
 	private static final String FIXEDWEIGHTS_CONST_OPTION = "fixedWeights";
-
+	// wwc: protected so that ModuleConfiguration can give warnings...
+	protected static final String PRUNEDPREDICATE_CONST_OPTION = "prunedPredicates";
 
 	/* set class for module. Options for this section are handled in ModuleConfiguration.java. */
 	/** module. */
@@ -118,6 +119,7 @@ public class Configuration {
 	public int duplicates = (int) 1e6;
 	public int throttle = Multithreading.DEFAULT_THROTTLE;
 	public FixedWeightRules fixedWeightRules = null;
+	public FixedWeightRules prunedPredicateRules = null;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -196,6 +198,8 @@ public class Configuration {
 
 		// input files: must exist already
 		flags = inputFiles(allFlags);
+
+
 		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))         this.queryFile = getExistingFile(line.getOptionValue(QUERIES_FILE_OPTION));
 		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION))       this.groundedFile = getExistingFile(line.getOptionValue(GROUNDED_FILE_OPTION));
 		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION))       this.solutionsFile = getExistingFile(line.getOptionValue(SOLUTIONS_FILE_OPTION));
@@ -220,6 +224,9 @@ public class Configuration {
 		if (isOn(flags,USE_WAM)) {
 			if (line.hasOption(PROGRAMFILES_CONST_OPTION)) this.programFiles = line.getOptionValues(PROGRAMFILES_CONST_OPTION);
 			if (line.hasOption(TERNARYINDEX_CONST_OPTION)) this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue(TERNARYINDEX_CONST_OPTION));
+			if (line.hasOption(PRUNEDPREDICATE_CONST_OPTION)) {
+				this.prunedPredicateRules = new FixedWeightRules(line.getOptionValues(PRUNEDPREDICATE_CONST_OPTION));
+			}
 		}
 		if (anyOn(flags,USE_APR))
 			if (line.hasOption(APR_CONST_OPTION))          this.apr = new APROptions(line.getOptionValues(APR_CONST_OPTION));
@@ -236,7 +243,6 @@ public class Configuration {
 		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION))          this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
 		if (isOn(flags,USE_EMPTYGRAPHS) && line.hasOption(EMPTYGRAPHS_CONST_OPTION))    this.includeEmptyGraphs = true;
 		if (isOn(flags,USE_FIXEDWEIGHTS) && line.hasOption(FIXEDWEIGHTS_CONST_OPTION))  this.fixedWeightRules = new FixedWeightRules(line.getOptionValues(FIXEDWEIGHTS_CONST_OPTION));
-
 
 		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
 	}
@@ -446,6 +452,12 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Turn on A1A2 index for facts of arity >= 3.")
 					.create());
+			options.addOption(Option.builder(PRUNEDPREDICATE_CONST_OPTION)
+          .hasArgs()
+					.argName("exact[={y|n}]:prefix*")
+					.valueSeparator(':')
+					.desc("Specify predicates names that will be pruned by PruningIdDprProver, specified in same format as fixedWeights")
+					.build());
 		}		
 		if (isOn(flags, USE_THREADS)) 
 			options.addOption(
@@ -528,7 +540,6 @@ public class Configuration {
 					.valueSeparator(':')
 					.desc("Specify patterns of features to keep fixed at 1.0 or permit tuning. End in * for a prefix, otherwise uses exact match. Fixed by default; specify '=n' to permit tuning. First matching rule decides.")
 					.build());
-					
 
 		//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
 		//			options.addOption(
@@ -568,6 +579,7 @@ public class Configuration {
 		flags = constants(allFlags);
 		if (isOn(flags, USE_WAM)) syntax.append(" --").append(PROGRAMFILES_CONST_OPTION).append(" file.wam:file.cfacts:file.graph");
 		if (isOn(flags, USE_WAM)) syntax.append(" [--").append(TERNARYINDEX_CONST_OPTION).append(" true|false]");
+		if (isOn(flags, USE_WAM)) syntax.append(" [--").append(PRUNEDPREDICATE_CONST_OPTION).append(" predicate1:predicate2]");
 		if (isOn(flags, USE_THREADS)) syntax.append(" [--").append(THREADS_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_EPOCHS)) syntax.append(" [--").append(EPOCHS_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_TRACELOSSES)) syntax.append(" [--").append(TRACELOSSES_CONST_OPTION).append("]");

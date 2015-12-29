@@ -71,4 +71,12 @@ public class FixedWeightRules {
 		 */
 		params.put(feature, 1.0);
 	}
+	public String toString() 
+	{
+		StringBuilder sb = new StringBuilder();
+		for (DecisionRule r:ruleList) {
+			sb.append(r.toString()+"; ");
+		}
+		return sb.toString();
+	}
 }

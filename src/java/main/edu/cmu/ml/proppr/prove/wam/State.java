@@ -105,6 +105,10 @@ public abstract class State {
 		return jumpTo;
 	}
 	
+	public List<CallStackFrame> getCalls() {
+		return calls;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("state<");

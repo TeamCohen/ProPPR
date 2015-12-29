@@ -91,7 +91,6 @@ def doShow(o):
    v = getArgvOptions() or ['--maxDepth','-1']
    invokeHelper(o,'show.py',[],grounded,eid,v[0],v[1])
 shortHelpMsg['show'] = ' INPUT.grounded [example#] [--maxDepth d]: display an ASCII representation of a grounded example'
-
 def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
    solutions = getFile(getArg(2, stem+'.solutions.txt'),o)
