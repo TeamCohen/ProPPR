@@ -81,6 +81,10 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	public Map<State, Double> prove(CachingIdProofGraph pg) {
 		LongDense.FloatVector p = new LongDense.FloatVector();
 		prove(pg,p);
+		if (apr.traceDepth!=0) {
+			System.out.println("== proof graph: edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
+			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,p));
+		}
 		return pg.asMap(p);
 	}
 		

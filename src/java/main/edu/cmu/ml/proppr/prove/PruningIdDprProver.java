@@ -47,23 +47,28 @@ public class PruningIdDprProver extends IdDprProver {
 		//System.out.println("calling Prunedpredicaterules.prove");
 		LongDense.FloatVector p = new LongDense.FloatVector();
 		prove(pg,p);
-		System.out.println("== before pruning: edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
-		System.out.println(pg.treeView(weighter));
-		pg.prune(params,weighter,test);
-		System.out.println("== after pruning:  edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
-		System.out.println(pg.treeView(weighter));
-		return pg.asMap(p);
+		if (apr.traceDepth!=0) {
+			System.out.println("== before pruning:  edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
+			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,p));
+		}
+		LongDense.FloatVector prunedP = pg.prune(params,weighter,test,p);
+		//System.out.println("== after pruning:  edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
+		//System.out.println(pg.treeView(weighter,prunedP));
+		if (apr.traceDepth!=0) {
+			System.out.println("== after pruning:  edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
+			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,prunedP));
+		}
+		return pg.asMap(prunedP);
 	}
 
 	public static class PredicatePruner implements CachingIdProofGraph.VisibilityTest {
 		private FixedWeightRules rules;
 		public PredicatePruner(FixedWeightRules rules) {
 			this.rules = rules;
-			//System.out.println("pruning rules = "+rules);
 		}
 		public boolean visible(State state) {
-			// test to see if any hidden predicate is on the stack 
-			//System.out.println("Testing state "+state);
+			if (rules==null) return true;
+			// test to see if any 'pruned' predicate is on the stack 
 			String jumpTo = state.getJumpTo();
 			if (jumpTo!=null && rules.isFixed(state.getJumpTo())) {
 				return false;
@@ -71,11 +76,9 @@ public class PruningIdDprProver extends IdDprProver {
 			for (CallStackFrame frame: state.getCalls()) {
 				jumpTo = frame.getJumpTo();
 				if (jumpTo!=null && rules.isFixed(jumpTo)) {
-						//System.out.println("== invisible state! from "+jumpTo);
 					return false;
 				}
 			}
-			//System.out.println("No rules fired");
 			return true;
 		}
 	}

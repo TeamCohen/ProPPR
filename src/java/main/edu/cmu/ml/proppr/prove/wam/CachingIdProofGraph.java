@@ -254,39 +254,51 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	 * from its closest visible ancestor in the graph.
 	 **/
 
-	// TODO since we actually modify the graph in-place this whole
-	// 'copy' paradigm is bit awkward now
-
-	public void prune(LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,
-																	 VisibilityTest test) {
+	public LongDense.FloatVector prune(LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,VisibilityTest test,
+																		 LongDense.FloatVector p) 
+	{
+		// prune the graph
 		CachingIdProofGraph copy = prunedCopy(params,weighter,test);
+		// recode the weights to the new node indices in the pruned copy
+		LongDense.FloatVector prunedP = null;
+		if (p!=null) {
+			prunedP = new LongDense.FloatVector(copy.nodeSize());
+			// note smallest id index is 1, not 0
+			for (int i=1; i<p.size(); i++) {
+				int j = copy.nodeTab.getId(getState(i));
+				prunedP.set(j, p.get(i));
+			}
+		}
+		// replace this graph with the copy
 		this.nodeVec = copy.nodeVec;
 		this.featureTab = copy.featureTab;
 		this.nodeTab = copy.nodeTab;
+		// return the new node weights
+		return prunedP;
 	}
 
 
-	public CachingIdProofGraph prunedCopy(LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,
+	private CachingIdProofGraph prunedCopy(LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,
 																				VisibilityTest test) {
 		try {
 			CachingIdProofGraph pruned = emptyCopy();
-			// this is all the work of figuring out what to prune
+			// line up the roots
+			int prunedRootId = pruned.getId(getState(getRootId()));
+			// collect two kinds of edges: 'real' and 'virtual' - see EdgeCollector comments
 			EdgeCollector collector = new EdgeCollector();
-			//System.out.println("++ edge collection");
 			collectUnprunedEdges(collector,0,params,weighter,new HashSet<Integer>(),test,getRootId(),getRootId(),1.0);
-			//System.out.println("++ collected");
-			// now convert collected edges to a CachingIdProofGraph.  You
-			// need to recode the node id's into the right range for the new
-			// graph.
-			int[] virtualFeatureIndex = new int[] { pruned.featureTab.getId(new Feature("subproofSummary")) };
-			// first cycle through the src nodes for 'real' edge
+			// merge the two edge types together
+			collector.makeVirtualEdgesReal(featureTab);
+			// Now convert the collected edges to a CachingIdProofGraph.
+			// Note that we need to recode the node id's into the right
+			// range for the new graph.
 			for (Integer u : collector.realEdgeSources()) {
 				int ui = u.intValue();
 				int uj = pruned.getId(getState(ui));
-				int rd = collector.realEdgeDegree(ui);
-				int vd = collector.virtualEdgeDegree(ui);
-				int[] destIndex = new int[rd + vd];
-				SimpleSparse.FloatVector[] destValue = new SimpleSparse.FloatVector[rd + vd];
+				int d = collector.realEdgeDegree(ui);
+				// space for the FloatMatrix we'll create
+				int[] destIndex = new int[d];
+				SimpleSparse.FloatVector[] destValue = new SimpleSparse.FloatVector[d];
 				int k = 0;
 				for (Integer v : collector.realEdgeDestinations(ui)) {
 					int vi = v.intValue();
@@ -295,41 +307,10 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 					destValue[k] = collector.realEdgeFeatures(ui,vi);
 					k++;
 				}
-				for (Integer v : collector.virtualEdgeDestinations(ui)) {
-					int vi = v.intValue();					
-					int vj = pruned.getId(getState(vi));
-					destIndex[k] = vj;
-					double w = collector.virtualEdgeWeight(ui,vi);
-					destValue[k] = new SimpleSparse.FloatVector(virtualFeatureIndex, new float[] { (float)w });
-					k++;
-				}
 				SimpleSparse.FloatMatrix m = new SimpleSparse.FloatMatrix(destIndex,destValue);
 				m.sortIndex();
-				pruned.edgeCount += destIndex.length;
+				pruned.edgeCount += d;
 				pruned.nodeVec.set(uj, m);
-			}
-			// now cycle through the src nodes with only 'virtual' edges that we missed the first time around
-			for (Integer u : collector.virtualEdgeSources()) {
-				int ui = u.intValue();
-				if (!collector.hasRealEdge(ui)) {
-					int uj = pruned.getId(getState(ui));					
-					int d = collector.virtualEdgeDegree(ui);
-					int[] destIndex = new int[d];
-					SimpleSparse.FloatVector[] destValue = new SimpleSparse.FloatVector[d];
-					int k = 0;
-					for (Integer v : collector.virtualEdgeDestinations(ui)) {
-						int vi = v.intValue();					
-						int vj = pruned.getId(getState(vi));
-						destIndex[k] = vj;
-						double w = collector.virtualEdgeWeight(ui,vi);
-						destValue[k] = new SimpleSparse.FloatVector(virtualFeatureIndex, new float[] { (float)w });
-						k++;
-					}
-					SimpleSparse.FloatMatrix m = new SimpleSparse.FloatMatrix(destIndex,destValue);
-					m.sortIndex();
-					pruned.edgeCount += destIndex.length;
-					pruned.nodeVec.set(uj, m);
-				}
 			}
 			return pruned;
 		} catch (LogicProgramException ex) {
@@ -348,15 +329,19 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		HashMap<Integer, HashMap<Integer, Double> > accum = new HashMap<Integer, HashMap<Integer, Double> >();
 		static final HashSet<Integer> EMPTYSET = new HashSet<Integer>();
 
+		/** Collect an edge that directly connected visible nodes in the
+		 * unpruned graph **/
 		public void collectRealEdge(int ui,int vi,SimpleSparse.FloatVector featureVec) {
-			System.out.println("++ real edge from "+ui+" to "+vi);
+			//System.out.println("++ real edge from "+ui+" to "+vi);
 			if (space.get(ui)==null) {
 				space.put(ui, new HashMap<Integer,SimpleSparse.FloatVector>());
 			}
 			space.get(ui).put(vi,featureVec);
 		}
+		/** Collect an edge that connects a visible node to its closest
+		 * visible descendent in the unpruned graph **/
 		public void collectVirtualEdge(int ui,int vi,double delta) {
-			System.out.println("++ virt edge from "+ui+" to "+vi);
+			//System.out.println("++ virt edge from "+ui+" to "+vi);
 			if (accum.get(ui)==null) {
 				accum.put(ui, new HashMap<Integer,Double>());
 			}
@@ -366,6 +351,40 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			double old = accum.get(ui).get(vi).doubleValue();
 			accum.get(ui).put(vi, old + delta);
 		}
+
+		/** Combine the virtual and real edges 
+		 */
+		public void makeVirtualEdgesReal(SymbolTable<Feature> featureTab) {
+			int virtualFeatureId = featureTab.getId(new Feature("subproof"));
+			// loop through the virtual edges u->v
+			for (Integer u:accum.keySet()) {
+				for (Integer v: accum.get(u).keySet()) {
+					if (space.get(u)!=null && space.get(u).get(v)!=null) {
+						// there's also a real edge from u to v, so extend the
+						// real edge's feature vector with the virtual feature,
+						// with the weight from the accumulator
+						SimpleSparse.FloatVector fuv = space.get(u).get(v);
+						int n = fuv.index.length;
+						int[] index1 = new int[n+1];
+						float[] val1 = new float[n+1];
+						for (int i=0; i<n; i++) {
+							index1[i] = fuv.index[i];
+							val1[i] = fuv.val[i];
+						}
+						index1[n] = virtualFeatureId;
+						val1[n] = (float)accum.get(u).get(v).doubleValue(); 
+						space.get(u).put(v, new SimpleSparse.FloatVector(index1,val1));
+					} else {
+						// there's no real edge connecting these, so create a new
+						// feature vector for this edge
+						int[] index1 = new int[] {virtualFeatureId};
+						float[] val1 = new float[] {(float)accum.get(u).get(v).doubleValue()};
+						collectRealEdge(u.intValue(), v.intValue(), new SimpleSparse.FloatVector(index1,val1));					
+					}
+				}
+			}
+		}
+
 		public boolean hasRealEdge(int ui) {
 			return space.get(ui)!=null;
 		}
@@ -412,7 +431,6 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	/** Recursively traverse the graph and figure out what edges to
 	 * keep **/
 
-// TODO check depth bound? 
 	private void collectUnprunedEdges(EdgeCollector collector,int depth,
 																		LongDense.AbstractFloatVector params,FeatureDictWeighter weighter, 
 																		HashSet<Integer> previouslyProcessed,VisibilityTest test,
@@ -420,16 +438,15 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		throws LogicProgramException
 	{
 		if (previouslyProcessed.add(ui)) {
-			//System.out.println("++ checking "+ui + " last visibleAncestor " + visibleAncestor+ " depth "+depth);
-			//System.out.println("++ size of previouslyProcessed "+previouslyProcessed.size());
-			trace(depth,ui,test,"check:" );
+			// depth is kept track of just for debugging purposes....
+			// trace(depth,ui,test,"check:" );
 			int du = getDegreeById(ui,weighter);
 			for (int i=0; i<du; i++) {
 				int vi = getIthNeighborById(ui,i,weighter);
 				double wuv = getIthWeightById(ui,i,params,weighter);
 				boolean vIsVisible = test.visible(getState(vi));
 				if (vIsVisible) {
-					trace(depth,ui,test,"direct visible child "+vi+" of "+ui+": " );
+					//trace(depth,ui,test,"direct visible child "+vi+" of "+ui+": " );
 					if (ui==visibleAncestor) {
 						// add an edge from the ancestor to the visible node vi
 						SimpleSparse.FloatMatrix uiOutlinkMat = nodeVec.get(ui);
@@ -437,13 +454,13 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 						collector.collectRealEdge(ui,vi,uiOutlinkMat.val[vx]);
 					} else if (ui!=visibleAncestor) {
 						// add a virtual edge from the ancestor to the visible node vi
-						trace(depth,ui,test,"indirect visible descendant "+vi+" of "+visibleAncestor+": " );
+						//trace(depth,ui,test,"indirect visible descendant "+vi+" of "+visibleAncestor+": " );
 						collector.collectVirtualEdge(visibleAncestor,vi,weightOfPathFromVisibleAncestor*wuv);
 					}
 					// recurse through v
 					collectUnprunedEdges(collector,depth+1,params,weighter,previouslyProcessed,test,vi,vi,1.0);
 				} else if (!vIsVisible) {
-					trace(depth,ui,test,"direct invisible child "+vi+" of "+ui+": " );
+					//trace(depth,ui,test,"direct invisible child "+vi+" of "+ui+": " );
 					// recurse through children of v
 					int dv = getDegreeById(vi,weighter);
 					for (int j=0; j<dv; j++) {
@@ -460,11 +477,99 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		}
 	}
 
+	/**
+	 * Object used by the prune() method to decide which nodes are
+	 * 'visible'.
+	 */ 
 	public static interface VisibilityTest {
 		public boolean visible(State state);		
 	}
 
-	/* just for debugging */
+	/** Construct a tree-like ascii representation of a proof graph for
+	 * debugging purposes.
+	 **/
+
+	public String treeView(int maxDepth,int root,FeatureDictWeighter weighter) {
+		return treeView(maxDepth,root,weighter,null);
+	}
+
+	/** Construct a tree-like ascii representation of a proof graph for
+	 * debugging purposes.
+	 **/
+
+	public String treeView(int maxDepth,int root,FeatureDictWeighter weighter,LongDense.AbstractFloatVector p) {
+		StringBuilder sb = new StringBuilder();
+		try {
+			treeView(0,maxDepth,sb,new HashSet<Integer>(),weighter,p,null,root);
+		} catch (LogicProgramException ex) {
+			throw new IllegalStateException("I really shouldn't have seen a LogicProgramException here. How awkward...");			
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Recursively traverse a graph like a tree.
+	 * 
+	 * @param depth - recursion depth
+	 * @param sb - buffer holding what's been "printed" so far
+	 * @param previouslyProcessed  - record of what node id's have been visualized
+	 * @param weighter - needed getIthNeighborById (why? because graphs are expanded as needed)
+	 * @param p  - inferred node weights or null, to be printed if possible
+	 * @param featureVec  - features for the edge leading into this node
+	 * @param ui - node we've recursed down to
+	 **/
+
+	private void treeView(int depth,int maxDepth,StringBuilder sb,HashSet<Integer> previouslyProcessed,FeatureDictWeighter weighter,
+												LongDense.AbstractFloatVector p,
+												SimpleSparse.FloatVector featureVec,int ui) 
+		throws LogicProgramException
+	{
+		if (!previouslyProcessed.add(ui)) {
+			if (ui!=getRootId()) { 
+				for (int i=0; i<depth; i++) sb.append("|  ");
+				sb.append("%repeat%");
+				sb.append(treeViewNodeSummary(p,ui,featureVec,weighter));
+				sb.append("\n");
+			}
+		} else {
+			for (int i=0; i<depth; i++) sb.append("|  ");
+			sb.append(getState(ui).canonicalForm() + ":");
+			sb.append(treeViewNodeSummary(p,ui,featureVec,weighter));
+			if (maxDepth>=0  && (depth+1 > maxDepth)) {
+				sb.append(" ...\n");
+			} else {
+				sb.append("\n");
+				// recurse to children
+				int du = getDegreeById(ui,weighter);
+				for (int i=0; i<du; i++) {
+					int vi = getIthNeighborById(ui,i,weighter);
+					SimpleSparse.FloatVector featureVecToV = nodeVec.get(ui).val[i]; 
+					treeView(depth+1,maxDepth,sb,previouslyProcessed,weighter,p,featureVecToV,vi);
+				}
+			}
+		}
+	}
+	private String treeViewNodeSummary(LongDense.AbstractFloatVector p,int ui,SimpleSparse.FloatVector featureVec,FeatureDictWeighter weighter) 
+		throws LogicProgramException 
+	{
+		StringBuilder sb1 = new StringBuilder();
+		sb1.append(" #"+ui);
+		if (p!=null) {
+			sb1.append(String.format(" [%f]",p.get(ui)));
+		}
+		if (featureVec!=null) {
+			sb1.append(" via {");
+			for (int i=0; i<featureVec.index.length; i++) {
+				if (i>0) sb1.append(", ");
+				sb1.append(featureTab.getSymbol(featureVec.index[i]).toString());
+			}
+			sb1.append("}");
+		}
+		if (getState(ui).isCompleted()) {
+				sb1.append(" [_]");
+		}
+		return sb1.toString();
+	}
 
 	private void trace(int depth,int ui,VisibilityTest test,String msg) {
 		StringBuilder sb = new StringBuilder();
@@ -481,35 +586,4 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		System.out.println(sb.toString());
 	}
 
-	public String treeView(FeatureDictWeighter weighter) {
-		StringBuilder sb = new StringBuilder();
-		try {
-			treeView(0,sb,new HashSet<Integer>(), weighter,getRootId());
-		} catch (LogicProgramException ex) {
-			throw new IllegalStateException("I really shouldn't have seen a LogicProgramException here. How awkward...");			
-		}
-		return sb.toString();
-	}
-	private void treeView(int depth,StringBuilder sb,HashSet<Integer> previouslyProcessed,FeatureDictWeighter weighter,int ui) 
-		throws LogicProgramException
-	{
-		if (!previouslyProcessed.add(ui)) {
-			if (ui!=getRootId()) {
-				for (int i=0; i<depth; i++) sb.append("|  ");
-				sb.append("%repeat% "+ui+"\n");			
-			}
-		} else {
-			for (int i=0; i<depth; i++) sb.append("|  ");
-			sb.append(getState(ui).canonicalForm() + ": "+ui);
-			if (getState(ui).isCompleted()) {
-				sb.append(" [_]");
-			}
-			sb.append("\n");
-			int du = getDegreeById(ui,weighter);
-			for (int i=0; i<du; i++) {
-				int vi = getIthNeighborById(ui,i,weighter);
-				treeView(depth+1,sb,previouslyProcessed,weighter,vi);
-			}
-		}
-	}
 }

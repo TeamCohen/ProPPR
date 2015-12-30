@@ -53,7 +53,8 @@ public abstract class Prover<P extends ProofGraph> {
 	 * @throws LogicProgramException */
 	public abstract Map<State,Double> prove(P pg) throws LogicProgramException;
 	
-	/** Return a threadsafe copy of the prover */
+	/** Return a threadsafe copy of the prover.
+	 */
 	public abstract Prover<P> copy();
 	
 	public void setWeighter(FeatureDictWeighter w) {
