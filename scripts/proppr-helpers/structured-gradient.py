@@ -14,7 +14,7 @@ MAX_FILE_LINES_TO_ECHO = 15
 # converted to a rule, where W_prev is the previous rules's weight (in
 # weight-sorted order) and W is the feature's weight
 
-MAX_WEIGHT_RATIO = 0
+MAX_WEIGHT_RATIO = 20
 
 # parameter for iterativeStucturedGradient: number of epochs of SGD
 # to perform before computing gradient
@@ -95,6 +95,7 @@ def gradientToRules(src,dst,opts):
     def interpFeature(feat): return feat.startswith("if(") or feat.startswith("ifInv(") or feat.startswith("chain(")
 
     totFeatures = 0
+    totRuleFeatures = 0
     #collect weights for all the features that correspond to rules
     featureWeight = collections.defaultdict(float)
     for line in open(src):
@@ -102,17 +103,16 @@ def gradientToRules(src,dst,opts):
             totFeatures += 1
             (feature,weightStr) = line.strip().split("\t")
             if interpFeature(feature):
+                totRuleFeatures += 1
                 weight = float(weightStr)
                 if weight<0:
                     featureWeight[feature] = min(featureWeight[feature],weight)
     
     rules = []
-    totRuleFeatures = 0
     totAccepted = 0
     lastWeight = None
     if featureWeight:
         for (feature,weight) in sorted(featureWeight.items(), key=lambda(f,w):w):
-            totRuleFeatures += 1
             if weight>=0:
                 break
             if (MAX_WEIGHT_RATIO!=0 and lastWeight!=None and lastWeight/weight > MAX_WEIGHT_RATIO):
