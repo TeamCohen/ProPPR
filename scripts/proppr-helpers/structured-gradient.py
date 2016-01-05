@@ -14,7 +14,7 @@ MAX_FILE_LINES_TO_ECHO = 15
 # converted to a rule, where W_prev is the previous rules's weight (in
 # weight-sorted order) and W is the feature's weight
 
-MAX_WEIGHT_RATIO = 20
+MAX_WEIGHT_RATIO = 0
 
 # parameter for iterativeStucturedGradient: number of epochs of SGD
 # to perform before computing gradient
