@@ -73,6 +73,16 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	@Override
 	public Map<State, Double> prove(CachingIdProofGraph pg) 
 	{
+		LongDense.FloatVector p = proveVec(pg);
+		if (apr.traceDepth!=0) {
+			System.out.println("== proof graph: edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
+			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,p));
+		}
+		return pg.asMap(p);
+	}
+
+	protected LongDense.FloatVector proveVec(CachingIdProofGraph pg)
+	{
 		LongDense.FloatVector startVec = new LongDense.FloatVector();
 		startVec.set( pg.getRootId(), SEED_WEIGHT );
 		LongDense.AbstractFloatVector params = getFrozenParams(pg);
@@ -94,7 +104,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 			//System.out.println("ippr iter "+(i+1)+" size "+vec.size());
 		}
 
-		return pg.asMap(vec);
+		return vec;
 	}
 
 	LongDense.FloatVector walkOnce(CachingIdProofGraph cg, LongDense.FloatVector vec,LongDense.AbstractFloatVector params) 

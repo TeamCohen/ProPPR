@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Iterator;
 import java.util.Arrays;
 
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.examples.GroundedExample;
 import edu.cmu.ml.proppr.examples.InferenceExample;
 import edu.cmu.ml.proppr.graph.InferenceGraph;
@@ -84,6 +85,12 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	public int getDegreeById(int ui, FeatureDictWeighter weighter) throws LogicProgramException { 
 		expandIfNeeded(ui, weighter);
 		return nodeVec.get(ui).index.length; 
+	}
+	public int getDegreeByIdWithoutLazyExpansion(int ui) 
+	{
+		SimpleSparse.FloatMatrix outlinks = nodeVec.get(ui);
+		if (outlinks==null) return 0;
+		else return outlinks.index.length; 
 	}
 	public int getIthNeighborById(int ui,int i, FeatureDictWeighter weighter)  throws LogicProgramException {
 		expandIfNeeded(ui, weighter);
@@ -254,7 +261,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	 * from its closest visible ancestor in the graph.
 	 **/
 
-	public LongDense.FloatVector prune(LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,VisibilityTest test,
+	public LongDense.FloatVector prune(LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,VisibilityFilter test,
 																		 LongDense.FloatVector p) 
 	{
 		// prune the graph
@@ -279,7 +286,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 
 
 	private CachingIdProofGraph prunedCopy(LongDense.AbstractFloatVector params,FeatureDictWeighter weighter,
-																				VisibilityTest test) {
+																				VisibilityFilter test) {
 		try {
 			CachingIdProofGraph pruned = emptyCopy();
 			// line up the roots
@@ -433,14 +440,14 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 
 	private void collectUnprunedEdges(EdgeCollector collector,int depth,
 																		LongDense.AbstractFloatVector params,FeatureDictWeighter weighter, 
-																		HashSet<Integer> previouslyProcessed,VisibilityTest test,
+																		HashSet<Integer> previouslyProcessed,VisibilityFilter test,
 																		int visibleAncestor,int ui,double weightOfPathFromVisibleAncestor) 
 		throws LogicProgramException
 	{
 		if (previouslyProcessed.add(ui)) {
 			// depth is kept track of just for debugging purposes....
 			// trace(depth,ui,test,"check:" );
-			int du = getDegreeById(ui,weighter);
+			int du = getDegreeByIdWithoutLazyExpansion(ui);
 			for (int i=0; i<du; i++) {
 				int vi = getIthNeighborById(ui,i,weighter);
 				double wuv = getIthWeightById(ui,i,params,weighter);
@@ -462,7 +469,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 				} else if (!vIsVisible) {
 					//trace(depth,ui,test,"direct invisible child "+vi+" of "+ui+": " );
 					// recurse through children of v
-					int dv = getDegreeById(vi,weighter);
+					int dv = getDegreeByIdWithoutLazyExpansion(vi);
 					for (int j=0; j<dv; j++) {
 						int xj = getIthNeighborById(vi,j,weighter);
 						double wvx = getIthWeightById(vi,j,params,weighter);
@@ -481,8 +488,34 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	 * Object used by the prune() method to decide which nodes are
 	 * 'visible'.
 	 */ 
-	public static interface VisibilityTest {
+	public static interface VisibilityFilter {
 		public boolean visible(State state);		
+	}
+
+	/** Implements visibilty test by checking for any 'pruned' predicate
+	 * on the callstack.
+	 */
+
+	public static class PredicatePruner implements VisibilityFilter {
+		private FixedWeightRules rules;
+		public PredicatePruner(FixedWeightRules rules) {
+			this.rules = rules;
+		}
+		public boolean visible(State state) {
+			if (rules==null) return true;
+			// test to see if any 'pruned' predicate is on the stack 
+			String jumpTo = state.getJumpTo();
+			if (jumpTo!=null && rules.isFixed(state.getJumpTo())) {
+				return false;
+			}
+			for (CallStackFrame frame: state.getCalls()) {
+				jumpTo = frame.getJumpTo();
+				if (jumpTo!=null && rules.isFixed(jumpTo)) {
+					return false;
+				}
+			}
+			return true;
+		}
 	}
 
 	/** Construct a tree-like ascii representation of a proof graph for
@@ -540,7 +573,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 			} else {
 				sb.append("\n");
 				// recurse to children
-				int du = getDegreeById(ui,weighter);
+				int du = getDegreeByIdWithoutLazyExpansion(ui);
 				for (int i=0; i<du; i++) {
 					int vi = getIthNeighborById(ui,i,weighter);
 					SimpleSparse.FloatVector featureVecToV = nodeVec.get(ui).val[i]; 
@@ -571,7 +604,7 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 		return sb1.toString();
 	}
 
-	private void trace(int depth,int ui,VisibilityTest test,String msg) {
+	private void trace(int depth,int ui,VisibilityFilter test,String msg) {
 		StringBuilder sb = new StringBuilder();
 		for (int i=0; i<depth; i++) {
 			sb.append("|  ");

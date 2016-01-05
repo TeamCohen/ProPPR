@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.prove.wam.CachingIdProofGraph;
+import edu.cmu.ml.proppr.prove.wam.CachingIdProofGraph.VisibilityFilter;
 import edu.cmu.ml.proppr.prove.wam.CallStackFrame;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
@@ -20,7 +21,7 @@ import edu.cmu.ml.proppr.util.math.SmoothFunction;
 /**
  */
 public class PruningIdDprProver extends IdDprProver {
-	private CachingIdProofGraph.VisibilityTest test;
+	private CachingIdProofGraph.VisibilityFilter test;
 	private FixedWeightRules prunedPredicateRules;
 
 	public String toString() { 
@@ -61,7 +62,7 @@ public class PruningIdDprProver extends IdDprProver {
 		return pg.asMap(prunedP);
 	}
 
-	public static class PredicatePruner implements CachingIdProofGraph.VisibilityTest {
+	public static class PredicatePruner implements CachingIdProofGraph.VisibilityFilter {
 		private FixedWeightRules rules;
 		public PredicatePruner(FixedWeightRules rules) {
 			this.rules = rules;

@@ -10,9 +10,9 @@ import collections
 MAX_FILE_LINES_TO_ECHO = 15
 
 # parameters for iterativeStucturedGradient and structuredGradient via
-# gradientToRules: maximum ratio W_min/W for a feature that will be
-# converted to a rule, where W_min is the most-negative feature weight
-# and W is the feature's weight
+# gradientToRules: maximum ratio W_prev/W for a feature that will be
+# converted to a rule, where W_prev is the previous rules's weight (in
+# weight-sorted order) and W is the feature's weight
 
 MAX_WEIGHT_RATIO = 0
 
@@ -109,27 +109,32 @@ def gradientToRules(src,dst,opts):
     rules = []
     totRuleFeatures = 0
     totAccepted = 0
+    lastWeight = None
     if featureWeight:
-        minWeight = min(featureWeight.values())
         for (feature,weight) in sorted(featureWeight.items(), key=lambda(f,w):w):
             totRuleFeatures += 1
-            if (MAX_WEIGHT_RATIO==0 or (minWeight/weight < MAX_WEIGHT_RATIO)):
-                logging.debug('collect '+feature + ' minWeight/weight ' + str(minWeight/weight) + ' max ratio ' + str(MAX_WEIGHT_RATIO))
-                totAccepted += 1
-                parts = filter(lambda x:x, re.split('\W+', feature))
-                if len(parts)==3:
-                    (iftype,p,q) = parts
-                    rhs = rhs_i if intensional(q) else rhs_e
-                    if iftype=='if' and p!=q:
-                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Y) {lr_%s}." % (lhs,p,rhs,q,feature))
-                    elif iftype=='ifInv':
-                        rules.append( "%s(%s,X,Y) :- %s(%s,Y,X) {lr_%s}." % (lhs,p,rhs,q,feature))
-                elif len(parts)==4:
-                    (chaintype,p,q,r) = parts                
-                    rhsq = rhs_i if intensional(q) else rhs_e
-                    rhsr = rhs_i if intensional(r) else rhs_e
-                    if chaintype=='chain':
-                        rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y) {lr_%s}." % (lhs,p,rhsq,q,rhsr,r,feature))
+            if weight>=0:
+                break
+            if (MAX_WEIGHT_RATIO!=0 and lastWeight!=None and lastWeight/weight > MAX_WEIGHT_RATIO):
+                print 'stopped collected features after seeing a gap: %g to %g' % (lastWeight,weight)
+                break
+            #if lastWeight: print 'collecting',feature,weight,lastWeight,'ratio',lastWeight/weight
+            lastWeight = weight
+            totAccepted += 1
+            parts = filter(lambda x:x, re.split('\W+', feature))
+            if len(parts)==3:
+                (iftype,p,q) = parts
+                rhs = rhs_i if intensional(q) else rhs_e
+                if iftype=='if' and p!=q:
+                    rules.append( "%s(%s,X,Y) :- %s(%s,X,Y) {lr_%s}." % (lhs,p,rhs,q,feature))
+                elif iftype=='ifInv':
+                    rules.append( "%s(%s,X,Y) :- %s(%s,Y,X) {lr_%s}." % (lhs,p,rhs,q,feature))
+            elif len(parts)==4:
+                (chaintype,p,q,r) = parts                
+                rhsq = rhs_i if intensional(q) else rhs_e
+                rhsr = rhs_i if intensional(r) else rhs_e
+                if chaintype=='chain':
+                    rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y) {lr_%s}." % (lhs,p,rhsq,q,rhsr,r,feature))
     logging.info('gradientToRules examines %d gradients %d for second-order rules and accepted %d' % (totFeatures,totRuleFeatures,totAccepted))
     fp = open(dst,'w')
     fp.write("\n".join(rules) + "\n")
