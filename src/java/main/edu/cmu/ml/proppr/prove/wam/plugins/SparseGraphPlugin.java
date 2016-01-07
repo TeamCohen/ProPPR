@@ -39,6 +39,7 @@ public class SparseGraphPlugin extends GraphlikePlugin {
 	
 	public SparseGraphPlugin(APROptions apr, File matrixDir) {
 		super(apr);
+		this.name=matrixDir.getName();
 		
 		log.info("Loading sparse graph component "+matrixDir);
 		long start = System.currentTimeMillis();

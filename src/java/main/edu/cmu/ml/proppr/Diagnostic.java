@@ -54,12 +54,11 @@ public class Diagnostic {
 			final ArrayLearningGraphBuilder b = new ArrayLearningGraphBuilder();
 			final SRW srw = c.srw;
 			final ParamVector<String,?> params = srw.setupParams(new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>(16,(float) 0.75,24)));
-			for (String f : srw.untrainedFeatures()) params.put(f,srw.getSquashingFunction().defaultValue());
 			srw.setEpoch(1);
 			srw.clearLoss();
-			srw.untrainedFeatures().add("id(restart)");
-			srw.untrainedFeatures().add("id(trueLoop)");
-			srw.untrainedFeatures().add("id(trueLoopRestart)");
+			srw.fixedWeightRules().addExact("id(restart)");
+			srw.fixedWeightRules().addExact("id(trueLoop)");
+			srw.fixedWeightRules().addExact("id(trueLoopRestart)");
 
 
 			/* DiagSrwES: */

@@ -3,15 +3,20 @@ package edu.cmu.ml.proppr;
 import static org.junit.Assert.*;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
-import edu.cmu.ml.proppr.learn.L2SRW;
+import edu.cmu.ml.proppr.learn.RegularizationSchedule;
+import edu.cmu.ml.proppr.learn.RegularizeL2;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -36,7 +41,8 @@ public class GradientFinderTest extends RedBlueGraph {
 	@Before
 	public void setup() {
 		super.setup();
-		this.srw = new L2SRW();
+		this.srw = new SRW();
+		this.srw.setRegularizer(new RegularizationSchedule(this.srw, new RegularizeL2()));
 		this.srw.setSquashingFunction(new ReLU<String>());
 		this.initTrainer();
 		
@@ -78,7 +84,7 @@ public class GradientFinderTest extends RedBlueGraph {
 	}
 	
 	public ParamVector<String,?> train() {
-		return this.trainer.findGradient(examples, new ArrayLearningGraphBuilder(), new SimpleParamVector<String>());
+		return this.trainer.findGradient(null, examples, new ArrayLearningGraphBuilder(), new SimpleParamVector<String>());
 	}
 
 	@Test

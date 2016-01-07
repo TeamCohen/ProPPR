@@ -32,8 +32,8 @@ public abstract class State {
 	protected boolean completed;
 	protected boolean failed;
 	protected LinkedList<CallStackFrame> calls;
-	protected int canon;
-	protected String canonF;
+	protected int canon;      // canonical hash code - for duplicate checking
+	protected String canonF;  // canonical format - canon is hash of this
 	/** True iff there is a constant at heap position i. */
 	public boolean hasConstantAt(int i) { return heap[i]<0; }
 	/** True iff there is a variable at heap position i. */
@@ -105,6 +105,10 @@ public abstract class State {
 		return jumpTo;
 	}
 	
+	public List<CallStackFrame> getCalls() {
+		return calls;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("state<");
@@ -172,19 +176,25 @@ public abstract class State {
 	public void setCanonicalHash(WamInterpreter interpreter, State startState) {
 		try {
 //			this.canon = interpreter.canonicalForm(startState, this).hashCode();
-			this.canon = interpreter.canonicalHash(startState, this);
+			 setCanonicalHash(interpreter.canonicalHash(startState, this));
 		} catch (LogicProgramException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
+	public void setCanonicalHash(int i) {
+		this.canon = i;
+	}
 	public void setCanonicalForm(WamInterpreter interpreter, State startState) {
 		if (this.canonF != null) return;
 		try {
-			this.canonF = interpreter.canonicalForm(startState, this);
+			setCanonicalForm(interpreter.canonicalForm(startState, this));
 		} catch (LogicProgramException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	public void setCanonicalForm(String s) {
+		this.canonF = s;
 	}
 }

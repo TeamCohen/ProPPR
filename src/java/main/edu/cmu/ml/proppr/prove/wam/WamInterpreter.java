@@ -45,7 +45,7 @@ import edu.cmu.ml.proppr.util.SymbolTable;
  */
 public class WamInterpreter {
 	private static final Logger log = Logger.getLogger(WamInterpreter.class);
-	private static final int MAXDEPTH = 3;
+	private static final int MAXDEPTH = 5;
 	private MutableState state;
 	private SymbolTable<String> constantTable;
 	private List<FeatureBuilder> featureStack;
@@ -105,7 +105,7 @@ public class WamInterpreter {
 			Instruction inst = this.program.getInstruction(state.getProgramCounter());
 			execute(inst,computeFeatures);
 		}
-		if(state.isCompleted() && log.isDebugEnabled()) log.debug(this.constantTable.toString());
+		//if(state.isCompleted() && log.isDebugEnabled()) log.debug(this.constantTable.toString());
 		return this.reportedFeatures;
 	}
 
@@ -140,10 +140,15 @@ public class WamInterpreter {
 	}
 
 	private void doFeatureFindallDFS(State state, int depth) throws LogicProgramException {
+		log.info("depth "+depth+": "+state);
 		if (depth>=MAXDEPTH) throw new IllegalStateException("depth bound "+MAXDEPTH+" exceeded in feature computation");
 		if (!state.isCompleted()) {
 			// wwcmod: replace false with true to that you compute the features as well
-			for (Outlink o : wamOutlinks(state,true)) {
+		    List<Outlink> outlinks = wamOutlinks(state,false);
+		    log.info(outlinks.size()+" outlinks");
+		    int i=1;
+			for (Outlink o : outlinks) {
+			    log.info("outlink "+depth+"."+i++);
 				doFeatureFindallDFS(o.child, depth+1);
 			}
 		}
@@ -161,7 +166,7 @@ public class WamInterpreter {
 			if (plugin.claim(s.getJumpTo())) {
 				if (log.isDebugEnabled()) log.debug("Executing "+s.getJumpTo()+" from "+plugin.about());
 				this.restoreState(s);
-				if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
+				//if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
 				for (Outlink o : plugin.outlinks(s, this, computeFeatures)) {
 					result.add(o);
 				}
@@ -173,7 +178,7 @@ public class WamInterpreter {
 		for (Integer address : program.getAddresses(s.getJumpTo())) {
 			if (log.isDebugEnabled()) log.debug("Executing "+s.getJumpTo()+" from "+address);
 			this.restoreState(s);
-			if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
+			//if (log.isDebugEnabled()) log.debug(this.constantTable.toString());
 			if (computeFeatures) {
 				Map<Feature,Double> features = this.executeWithoutBranching(address);
 				if (!features.isEmpty() && !this.state.isFailed()) {
@@ -351,6 +356,7 @@ public class WamInterpreter {
 	public void ffindall(int address) throws LogicProgramException {
 		// backup the state
 		ImmutableState savedState = saveState();
+		if(log.isDebugEnabled()) log.debug("Now in ffindall");
 		// clear the call stack and branch to addr
 		this.state.getCalls().clear();
 		executeWithoutBranching(address);

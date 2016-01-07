@@ -42,16 +42,16 @@ public class LongDense
 		int maxIndex = -1;  // largest index actually used
 		float dflt; // when asked for a value out of bounds
 
-		public FloatVector(float[] v, float dflt) {
+		public FloatVector(float[] v, int mi, float dflt) {
 			this.val=v;
-			this.maxIndex=this.val.length-1;
+			this.maxIndex=mi;//this.val.length-1;
 			this.dflt=dflt;
 		}
-		public FloatVector(float[] v) {
-			this(v,0.0f);
+		public FloatVector(float[] v, int mi) {
+			this(v,mi,0.0f);
 		}
 		public FloatVector(int sizeHint) {
-			this(new float[sizeHint]);
+			this(new float[sizeHint],-1);
 		}
 		public FloatVector() {
 			this(10);
@@ -107,7 +107,9 @@ public class LongDense
 			}
 		}
 		public String toString() {
-			return Dictionary.buildString(this.val, new StringBuilder(), "\n", true).toString();
+			StringBuilder sb = new StringBuilder();
+			for (int i=0;i<=maxIndex;i++) { sb.append("\n").append(val[i]); }
+			return sb.substring(1);
 		}
 	}
 

@@ -13,30 +13,24 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.log4j.Logger;
 
-import edu.cmu.ml.proppr.examples.PprExample;
+import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
+import edu.cmu.ml.proppr.examples.PprExample;
 import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.graph.LearningGraph;
-import edu.cmu.ml.proppr.learn.SRW.ZeroGradientData;
 import edu.cmu.ml.proppr.learn.tools.ClippedExp;
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
-import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SRWOptions;
-import edu.cmu.ml.proppr.util.SimpleSymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntDoubleMap;
-import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
 /**
@@ -59,25 +53,36 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
  */
 public class SRW {	
 	private static final Logger log = Logger.getLogger(SRW.class);
-	private static final double BOUND = 1.0e-15; //Prevent infinite log loss.
 	private static final int MAX_ZERO_LOGS = 10;
 	private static Random random = new Random();
 	public static final String FIXED_WEIGHT_FUNCTOR="fixedWeight";
 	public static void seed(long seed) { random.setSeed(seed); }
 	public static SquashingFunction DEFAULT_SQUASHING_FUNCTION() { return new ClippedExp(); }
-	protected Set<String> untrainedFeatures;
+	protected FixedWeightRules fixedWeightRules;
+//	protected Set<String> untrainedFeatures;
 	protected int epoch;
 	protected SRWOptions c;
 	protected LossData cumloss;
 	protected ZeroGradientData zeroGradientData;
 	protected int zeroLogsThisEpoch=0;
+	protected RegularizationSchedule regularizer;
+	protected LossFunction lossf=new PosNegLoss();
 	public SRW() { this(new SRWOptions()); }
 	public SRW(SRWOptions params) {
 		this.c = params;
 		this.epoch = 1;
-		this.untrainedFeatures = new TreeSet<String>();
+//		this.untrainedFeatures = new TreeSet<String>();
+		this.fixedWeightRules = new FixedWeightRules();
 		this.cumloss = new LossData();
 		this.zeroGradientData = new ZeroGradientData();
+	}
+	
+	public void setLossFunction(LossFunction f) {
+		this.lossf = f;
+	}
+	
+	public void setRegularizer(RegularizationSchedule r) {
+		this.regularizer = r;
 	}
 
 	/**
@@ -89,7 +94,7 @@ public class SRW {
 		log.info("Training on "+example);
 
 		initializeFeatures(params, example.getGraph());
-		prepareForExample(params, example.getGraph(), params);
+		regularizer.prepareForExample(params, example.getGraph(), params);
 		load(params, example);
 		inference(params, example);
 		sgd(params, example);
@@ -100,11 +105,11 @@ public class SRW {
 
 		initializeFeatures(params, example.getGraph());
 		ParamVector<String,Double> prepare = new SimpleParamVector<String>();
-		prepareForExample(params, example.getGraph(), prepare);
+		regularizer.prepareForExample(params, example.getGraph(), prepare);
 		load(params, example);
 		inference(params, example);
 		TIntDoubleMap gradient = gradient(params,example);
-		
+
 		for (Map.Entry<String, Double> e : prepare.entrySet()) {
 			if (trainable(e.getKey())) 
 				accumulator.adjustValue(e.getKey(), -e.getValue() / example.length());
@@ -203,7 +208,8 @@ public class SRW {
 	public void initializeFeatures(ParamVector<String,?> params, LearningGraph graph) {
 		for (String f : graph.getFeatureSet()) {
 			if (!params.containsKey(f)) {
-				params.put(f,c.squashingFunction.defaultValue()+ (trainable(f) ? 0.01*random.nextDouble() : 0));
+				if (trainable(f)) params.put(f,c.squashingFunction.defaultValue()+0.01*random.nextDouble());
+				else fixedWeightRules.initializeFixed(params,f);
 			}
 		}
 	}
@@ -237,6 +243,9 @@ public class SRW {
 			for(int eid = ex.getGraph().node_near_lo[uid], xvi = 0; eid < ex.getGraph().node_near_hi[uid]; eid++, xvi++) {
 				int vid = ex.getGraph().edge_dest[eid];
 				// p: 2(b)i. p_v^{t+1} += (1-alpha) * p_u^t * M_uv
+				if (vid>=pNext.length) {
+					throw new IllegalStateException("vid="+vid+" > pNext.length="+pNext.length);
+				}
 				pNext[vid] += (1-c.apr.alpha) * ex.p[uid] * ex.M[uid][xvi];
 				// d: i. for each feature i in dM_uv:
 				if (dNext[vid] == null)
@@ -278,69 +287,31 @@ public class SRW {
 			grad.advance();
 			if (grad.value()==0) continue;
 			String feature = ex.getGraph().featureLibrary.getSymbol(grad.key());
-			if (trainable(feature)) params.adjustValue(feature, - learningRate() * grad.value());
+			if (trainable(feature)) {
+				params.adjustValue(feature, - learningRate(feature) * grad.value());
+				if (params.get(feature).isInfinite()) {
+					log.warn("Infinity at "+feature+"; gradient "+grad.value());
+				}
+			}
 		}
 	}
 
 	protected TIntDoubleMap gradient(ParamVector<String,?> params, PosNegRWExample example) {
 		PosNegRWExample ex = (PosNegRWExample) example;
-		Set<String> features = this.localFeatures(params, ex.getGraph());
+		Set<String> features = this.regularizer.localFeatures(params, ex.getGraph());
 		TIntDoubleMap gradient = new TIntDoubleHashMap(features.size());
 		// add regularization term
 		regularization(params, ex, gradient);
 		
-		int nonzero=0;
-		double mag = 0;
-		
-		// add empirical loss gradient term
-		// positive examples
-		double pmax = 0;
-		for (int a : ex.getPosList()) {
-			double pa = clip(ex.p[a]);
-			if(pa > pmax) pmax = pa;
-			for (TIntDoubleIterator da = ex.dp[a].iterator(); da.hasNext(); ) {
-				da.advance();
-				if (da.value()==0) continue;
-				nonzero++;
-				double aterm = -da.value() / pa;
-				mag += aterm*aterm;
-				gradient.adjustOrPutValue(da.key(), aterm, aterm);
-			}
-			if (log.isDebugEnabled()) log.debug("+p="+pa);
-			this.cumloss.add(LOSS.LOG, -Math.log(pa));
+		int nonzero=lossf.computeLossGradient(params, example, gradient, this.cumloss, c);
+		for(int i: gradient.keys()){
+			gradient.put(i,gradient.get(i)/example.length());
 		}
-
-		//negative instance booster
-		double h = pmax + c.delta;
-		double beta = 1;
-		if(c.delta < 0.5) beta = (Math.log(1/h))/(Math.log(1/(1-h)));
-
-		// negative examples
-		for (int b : ex.getNegList()) {
-			double pb = clip(ex.p[b]);
-			for (TIntDoubleIterator db = ex.dp[b].iterator(); db.hasNext(); ) {
-				db.advance();
-				if (db.value()==0) continue;
-				nonzero++;
-				double bterm = beta * db.value() / (1 - pb);
-				mag += bterm*bterm;
-				gradient.adjustOrPutValue(db.key(), bterm, bterm);
-			}
-			if (log.isDebugEnabled()) log.debug("-p="+pb);
-			this.cumloss.add(LOSS.LOG, -Math.log(1.0-pb));
-		}
-
-//		log.info("gradient step magnitude "+Math.sqrt(mag)+" "+ex.ex.toString());
 		if (nonzero==0) {
 			this.zeroGradientData.numZero++;
 			if (this.zeroGradientData.numZero < MAX_ZERO_LOGS) {
 				this.zeroGradientData.examples.append("\n").append(ex);
 			}
-//				log.warn("0 gradient. Try a different squashing function? "+ex.toString());
-//				zeroLogsThisEpoch++;
-//				if (zeroLogsThisEpoch >= MAX_ZERO_LOGS) {
-//					log.warn("(that's your last 0 gradient warning this epoch)");
-//				}
 		}
 		return gradient;
 	}
@@ -361,7 +332,9 @@ public class SRW {
 	}
 	
 	/** template: update gradient with regularization term */
-	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {}
+	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {
+		regularizer.regularization(params, ex, gradient);
+	}
 
 	//////////////////////////// copypasta from SRW.java:
 
@@ -404,36 +377,33 @@ public class SRW {
 	}
 
 
-	protected double learningRate() {
+	protected double learningRate(String feature) {
 		return Math.pow(this.epoch,-2) * c.eta;
 	}
 
-	public double clip(double prob)
-	{
-		if(prob <= 0) return BOUND;
-		return prob;
-	}
 
 	public boolean trainable(String feature) {
-		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));
+//		return !(untrainedFeatures.contains(feature) || feature.startsWith(FIXED_WEIGHT_FUNCTOR));
+		return !fixedWeightRules.isFixed(feature);
 	}
 
-	/** Allow subclasses to filter feature list **/
-	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
-		return paramVec.keySet();
-	}
-	/** Allow subclasses to swap in an alternate parameter implementation **/
-	public ParamVector<String,?> setupParams(ParamVector<String,?> params) { return params; }
+//	/** Allow subclasses to filter feature list **/
+//	public Set<String> localFeatures(ParamVector<String,?> paramVec, LearningGraph graph) {
+//		return paramVec.keySet();
+//	}
+//	/** Allow subclasses to swap in an alternate parameter implementation **/
+//	public ParamVector<String,?> setupParams(ParamVector<String,?> params) { return params; }
 
 
-	/** Allow subclasses to do pre-example calculations (e.g. lazy regularization) **/
-	public void prepareForExample(ParamVector<String,?> params, LearningGraph graph, ParamVector<String,?> apply) {}
+//	/** Allow subclasses to do pre-example calculations (e.g. lazy regularization) **/
+//	public void prepareForExample(ParamVector params, LearningGraph graph, ParamVector apply) {}
 	
 	/** Allow subclasses to do additional parameter processing at the end of an epoch **/
-	public void cleanupParams(ParamVector<String,?> params, ParamVector<String,?> apply) {}
+//	public void cleanupParams(ParamVector<String,?> params, ParamVector apply) {}
 
 
-	public Set<String> untrainedFeatures() { return this.untrainedFeatures; }
+	public FixedWeightRules fixedWeightRules() { return this.fixedWeightRules; }
+	public void setFixedWeightRules(FixedWeightRules f) { this.fixedWeightRules = f; }
 	public SquashingFunction getSquashingFunction() {
 		return c.squashingFunction;
 	}
@@ -445,6 +415,9 @@ public class SRW {
 		this.cumloss.clear();
 		this.cumloss.add(LOSS.LOG, 0.0);
 		this.cumloss.add(LOSS.REGULARIZATION, 0.0);
+	}
+	public LossData _cumulativeLoss() {
+		return this.cumloss;
 	}
 	public LossData cumulativeLoss() {
 		return this.cumloss.copy();
@@ -465,11 +438,19 @@ public class SRW {
 			TIntDoubleMap queryVec, int[] posList, int[] negList) {
 		return new PprExample(string, g, queryVec, posList, negList);
 	}
+	public ParamVector setupParams(ParamVector params) {
+		return regularizer.setupParams(params);
+	}
+	public void cleanupParams(ParamVector params, ParamVector apply) {
+		regularizer.cleanupParams(params, apply);
+	}
 	public SRW copy() {
 		Class<? extends SRW> clazz = this.getClass();
 		try {
 			SRW copy = clazz.getConstructor(SRWOptions.class).newInstance(this.c);
-			copy.untrainedFeatures = this.untrainedFeatures;
+			copy.setRegularizer(this.regularizer.copy(copy));
+			copy.setLossFunction(this.lossf.clone());
+			copy.fixedWeightRules = this.fixedWeightRules;
 			return copy;
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block
@@ -489,8 +470,17 @@ public class SRW {
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (CloneNotSupportedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		throw new UnsupportedOperationException("Programmer error in SRW subclass "+clazz.getName()
 				+": Must provide the standard SRW constructor signature, or else override copy()");
+	}
+	public RegularizationSchedule getRegularizer() {
+		return this.regularizer;
+	}
+	public LossFunction getLossFunction() {
+		return this.lossf;
 	}
 }

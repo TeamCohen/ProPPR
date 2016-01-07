@@ -80,6 +80,15 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 
 	public Map<State, Double> prove(CachingIdProofGraph pg) {
 		LongDense.FloatVector p = new LongDense.FloatVector();
+		prove(pg,p);
+		if (apr.traceDepth!=0) {
+			System.out.println("== proof graph: edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
+			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,p));
+		}
+		return pg.asMap(p);
+	}
+		
+	protected void prove(CachingIdProofGraph pg,LongDense.FloatVector p) {
 		LongDense.FloatVector r = new LongDense.FloatVector();
 		LongDense.AbstractFloatVector params = getFrozenParams(pg);
 		int state0 = pg.getRootId();
@@ -96,9 +105,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 			numPushes += pushCounter;
 		}
 		if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
-		return pg.asMap(p);
 	}
-	
 	
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, double iterEpsilon,LongDense.AbstractFloatVector params) 
@@ -112,11 +119,11 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	{
 
 		try {
-			int deg = cg.getDegreeById(uid);
+			int deg = cg.getDegreeById(uid, this.weighter);
 			if (r.get(uid) / deg > iterEpsilon) {
 				pushCounter += 1;
 				try {
-					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter);
 					// push this state as far as you can
 					while( r.get(uid)/deg > iterEpsilon ) {
 						double ru = r.get(uid);
@@ -132,9 +139,9 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 						for (int i=0; i<deg; i++) {
 							// r[v] += (1-alpha) * move? * Muv * ru
 							//Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
-							double wuv = cg.getIthWeightById(uid,i,params,this.weighter.squashingFunction);
+							double wuv = cg.getIthWeightById(uid,i,params,this.weighter);
 							if (wuv==0) continue;
-							int vid = cg.getIthNeighborById(uid,i);
+							int vid = cg.getIthNeighborById(uid,i,this.weighter);
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 							if (Double.isNaN(r.get(vid))) log.debug("NaN in r at v="+vid+" wuv="+wuv+" z="+z+" ru="+ru);
 						}
@@ -155,11 +162,12 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 						// proveState(v):
 						// current pushcounter is passed down, gets incremented and returned, and 
 						// on the next for loop iter is passed down again...
-						int vid = cg.getIthNeighborById(uid,i);
-						if (vid!=cg.getRootId()) {
-							//pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
-							pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon,params);
-						}
+						int vid = cg.getIthNeighborById(uid,i,this.weighter);
+						if (vid==cg.getRootId()) continue;
+						if (0 == cg.getIthWeightById(uid,i,params,this.weighter)) continue;
+						//pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
+						pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon,params);
+						
 					}
 				} catch (LogicProgramException e) {
 					throw new IllegalStateException(e);

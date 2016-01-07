@@ -13,8 +13,9 @@ def answerWithIntVars(query):
 def queryWithIntVars(query):
     """Convert from format p(foo,Y,Z) to p(foo,-1,-2)."""
     result = query[:]
-    # bugfix: variables must start with _A-Z, which means they must be preceded by a nonword character
-    matches = list(re.finditer(r"(\W)[_A-Z]\w*", query))
+    # bugfix: variables must start with _A-Z, which means they must be preceded by ^H^Ha nonword character
+    # bugfix: variables must start with _A-Z, which means they must be preceded by a comma , or open paren (
+    matches = list(re.finditer(r"([,(])[_A-Z]\w*", query))
     k = -len(matches)
     for m in reversed(matches):
         result = result[:m.start()] + m.groups()[0] + str(k) + result[m.end():]
@@ -45,18 +46,25 @@ class Labels(object):
         self.pos = collections.defaultdict(set)
         self.neg = collections.defaultdict(set)
         self.queries = set()
+        linenum=0
         for line in open(self.dataFile):
+            linenum += 1
             parts = line.strip().split("\t")
             query = parts[0]
             intVarQuery = queryWithIntVars(query)
-            self.queries.add(intVarQuery)
-            for p in parts[1:]:
-                if p.startswith('+'):
-                    self.pos[intVarQuery].add(p[1:])
-                elif p.startswith('-'):
-                    self.neg[intVarQuery].add(p[1:])
-                else:
-                    assert 'somethings wrong at line ' + line
+            if intVarQuery in self.queries:
+                for p in parts[1:]:
+                    if (p.startswith('+') and p[1:] not in self.pos[intVarQuery]) or (p.startswith('-') and p[1:] not in self.neg[intVarQuery]):
+                        assert "Duplicate query %s at line %d with different labels. Not sure what you want me to do here, since solution files may not be in query file order." % (query,linenum)
+            else:
+                self.queries.add(intVarQuery)
+                for p in parts[1:]:
+                    if p.startswith('+'):
+                        self.pos[intVarQuery].add(p[1:])
+                    elif p.startswith('-'):
+                        self.neg[intVarQuery].add(p[1:])
+                    else:
+                        assert 'somethings wrong at line ' + line
         
     def __str__(self):
         return 'Labels(%s,%s)' % (str(self.pos),str(self.neg))
@@ -99,7 +107,7 @@ class Answer(object):
         self.isNeg = None
 
     def asFields(self,sep="\t"):
-        return sep.join(map(str,[self.rank,self.score,self.solution,"+=",self.isPos,"-=",self.isNeg]))        
+        return sep.join(map(str,[self.rank,self.score,self.solution,["","+"][self.isPos],["","-"][self.isNeg]]))        
 
     def __repr__(self):
         return 'Answer(rank=%d,score=%f,isPos=%s,isNeg=%s,solution=%s)' \
@@ -128,21 +136,25 @@ class Answers(object):
         self.answers = collections.defaultdict(list)
         self.solutions = collections.defaultdict(set)
         self.queryTime = {}
+        done = {}
         intVarQuery = None
         totQueries = 0
         totAnswers = 0
         totLabeledAnswers = 0
         for line in open(self.answerFile):        
             if line.startswith('#'):
-                totQueries += 1
+            	done[intVarQuery] = True
                 (dummy,intVarQuery,timeStr) = line.strip().split("\t")
                 intVarQuery = answerWithIntVars(intVarQuery[:(intVarQuery.rindex("."))])
+                if intVarQuery in done: continue #skip duplicate queries
+                totQueries += 1
                 self.queryTime[intVarQuery] = int(timeStr.split(" ")[0])
                 #print line
                 #print intVarQuery
                 #print "+",labels.pos[intVarQuery]
                 #print "-",labels.neg[intVarQuery]
             else:
+            	if intVarQuery in done: continue #skip duplicate queries
                 totAnswers += 1
                 (rankStr,scoreStr,solution) = line.strip().split("\t")
                 score = float(scoreStr)
@@ -336,8 +348,8 @@ class Accuracy(Metric):
         return numCorrect/float(totExamples)
 
     def dissectSolution(self,solution):
-        functor,args = solution[:-1].split("(")
-        arg1,arg2 = args.split(",")
+        functor,delim,args = solution[:-1].partition("(")
+        arg1,delim,arg2 = args.partition(",")
         return functor,arg1,arg2
 
 class AccuracyL1(Accuracy):            
@@ -416,8 +428,10 @@ if __name__ == "__main__":
             if val in metrics:
                 print '=' * 78
                 print 'metric %s %s' % (val,metrics[val].explanation())
-                print '. micro:',metrics[val].microAverage(answers,labels)
-                print '. macro:',metrics[val].macroAverage(answers,labels)
+                micro = metrics[val].microAverage(answers,labels)
+                macro = metrics[val].macroAverage(answers,labels)
+                print '. micro:',micro
+                print '. macro:',macro
                 if '--details' in option:
                     print '. details:'
                     d = metrics[val].detailedReportAsDict(answers,labels)

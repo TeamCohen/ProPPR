@@ -40,15 +40,16 @@ public abstract class ProofGraph {
 	public static final Feature TRUELOOP = new Feature("id(trueLoop)");
 	public static final Feature RESTART = new Feature("id(restart)");
 	
-	private InferenceExample example;
-	private WamProgram program;
+	protected InferenceExample example;
+	protected WamProgram program;
 	protected final WamInterpreter interpreter;
 	private int queryStartAddress;
 	protected final ImmutableState startState;
 	private int[] variableIds;
 	private Map<Feature,Double> trueLoopFD;
 	private Feature restartFeature;
-	private APROptions apr;
+	protected APROptions apr;
+	protected ProofGraph() { startState = null; interpreter = null; }
 	public ProofGraph(Query query, APROptions apr, WamProgram program, WamPlugin ... plugins) throws LogicProgramException {
 		this(query,apr,new SimpleSymbolTable<Feature>(),program,plugins);
 	}

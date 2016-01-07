@@ -24,6 +24,7 @@ import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.prove.InnerProductWeighter;
 import edu.cmu.ml.proppr.prove.Prover;
+import edu.cmu.ml.proppr.prove.wam.Argument;
 import edu.cmu.ml.proppr.prove.wam.Feature;
 import edu.cmu.ml.proppr.prove.wam.Goal;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
@@ -66,6 +67,7 @@ public class Grounder<P extends ProofGraph> {
 	protected int nthreads=1;
 	protected int throttle=Multithreading.DEFAULT_THROTTLE;
 	private int empty;
+	protected boolean includeUnlabeledGraphs = false;
 	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>(ConcurrentSymbolTable.HASHING_STRATEGIES.identity);
 
 
@@ -83,6 +85,9 @@ public class Grounder<P extends ProofGraph> {
 
 	public void addParams(ParamVector<String,?> params, SquashingFunction<Goal> f) {
 		this.prover.setWeighter(InnerProductWeighter.fromParamVec(params, f));
+	}
+	public void includeUnlabeledGraphs(boolean includeThem) {
+		this.includeUnlabeledGraphs = includeThem;
 	}
 
 	public class GroundingStatistics {
@@ -224,6 +229,7 @@ public class Grounder<P extends ProofGraph> {
 
 	public GroundedExample groundExample(Prover<P> p,
 			InferenceExample inferenceExample) throws LogicProgramException {
+		validateExample(inferenceExample);
 		return this.groundExample(p, p.makeProofGraph(inferenceExample,apr,featureTable,masterProgram, masterPlugins));
 	}
 
@@ -283,6 +289,19 @@ public class Grounder<P extends ProofGraph> {
 		log.info("Using graph key file "+keyFile.getName());
 		this.graphKeyFile = keyFile;
 	}
+	
+	public void validateExample(InferenceExample in) {
+		for (Query[] labels: new Query[][]{in.getPosSet(),in.getNegSet()}) {
+			for (Query q: labels) {
+				for (Goal g : q.getRhs()) {
+					for (Argument a: g.getArgs()) {
+						if (a.isVariableAtom()) 
+							throw new IllegalArgumentException("Malformed query label (all arguments must be bound; must start with lowercase): "+q.toString());
+					}
+				}
+			}
+		}
+	}
 
 	///////////////////////////////// Multithreading scaffold //////////////////////////
 
@@ -294,6 +313,7 @@ public class Grounder<P extends ProofGraph> {
 		InferenceExample inf;
 		int id;
 		public Ground(InferenceExample in, int id) {
+			validateExample(in);
 			this.inf = in;
 			this.id = id;
 		}
@@ -306,7 +326,7 @@ public class Grounder<P extends ProofGraph> {
 					ix.getPosSet().length,ix.getNegSet().length,
 					gx.getPosList().size(),gx.getNegList().size());
 			if (gx.getGraph().edgeSize() > 0) {
-				if (gx.length() > 0) {
+				if (gx.length() > 0 || includeUnlabeledGraphs) {
 					return (serializeGroundedExample(pg, gx));
 				} else {
 					statistics.noPosNeg();
@@ -322,7 +342,7 @@ public class Grounder<P extends ProofGraph> {
 		try {
 			int inputFiles = Configuration.USE_QUERIES | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GROUNDED;
-			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER;
+			int constants = Configuration.USE_WAM | Configuration.USE_THREADS | Configuration.USE_ORDER | Configuration.USE_EMPTYGRAPHS;
 			int modules = Configuration.USE_GROUNDER | Configuration.USE_PROVER | Configuration.USE_SQUASHFUNCTION;
 
 			ExampleGrounderConfiguration c = new ExampleGrounderConfiguration(args, inputFiles, outputFiles, constants, modules);

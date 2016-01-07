@@ -1,0 +1,2 @@
+predict(Y,X) :- seed(Y,X).
+predict(Y,X) :- predict(Y,Z),edge(Z,X).

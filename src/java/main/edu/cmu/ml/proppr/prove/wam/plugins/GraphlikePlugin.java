@@ -32,7 +32,7 @@ import gnu.trove.procedure.TObjectDoubleProcedure;
  *
  */
 public abstract class GraphlikePlugin extends WamPlugin {
-	private static final Logger log = Logger.getLogger(LightweightGraphPlugin.class);
+	private static final Logger log = Logger.getLogger(GraphlikePlugin.class);
 	protected static final TObjectDoubleMap<String> DEFAULT_DSTLIST = new TObjectDoubleHashMap<String>(0);
 	protected static final List<String> DEFAULT_SRCLIST = Collections.emptyList();
 	protected static final String GRAPH_ARITY = "/2";
@@ -112,14 +112,18 @@ public abstract class GraphlikePlugin extends WamPlugin {
 					public boolean execute(String val, double wt) {
 						try {
 //							String weightString = returnWeights ? Double.toString(wt) : null;
-							if (dstConst != null && val==dstConst) {
-								wamInterp.restoreState(state);
-								if (returnWeights) {
-									wamInterp.setWt(arity,3,wt);
+							if (dstConst != null){
+								if (val.equals(dstConst)) {
+									wamInterp.restoreState(state);
+									if (returnWeights) {
+										wamInterp.setWt(arity,3,wt);
+									}
+									wamInterp.returnp();
+									wamInterp.executeWithoutBranching();
+								} else {
+									return true;
 								}
-								wamInterp.returnp();
-								wamInterp.executeWithoutBranching();
-							} else if (dstConst == null) {
+							} else { // dstConst == null
 								wamInterp.restoreState(state);
 								wamInterp.setArg(arity,2,val);
 								if (returnWeights) {							
@@ -131,7 +135,9 @@ public abstract class GraphlikePlugin extends WamPlugin {
 							if (computeFeatures) {
 								result.add(new Outlink(scaleFD(getFD(), wt), wamInterp.saveState()));
 							} else {
-								result.add(new Outlink(null, wamInterp.saveState()));
+							    State save = wamInterp.saveState();
+							    if (log.isDebugEnabled()) log.debug("Result "+save);
+								result.add(new Outlink(null, save));
 							}
 						} catch (LogicProgramException e) {
 							// wow this is awkward but whatcha gonna do

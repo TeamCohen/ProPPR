@@ -1,12 +1,14 @@
+Speedup thoughts:
+* most of time is in inferenceUpdate dealing with TIntDoubleMap's 
+  dNext[u][v][f] 
+  where u: dense node id; v is from node_near_lo[uid]...node_near_hi[uid]
+  and f is indexed from ex.dM_lo[u][v] ... ex.dM_hi[u][v] 
+
+  we could store the indices of the non-zero entries in dNext
+
 Small things to do:
 
-* Nomenclature: replace cooked with grounded
-* Efficiency: file based iterator over cooked graphs? can we use a
-simpler, no-object graph structure and/or proof structure?  Where is
-the space and time going?
 * Better documents (eg 'hard' rules, fixedWeight, escapes, ...) - see dorpbox
-* MinAlpha!
-* Assess recall directly
 
 * Fix compile scripts to run anywhere
 * Test for 'hard' rules and semantics for them
@@ -14,9 +16,6 @@ the space and time going?
 * Empirical loss monitoring
 * Initialize params around zero (config file, maybe, not just params?)
 * Experiment with tanh*sqrt(double.max), sparse parameters
-* Extend util.Configuration to read also from a param file - DONE
-* untuneable weights - eg, a special feature names, like fixedWeight, eg
-   DONE but need to document this
 
 *  hard clauses - syntax is implemented but I need to work out what
    the semantics should be.  I think the idea would be to treat them
@@ -37,6 +36,68 @@ the space and time going?
 *** Alternate: just get proofs with a large upper-bound on scores
 ** Convert to DB pattern queries
 ** Add instances of these queries to a pool and increment their sums...
+
+==============================================================================
+
+General Paradigm: think about coupling prediction tasks with inference
+
+eg: core SSL
+
+  predict(X,Y) :- pickLabel(Y), classify(X,Y).
+  classify(X,Y) :- { f(W,Y): feature(X,W) }
+  conflict(X) :- predict(X,Y1),mutex(Y1,Y2),classify(X,Y2).
+
+cotrain: add two feature sets
+
+  classify(X,Y) :- { f1(W,Y): feature1(X,W) }
+  classify(X,Y) :- { f2(W,Y): feature2(X,W) }
+
+Laplacian regularization: add
+
+  predict(X,Y) :- near(X,Z),predict(Z,Y).
+
+LP:
+
+  predict(X,Y) :- seed(X,Y).
+  predict(X,Y) :- near(X,Z),predict(Z,Y).
+
+Ontologies:
+
+  predict_l1(X,Y1) :- ... level 1 of ontology
+  predict_l2(X,Y1) :- ... level 2 of ontology
+
+  predict_l1(X,Y1) :- predict_l2(X,Y2),subset(Y2,Y1).  #inherit
+
+Joint learning paragraphs and relations:
+
+  predict_rel(XR,YR) :- 
+    inPara(X,XP),predict_par(XP,YP),pickLabel_rel(YR),ab_relIfpar(YR,YP).
+  ab_relIfpar(Y1,Y2) :- { relIfPar(Y1,Y2) }.
+
+Joint learning rules:
+
+  SL interpreter...
+
+Recommendation:
+
+  likes(U,I) :- predictCluster_u(U,Ku),predictCluster_i(I,Ki),ab_likes(Ku,Ki).
+  predictCluster_u(U,K) :- pickCluster_u(K),classifyCluster_u(U,K).
+  classifyCluster_u(U,K) :- { f1(U,K) }.
+  ...
+  # similar for _i
+
+  # feature-based clustering, rather than rote clustering
+  predictCluster_i(I,K) :- pickCluster_i(K),classifyCluster_i(I,K).
+  classifyCluster_i(I,K) :- { f(F,K) : feature(I,F) }.
+
+  # option: enforce single cluster per item/user
+  conflict_i(I) :- predictCluster_i(I,K1),mutex(K1,K2),classifyCluster_i(I,K2).
+
+  # option: use clusters to predict other relations, like:
+    directs(D,I), actsIn(D,I), highRevenue(R), ...
+
+  # could make cluster an unknown feature of items in a KB-completion
+  # type task.
 
 ==============================================================================
 

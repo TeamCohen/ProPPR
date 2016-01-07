@@ -31,6 +31,8 @@ clean:
 
 clean-post: clean
 
+.SECONDARY:
+
 ##### generating data files
 
 all.data: all all.allowed

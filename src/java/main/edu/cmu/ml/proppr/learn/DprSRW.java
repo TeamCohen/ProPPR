@@ -30,9 +30,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 public class DprSRW extends SRW {
 	private static final Logger log = Logger.getLogger(DprSRW.class);
 	public static final double DEFAULT_STAYPROB=DprProver.STAYPROB_DEFAULT;
-	
 	private double stayProb;
-	protected LossData cumloss;
 
 	public DprSRW() {
 		super();
@@ -176,9 +174,9 @@ public class DprSRW extends SRW {
 	@Override	
 	protected void regularization(ParamVector<String,?> params, PosNegRWExample ex, TIntDoubleMap gradient) {
 		
-		for (String f : localFeatures(params, ex.getGraph())) {
+		for (String f : regularizer.localFeatures(params, ex.getGraph())) {
 			double value = Dictionary.safeGet(params, f);
-			double ret = untrainedFeatures.contains(f) ? 0.0 : 2*c.mu*value;
+			double ret = fixedWeightRules.isFixed(f) ? 0.0 : 2*c.mu*value;
 			this.cumloss.add(LOSS.REGULARIZATION, c.mu * Math.pow(value,2));
 			gradient.adjustOrPutValue(ex.getGraph().featureLibrary.getId(f), ret, ret);
 		}

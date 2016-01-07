@@ -1,23 +1,33 @@
 #!/usr/bin/python
 
-import sys
-import subprocess
 import os
+import sys
+import getopt
 import logging
+import subprocess
 
-shortHelpMsg = {}
+shortHelpMsg = {}    #for main commands
+shortHelpMsgSL = {}  #for sl-xxx subcommands
 logging.basicConfig(level=logging.INFO)
 
 # dispatch to subcommand
 
 def doMain():
    logging.info('ProPPR v2')
-   opts = {'dryRun':False}
+   opts = {'dryRun':False, 'out':getOutputDirectory()}
    com = getArg(0)
-   if com == "-n":
-       opts['dryRun'] = True
-       sys.argv = sys.argv[1:]
-       com = getArg(0)
+   while True:
+      #parse special options -n, -Cfoo
+      if com == "-n":
+         opts['dryRun'] = True
+         sys.argv = sys.argv[1:]
+         com = getArg(0)
+      elif com.startswith("-C"):
+         opts['out']=com[2:]
+         if not opts['out'].endswith("/"): opts['out'] += "/"
+         sys.argv = sys.argv[1:]
+         com = getArg(0)
+      else: break
    if com == "help":
       doHelp(opts)
    elif com == "set":
@@ -36,111 +46,54 @@ def doMain():
       doEval(opts)
    elif com == "train":
       doTrain(opts)
+   elif com == "gradient":
+      doGradient(opts)
+   elif com.startswith("sl-"):
+      doSLSubcommand(opts,com[len("sl-"):])
    else:
-      doHelp(opts)
+      logging.warn("illegal command - use 'proppr help' for help")
       
 # subcommands
 
 def doSet(o):
-   opts = loadOptionDict()  #also load command-line options
-   saveOptionDict(opts)
+   opts = loadOptionDict(o)  #also load command-line options
+   saveOptionDict(opts,o)
 shortHelpMsg['set'] = ' OPTION VALUE: store a default setting in proppr.settings, where OPTION starts with --'
 
 def doSettings(o):
-   for key,val in loadOptionDict().items():
+   for key,val in loadOptionDict(o).items():
       print key,val
 shortHelpMsg['settings'] = ': show current default settings in proppr.settings'
 
 def doAnswer(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = getArg(2,stem+'.solutions.txt')
+   solutions = makeOutput(getArg(2,stem+'.solutions.txt'),o)
+   #TODO this is ugly
+   v = getArgvOptions()
+   for i in range(len(v)):
+      if v[i] == '--params':
+         setArgvOption(i+1,getFile(v[i+1],o))
+         break
    invokeMain(o,'QueryAnswerer','--queries',examples,'--solutions',solutions)
    logging.info('answers in '+solutions)
 shortHelpMsg['answer'] = ' INPUT.examples [OUTPUT.solutions.txt]: answer queries from file and write solutions'
 
 def doGround(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   grounded = getArg(2,stem+'.examples.grounded')
+   grounded = makeOutput(getArg(2,stem+'.grounded'),o)
    invokeMain(o,'Grounder','--queries',examples,'--grounded',grounded)
    logging.info('grounded to '+grounded)
 shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from file and write graphs'
 
 def doShow(o):
    stem,grounded = stemExt(getArg(1),'.grounded')
-   eid = int(getArg(2,'1'))
-   maxDepth=-1
+   eid = getArg(2,'1')
    v = getArgvOptions() or ['--maxDepth','-1']
-   if v[0] == '--maxDepth':
-      maxDepth=int(v[1])
-   featurefile = "%s.features" % grounded
-   features = [0]
-   with open(featurefile,'r') as f:
-      features.extend([line.strip() for line in f])
-   lineno=0
-   query = ""
-   edges = []
-   pos = []
-   neg = []
-   with open(grounded,'r') as f:
-      for line in f:
-         lineno+=1
-         if lineno == eid:
-            fields = line.strip().split("\t")
-            query = fields[0]
-            pos = [int(n) for n in fields[2].split(',')]
-            neg = [int(n) for n in fields[3].split(',')]
-            edges = fields[7:]
-            break
-   graph = {}
-   for edge in edges:
-      (e,F) = edge.split(":")
-      (src,dest) = [ int(n) for n in e.split("->") ]
-      #
-      if not graph.has_key(src): graph[src] = {}
-      if not graph[src].has_key(F): graph[src][F] = []
-      graph[src][F].append(dest)
-   
-   cursor = 1
-   def show(cursor,level):
-      print "%d" % (cursor),
-      if type(graph[cursor]) == type(1):
-         # then we've seen this node before
-         graph[cursor] += 1
-         if cursor in pos: print "+"
-         elif cursor in neg: print "-"
-         else: print "%% (x%d)" % graph[cursor]
-      else:
-         descendants = graph[cursor]
-         graph[cursor] = 1
-         for (F,links) in descendants.iteritems():
-            labels = []
-            skip = False
-            for f in F.split(","):
-               p = f.split("@")
-               label = (features[int(p[0])], float(p[1]))
-               if label[0] == "id(restart)":
-                  skip = True
-               elif label[0] == "id(trueLoop)":
-                  if cursor in pos: print "+"
-                  elif cursor in neg: print "-"
-                  else: print "?"
-                  skip = True
-               labels.append(label)
-            if skip: continue
-            print "->"
-            for link in links:
-               print "%s%s: " % ( '  |'*level,labels),
-               if (maxDepth<0) or (level<maxDepth):
-                  show(link,level+1)
-               else:
-                  print "%d [truncated]" % link
-   print query
-   show(1,1)
+   invokeHelper(o,'show.py',[],grounded,eid,v[0],v[1])
 shortHelpMsg['show'] = ' INPUT.grounded [example#] [--maxDepth d]: display an ASCII representation of a grounded example'
-
 def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
-   solutions = getArg(2, stem+'.solutions.txt')
+   solutions = getFile(getArg(2, stem+'.solutions.txt'),o)
    opts = getArgvOptions() or ['--metric','map']
    root = getRoot()
    callProcess(o,['python',root+'/scripts/answermetrics.py','--data',examples,'--answers',solutions] + opts)
@@ -148,29 +101,133 @@ shortHelpMsg['eval'] = ' INPUT.examples INPUT.solutions.txt [--metric mrr|recall
 
 def doCompile(o):
    stem,src = stemExt(getArg(1),'.ppr')
-   dst = getArg(2,stem+".wam")
+   src = getFile(src,o)
+   dst = makeOutput(getArg(2,stem+".wam"),o)
    root = getRoot()
    callProcess(o,['python',root+'/src/scripts/compiler.py','serialize',src],stdout=open(dst,'w'))
    logging.info('compiled '+ src + ' to ' + dst)
 shortHelpMsg['compile'] = ' INPUT.ppr [OUTPUT.wam]: compile a ProPPR program to abstract machine'
 
 def doTrain(o):
-   stem,src = stemExt(getArg(1),'.examples.grounded')
-   dst = getArg(2,stem+'.params')
+   stem,src = stemExt(getArg(1),'.grounded')
+   src = getFile(src,o)
+   dst = makeOutput(getArg(2,stem+'.params'),o)
    invokeMain(o,'Trainer','--train',src,'--params',dst)
 shortHelpMsg['train'] = ' INPUT.examples.grounded [OUTPUT.params]: learn parameters for the prover'
 
+def doGradient(o):
+   stem,src = stemExt(getArg(1),'.grounded')
+   src = getFile(src,o)
+   dst = makeOutput(getArg(2,stem+'.gradient'),o)
+   invokeMain(o,'GradientFinder','--grounded',src,'--gradient',dst)
+   logging.info('gradient in '+dst)
+shortHelpMsg['gradient'] = ' INPUT.examples.grounded [OUTPUT.gradient]: measure gradient with respect to parameters'
+
+def doSLSubcommand(o,subcommand):
+   opts = loadOptionDict(o)
+   opts['--ternaryIndex'] = 'true'
+   if subcommand in ['lift','lower']:
+      stem,src = stemExt(getArg(1),'.cfacts')
+      src = getFile(src,o)
+      dst = makeOutput(getArg(2),o)
+      #no default stem+extension here so we need to add .cfacts extension if it's missing
+      if not dst.endswith(".cfacts"): dst = dst+".cfacts"
+      invokeHelper(o,'structured-gradient.py',[],'--com',subcommand,'--src',src,'--dst',dst)
+   elif subcommand=="rel2ex":
+      stem,src = stemExt(getArg(1),'.cfacts')
+      src = getFile(src,o)
+      dst = makeOutput(getArg(2,stem+'.examples'),o)
+      if not dst.endswith(".examples"): dst = dst+".examples"
+      invokeHelper(o,'structured-gradient.py',[],'--com',subcommand,'--src',src,'--dst',dst)
+   elif subcommand=="grad2ppr":
+      stem,src = stemExt(getArg(1),'.cfacts')
+      src = getFile(src,o)
+      dst = makeOutput(getArg(2,stem+'.ppr'),o)
+      invokeHelper(o,'structured-gradient.py',[],'--com',subcommand,'--src',src,'--dst',dst)
+   elif subcommand=="tune":
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
+      backgroundFile = getFile(backgroundFile,o)
+      learnedRuleStem,learnedRuleFile = stemExt(getArg(3),'.ppr')
+      learnedRuleFile = getFile(learnedRuleFile,o)
+      invokeMyself(o,'compile',learnedRuleFile)
+      invokeMyself(o,'ground',exampleFile,exampleFile+".grounded",'--programFiles',learnedRuleStem+'.wam:'+backgroundFile,'--ternaryIndex','true')
+      paramFile = makeOutput(getArg(4,exampleStem+'.params'),o)
+      invokeMyself(o,'train',exampleFile+".grounded",paramFile)
+   elif subcommand=="answer":
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
+      backgroundFile = getFile(backgroundFile,o)
+      learnedRuleStem,learnedRuleFile = stemExt(getArg(3),'.ppr')
+      learnedRuleFile = getFile(learnedRuleFile,o)
+      solutionsFile = makeOutput(getArg(4,exampleStem+'.solutions.txt'),o)
+      invokeMyself(o,'compile',learnedRuleFile)
+      invokeMyself(o,'answer',exampleFile,solutionsFile,'--programFiles',learnedRuleStem+'.wam:'+backgroundFile,'--ternaryIndex','true')
+   elif subcommand=="train1":
+      #work out input file names
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
+      backgroundFile = getFile(backgroundFile,o)
+      #output and tmp files
+      learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned1.ppr'),o)
+      invokeHelper(o,'structured-gradient.py',[],'--com','sg-train',
+                   '--src',exampleFile,'--dst',learnedRuleFile,
+                   '--src2',backgroundFile,'--stem',exampleStem)
+      logging.info('Created rule file ' + learnedRuleFile)
+   elif subcommand=="train":
+      #work out input/output file names
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
+      backgroundFile = getFile(backgroundFile,o)
+      learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
+      #optional arguments
+      optDict = getSomeArgvOptsAsDict(['--numIters'])
+      numIters = optDict.get('--numIters','5')
+      invokeHelper(o,'structured-gradient.py',['--numIters'],
+                   '--com','isg-train',
+                   '--src',exampleFile,'--dst',learnedRuleFile,
+                   '--src2',backgroundFile,'--stem',exampleStem,
+                   '--numIters', str(numIters))
+      logging.info('Created rule file ' + learnedRuleFile)
+   elif subcommand=="help":
+      print 'ProPPR v2: The structured gradient subcommands are:'
+      for com in sorted(shortHelpMsgSL.keys()):
+         print '  proppr ' + com + shortHelpMsgSL[com]
+   else:
+      logging.warn("illegal command - use 'proppr sl-help' for help")
+
+shortHelpMsg['sl-help'] = ' help on the structure learning subcommands, which are of the form sl-xxx'
+
+shortHelpMsgSL['sl-lift'] = ' INPUT.cfacts OUTPUT.cfacts: convert arity-two facts to the 2nd-order format used for structural gradient'
+shortHelpMsgSL['sl-lower'] = ' INPUT.cfacts OUTPUT.cfacts: convert from the 2nd-order format used for structural gradient to ordinary facts'
+shortHelpMsgSL['sl-rel2ex'] = ' INPUT.cfacts [OUTPUT.examples]: convert from the 2nd-order format for facts to a set of training/test examples'
+shortHelpMsgSL['sl-grad2ppr'] = ' INPUT.gradient [OUTPUT.ppr]: convert features from gradient into rules'
+shortHelpMsgSL['sl-train1'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr]: given 2nd-order examples and background facts, learn a rules file.
+         Also creates an intermediate file INPUT1.gradient. This is the (non-iterated) structural gradient algorithm."""
+shortHelpMsgSL['sl-train'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr] --numIters n: given 2nd-order examples and background facts, learn a rules file.
+         Also creates a number of intermediate files for each iteration. This is the iterated structural gradient algorithm."""
+shortHelpMsgSL['sl-tune'] = ' INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.params]: do parameter-tuning on a ruleset learned by sl-train or sl-train1'
+shortHelpMsgSL['sl-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
+         One expected training/test sequence is: proppr sl-train1 train.examples train.cfacts; proppr sl-answer1 train1 train.examples train.cfacts; proppr eval test
+         where train.examples, train.cfacts are 2nd-order examples and facts"""
+
 def doHelp(o):
    print 'ProPPR v2: commands are:'
-   for com in shortHelpMsg:
-      print '  proppr '+ com + shortHelpMsg[com]
+   for com in sorted(shortHelpMsg.keys()):
+      print '  proppr ' + com + shortHelpMsg[com]
    print 'other tips:'
-   print '  (1) for all commands that invoke Java mains, options can be passed in by appending them,'
+   print '  (1) For all commands that invoke Java mains, options can be passed in by appending them,'
    print '      e.g. "proppr answer test.examples --prover tr"'
-   print '  (2) for all commands that invoke Java mains, appending "--help" will give help'
-   print '      on available additional options'
-   print '  (3) the environment variable PROPPR_JAVA_ARGS can be used to specify additional'
-   print '      arguments to java, i.e. "export PROPPR_JAVA_ARGS=-Xmx32g" increases the heap size'
+   print '  (2) For all commands that invoke Java mains, appending "--help" explains additional options'
+   print '  (3) The environment variable PROPPR_JAVA_ARGS provides arguments to java itself,'
+   print '      e.g. "export PROPPR_JAVA_ARGS=-Xmx32g" increases the heap size'
+   print '  (4) Any global options precede the command, and the valid ones are:'
+   print '      -Cfoo put all output files in directory \'foo\''
+   print '      -n dry-run mode: print actions but don\'t perform them'
 shortHelpMsg['help'] = ': this help message'
 
 ## helpers
@@ -183,7 +240,22 @@ def stemExt(fileName,expectedExtension):
    if fileName.endswith(expectedExtension):
       return (fileName[:-len(expectedExtension)],fileName)
    else:
+      if os.path.exists(fileName):
+         stem = fileName.rfind('.')
+         if stem<0: stem = len(fileName)
+         return (fileName[:stem],fileName)
       return (fileName,fileName+expectedExtension)
+
+def invokeMyself(o,*args):
+   print 'invokeMyself',o,args
+   procArgs = ['%s/scripts/proppr' % getRoot()]
+   if 'out' in o and o['out']:
+      procArgs.append('-C'+o['out'])
+   if 'dryRun' in o and o['dryRun']:
+      procArgs.append('-n')
+   procArgs.extend(args)
+   procArgs.extend(getArgvOptions())
+   callProcess(o,procArgs)
 
 def invokeMain(o,main,*mainProgArgs):
    """Invoke a main program, supplying options from the settings file
@@ -192,10 +264,31 @@ def invokeMain(o,main,*mainProgArgs):
    classPath = '.:%s/conf/:%s/bin:%s/lib/*' % (root,root,root)
    mainClass = 'edu.cmu.ml.proppr.%s' % main
    optArgs = []
-   for (key,val) in loadOptionDict().items():
+   for (key,val) in loadOptionDict(o).items():
       optArgs.append(key)
       optArgs.append(val)
    callProcess(o,['java','-cp',classPath] + getJavaArgs()  + [mainClass] + list(mainProgArgs) + optArgs)
+
+def invokeHelper(o,main,mainArgsConsumedBeforeHelperCalled,*mainProgArgs):
+   """Invoke a python program from scripts/proppr-helpers, supplying
+   options from the settings file and/or the command-line options.
+   """
+   root = getRoot()
+   helperFile = '%s/scripts/proppr-helpers/%s' % (root,main)
+   globalPropprOpts = []
+   if o['out']: globalPropprOpts.append('--C'+o['out'])
+   if o['dryRun']: globalPropprOpts.append('--n')
+   otherOpts = _unconsumedArgvOptions(mainArgsConsumedBeforeHelperCalled)
+   callProcess(o,['python',helperFile] + globalPropprOpts + list(mainProgArgs) + ['+'] + otherOpts)
+
+def _unconsumedArgvOptions(consumedArgs):
+   opts = getArgvOptions()
+   result = []
+   for i in range(0,len(opts),2):
+      if opts[i] not in consumedArgs:
+         result.append(opts[i])
+         result.append(opts[i+1])
+   return result
 
 def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""
@@ -220,6 +313,32 @@ def getJavaArgs():
    jargs = os.environ.get('PROPPR_JAVA_ARGS')
    return jargs.split() if jargs else []
 
+def getOutputDirectory():
+   """Get any output directory defined in the environment"""
+   out = os.environ.get('PROPPR_OUTPUT')
+   if out and not out.endswith("/"):
+      out += "/"
+   return out or ""
+
+def getFile(name,o,quiet=False):
+   """Return the file name, prepending the output directory defined by -C
+   if necessary, and if quiet!=True, warning if the file does not
+   exist.
+   """
+   test = name
+   if os.path.exists(test): return test
+   test = o['out']+name
+   if os.path.exists(test): return test
+   if quiet:return name
+   print "no file %s in current directory" % name,
+   if o['out']: print "or %s" % o['out']
+   else: print ""
+
+def makeOutput(filename,o):
+   """Create an output filename with the requested filename, in the -C directory if requested."""
+   if filename.startswith(o['out']): return filename
+   return o['out']+filename
+
 def getArg(i,defaultVal=None):
    """Get the i-th command line argument."""
    def safeDefault():
@@ -241,12 +360,26 @@ def getArgvOptions():
          return sys.argv[i:]
    return []
 
-def loadOptionDict():
+def getSomeArgvOptsAsDict(targetOpts):
+   opts = getArgvOptions()
+   result = {}
+   for i in range(0,len(opts),2):
+      if opts[i] in targetOpts:
+         result[opts[i]] = opts[i+1]
+   return result
+
+def setArgvOption(n,val):
+   for i in range(len(sys.argv)):
+      if sys.argv[i].startswith('--'):
+         sys.argv[i+n]=val
+         return
+
+def loadOptionDict(o):
    """Load options from proppr.settings, ie previously stored with 'proppr set',
    or from the command line."""
    opts = {}
    try:
-      for line in open("proppr.settings",'r'):
+      for line in open(getFile("proppr.settings",o,quiet=True),'r'):
          key,val = line.strip().split("\t")
          opts[key] = val
    except IOError:
@@ -259,8 +392,8 @@ def loadOptionDict():
       opts[commandLineOpts[i]] = '1'
    return opts
 
-def saveOptionDict(opts):
-   fp = open("proppr.settings",'w')
+def saveOptionDict(opts,o):
+   fp = open(o['out']+"proppr.settings",'w')
    for key,val in opts.items():
       fp.write(key + '\t' + val + '\n')
    fp.close()

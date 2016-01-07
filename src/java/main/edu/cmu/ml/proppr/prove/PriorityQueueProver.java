@@ -92,7 +92,7 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 		PriorityQueue<QueueEntry> q = new PriorityQueue<QueueEntry>();
 		int deg;
 		try {
-			deg = cg.getDegreeById(state0);
+			deg = cg.getDegreeById(state0, null);
 			q.add(new QueueEntry(state0, 1.0/deg));
 		} catch (LogicProgramException ex) {
 			throw new IllegalStateException(ex);
@@ -108,13 +108,13 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 			if (head.score > apr.epsilon) {
 				try {
 					int uid = head.id;
-					deg = cg.getDegreeById(uid);
-					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter.squashingFunction);
+					deg = cg.getDegreeById(uid, null);
+					double z = cg.getTotalWeightOfOutlinks(uid, params, this.weighter);
 					// record states with scores to update
 					children = new int[deg+1];
 					children[0] = uid;
 					for (int i=0; i<deg; i++) {
-						int vid = cg.getIthNeighborById(uid,i);
+						int vid = cg.getIthNeighborById(uid,i,this.weighter);
 						q.remove(new QueueEntry(vid,r.get(vid)));
 						children[i+1] = vid;
 					}
@@ -127,15 +127,15 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 						for (int i=0; i<deg; i++) {
 							// r[v] += (1-alpha) * move? * Muv * ru
 							//Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
-							double wuv = cg.getIthWeightById(uid,i,params, this.weighter.squashingFunction);
-							int vid = cg.getIthNeighborById(uid,i);
+							double wuv = cg.getIthWeightById(uid,i,params, this.weighter);
+							int vid = cg.getIthNeighborById(uid,i,this.weighter);
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 						}
 					}
 					// reinsert changed values on the queue
 					for (int i=0; i<children.length; i++) {
 						int vi = children[i];
-						int degvi = cg.getDegreeById(vi);
+						int degvi = cg.getDegreeById(vi, null);
 						double scorevi = r.get(vi)/degvi;
 						q.add(new QueueEntry(vi,scorevi));
 					}

@@ -24,6 +24,7 @@ public class DprSRWTest extends L2PosNegLossSRWTest {
 	@Override
 	public void initSrw() {
 		srw = new DprSRW();
+		this.srw.setRegularizer(new RegularizationSchedule(this.srw, new Regularize()));
 		factory = new DprExampleFactory();
 	}
 	

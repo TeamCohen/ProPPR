@@ -1,2 +1,0 @@
-interp(P,X,Y) :- interp0(P,X,Y).
-interp0(P,X,Y) :- rel(P,X,Y) {fixedWeight}.

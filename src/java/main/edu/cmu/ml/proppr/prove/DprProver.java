@@ -69,8 +69,9 @@ public class DprProver extends Prover<StateProofGraph> {
 	// wwc: might look at using a PriorityQueue together with r to find
 	// just the top things. 
 
-	// wwc:, could we use canonical hashes instead of states somehow, to
-	// make this smaller/faster for lookups?
+	// wwc: could we use canonical hashes instead of states somehow, to
+	// make this smaller/faster for lookups? or make hashcode for the
+	// state the canonical hash
 
 	public Map<State, Double> prove(StateProofGraph pg) {
 		if (this.current != null) throw new IllegalStateException("DprProver not threadsafe -- one instance per thread only, please!");
@@ -119,15 +120,23 @@ public class DprProver extends Prover<StateProofGraph> {
 					double z = 0.0;
 					for (Outlink o : outs) {
 						o.wt = this.weighter.w(o.fd);
-						if (Double.isInfinite(o.wt)) log.warn("Infinite weight at outlink "+o.child+";"
+						if (Double.isInfinite(o.wt) || Double.isNaN(o.wt)) 
+							log.warn("Illegal weight ("+Double.toString(o.wt)+") at outlink "+o.child+";"
 								+Dictionary.buildString(o.fd,new StringBuilder(),"\n\t").toString());
 						z += o.wt;
+					}
+					if (z==0) {
+						//then we're in trouble
+						log.warn("Illegal graph: weight on this node has nowhere to go");
+						for (Outlink o: outs) {
+							log.warn("Outlink: "+Dictionary.buildString(o.fd, new StringBuilder(), "; "));
+						}
 					}
 					
 					// push this state as far as you can
 					while( r.get(u) / deg > iterEpsilon ) {
 						double ru = r.get(u);
-						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, u));
+						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d z %.6f state %s", iterEpsilon, depth, ru, deg, z, u));
 						
 						// p[u] += alpha * ru
 						addToP(p,u,ru);
@@ -136,6 +145,8 @@ public class DprProver extends Prover<StateProofGraph> {
 						
 						// for each v near u:
 						for (Outlink o : outs) {
+							// skip 0-weighted links
+							if (o.wt == 0) continue;
 							// r[v] += (1-alpha) * move? * Muv * ru
 							Dictionary.increment(r, o.child, (1.0-apr.alpha) * moveProbability * (o.wt / z) * ru,"(elided)");
 						}
@@ -159,6 +170,7 @@ public class DprProver extends Prover<StateProofGraph> {
 						// current pushcounter is passed down, gets incremented and returned, and 
 						// on the next for loop iter is passed down again...
 						if (o.child.equals(pg.getStartState())) continue;
+						if (o.wt == 0) continue;
 						pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
 					}
 				} catch (LogicProgramException e) {

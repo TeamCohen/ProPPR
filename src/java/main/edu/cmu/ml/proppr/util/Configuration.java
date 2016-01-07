@@ -4,12 +4,14 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PermissiveParser;
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.prove.wam.WamProgram;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
@@ -64,6 +66,8 @@ public class Configuration {
 	public static final int USE_ORDER = 0x20;
 	public static final int USE_DUPCHECK = 0x40;
 	public static final int USE_THROTTLE = 0x80;
+	public static final int USE_EMPTYGRAPHS = 0x100;
+	public static final int USE_FIXEDWEIGHTS = 0x200;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
 	private static final String APR_CONST_OPTION = "apr";
@@ -74,7 +78,10 @@ public class Configuration {
 	private static final String ORDER_CONST_OPTION = "order";
 	private static final String DUPCHECK_CONST_OPTION = "duplicateCheck";
 	private static final String THROTTLE_CONST_OPTION = "throttle";
-	
+	private static final String EMPTYGRAPHS_CONST_OPTION = "includeEmptyGraphs";
+	private static final String FIXEDWEIGHTS_CONST_OPTION = "fixedWeights";
+	// wwc: protected so that ModuleConfiguration can give warnings...
+	protected static final String PRUNEDPREDICATE_CONST_OPTION = "prunedPredicates";
 
 	/* set class for module. Options for this section are handled in ModuleConfiguration.java. */
 	/** module. */
@@ -87,7 +94,7 @@ public class Configuration {
 	/** */
 	public static final String PROPFILE = "config.properties";
 	private static final boolean DEFAULT_COMBINE = true;
-	
+
 	private static final int USE_APR = USE_WAM | USE_PROVER | USE_SRW;
 
 	public File queryFile = null;
@@ -102,14 +109,17 @@ public class Configuration {
 	public WamPlugin[] plugins = null;
 	public String[] programFiles = null;
 	public int nthreads = -1;
-    public APROptions apr = new APROptions();
+	public APROptions apr = new APROptions();
 	public int epochs = 5;
 	public boolean traceLosses = false;
 	public boolean force = false;
 	public boolean ternaryIndex = false;
 	public boolean maintainOrder = true;
+	public boolean includeEmptyGraphs = false;
 	public int duplicates = (int) 1e6;
 	public int throttle = Multithreading.DEFAULT_THROTTLE;
+	public FixedWeightRules fixedWeightRules = null;
+	public FixedWeightRules prunedPredicateRules = null;
 
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
@@ -127,27 +137,42 @@ public class Configuration {
 	public Configuration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		boolean combine = DEFAULT_COMBINE;
 		int[] flags = {inputFiles, outputFiles, constants, modules};
-		
+
 		Options options = new Options();
-		options.addOption(OptionBuilder.withLongOpt("profile")
-				.withDescription("Holds all computation & loading until the return key is pressed.")
-				.create());
+		options.addOption(Option.builder().longOpt("profile")
+				.desc("Holds all computation & loading until the return key is pressed.")
+				.build());
 		addOptions(options, flags);
+//		System.err.println(Dictionary.buildString(args, new StringBuilder(), "\n").toString());
 
 		CommandLine line = null;
 		try {
-			PermissiveParser parser = new PermissiveParser(true);
+			DefaultParser parser = new DefaultParser();
 
-			// if the user specified a properties file, add those values at the end
+			// if the user specified a properties file, add those values at the beginning
 			// (so that command line args override them)
 			if(combine) args = combinedArgs(args);
 
-			// parse the command line arguments
-			line = parser.parse( options, args );
-			if (parser.hasUnrecognizedOptions()) {
-				System.err.println("WARNING: unrecognized options detected:");
-				for (String opt : parser.getUnrecognizedOptions()) { System.err.println("\t"+opt); }
+			// this is terrible: we just read a Properties from a file and serialized it to String[],
+			// and now we're going to put it back into a Properties object. But Commons CLI 
+			// doesn't know how to handle unrecognized options, so ... that's what we gotta do.
+			Properties props = new Properties();
+			for (int i=0; i<args.length; i++) {
+				if (args[i].startsWith("--")) {
+					if (!options.hasOption(args[i])) {
+						System.err.println("Unrecognized option: "+args[i]);
+						continue; // skip unrecognized options
+					}
+					if (i+1 < args.length && !args[i+1].startsWith("--")) {
+						props.setProperty(args[i], args[i+1]);
+						i++;
+					} else props.setProperty(args[i], "true");
+				}
 			}
+
+
+			// parse the command line arguments
+			line = parser.parse(options, new String[0], props);
 			if (line.hasOption("profile")) {
 				System.out.println("Holding for profiler setup; press any key to proceed.");
 				System.in.read();
@@ -168,11 +193,13 @@ public class Configuration {
 	}
 	protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
 		int flags;
-		
+
 		if (line.hasOption("help")) usageOptions(options, allFlags);
 
 		// input files: must exist already
 		flags = inputFiles(allFlags);
+
+
 		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))         this.queryFile = getExistingFile(line.getOptionValue(QUERIES_FILE_OPTION));
 		if (isOn(flags,USE_GROUNDED) && line.hasOption(GROUNDED_FILE_OPTION))       this.groundedFile = getExistingFile(line.getOptionValue(GROUNDED_FILE_OPTION));
 		if (isOn(flags,USE_ANSWERS) && line.hasOption(SOLUTIONS_FILE_OPTION))       this.solutionsFile = getExistingFile(line.getOptionValue(SOLUTIONS_FILE_OPTION));
@@ -181,7 +208,7 @@ public class Configuration {
 		if (isOn(flags,USE_PARAMS) && line.hasOption(PARAMS_FILE_OPTION))           this.paramsFile = getExistingFile(line.getOptionValue(PARAMS_FILE_OPTION));
 		if (isOn(flags,USE_INIT_PARAMS) && line.hasOption(INIT_PARAMS_FILE_OPTION)) this.initParamsFile = getExistingFile(line.getOptionValue(INIT_PARAMS_FILE_OPTION));
 		if (isOn(flags,USE_GRADIENT) && line.hasOption(GRADIENT_FILE_OPTION))       this.gradientFile = getExistingFile(line.getOptionValue(GRADIENT_FILE_OPTION));
-		
+
 		// output & intermediate files: may not exist yet
 		flags = outputFiles(allFlags);
 		if (isOn(flags,USE_QUERIES) && line.hasOption(QUERIES_FILE_OPTION))         this.queryFile = new File(line.getOptionValue(QUERIES_FILE_OPTION));
@@ -197,6 +224,9 @@ public class Configuration {
 		if (isOn(flags,USE_WAM)) {
 			if (line.hasOption(PROGRAMFILES_CONST_OPTION)) this.programFiles = line.getOptionValues(PROGRAMFILES_CONST_OPTION);
 			if (line.hasOption(TERNARYINDEX_CONST_OPTION)) this.ternaryIndex = Boolean.parseBoolean(line.getOptionValue(TERNARYINDEX_CONST_OPTION));
+			if (line.hasOption(PRUNEDPREDICATE_CONST_OPTION)) {
+				this.prunedPredicateRules = new FixedWeightRules(line.getOptionValues(PRUNEDPREDICATE_CONST_OPTION));
+			}
 		}
 		if (anyOn(flags,USE_APR))
 			if (line.hasOption(APR_CONST_OPTION))          this.apr = new APROptions(line.getOptionValues(APR_CONST_OPTION));
@@ -210,8 +240,10 @@ public class Configuration {
 			else this.maintainOrder = false;
 		}
 		if (anyOn(flags,USE_DUPCHECK|USE_WAM) && line.hasOption(DUPCHECK_CONST_OPTION)) this.duplicates = (int) Double.parseDouble(line.getOptionValue(DUPCHECK_CONST_OPTION));
-		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION)) this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
-		
+		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION))          this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
+		if (isOn(flags,USE_EMPTYGRAPHS) && line.hasOption(EMPTYGRAPHS_CONST_OPTION))    this.includeEmptyGraphs = true;
+		if (isOn(flags,USE_FIXEDWEIGHTS) && line.hasOption(FIXEDWEIGHTS_CONST_OPTION))  this.fixedWeightRules = new FixedWeightRules(line.getOptionValues(FIXEDWEIGHTS_CONST_OPTION));
+
 		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
 	}
 
@@ -281,7 +313,7 @@ public class Configuration {
 				.withLongOpt("help")
 				.withDescription("Print usage syntax.")
 				.create());
-		
+
 		// input files
 		flags = inputFiles(allFlags);
 		if(isOn(flags, USE_QUERIES))
@@ -420,35 +452,41 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Turn on A1A2 index for facts of arity >= 3.")
 					.create());
+			options.addOption(Option.builder(PRUNEDPREDICATE_CONST_OPTION)
+          .hasArgs()
+					.argName("exact[={y|n}]:prefix*")
+					.valueSeparator(':')
+					.desc("Specify predicates names that will be pruned by PruningIdDprProver, specified in same format as fixedWeights")
+					.build());
 		}		
 		if (isOn(flags, USE_THREADS)) 
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(THREADS_CONST_OPTION)
-				.withArgName("integer")
-				.hasArg()
-				.withDescription("Use x worker threads. (Pls ensure x < #cores)")
-				.create());
+					OptionBuilder
+					.withLongOpt(THREADS_CONST_OPTION)
+					.withArgName("integer")
+					.hasArg()
+					.withDescription("Use x worker threads. (Pls ensure x < #cores)")
+					.create());
 		if (isOn(flags, USE_EPOCHS))
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(EPOCHS_CONST_OPTION)
-				.withArgName("integer")
-				.hasArg()
-				.withDescription("Use x training epochs (default = 5)")
-				.create());
+					OptionBuilder
+					.withLongOpt(EPOCHS_CONST_OPTION)
+					.withArgName("integer")
+					.hasArg()
+					.withDescription("Use x training epochs (default = 5)")
+					.create());
 		if (isOn(flags, USE_TRACELOSSES))
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(TRACELOSSES_CONST_OPTION)
-				.withDescription("Print training loss at each epoch")
-				.create());
+					OptionBuilder
+					.withLongOpt(TRACELOSSES_CONST_OPTION)
+					.withDescription("Print training loss at each epoch")
+					.create());
 		if (isOn(flags, USE_FORCE))
 			options.addOption(
-				OptionBuilder
-				.withLongOpt("force")
-				.withDescription("Ignore errors and run anyway")
-				.create());
+					OptionBuilder
+					.withLongOpt("force")
+					.withDescription("Ignore errors and run anyway")
+					.create());
 		if (anyOn(flags, USE_APR))
 			options.addOption(
 					OptionBuilder
@@ -460,7 +498,7 @@ public class Configuration {
 							+ "Syntax: param=value:param=value...\n"
 							+ "Available parameters:\n"
 							+ "eps, alph, depth")
-					.create());
+							.create());
 		if (isOn(flags, USE_ORDER))
 			options.addOption(
 					OptionBuilder
@@ -470,7 +508,7 @@ public class Configuration {
 					.withDescription("Set ordering of outputs wrt inputs. Valid options:\n"
 							+"same, maintain (keep input ordering)\n"
 							+"anything else (reorder outputs to save time/memory)")
-					.create()
+							.create()
 					);
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM))
 			options.addOption(
@@ -480,31 +518,43 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Default: "+duplicates+"\nCheck for duplicates, expecting <size> values. Increasing <size> is cheap.\n"
 							+"To turn off duplicate checking, set to -1.")
-					.create());
+							.create());
 		if (isOn(flags, USE_THROTTLE)) 
 			options.addOption(
-				OptionBuilder
-				.withLongOpt(THROTTLE_CONST_OPTION)
-				.withArgName("integer")
-				.hasArg()
-				.withDescription("Default: -1\nPause buffering of new jobs if unfinished queue grows beyond x. -1 to disable.")
-				.create());
+					OptionBuilder
+					.withLongOpt(THROTTLE_CONST_OPTION)
+					.withArgName("integer")
+					.hasArg()
+					.withDescription("Default: -1\nPause buffering of new jobs if unfinished queue grows beyond x. -1 to disable.")
+					.create());
+		if (isOn(flags, USE_EMPTYGRAPHS))
+			options.addOption(
+					OptionBuilder
+					.withLongOpt(EMPTYGRAPHS_CONST_OPTION)
+					.withDescription("Include examples with no pos or neg labeled solutions")
+					.create());
+		if (isOn(flags, USE_FIXEDWEIGHTS))
+			options.addOption(Option.builder(FIXEDWEIGHTS_CONST_OPTION)
+					.hasArgs()
+					.argName("exact[={y|n}]:prefix*")
+					.valueSeparator(':')
+					.desc("Specify patterns of features to keep fixed at 1.0 or permit tuning. End in * for a prefix, otherwise uses exact match. Fixed by default; specify '=n' to permit tuning. First matching rule decides.")
+					.build());
 
-
-//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
-//			options.addOption(
-//					OptionBuilder
-//					.withLongOpt("complexFeatures")
-//					.withArgName("file")
-//					.hasArg()
-//					.withDescription("Properties file for complex features")
-//					.create());
-//		}
+		//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
+		//			options.addOption(
+		//					OptionBuilder
+		//					.withLongOpt("complexFeatures")
+		//					.withArgName("file")
+		//					.hasArg()
+		//					.withDescription("Properties file for complex features")
+		//					.create());
+		//		}
 	}
 
 	protected void constructUsageSyntax(StringBuilder syntax, int[] allFlags) {
 		int flags;
-		
+
 		//input files
 		flags = inputFiles(allFlags);
 		if (isOn(flags, USE_QUERIES)) syntax.append(" --").append(QUERIES_FILE_OPTION).append(" inputFile");
@@ -524,11 +574,12 @@ public class Configuration {
 		if (isOn(flags, USE_TEST)) syntax.append(" --").append(TEST_FILE_OPTION).append(" outputFile");
 		if (isOn(flags, USE_PARAMS)) syntax.append(" --").append(PARAMS_FILE_OPTION).append(" params.wts");
 		if (isOn(flags, USE_GRADIENT)) syntax.append(" --").append(GRADIENT_FILE_OPTION).append(" gradient.dwts");
-		
+
 		//constants
 		flags = constants(allFlags);
 		if (isOn(flags, USE_WAM)) syntax.append(" --").append(PROGRAMFILES_CONST_OPTION).append(" file.wam:file.cfacts:file.graph");
 		if (isOn(flags, USE_WAM)) syntax.append(" [--").append(TERNARYINDEX_CONST_OPTION).append(" true|false]");
+		if (isOn(flags, USE_WAM)) syntax.append(" [--").append(PRUNEDPREDICATE_CONST_OPTION).append(" predicate1:predicate2]");
 		if (isOn(flags, USE_THREADS)) syntax.append(" [--").append(THREADS_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_EPOCHS)) syntax.append(" [--").append(EPOCHS_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_TRACELOSSES)) syntax.append(" [--").append(TRACELOSSES_CONST_OPTION).append("]");
@@ -536,15 +587,17 @@ public class Configuration {
 		if (isOn(flags, USE_ORDER)) syntax.append(" [--").append(ORDER_CONST_OPTION).append(" same|reorder]");
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM)) syntax.append(" [--").append(DUPCHECK_CONST_OPTION).append(" -1|integer]");
 		if (isOn(flags, USE_THROTTLE)) syntax.append(" [--").append(THROTTLE_CONST_OPTION).append(" integer]");
+		if (isOn(flags, USE_EMPTYGRAPHS)) syntax.append(" [--").append(EMPTYGRAPHS_CONST_OPTION).append("]");
+		if (isOn(flags, USE_FIXEDWEIGHTS)) syntax.append(" [--").append(FIXEDWEIGHTS_CONST_OPTION).append(" featureA:featureB()]");
 	}
-	
+
 	/**
 	 * Calls System.exit()
 	 */
 	protected void usageOptions(Options options, int inputFile, int outputFile, int constants, int modules, String msg) {
 		usageOptions(options,new int[] {inputFile, outputFile, constants, modules},msg);
 	}
-	
+
 
 	/**
 	 * Calls System.exit()
@@ -558,7 +611,7 @@ public class Configuration {
 	 */
 	protected void usageOptions(Options options, int[] flags, String msg) {
 		HelpFormatter formatter = new HelpFormatter();
-		int width = 80;
+		int width = 74;
 
 		String swidth = System.getenv("COLUMNS");
 		if (swidth != null) {
@@ -611,14 +664,14 @@ public class Configuration {
 	}
 
 	protected String[] combinedArgs(String[] origArgs) {
-		// if the user specified a properties file, add those values at the end
+		// if the user specified a properties file, add those values at the beginning
 		// (so that command line args override them)
 		if (System.getProperty(PROPFILE) != null) {
 			String[] propArgs = fakeCommandLine(System.getProperty(PROPFILE));
 			String[] args = new String[origArgs.length + propArgs.length];
 			int i = 0;
-			for (int j = 0; j < origArgs.length; j++) args[i++] = origArgs[j];
 			for (int j = 0; j < propArgs.length; j++) args[i++] = propArgs[j];
+			for (int j = 0; j < origArgs.length; j++) args[i++] = origArgs[j];
 			return args;
 		}
 		return origArgs;
@@ -639,7 +692,7 @@ public class Configuration {
 		StringBuilder sb = new StringBuilder();
 		for (String name : props.stringPropertyNames()) {
 			sb.append(" --").append(name);
-			if (props.getProperty(name) != null) {
+			if (props.getProperty(name) != null && !props.getProperty(name).equals("")) {
 				sb.append(" ").append(props.getProperty(name));
 			}
 		}
