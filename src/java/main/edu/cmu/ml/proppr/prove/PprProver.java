@@ -13,6 +13,7 @@ import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 /**
  * prover using power iteration
  * @author "William Cohen <wcohen@cs.cmu.edu>"
@@ -59,14 +60,14 @@ public class PprProver extends Prover<StateProofGraph> {
 		this.trace = b;
 	}
 	@Override
-	public Map<State, Double> prove(StateProofGraph pg) {
+	public Map<State, Double> prove(StateProofGraph pg, StatusLogger status) {
 		Map<State,Double> startVec = new HashMap<State,Double>();
 		startVec.put(pg.getStartState(),SEED_WEIGHT);
 		Map<State,Double> vec = startVec;
 		
 		for (int i=0; i<this.apr.maxDepth; i++) {
 			vec = walkOnce(pg,vec);
-			if (log.isInfoEnabled()) log.info("iteration/descent "+(i-1)+" complete");
+			if (log.isInfoEnabled() && status.due(1)) log.info("iteration/descent "+(i-1)+" complete");
 			if(log.isDebugEnabled()) log.debug("after iteration "+(i+1)+" :"+
 					Dictionary.buildString(vec,new StringBuilder(),"\n\t").toString());
 //			System.out.println("ppr iter "+(i+1)+" size "+vec.size());

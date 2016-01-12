@@ -22,6 +22,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.SparseGraphPluginTest;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class PathDprProverTest {
@@ -36,7 +37,7 @@ public class PathDprProverTest {
 		
 		Query query = Query.parse("kids(bette,Y)");
 		StateProofGraph pg = new StateProofGraph(query,apr,program,plugins);
-		p.prove(pg);
+		p.prove(pg, new StatusLogger());
 	}
 	
 	@Test

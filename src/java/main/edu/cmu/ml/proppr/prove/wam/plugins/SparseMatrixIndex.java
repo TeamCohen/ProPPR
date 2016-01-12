@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
@@ -52,7 +53,7 @@ public class SparseMatrixIndex {
 	public void load(File dir, String functor_arg1type_arg2type) throws IOException {
 		log.info("Loading matrix "+functor_arg1type_arg2type+" from "+dir.getName()+"...");
 		this.name = dir+":"+functor_arg1type_arg2type;
-		long start0 = System.currentTimeMillis();
+		StatusLogger status = new StatusLogger(LOGUPDATE_MS);
 		/* Read the number of rows, columns, and entries - entry is a triple (i,j,m[i,j]) */
 		ParsedFile file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".rce"));
 		{
@@ -82,21 +83,19 @@ public class SparseMatrixIndex {
 		this.colIndices = new int[entries];
 		this.values = new float[entries];
 
-		long start = System.currentTimeMillis(), last=start;
+		long start = status.tick();
 		file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".rowOffset"));
 		for(String line : file) {
 			rowsOffsets.add(Integer.parseInt(line));
 			if (log.isInfoEnabled()) {
-				long now = System.currentTimeMillis();
-				if ( (now-last) > LOGUPDATE_MS) {
-					log.info("rowOffset: "+file.getLineNumber()+" lines ("+(file.getLineNumber()/(now-start))+" klps)");
-					last = now;
+				if (status.due()) {
+					log.info("rowOffset: "+file.getLineNumber()+" lines ("+(file.getLineNumber()/status.since(start))+" klps)");
 				}
 			}
 		}
 		file.close();
 		
-		start = System.currentTimeMillis(); last=start;
+		start = status.tick();
 		file = new ParsedFile(new File(dir,functor_arg1type_arg2type+".colIndex"));
 		for(String line : file) {
 			int ln = file.getLineNumber();
@@ -107,10 +106,8 @@ public class SparseMatrixIndex {
 				throw new IllegalArgumentException("Malformed sparsegraph! For index "+this.name+", colIndices["+ln+"]="+colIndices[ln]+"; arg2.length is only "+arg2.length);
 			}
 			if (log.isInfoEnabled()) {
-				long now = System.currentTimeMillis();
-				if ( (now-last) > LOGUPDATE_MS) {
-					log.info("colIndex: "+file.getLineNumber()+" lines ("+(file.getLineNumber()/(now-start))+" klps)");
-					last = now;
+				if (status.due()) {
+					log.info("colIndex: "+file.getLineNumber()+" lines ("+(file.getLineNumber()/status.since(start))+" klps)");
 				}
 			}
 		}
@@ -121,7 +118,7 @@ public class SparseMatrixIndex {
 		}
 		rowOffsets[rowsOffsets.size()] = entries;
 		
-		long del = System.currentTimeMillis() - start0;
+		long del = status.sinceStart();
 		if (del > LOGUPDATE_MS)
 			log.info("Finished loading sparse graph matrix "+functor_arg1type_arg2type+" ("+(del/1000.)+" sec)");
 	}

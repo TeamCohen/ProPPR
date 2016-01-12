@@ -18,7 +18,7 @@ default: k_spouse.src k_spouse.eval
 .SECONDARY:
 
 clean:
-	rm *.wam *.grounded* *.gradient k_*.ppr *.solutions.txt *.eval
+	rm -f *.wam *.grounded* *.gradient k_*.ppr *.solutions.txt *.eval
 
 k_spouse.src:
 	grep -v -e "husband" -e "wife" kinship-train.cfacts > k_spouse-train.cfacts

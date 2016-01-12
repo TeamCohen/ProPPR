@@ -32,6 +32,7 @@ import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
@@ -51,7 +52,7 @@ public class Trainer {
 	protected int epoch;
 	protected LossData lossLastEpoch;
 	protected TrainingStatistics statistics=new TrainingStatistics();
-	
+	protected StatusLogger status = new StatusLogger();
 	protected int stoppingEpoch = 3;
 	protected double stoppingPercent = 1.0;
 
@@ -139,7 +140,7 @@ public class Trainer {
 	}
 
 	public void doExample(PosNegRWExample x, ParamVector<String,?> paramVec, boolean traceLosses) {
-		this.learners.get(Thread.currentThread().getName()).trainOnExample(paramVec, x);
+		this.learners.get(Thread.currentThread().getName()).trainOnExample(paramVec, x, status);
 	}
 
 	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
@@ -170,6 +171,7 @@ public class Trainer {
 		TrainingStatistics total = new TrainingStatistics();
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs, this.stoppingPercent, this.stoppingEpoch);
 		boolean graphSizesStatusLog=true;
+		StatusLogger stattime = new StatusLogger();
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
 			// set up current epoch
@@ -178,7 +180,7 @@ public class Trainer {
 				learner.setEpoch(epoch);
 				learner.clearLoss();
 			}
-			log.info("epoch "+epoch+" ...");
+			log.info("epoch "+epoch+" ..."); status.tick();
 
 			// reset counters & file pointers
 			this.statistics = new TrainingStatistics();
@@ -190,11 +192,11 @@ public class Trainer {
 
 			// run examples
 			int id=1;
-			long start = System.currentTimeMillis();
+			stattime.start();
 			int countdown=-1; Trainer notify = null;
 			for (String s : examples) {
 				if (log.isDebugEnabled()) log.debug("Queue size "+(workingPool.getTaskCount()-workingPool.getCompletedTaskCount()));
-				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
+				statistics.updateReadingStatistics(stattime.sinceLast());
 				/*
 				 * Throttling behavior:
 				 * Once the number of unfinished tasks exceeds 1.5x the number of threads,
@@ -247,7 +249,9 @@ public class Trainer {
 				Future<ExampleStats> trained = workingPool.submit(new Train(parsed, paramVec, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
-				start = System.currentTimeMillis();
+				stattime.tick();
+				if (log.isInfoEnabled() && status.due(1))
+					log.info("parsed: "+id+" trained: "+statistics.exampleSetSize);
 			}
 
 			cleanEpoch(workingPool, cleanPool, paramVec, traceLosses, stopper, id, total);
@@ -310,7 +314,7 @@ public class Trainer {
 		if (zeros.numZero > 0) {
 			log.info(zeros.numZero + " / "+n+" examples with 0 gradient");
 			if (zeros.numZero / (float) n > MAX_PCT_ZERO_GRADIENT) 
-				log.warn("Having this many 0 gradients is unusual. Try a different squashing function?");
+				log.warn("Having this many 0 gradients is unusual for supervised tasks. Try a different squashing function?");
 		}
 		stopper.recordEpoch();
 		statistics.checkStatistics();
@@ -366,10 +370,9 @@ public class Trainer {
 		// run examples
 		int id=1;
 		int countdown=-1; Trainer notify = null;
-		long start = System.currentTimeMillis(),now;
+		status.start();
 		for (String s : examples) {
-			now = System.currentTimeMillis();
-			if ( (now-start) > 5000) { log.info(id+" examples read..."); start = now; }
+			if (log.isInfoEnabled() && status.due()) log.info(id+" examples read...");
 			long queueSize = (((ThreadPoolExecutor) workPool).getTaskCount()-((ThreadPoolExecutor) workPool).getCompletedTaskCount());
 			if (log.isDebugEnabled()) log.debug("Queue size "+queueSize);
 			if (countdown>0) {
@@ -476,7 +479,7 @@ public class Trainer {
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
 			long start = System.currentTimeMillis();
-			learner.trainOnExample(paramVec, ex);
+			learner.trainOnExample(paramVec, ex, status);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
 			if (paramVec.get("id(restart)")!= 1.0) {
 				log.warn("Non-unit restart weight");
@@ -498,7 +501,7 @@ public class Trainer {
 			SRW learner = learners.get(Thread.currentThread().getName());
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
-			learner.accumulateGradient(paramVec, ex, sumGradient);
+			learner.accumulateGradient(paramVec, ex, sumGradient, status);
 			if (log.isDebugEnabled()) log.debug("Gradient done "+this.id);
 			return new ExampleStats(1,-1); 
 			// ^^^^ this is the equivalent of k++ from before;

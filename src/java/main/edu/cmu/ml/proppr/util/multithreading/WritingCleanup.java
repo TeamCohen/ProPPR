@@ -7,13 +7,18 @@ import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.util.StatusLogger;
+
 
 public class WritingCleanup extends Cleanup<String> {
 	protected Logger log;
 	protected Writer writer;
-	public WritingCleanup(Writer w, Logger l) { 
+	protected StatusLogger status;
+	protected int count=0;
+	public WritingCleanup(Writer w, Logger l, StatusLogger s) { 
 		this.writer = w;
 		this.log = l;
+		this.status = s;
 	}
 	@Override
 	public Runnable cleanup(Future<String> in, int id) {
@@ -35,6 +40,8 @@ public class WritingCleanup extends Cleanup<String> {
 			try {
 				String s = this.input.get();
 				if (s != null) this.writer.write(s);
+				count++;
+				if (status.due()) getLog().info("Finished "+count+" ...");
 			} catch (IOException e) {
 				throw new IllegalStateException("IO trouble while writing: ",e);
 			} catch (InterruptedException e) {

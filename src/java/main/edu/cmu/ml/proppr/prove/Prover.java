@@ -23,6 +23,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
 /**
@@ -49,9 +50,12 @@ public abstract class Prover<P extends ProofGraph> {
 	
 	public abstract Class<P> getProofGraphClass();
 	
+//	public Map<State, Double> prove(P pg) throws LogicProgramException {
+//		return prove(pg, null);
+//	}
 	/** Return unfiltered distribution of state associated with proving the start state. 
 	 * @throws LogicProgramException */
-	public abstract Map<State,Double> prove(P pg) throws LogicProgramException;
+	public abstract Map<State,Double> prove(P pg, StatusLogger status) throws LogicProgramException;
 	
 	/** Return a threadsafe copy of the prover.
 	 */
@@ -60,8 +64,8 @@ public abstract class Prover<P extends ProofGraph> {
 	public void setWeighter(FeatureDictWeighter w) {
 		this.weighter = w;
 	}
-	public Map<Query,Double> solvedQueries(P pg) throws LogicProgramException {
-		Map<State,Double> ans = prove(pg);
+	public Map<Query,Double> solvedQueries(P pg, StatusLogger status) throws LogicProgramException {
+		Map<State,Double> ans = prove(pg, status);
 		Map<Query,Double> solved = new HashMap<Query,Double>();
 		double normalizer = 0;
 		for (Map.Entry<State,Double> e : ans.entrySet()) {
@@ -73,8 +77,8 @@ public abstract class Prover<P extends ProofGraph> {
 		for (Map.Entry<Query,Double> e : solved.entrySet()) { e.setValue(e.getValue()/normalizer); }
 		return solved;
 	}
-	public Map<String,Double> solutions(P pg) throws LogicProgramException {
-		Map<State,Double> proveOutput = this.prove(pg);
+	public Map<String,Double> solutions(P pg, StatusLogger status) throws LogicProgramException {
+		Map<State,Double> proveOutput = this.prove(pg,status);
 		Map<String,Double> filtered = new HashMap<String,Double>();
 		double normalizer = 0;
 		for (Map.Entry<State, Double> e : proveOutput.entrySet()) {

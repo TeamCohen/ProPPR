@@ -19,6 +19,7 @@ import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.multithreading.NamedThreadFactory;
@@ -39,21 +40,27 @@ public class CachingTrainer extends Trainer {
 		RWExampleParser parser = new RWExampleParser();
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		int id=0;
-		long start = System.currentTimeMillis();
+		StatusLogger stattime = new StatusLogger();
 		TrainingStatistics total = new TrainingStatistics();
+		boolean logged = false;
 		for (String s : exampleFile) {
-			total.updateReadingStatistics(System.currentTimeMillis()-start);
+			total.updateReadingStatistics(stattime.sinceLast());
 			id++;
 			try {
-				long before = System.currentTimeMillis();
+				stattime.tick();
 				PosNegRWExample ex = parser.parse(s, builder, masterLearner);
-				total.updateParsingStatistics(System.currentTimeMillis()-before);
+				total.updateParsingStatistics(stattime.sinceLast());
 				examples.add(ex);
+				if (status.due()) {
+					log.info("Parsed "+id +" ...");
+					logged = true;
+				}
 			} catch (GraphFormatException e) {
 				log.error("Trouble with #"+id,e);
 			}
-			start = System.currentTimeMillis();
+			stattime.tick();
 		}
+		if (logged) log.info("Total parsed: "+id);
 		return trainCached(examples,builder,initialParamVec,numEpochs,traceLosses,total);
 	}
 	
@@ -72,7 +79,7 @@ public class CachingTrainer extends Trainer {
 				learner.setEpoch(epoch);
 				learner.clearLoss();
 			}
-			log.info("epoch "+epoch+" ...");
+			log.info("epoch "+epoch+" ..."); status.tick();
 
 			// reset counters & file pointers
 			this.statistics = new TrainingStatistics();
@@ -88,6 +95,8 @@ public class CachingTrainer extends Trainer {
 				Future<ExampleStats> trained = trainPool.submit(new Train(new PretendParse(s), paramVec, id, null));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
+				if (log.isInfoEnabled() && status.due(1))
+					log.info("queued: "+id+" trained: "+statistics.exampleSetSize);
 			}
 
 			cleanEpoch(trainPool, cleanPool, paramVec, traceLosses, stopper, id, total);

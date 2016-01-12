@@ -11,6 +11,7 @@ import edu.cmu.ml.proppr.prove.wam.LogicProgramException;
 import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.LongDense;
 import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
@@ -79,7 +80,7 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 	}
 	
 
-	public Map<State, Double> prove(CachingIdProofGraph cg) {
+	public Map<State, Double> prove(CachingIdProofGraph cg, StatusLogger status) {
 		//Map<State,Double> p = new HashMap<State,Double>();
 		//Map<State,Double> r = new HashMap<State,Double>();
 		LongDense.FloatVector p = new LongDense.FloatVector();
@@ -144,7 +145,7 @@ public class PriorityQueueProver extends Prover<CachingIdProofGraph> {
 				}
 			} // if push
 		}
-		if(log.isInfoEnabled()) log.info(Thread.currentThread()+" r-states: "+r.size()+" p-states: "+p.size()+" q-size: "+q.size());
+		if(log.isInfoEnabled() && status.due(1)) log.info(Thread.currentThread()+" r-states: "+r.size()+" p-states: "+p.size()+" q-size: "+q.size());
 		return cg.asMap(p);
 	}
 	

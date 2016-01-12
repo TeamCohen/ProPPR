@@ -27,6 +27,7 @@ import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
@@ -90,24 +91,27 @@ public class SRW {
 	 * @param params
 	 * @param example
 	 */
-	public void trainOnExample(ParamVector<String,?> params, PosNegRWExample example) {
-		log.info("Training on "+example);
+	public void trainOnExample(ParamVector<String,?> params, PosNegRWExample example, StatusLogger status) {
+		if (log.isDebugEnabled()) 
+			log.debug("Training on "+example);
+		else if (log.isInfoEnabled() && status.due(2))
+			log.info(Thread.currentThread()+" Training on "+example);
 
 		initializeFeatures(params, example.getGraph());
 		regularizer.prepareForExample(params, example.getGraph(), params);
 		load(params, example);
-		inference(params, example);
+		inference(params, example, status);
 		sgd(params, example);
 	}
 
-	public void accumulateGradient(ParamVector<String,?> params, PosNegRWExample example, ParamVector<String,?> accumulator) {
-		log.info("Gradient calculating on "+example);
+	public void accumulateGradient(ParamVector<String,?> params, PosNegRWExample example, ParamVector<String,?> accumulator, StatusLogger status) {
+		log.debug("Gradient calculating on "+example);
 
 		initializeFeatures(params, example.getGraph());
 		ParamVector<String,Double> prepare = new SimpleParamVector<String>();
 		regularizer.prepareForExample(params, example.getGraph(), prepare);
 		load(params, example);
-		inference(params, example);
+		inference(params, example, status);
 		TIntDoubleMap gradient = gradient(params,example);
 
 		for (Map.Entry<String, Double> e : prepare.entrySet()) {
@@ -216,7 +220,7 @@ public class SRW {
 
 	/** fills p, dp 
 	 * @param params */
-	protected void inference(ParamVector<String,?> params, PosNegRWExample example) {
+	protected void inference(ParamVector<String,?> params, PosNegRWExample example, StatusLogger status) {
 		PosNegRWExample ex = (PosNegRWExample) example;
 		ex.p = new double[ex.getGraph().node_hi];
 		ex.dp = new TIntDoubleMap[ex.getGraph().node_hi];
@@ -228,6 +232,7 @@ public class SRW {
 		}
 		for (int i=0; i<c.apr.maxDepth; i++) {
 			inferenceUpdate(ex);
+			if (log.isInfoEnabled() && status.due(3)) log.info("Inference: iter "+(i+1)+" of "+(c.apr.maxDepth));
 		}
 
 	}

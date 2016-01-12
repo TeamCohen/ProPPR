@@ -40,6 +40,7 @@ import edu.cmu.ml.proppr.util.CustomConfiguration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
@@ -69,6 +70,7 @@ public class Grounder<P extends ProofGraph> {
 	private int empty;
 	protected boolean includeUnlabeledGraphs = false;
 	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>(ConcurrentSymbolTable.HASHING_STRATEGIES.identity);
+	protected StatusLogger status=new StatusLogger();
 
 
 	public Grounder(APROptions apr, Prover<P> p, WamProgram program, WamPlugin ... plugins) {
@@ -133,12 +135,13 @@ public class Grounder<P extends ProofGraph> {
 	}
 
 	public void groundExamples(File dataFile, File groundedFile, boolean maintainOrder) {
+		status.start();
 		try {
 			if (this.graphKeyFile != null) this.graphKeyWriter = new BufferedWriter(new FileWriter(this.graphKeyFile));
 			this.statistics = new GroundingStatistics();
 			this.empty = 0;
 
-			Multithreading<InferenceExample,String> m = new Multithreading<InferenceExample,String>(log, maintainOrder);
+			Multithreading<InferenceExample,String> m = new Multithreading<InferenceExample,String>(log, this.status, maintainOrder);
 
 			m.executeJob(
 					this.nthreads, 
@@ -221,7 +224,7 @@ public class Grounder<P extends ProofGraph> {
 	public GroundedExample groundExample(Prover<P> p, P pg) throws LogicProgramException {
 		if (log.isTraceEnabled())
 			log.trace("thawed example: "+pg.getExample().toString());
-		Map<State,Double> ans = p.prove(pg);
+		Map<State,Double> ans = p.prove(pg,status);
 		GroundedExample ground = pg.makeRWExample(ans);
 		if (this.graphKeyFile!= null) { saveGraphKey(ground, pg); }
 		return ground;
@@ -235,7 +238,6 @@ public class Grounder<P extends ProofGraph> {
 
 	protected void reportStatistics(int empty) {
 		if(!log.isInfoEnabled()) return;
-		log.info("Processed "+statistics.count+" examples");
 		int skipped = statistics.noPosNeg+statistics.emptyGraph;
 		log.info("Grounded: "+(statistics.count-skipped));
 		log.info("Skipped: "+skipped+" = "+statistics.noPosNeg+" with no labeled solutions; "+statistics.emptyGraph+" with empty graphs");

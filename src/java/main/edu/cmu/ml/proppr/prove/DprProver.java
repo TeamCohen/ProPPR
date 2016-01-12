@@ -17,6 +17,7 @@ import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 
 /**
  * prover using depth-first approximate personalized pagerank
@@ -30,8 +31,6 @@ public class DprProver extends Prover<StateProofGraph> {
 	private static final boolean TRUELOOP_ON = true;
 	protected final double stayProbability;
 	protected final double moveProbability;
-	// for timing traces
-	protected long last;
 	// for debug
 	protected Backtrace<State> backtrace = new Backtrace<State>(log);
 	protected ProofGraph current;
@@ -73,7 +72,7 @@ public class DprProver extends Prover<StateProofGraph> {
 	// make this smaller/faster for lookups? or make hashcode for the
 	// state the canonical hash
 
-	public Map<State, Double> prove(StateProofGraph pg) {
+	public Map<State, Double> prove(StateProofGraph pg, StatusLogger status) {
 		if (this.current != null) throw new IllegalStateException("DprProver not threadsafe -- one instance per thread only, please!");
 		this.current = pg;
 
@@ -87,15 +86,15 @@ public class DprProver extends Prover<StateProofGraph> {
 		double iterEpsilon = 1.0;
 		for(int pushCounter = 0; ;) {
 			iterEpsilon = Math.max(iterEpsilon/10,apr.epsilon);
-			last = System.currentTimeMillis();
 			if(log.isDebugEnabled()) log.debug("Starting iteration with eps = "+iterEpsilon);
-			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon);
+			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon,status);
 			numIterations++;
-			if(log.isInfoEnabled()) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
+			if(log.isInfoEnabled() && status.due(1)) 
+				log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
 			if(iterEpsilon == apr.epsilon && pushCounter==0) break;
 			numPushes+=pushCounter;
 		}
-		if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
+		//if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
 		
 		//clear state
 		this.current = null;
@@ -104,11 +103,13 @@ public class DprProver extends Prover<StateProofGraph> {
 	
 	
 	protected int proveState(StateProofGraph pg, Map<State,Double> p, Map<State, Double> r,
-			State u, int pushCounter, double iterEpsilon) {
-		return proveState(pg, p, r, u, pushCounter, 1, iterEpsilon);
+			State u, int pushCounter, double iterEpsilon,
+			StatusLogger status) {
+		return proveState(pg, p, r, u, pushCounter, 1, iterEpsilon, status);
 	}
 	protected int proveState(StateProofGraph pg, Map<State,Double> p, Map<State, Double> r,
-			State u, int pushCounter, int depth, double iterEpsilon) {
+			State u, int pushCounter, int depth, double iterEpsilon,
+			StatusLogger status) {
 		try {
 			int deg = pg.pgDegree(u);
 			if (r.get(u) / deg > iterEpsilon) {
@@ -136,7 +137,10 @@ public class DprProver extends Prover<StateProofGraph> {
 					// push this state as far as you can
 					while( r.get(u) / deg > iterEpsilon ) {
 						double ru = r.get(u);
-						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d z %.6f state %s", iterEpsilon, depth, ru, deg, z, u));
+						if (log.isDebugEnabled()) 
+							log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d z %.6f state %s", iterEpsilon, depth, ru, deg, z, u));
+						else if (log.isInfoEnabled() && status.due(2)) 
+							log.info(String.format("Pushing eps %f @depth %d ru %.6f deg %d z %.6f state %s", iterEpsilon, depth, ru, deg, z, u));
 						
 						// p[u] += alpha * ru
 						addToP(p,u,ru);
@@ -171,7 +175,7 @@ public class DprProver extends Prover<StateProofGraph> {
 						// on the next for loop iter is passed down again...
 						if (o.child.equals(pg.getStartState())) continue;
 						if (o.wt == 0) continue;
-						pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
+						pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon,status);
 					}
 				} catch (LogicProgramException e) {
 					backtrace.rethrow(e);
