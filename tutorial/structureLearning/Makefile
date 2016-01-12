@@ -4,7 +4,7 @@ default: k_spouse.src k_spouse.eval
 	proppr compile sl.ppr
 	proppr set --programFiles sl.wam:$*.cfacts
 	proppr ground $*.examples
-	proppr gradient $*.grounded --epochs 0
+	proppr gradient $*.grounded
 
 %.ppr:%-train.gradient
 	python structureLearning.py $^ > $@

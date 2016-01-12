@@ -140,7 +140,6 @@ public class Configuration {
 				.desc("Holds all computation & loading until the return key is pressed.")
 				.build());
 		addOptions(options, flags);
-//		System.err.println(Dictionary.buildString(args, new StringBuilder(), "\n").toString());
 
 		CommandLine line = null;
 		try {
@@ -296,6 +295,10 @@ public class Configuration {
 			log.warn("Consolidated graph files not yet supported! If the same functor exists in two files, facts in the later file will be hidden from the prover!");
 		}
 	}
+	
+	protected Option checkOption(Option o) {
+		return o;
+	}
 
 	/**
 	 * For all option flags as specified in this file, addOptions creates
@@ -313,172 +316,173 @@ public class Configuration {
 		// input files
 		flags = inputFiles(allFlags);
 		if(isOn(flags, USE_QUERIES))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(QUERIES_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Queries. Format (discards after tab): "+EXAMPLES_FORMAT)
-					.create());		
+					.create()));		
 		if (isOn(flags, USE_GROUNDED))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(GROUNDED_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Grounded examples. Format: query\\tkeys,,\\tposList,,\\tnegList,,\\tgraph")
-					.create());
+					.create()));
 		if (isOn(flags, USE_TRAIN))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(TRAIN_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Training examples. Format: "+EXAMPLES_FORMAT)
-					.create());
+					.create()));
 		if (isOn(flags, USE_TEST))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(TEST_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Testing examples. Format: "+EXAMPLES_FORMAT)
-					.create());
+					.create()));
 		if (isOn(flags, USE_PARAMS))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(PARAMS_FILE_OPTION)
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Learned walker parameters. Format: feature\\t0.000000")
-					.create());
+					.create()));
 		if (isOn(flags, USE_INIT_PARAMS))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(INIT_PARAMS_FILE_OPTION)
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Learned walker parameters. Same format as --params, but used to warm-start a learner.")
-					.create());
+					.create()));
 
 		// output files
 		flags = outputFiles(allFlags);
 		if(isOn(flags, USE_ANSWERS))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(SOLUTIONS_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output answers")
-					.create());	
+					.create()));	
 		if(isOn(flags, USE_QUERIES))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(QUERIES_FILE_OPTION)
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output queries")
-					.create());		
+					.create()));		
 		if (isOn(flags, USE_GROUNDED))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(GROUNDED_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output grounded examples.")
-					.create());
+					.create()));
 		if(isOn(flags, USE_GRADIENT))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(GRADIENT_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output gradient.")
-					.create());	
+					.create()));	
 		if (isOn(flags, USE_TRAIN))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(TRAIN_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output training examples.")
-					.create());
+					.create()));
 		if (isOn(flags, USE_TEST))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(TEST_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output testing examples.")
-					.create());
+					.create()));
 		if (isOn(flags, USE_PARAMS))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(PARAMS_FILE_OPTION)
 					.isRequired()
 					.withArgName("file")
 					.hasArg()
 					.withDescription("Output learned walker parameters.")
-					.create());
+					.create()));
 
 		// constants
 		flags = constants(allFlags);
 		if (isOn(flags, USE_WAM)) {
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(PROGRAMFILES_CONST_OPTION)
 					.withArgName("file:...:file")
 					.hasArgs()
 					.withValueSeparator(':')
 					.withDescription("Description of the logic program. Permitted extensions: .wam, .cfacts, .graph, .sparse")
-					.create());
-			options.addOption(
+					.create()));
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(TERNARYINDEX_CONST_OPTION)
 					.withArgName("true|false")
 					.hasArg()
 					.withDescription("Turn on A1A2 index for facts of arity >= 3.")
-					.create());
-			options.addOption(Option.builder(PRUNEDPREDICATE_CONST_OPTION)
+					.create()));
+			options.addOption(checkOption(
+					Option.builder(PRUNEDPREDICATE_CONST_OPTION)
           .hasArgs()
 					.argName("exact[={y|n}]:prefix*")
 					.valueSeparator(':')
 					.desc("Specify predicates names that will be pruned by PruningIdDprProver, specified in same format as fixedWeights")
-					.build());
+					.build()));
 		}		
 		if (isOn(flags, USE_THREADS)) 
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(THREADS_CONST_OPTION)
 					.withArgName("integer")
 					.hasArg()
 					.withDescription("Use x worker threads. (Pls ensure x < #cores)")
-					.create());
+					.create()));
 		if (isOn(flags, USE_EPOCHS))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(EPOCHS_CONST_OPTION)
 					.withArgName("integer")
 					.hasArg()
 					.withDescription("Use x training epochs (default = 5)")
-					.create());
+					.create()));
 		if (isOn(flags, USE_FORCE))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt("force")
 					.withDescription("Ignore errors and run anyway")
-					.create());
+					.create()));
 		if (anyOn(flags, USE_APR))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(APR_CONST_OPTION)
 					.withArgName("options")
@@ -488,9 +492,9 @@ public class Configuration {
 							+ "Syntax: param=value:param=value...\n"
 							+ "Available parameters:\n"
 							+ "eps, alph, depth")
-							.create());
+							.create()));
 		if (isOn(flags, USE_ORDER))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(ORDER_CONST_OPTION)
 					.withArgName("o")
@@ -499,37 +503,38 @@ public class Configuration {
 							+"same, maintain (keep input ordering)\n"
 							+"anything else (reorder outputs to save time/memory)")
 							.create()
-					);
+					));
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(DUPCHECK_CONST_OPTION)
 					.withArgName("size")
 					.hasArg()
 					.withDescription("Default: "+duplicates+"\nCheck for duplicates, expecting <size> values. Increasing <size> is cheap.\n"
 							+"To turn off duplicate checking, set to -1.")
-							.create());
+							.create()));
 		if (isOn(flags, USE_THROTTLE)) 
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(THROTTLE_CONST_OPTION)
 					.withArgName("integer")
 					.hasArg()
 					.withDescription("Default: -1\nPause buffering of new jobs if unfinished queue grows beyond x. -1 to disable.")
-					.create());
+					.create()));
 		if (isOn(flags, USE_EMPTYGRAPHS))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(EMPTYGRAPHS_CONST_OPTION)
 					.withDescription("Include examples with no pos or neg labeled solutions")
-					.create());
+					.create()));
 		if (isOn(flags, USE_FIXEDWEIGHTS))
-			options.addOption(Option.builder(FIXEDWEIGHTS_CONST_OPTION)
+			options.addOption(checkOption(
+					Option.builder(FIXEDWEIGHTS_CONST_OPTION)
 					.hasArgs()
 					.argName("exact[={y|n}]:prefix*")
 					.valueSeparator(':')
 					.desc("Specify patterns of features to keep fixed at 1.0 or permit tuning. End in * for a prefix, otherwise uses exact match. Fixed by default; specify '=n' to permit tuning. First matching rule decides.")
-					.build());
+					.build()));
 
 		//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
 		//			options.addOption(

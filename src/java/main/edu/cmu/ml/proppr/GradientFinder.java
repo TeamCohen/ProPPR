@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
@@ -32,8 +33,8 @@ public class GradientFinder {
 
 	public static void main(String[] args) {
 		try {
-			int inputFiles = Configuration.USE_GROUNDED | Configuration.USE_PARAMS;
-			int outputFiles = Configuration.USE_GRADIENT;
+			int inputFiles = Configuration.USE_GROUNDED | Configuration.USE_INIT_PARAMS;
+			int outputFiles = Configuration.USE_GRADIENT | Configuration.USE_PARAMS;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
 			int constants = Configuration.USE_THREADS | Configuration.USE_EPOCHS | Configuration.USE_FORCE;
 			ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
@@ -44,18 +45,21 @@ public class GradientFinder {
 						usageOptions(options, allFlags, "Must specify grounded file using --"+Configuration.GROUNDED_FILE_OPTION);
 					if (gradientFile==null) 
 						usageOptions(options, allFlags, "Must specify gradient using --"+Configuration.GRADIENT_FILE_OPTION);
-					//					epochs = 1;
+					// default to 0 epochs
+					if (!options.hasOption("epochs")) this.epochs = 0;
 				}
+				
 				@Override
-				protected void addOptions(Options options, int[] allFlags) {
-					super.addOptions(options, allFlags);
-					options.getOption(PARAMS_FILE_OPTION).setRequired(false);
+				protected Option checkOption(Option o) {
+					if (PARAMS_FILE_OPTION.equals(o.getLongOpt()) ||
+							INIT_PARAMS_FILE_OPTION.equals(o.getLongOpt()))
+						o.setRequired(false);
+					return o;
 				}
 			};
 			System.out.println(c.toString());
 
 			ParamVector<String,?> params = null;
-			File nullFile = null;
 
 			SymbolTable<String> masterFeatures = new SimpleSymbolTable<String>();
 			File featureIndex = new File(c.groundedFile.getParent(),c.groundedFile.getName()+Grounder.FEATURE_INDEX_EXTENSION);
@@ -72,8 +76,11 @@ public class GradientFinder {
 						masterFeatures,
 						new ParsedFile(c.groundedFile), 
 						new ArrayLearningGraphBuilder(), 
-						nullFile, // create a parameter vector
+						c.initParamsFile, // create a parameter vector
 						c.epochs);
+				if (c.paramsFile != null) ParamsFile.save(params, c.paramsFile, c);
+			} else if (c.initParamsFile != null) {
+				params = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(c.initParamsFile)));
 			} else if (c.paramsFile != null) {
 				params = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(c.paramsFile)));
 			} else {

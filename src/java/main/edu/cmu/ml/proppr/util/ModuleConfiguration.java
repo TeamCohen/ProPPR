@@ -68,7 +68,7 @@ public class ModuleConfiguration extends Configuration {
 		//modules
 		flags = modules(allFlags);
 		if(isOn(flags, USE_SQUASHFUNCTION)) { 
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(SQUASHFUNCTION_MODULE_OPTION)
 					.withArgName("w")
@@ -83,10 +83,10 @@ public class ModuleConfiguration extends Configuration {
 //							+ "LReLU (leaky ReLU)\n"
 //							+ "exp\n"
 //							+ "clipExp (clipped to e*x @x=1)")
-							.create());
+							.create()));
 		}
 		if(isOn(flags, USE_PROVER))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(PROVER_MODULE_OPTION)
 					.withArgName("class[:arg:...:arg]")
@@ -102,9 +102,9 @@ public class ModuleConfiguration extends Configuration {
 //							+ "pdpr\n"
 //							+ "dfs\n"
 //							+ "tr")
-							.create());
+							.create()));
 		if (isOn(flags, USE_GROUNDER))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(GROUNDER_MODULE_OPTION)
 					.withArgName("class[:arg]")
@@ -113,9 +113,9 @@ public class ModuleConfiguration extends Configuration {
 					.withDescription("Default: g:3\n"
 							+ "Available options:\n"
 							+ "g[:threads[:throttle]] (default threads=3,throttle=-1)")
-							.create());
+							.create()));
 		if (isOn(flags, USE_TRAINER))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(TRAINER_MODULE_OPTION)
 					.withArgName("class")
@@ -129,9 +129,9 @@ public class ModuleConfiguration extends Configuration {
 							+ "Available parameters:\n"
 							+ "pct - stopping criterion max % improvement\n"
 							+ "stableEpochs - stopping criterion")
-							.create());
+							.create()));
 		if (isOn(flags, USE_SRW))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(SRW_MODULE_OPTION)
 					.withArgName("class")
@@ -147,15 +147,15 @@ public class ModuleConfiguration extends Configuration {
 							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
 							+ "Default eta=1.0")
-							.create());
+							.create()));
 		if (isOn(flags, USE_SRW))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(SEED_CONST_OPTION)
 					.withArgName("s")
 					.hasArg()
 					.withDescription("Seed the SRW random number generator")
-					.create());
+					.create()));
 	}
 
 	private void seed(CommandLine line) {
