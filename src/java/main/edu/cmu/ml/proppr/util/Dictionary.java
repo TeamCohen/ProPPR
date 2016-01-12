@@ -515,10 +515,15 @@ public class Dictionary {
 		return load(file, new HashMap<String,Double>());
 	}
 	public static Map<String,Double> load(ParsedFile file, Map<String,Double> map) {
+		int i=1;
 		for (String line : file) {
 			String[] parts = line.split("\t");
 			if (parts.length != 2) file.parseError();
-			map.put(parts[0], Double.parseDouble(parts[1]));
+			double d = Double.parseDouble(parts[1]);
+			if (Double.isInfinite(d)) throw new IllegalArgumentException("Can't load Infinity at line "+i+ " of "+file.getFileName());
+			if (Double.isNaN(d)) throw new IllegalArgumentException("Can't load NaN at line "+i+ " of "+file.getFileName());
+			map.put(parts[0], d);
+			i++;
 		}
 		file.close();
 		return map;
