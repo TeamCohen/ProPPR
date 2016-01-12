@@ -35,7 +35,7 @@ public class CachingTrainer extends Trainer {
 	}
 
 	@Override
-	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> exampleFile, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs) {
 		ArrayList<PosNegRWExample> examples = new ArrayList<PosNegRWExample>();
 		RWExampleParser parser = new RWExampleParser();
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
@@ -61,10 +61,10 @@ public class CachingTrainer extends Trainer {
 			stattime.tick();
 		}
 		if (logged) log.info("Total parsed: "+id);
-		return trainCached(examples,builder,initialParamVec,numEpochs,traceLosses,total);
+		return trainCached(examples,builder,initialParamVec,numEpochs,total);
 	}
 	
-	public ParamVector<String,?> trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses, TrainingStatistics total) {
+	public ParamVector<String,?> trainCached(List<PosNegRWExample> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, TrainingStatistics total) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
 		NamedThreadFactory trainThreads = new NamedThreadFactory("work-");
 		ExecutorService trainPool;
@@ -99,7 +99,7 @@ public class CachingTrainer extends Trainer {
 					log.info("queued: "+id+" trained: "+statistics.exampleSetSize);
 			}
 
-			cleanEpoch(trainPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			cleanEpoch(trainPool, cleanPool, paramVec, stopper, id, total);
 			if(graphSizesStatusLog) {
 				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
 				graphSizesStatusLog = false;

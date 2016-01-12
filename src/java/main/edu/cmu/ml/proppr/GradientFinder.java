@@ -35,7 +35,7 @@ public class GradientFinder {
 			int inputFiles = Configuration.USE_GROUNDED | Configuration.USE_PARAMS;
 			int outputFiles = Configuration.USE_GRADIENT;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
-			int constants = Configuration.USE_THREADS | Configuration.USE_TRACELOSSES | Configuration.USE_EPOCHS | Configuration.USE_FORCE;
+			int constants = Configuration.USE_THREADS | Configuration.USE_EPOCHS | Configuration.USE_FORCE;
 			ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
 				@Override
 				protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
@@ -73,8 +73,7 @@ public class GradientFinder {
 						new ParsedFile(c.groundedFile), 
 						new ArrayLearningGraphBuilder(), 
 						nullFile, // create a parameter vector
-						c.epochs, 
-						c.traceLosses);
+						c.epochs);
 			} else if (c.paramsFile != null) {
 				params = new SimpleParamVector<String>(Dictionary.load(new ParsedFile(c.paramsFile)));
 			} else {

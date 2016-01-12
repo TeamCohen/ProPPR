@@ -61,7 +61,6 @@ public class Configuration {
 	/** constant. */
 	public static final int USE_THREADS = 0x2;
 	public static final int USE_EPOCHS = 0x4;
-	public static final int USE_TRACELOSSES = 0x8;
 	public static final int USE_FORCE = 0x10;
 	public static final int USE_ORDER = 0x20;
 	public static final int USE_DUPCHECK = 0x40;
@@ -73,7 +72,6 @@ public class Configuration {
 	private static final String APR_CONST_OPTION = "apr";
 	private static final String THREADS_CONST_OPTION = "threads";
 	private static final String EPOCHS_CONST_OPTION = "epochs";
-	private static final String TRACELOSSES_CONST_OPTION = "traceLosses";
 	private static final String FORCE_CONST_OPTION = "force";
 	private static final String ORDER_CONST_OPTION = "order";
 	private static final String DUPCHECK_CONST_OPTION = "duplicateCheck";
@@ -111,7 +109,6 @@ public class Configuration {
 	public int nthreads = -1;
 	public APROptions apr = new APROptions();
 	public int epochs = 5;
-	public boolean traceLosses = false;
 	public boolean force = false;
 	public boolean ternaryIndex = false;
 	public boolean maintainOrder = true;
@@ -232,7 +229,6 @@ public class Configuration {
 			if (line.hasOption(APR_CONST_OPTION))          this.apr = new APROptions(line.getOptionValues(APR_CONST_OPTION));
 		if (isOn(flags,USE_THREADS) && line.hasOption(THREADS_CONST_OPTION))   this.nthreads = Integer.parseInt(line.getOptionValue(THREADS_CONST_OPTION));
 		if (isOn(flags,USE_EPOCHS) && line.hasOption(EPOCHS_CONST_OPTION))     this.epochs = Integer.parseInt(line.getOptionValue(EPOCHS_CONST_OPTION));
-		if (isOn(flags,USE_TRACELOSSES) && line.hasOption(TRACELOSSES_CONST_OPTION)) this.traceLosses = true;
 		if (isOn(flags,USE_FORCE) && line.hasOption(FORCE_CONST_OPTION))             this.force = true;
 		if (isOn(flags,USE_ORDER) && line.hasOption(ORDER_CONST_OPTION)) {
 			String order = line.getOptionValue(ORDER_CONST_OPTION);
@@ -475,12 +471,6 @@ public class Configuration {
 					.hasArg()
 					.withDescription("Use x training epochs (default = 5)")
 					.create());
-		if (isOn(flags, USE_TRACELOSSES))
-			options.addOption(
-					OptionBuilder
-					.withLongOpt(TRACELOSSES_CONST_OPTION)
-					.withDescription("Print training loss at each epoch")
-					.create());
 		if (isOn(flags, USE_FORCE))
 			options.addOption(
 					OptionBuilder
@@ -582,7 +572,6 @@ public class Configuration {
 		if (isOn(flags, USE_WAM)) syntax.append(" [--").append(PRUNEDPREDICATE_CONST_OPTION).append(" predicate1:predicate2]");
 		if (isOn(flags, USE_THREADS)) syntax.append(" [--").append(THREADS_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_EPOCHS)) syntax.append(" [--").append(EPOCHS_CONST_OPTION).append(" integer]");
-		if (isOn(flags, USE_TRACELOSSES)) syntax.append(" [--").append(TRACELOSSES_CONST_OPTION).append("]");
 		if (isOn(flags, USE_FORCE)) syntax.append(" [--").append(FORCE_CONST_OPTION).append("]");
 		if (isOn(flags, USE_ORDER)) syntax.append(" [--").append(ORDER_CONST_OPTION).append(" same|reorder]");
 		if (anyOn(flags, USE_DUPCHECK|USE_WAM)) syntax.append(" [--").append(DUPCHECK_CONST_OPTION).append(" -1|integer]");

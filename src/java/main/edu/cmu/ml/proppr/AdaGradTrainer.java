@@ -47,7 +47,7 @@ public class AdaGradTrainer extends Trainer {
 	}
 
 	@Override
-	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
 
 		//@rck AG
@@ -124,7 +124,7 @@ public class AdaGradTrainer extends Trainer {
 					log.info("parsed: "+id+" trained: "+statistics.exampleSetSize);
 			}
 
-			cleanEpoch(workingPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			cleanEpoch(workingPool, cleanPool, paramVec, stopper, id, total);
 			if(graphSizesStatusLog) {
 				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
 				graphSizesStatusLog = false;

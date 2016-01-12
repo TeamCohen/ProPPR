@@ -143,7 +143,7 @@ public class Trainer {
 		this.learners.get(Thread.currentThread().getName()).trainOnExample(paramVec, x, status);
 	}
 
-	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs, boolean traceLosses) {
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, File initialParamVecFile, int numEpochs) {
 		ParamVector<String,?> initParams = null;
 		if (initialParamVecFile != null) {
 			log.info("loading initial params from "+initialParamVecFile);
@@ -156,12 +156,11 @@ public class Trainer {
 				examples,
 				builder,
 				initParams,
-				numEpochs,
-				traceLosses
+				numEpochs
 				);
 	}
 
-	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
 		if (masterFeatures.size()>0) LearningGraphBuilder.setFeatures(masterFeatures);
 		NamedThreadFactory workingThreads = new NamedThreadFactory("work-");
@@ -254,7 +253,7 @@ public class Trainer {
 					log.info("parsed: "+id+" trained: "+statistics.exampleSetSize);
 			}
 
-			cleanEpoch(workingPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			cleanEpoch(workingPool, cleanPool, paramVec, stopper, id, total);
 			if(graphSizesStatusLog) {
 				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
 				graphSizesStatusLog = false;
@@ -279,7 +278,7 @@ public class Trainer {
 	 * @param stats
 	 */
 	protected void cleanEpoch(ExecutorService workingPool, ExecutorService cleanPool,
-			ParamVector<String,?> paramVec, boolean traceLosses, StoppingCriterion stopper, int n, TrainingStatistics stats) {
+			ParamVector<String,?> paramVec, StoppingCriterion stopper, int n, TrainingStatistics stats) {
 		n = n-1;
 		workingPool.shutdown();
 		try {
@@ -294,18 +293,16 @@ public class Trainer {
 		this.masterLearner.cleanupParams(paramVec,paramVec);
 
 			// loss status and signalling the stopper
-			if(traceLosses) {
 
-				LossData lossThisEpoch = new LossData();
-				for (SRW learner : this.learners.values()) {
-					lossThisEpoch.add(learner.cumulativeLoss());
-				}				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
-				printLossOutput(lossThisEpoch);
-				if (epoch>1) {
-					stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
-				}
-				lossLastEpoch = lossThisEpoch;
+			LossData lossThisEpoch = new LossData();
+			for (SRW learner : this.learners.values()) {
+				lossThisEpoch.add(learner.cumulativeLoss());
+			}				lossThisEpoch.convertCumulativesToAverage(statistics.numExamplesThisEpoch);
+			printLossOutput(lossThisEpoch);
+			if (epoch>1) {
+				stopper.recordConsecutiveLosses(lossThisEpoch,lossLastEpoch);
 			}
+			lossLastEpoch = lossThisEpoch;
 
 		ZeroGradientData zeros = this.masterLearner.new ZeroGradientData();
 		for (SRW learner : this.learners.values()) {
@@ -551,7 +548,7 @@ public class Trainer {
 		try {
 			int inputFiles = Configuration.USE_TRAIN | Configuration.USE_INIT_PARAMS;
 			int outputFiles = Configuration.USE_PARAMS;
-			int constants = Configuration.USE_EPOCHS | Configuration.USE_TRACELOSSES | Configuration.USE_FORCE | Configuration.USE_THREADS | Configuration.USE_FIXEDWEIGHTS;
+			int constants = Configuration.USE_EPOCHS | Configuration.USE_FORCE | Configuration.USE_THREADS | Configuration.USE_FIXEDWEIGHTS;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
 			ModuleConfiguration c = new ModuleConfiguration(args,inputFiles,outputFiles,constants,modules);
 			log.info(c.toString());
@@ -575,8 +572,7 @@ public class Trainer {
 					new ParsedFile(groundedFile), 
 					new ArrayLearningGraphBuilder(), 
 					c.initParamsFile,
-					c.epochs, 
-					c.traceLosses);
+					c.epochs);
 			System.out.println("Training time: "+(System.currentTimeMillis()-start));
 
 			if (c.paramsFile != null) {
