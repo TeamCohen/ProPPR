@@ -22,6 +22,7 @@ import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
 import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.SRW.ZeroGradientData;
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
@@ -544,6 +545,16 @@ public class Trainer {
 		}
 	}
 
+	public void setStoppingCriteria(int stoppingEpochs, double percent) {
+		this.stoppingEpoch = stoppingEpochs;
+		this.stoppingPercent = percent;
+
+	}
+	
+	public void setFixedWeightRules(FixedWeightRules f) {
+		this.masterLearner.setFixedWeightRules(f);
+		for (SRW el : this.learners.values()) el.setFixedWeightRules(f);
+	}
 	public static void main(String[] args) {
 		try {
 			int inputFiles = Configuration.USE_TRAIN | Configuration.USE_INIT_PARAMS;
@@ -585,9 +596,4 @@ public class Trainer {
 		}
 	}
 
-	public void setStoppingCriteria(int stoppingEpochs, double percent) {
-		this.stoppingEpoch = stoppingEpochs;
-		this.stoppingPercent = percent;
-
-	}
 }

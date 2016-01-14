@@ -11,8 +11,10 @@ import org.apache.commons.cli.Options;
 import org.apache.log4j.Logger;
 
 import edu.cmu.ml.proppr.graph.ArrayLearningGraphBuilder;
+import edu.cmu.ml.proppr.learn.tools.FixedWeightRules;
 import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
+import edu.cmu.ml.proppr.util.CustomConfiguration;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamsFile;
@@ -37,17 +39,8 @@ public class GradientFinder {
 			int outputFiles = Configuration.USE_GRADIENT | Configuration.USE_PARAMS;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
 			int constants = Configuration.USE_THREADS | Configuration.USE_EPOCHS | Configuration.USE_FORCE;
-			ModuleConfiguration c = new ModuleConfiguration(args, inputFiles, outputFiles, constants, modules) {
-				@Override
-				protected void retrieveSettings(CommandLine line, int[] allFlags, Options options) throws IOException {
-					super.retrieveSettings(line, allFlags, options);
-					if (groundedFile==null || !groundedFile.exists())
-						usageOptions(options, allFlags, "Must specify grounded file using --"+Configuration.GROUNDED_FILE_OPTION);
-					if (gradientFile==null) 
-						usageOptions(options, allFlags, "Must specify gradient using --"+Configuration.GRADIENT_FILE_OPTION);
-					// default to 0 epochs
-					if (!options.hasOption("epochs")) this.epochs = 0;
-				}
+			CustomConfiguration c = new CustomConfiguration(args, inputFiles, outputFiles, constants, modules) {
+				boolean relax=false;
 				
 				@Override
 				protected Option checkOption(Option o) {
@@ -55,6 +48,31 @@ public class GradientFinder {
 							INIT_PARAMS_FILE_OPTION.equals(o.getLongOpt()))
 						o.setRequired(false);
 					return o;
+				}
+
+				@Override
+				protected void addCustomOptions(Options options, int[] flags) {
+					options.addOption(Option.builder("relaxFW")
+							.desc("Relax fixedWeight rules for gradient computation (used in ProngHorn)")
+							.optionalArg(true).build());
+				}
+
+				@Override
+				protected void retrieveCustomSettings(CommandLine line,
+						int[] flags, Options options) {
+					if (groundedFile==null || !groundedFile.exists())
+						usageOptions(options, flags, "Must specify grounded file using --"+Configuration.GROUNDED_FILE_OPTION);
+					if (gradientFile==null) 
+						usageOptions(options, flags, "Must specify gradient using --"+Configuration.GRADIENT_FILE_OPTION);
+					// default to 0 epochs
+					if (!options.hasOption("epochs")) this.epochs = 0;
+					if (options.hasOption("relaxFW")) this.relax = true;
+				}
+
+				@Override
+				public Object getCustomSetting(String name) {
+					if ("relaxFW".equals(name)) return this.relax;
+					return null;
 				}
 			};
 			System.out.println(c.toString());
@@ -86,7 +104,11 @@ public class GradientFinder {
 			} else {
 				params = new SimpleParamVector<String>();
 			}
-
+			
+			// turn off any fixed-weight settings for computing the gradient
+			// this lets prongHorn hold external features fixed for training, but still compute their gradient
+			if (((Boolean) c.getCustomSetting("relaxFW"))) c.trainer.setFixedWeightRules(new FixedWeightRules());
+			
 			ParamVector<String,?> batchGradient = c.trainer.findGradient(
 					masterFeatures,
 					new ParsedFile(c.groundedFile), 
