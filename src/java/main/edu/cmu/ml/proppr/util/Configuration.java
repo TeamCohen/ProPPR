@@ -529,7 +529,8 @@ public class Configuration {
 					.create()));
 		if (isOn(flags, USE_FIXEDWEIGHTS))
 			options.addOption(checkOption(
-					Option.builder(FIXEDWEIGHTS_CONST_OPTION)
+					Option.builder()
+					.longOpt(FIXEDWEIGHTS_CONST_OPTION)
 					.hasArgs()
 					.argName("exact[={y|n}]:prefix*")
 					.valueSeparator(':')

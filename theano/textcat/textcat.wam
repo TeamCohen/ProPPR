@@ -1,0 +1,26 @@
+0		comment	ab_classify(-1,-2) :-  {theano_p(-2,-1)}  #v:['X', 'Y'].
+1	ab_classify/2	allocate	2	['Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	theano_p	2
+6		fpushboundvar	-2
+7		fpushboundvar	-1
+8		freport
+9		returnp
+10		comment	predict(-1,-2) :- isLabel(-2), ab_classify(-1,-2)  #v:['X', 'Y'].
+11	predict/2	allocate	2	['Y', 'X']
+12		initfreevar	-1	-2
+13		initfreevar	-2	-1
+14		fclear
+15		fpushstart	id	3
+16		fpushconst	predict
+17		fpushconst	2
+18		fpushconst	14
+19		freport
+20		pushboundvar	-2
+21		callp	isLabel/1
+22		pushboundvar	-1
+23		pushboundvar	-2
+24		callp	ab_classify/2
+25		returnp

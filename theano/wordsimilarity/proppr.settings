@@ -1,0 +1,3 @@
+--relaxFW	1
+--programFiles	wordsimilarity.wam
+--fixedWeights	theano_p*

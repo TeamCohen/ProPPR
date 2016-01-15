@@ -1,0 +1,1 @@
+sim(A,B) :- { theano_p(A,B) }.

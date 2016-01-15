@@ -1,0 +1,10 @@
+0		comment	sim(-1,-2) :-  {theano_p(-1,-2)}  #v:['A', 'B'].
+1	sim/2	allocate	2	['B', 'A']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	theano_p	2
+6		fpushboundvar	-1
+7		fpushboundvar	-2
+8		freport
+9		returnp

@@ -38,9 +38,9 @@ public class GradientFinder {
 			int inputFiles = Configuration.USE_GROUNDED | Configuration.USE_INIT_PARAMS;
 			int outputFiles = Configuration.USE_GRADIENT | Configuration.USE_PARAMS;
 			int modules = Configuration.USE_TRAINER | Configuration.USE_SRW | Configuration.USE_SQUASHFUNCTION;
-			int constants = Configuration.USE_THREADS | Configuration.USE_EPOCHS | Configuration.USE_FORCE;
+			int constants = Configuration.USE_THREADS | Configuration.USE_EPOCHS | Configuration.USE_FORCE | Configuration.USE_FIXEDWEIGHTS;
 			CustomConfiguration c = new CustomConfiguration(args, inputFiles, outputFiles, constants, modules) {
-				boolean relax=false;
+				boolean relax;
 				
 				@Override
 				protected Option checkOption(Option o) {
@@ -52,9 +52,10 @@ public class GradientFinder {
 
 				@Override
 				protected void addCustomOptions(Options options, int[] flags) {
-					options.addOption(Option.builder("relaxFW")
-							.desc("Relax fixedWeight rules for gradient computation (used in ProngHorn)")
-							.optionalArg(true).build());
+				    options.addOption(Option.builder()
+						      .longOpt("relaxFW")
+						      .desc("Relax fixedWeight rules for gradient computation (used in ProngHorn)")
+						      .optionalArg(true).build());
 				}
 
 				@Override
@@ -66,6 +67,7 @@ public class GradientFinder {
 						usageOptions(options, flags, "Must specify gradient using --"+Configuration.GRADIENT_FILE_OPTION);
 					// default to 0 epochs
 					if (!options.hasOption("epochs")) this.epochs = 0;
+					this.relax = false;
 					if (options.hasOption("relaxFW")) this.relax = true;
 				}
 
@@ -90,6 +92,7 @@ public class GradientFinder {
 			
 			if (c.epochs > 0) {
 				// train first
+			    log.info("Training for "+c.epochs+" epochs...");
 				params = c.trainer.train(
 						masterFeatures,
 						new ParsedFile(c.groundedFile), 
@@ -107,7 +110,10 @@ public class GradientFinder {
 			
 			// turn off any fixed-weight settings for computing the gradient
 			// this lets prongHorn hold external features fixed for training, but still compute their gradient
-			if (((Boolean) c.getCustomSetting("relaxFW"))) c.trainer.setFixedWeightRules(new FixedWeightRules());
+			if (((Boolean) c.getCustomSetting("relaxFW"))) {
+			    log.info("Turning off fixedWeight rules");
+			    c.trainer.setFixedWeightRules(new FixedWeightRules());
+			}
 			
 			ParamVector<String,?> batchGradient = c.trainer.findGradient(
 					masterFeatures,

@@ -1,0 +1,18 @@
+train00001	a pricy doll house
+train00002	a little red fire truck
+train00003	a red wagon
+train00004	a pricy red sports car
+train00005	punk queen barbie and ken
+train00006	a little red bike
+train00007	a big 7-seater minivan with an automatic transmission
+train00008	a big house in the suburbs with a crushing mortgage
+train00009	a job for life at IBM
+train00010	a hube pile of tax forms due yesterday
+train00011	huge pile of junk mail catalogs and bills
+test00001	a pricy barbie doll
+test00002	a little yellow toy car
+test00003	a red 10 speed bike
+test00004	a red porshe convertible
+test00005	a big pile of paperwork
+test00006	a huge backlog of email
+test00007	a life of woe and trouble
