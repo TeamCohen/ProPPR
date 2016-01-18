@@ -55,6 +55,7 @@ def relationsToExamples(src,dst,opts):
     triples = set()
     entities = set()
     rels = set()
+    kSample = int(opts.get('--sample',0))
     for line in open(src):
         (relkw,r,x,y) = line.strip().split("\t")
         trueYs[(r,x)].add(y)
@@ -68,9 +69,16 @@ def relationsToExamples(src,dst,opts):
         for x in entities:
             query = 'interp(i_%s,%s,Y)' % (r,x)
             posParts = map(lambda y: '+interp(i_%s,%s,%s)' % (r,x,y), trueYs[(r,x)])
-            #TODO randomly sample negatives?
-            negParts = map(lambda y: '-interp(i_%s,%s,%s)' % (r,x,y), [y for y in pairedWith[x] if y not in trueYs[(r,x)]])
-            result.append((query,posParts,negParts))
+            allNegParts = map(lambda y: '-interp(i_%s,%s,%s)' % (r,x,y), [y for y in pairedWith[x] if y not in trueYs[(r,x)]])
+            #sample negatives 
+            if kSample==0: 
+                negParts = allNegParts 
+            elif kSample<0: 
+                negParts = rnd.shuffle(allNegParts)[0:len(posParts)]
+            else:
+                negParts = rnd.shuffle(allNegParts)[0:kSample]
+            if posParts:
+                result.append((query,posParts,negParts))
     rnd.shuffle(result)
     fp = open(dst,'w')
     for (query,posParts,negParts) in result:
@@ -109,12 +117,14 @@ def gradientToRules(src,dst,opts):
                     featureWeight[feature] = min(featureWeight[feature],weight)
     
     rules = []
-    totAccepted = 0
+    totAccepted= 0
+    totNegativeGradient= 0
     lastWeight = None
     if featureWeight:
         for (feature,weight) in sorted(featureWeight.items(), key=lambda(f,w):w):
             if weight>=0:
                 break
+            totNegativeGradient += 1
             if (MAX_WEIGHT_RATIO!=0 and lastWeight!=None and lastWeight/weight > MAX_WEIGHT_RATIO):
                 print 'stopped collected features after seeing a gap: %g to %g' % (lastWeight,weight)
                 break
@@ -135,7 +145,7 @@ def gradientToRules(src,dst,opts):
                 rhsr = rhs_i if intensional(r) else rhs_e
                 if chaintype=='chain':
                     rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y) {lr_%s}." % (lhs,p,rhsq,q,rhsr,r,feature))
-    logging.info('gradientToRules examines %d gradients %d for second-order rules and accepted %d' % (totFeatures,totRuleFeatures,totAccepted))
+    logging.info('gradientToRules examined %d gradients, %d for 2nd-order rules, %d negative, %d accepted' % (totFeatures,totRuleFeatures,totNegativeGradient,totAccepted))
     fp = open(dst,'w')
     fp.write("\n".join(rules) + "\n")
 
@@ -279,6 +289,7 @@ if __name__=="__main__":
     #script in invokeProppr
     argspec = ["com=","src=", "dst=", 
                "C=", "n", #global proppr opts
+               "sample=", #for relationsToExamples, sample K negative examples from set of all negatives
                "lhs=", "rhs=", #for gradientToRules
                "src2=", "numIters=", "stem=", #for iterativeStucturedGradient, structuredGradient
     ]
