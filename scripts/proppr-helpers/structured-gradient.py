@@ -52,7 +52,6 @@ def relationsToExamples(src,dst,opts):
     rnd = random.Random()
     trueYs = collections.defaultdict(set)
     pairedWith = collections.defaultdict(set)
-    triples = set()
     entities = set()
     rels = set()
     kSample = int(opts.get('--sample',0))
@@ -62,23 +61,39 @@ def relationsToExamples(src,dst,opts):
         rels.add(r)
         entities.add(x)
         entities.add(y)
-        triples.add((r,x,y))
         pairedWith[x].add(y)
     result = []
-    for r in rels:
-        for x in entities:
-            query = 'interp(i_%s,%s,Y)' % (r,x)
-            posParts = map(lambda y: '+interp(i_%s,%s,%s)' % (r,x,y), trueYs[(r,x)])
-            allNegParts = map(lambda y: '-interp(i_%s,%s,%s)' % (r,x,y), [y for y in pairedWith[x] if y not in trueYs[(r,x)]])
-            #sample negatives 
-            if kSample==0: 
-                negParts = allNegParts 
-            elif kSample<0: 
-                negParts = rnd.shuffle(allNegParts)[0:len(posParts)]
-            else:
-                negParts = rnd.shuffle(allNegParts)[0:kSample]
-            if posParts:
-                result.append((query,posParts,negParts))
+
+    allowHopeless = '--allowHopelessQueries' in opts
+    if '--defaultNeg' in opts:
+        assert not allowHopeless,'--allowHopelessQueries not allowed with --defaultNeg'
+        #simple case: generate no negative examples at all
+        for (r,x),ys in trueYs.items():
+            query = 'interp(i_%s,%s,Y)' % (r,x)            
+            posParts = map(lambda y: '+interp(i_%s,%s,%s)' % (r,x,y), ys)
+            result.append((query,posParts,[]))
+    else:
+        #explicitly generate negative examples
+        for r in rels:
+            for x in entities:
+                query = 'interp(i_%s,%s,Y)' % (r,x)
+                posParts = map(lambda y: '+interp(i_%s,%s,%s)' % (r,x,y), trueYs[(r,x)])
+                # possible negatives are examples x,y where y is paired with x somewhere -- ie r1(x,y) holds for some r1 -- but
+                # y is not a positive answer to r(x,y)
+                allNegParts = map(lambda y: '-interp(i_%s,%s,%s)' % (r,x,y), [y for y in pairedWith[x] if y not in trueYs[(r,x)]])
+                #sample negatives 
+                if kSample==0: 
+                    #sample 0 -- use all negative examples
+                    negParts = allNegParts 
+                elif kSample<0: 
+                    #sample -1 -- use k negative examples, where k==number of positive examples
+                    negParts = rnd.shuffle(allNegParts)[0:len(posParts)]
+                else:
+                    #sample k>0 -- use k negative examples
+                    negParts = rnd.shuffle(allNegParts)[0:kSample]
+                if posParts or allowHopelessQueries:
+                    result.append((query,posParts,negParts))
+    
     rnd.shuffle(result)
     fp = open(dst,'w')
     for (query,posParts,negParts) in result:
@@ -287,9 +302,19 @@ if __name__=="__main__":
     #usage: the following arguments, followed by a "+" and a list 
     #of any remaining arguments to pass back to calls of the 'proppr'
     #script in invokeProppr
+    #
+    # Note: to be recieved properly, in the proppr.invokeHelper call,
+    # any arguments like --sample, --defaultNeg, ... need to be passed
+    # in as argument three (mainArgsConsumedBeforeHelperCalled) of the
+    # invokeProppr function
     argspec = ["com=","src=", "dst=", 
                "C=", "n", #global proppr opts
-               "sample=", #for relationsToExamples, sample K negative examples from set of all negatives
+               "sample=",                #for relationsToExamples, sample negative examples from set of all negatives
+                                         #sample 0 -- use all negative examples
+                                         #sample -1 -- use k negative examples, where k==number of positive examples
+                                         #sample k>0 -- use up to k negative examples
+               "defaultNeg=",            #for relationsToExamples, don't produce negative examples at all
+               "allowHopelessQueries=",  #for relationsToExamples, allow queries interp(rel,x,Y) where there are no positive Y's
                "lhs=", "rhs=", #for gradientToRules
                "src2=", "numIters=", "stem=", #for iterativeStucturedGradient, structuredGradient
     ]
