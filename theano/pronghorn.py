@@ -125,6 +125,8 @@ class LogisticRegression(Model):
         # keep track of model input
         self.input_data = input_data
 
+    def get_input(self):
+        return self.input_data
     def negative_log_likelihood(self, y):
         """Return the mean of the negative log-likelihood of the prediction
         of this model under a given target distribution.
@@ -199,16 +201,19 @@ class SimilarityRegression(Model):
         """
         
         self.input_data = input_data
-        logreg_input = T.prod(
+        self.inner_input = T.prod(
             T.reshape(
                 input_data,
-                (input_data.shape[0],n_in/2,2)
+                (input_data.shape[0],2,n_in/2)
                 ),
-            axis=2)
-        logging.debug("shape of logistic regression input: " + str(logreg_input.shape))
-        self.inner = LogisticRegression(logreg_input,n_in/2,1)
+            axis=1)
+        self.inner = LogisticRegression(self.inner_input,n_in/2,2)
         self.W = self.inner.W
         self.b = self.inner.b
+        self.p_y_given_x = self.inner.p_y_given_x
+        self.y_pred = self.inner.y_pred
+    def get_input(self):
+        return self.inner
     def negative_log_likelihood(self, y):
         return self.inner.negative_log_likelihood(y)
     def negative_log_likelihood_piecewise(self, y):
@@ -219,146 +224,6 @@ class SimilarityRegression(Model):
 class Pronghorn(object):
     def __init__(self,model):
         self.model = model
-    def train(self,train_set_x,train_set_y,learning_rate=0.13, n_epochs=1000,
-                               batch_size=600):
-        """
-        adapted from logicstic_sgd.py:sgd_optimization_mnist()
-        """
-        print '... building the model'
-
-        # generate symbolic variables for input (x and y represent a
-        # minibatch)
-        x = T.matrix('x')  # data, presented as word vectors
-        y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
-
-        # construct the logistic regression class
-        # Each feature vector has 56 entries
-        # there are 2 classes [TODO:DETECT]
-        classifier = self.model(**{'input_data':x, 'n_in':train_set_x.shape[1], 'n_out':2})
-
-        # the cost we minimize during training is the negative log likelihood of
-        # the model in symbolic format
-        cost = classifier.negative_log_likelihood(y)
-
-        # compute the gradient of cost with respect to theta = (W,b)
-        g_W = T.grad(cost=cost, wrt=classifier.W)
-        g_b = T.grad(cost=cost, wrt=classifier.b)
-
-        # start-snippet-3
-        # specify how to update the parameters of the model as a list of
-        # (variable, update expression) pairs.
-        updates = [(classifier.W, classifier.W - learning_rate * g_W),
-                   (classifier.b, classifier.b - learning_rate * g_b)]
-        test_model = theano.function(
-            inputs=[],
-            outputs=classifier.errors(y),
-            givens={
-                x: train_set_x,
-                y: train_set_y
-            }
-        )
-        validate_model = test_model
-
-        # compiling a Theano function `train_model` that returns the cost, but in
-        # the same time updates the parameter of the model based on the rules
-        # defined in `updates`
-        train_model = theano.function(
-            inputs=[],
-            outputs=cost,
-            updates=updates,
-            givens={
-                x: train_set_x,
-                y: train_set_y
-            }
-        )
-        # end-snippet-3
-        ###############
-        # TRAIN MODEL #
-        ###############
-        print '... training the model'
-        # early-stopping parameters
-        patience = 5  # look as this many examples regardless
-        patience_increase = 2  # wait this much longer when a new best is
-                                      # found
-        improvement_threshold = 0.995  # a relative improvement of this much is
-                                      # considered significant
-        validation_frequency = 1 #patience / 2
-        # go through this many
-        # minibatche before checking the network
-        # on the validation set
-        # -- validate every epoch
-
-        best_validation_loss = numpy.inf
-        test_score = 0.
-        start_time = timeit.default_timer()
-
-        done_looping = False
-        epoch = 0
-        while (epoch < n_epochs) and (not done_looping):
-            epoch = epoch + 1
-
-            # update W,b
-            avg_cost = train_model()
-            # iteration number
-            iter = (epoch - 1)
-
-            if (iter + 1) % validation_frequency == 0:
-                # compute zero-one loss on validation set
-                this_validation_loss = validate_model()
-
-                print(
-                    'epoch %i, validation error %f %%' %
-                    (
-                        epoch,
-                        this_validation_loss * 100.
-                        )
-                    )
-
-                # if we got the best validation score until now
-                if this_validation_loss < best_validation_loss:
-                    #improve patience if loss improvement is good enough
-                    if this_validation_loss < best_validation_loss *  \
-                            improvement_threshold:
-                        patience = max(patience, iter * patience_increase)
-
-                        best_validation_loss = this_validation_loss
-                        # test it on the test set
-                        test_score = test_model()
-
-                        print(
-                            (
-                                '     epoch %i, test error of'
-                                ' best model %f %%'
-                            ) %
-                            (
-                                epoch,
-                                test_score * 100.
-                            )
-                        )
-
-                        # save the best model
-                        with open(theanoModel, 'w') as f:
-                            cPickle.dump(classifier, f)
-
-            if patience <= iter:
-                done_looping = True
-                break
-
-        end_time = timeit.default_timer()
-        print(
-            (
-                'Optimization complete with best validation score of %f %%,'
-                'with test performance %f %%'
-            )
-            % (best_validation_loss * 100., test_score * 100.)
-        )
-        print 'The code run for %d epochs, with %f epochs/sec' % (
-            epoch, 1. * epoch / (end_time - start_time))
-        print >> sys.stderr, ('The code for file ' +
-                              os.path.split(__file__)[1] +
-                              ' ran for %.1fs' % ((end_time - start_time)))
-        return classifier
-
     def update(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
         """
         adapted from logicstic_sgd.py:sgd_optimization_mnist()
@@ -386,7 +251,7 @@ class Pronghorn(object):
         # dL/df comes from ProPPR; the f in question tells us which x and y to use
         # in computing the negative log likelihood of
         # the model in symbolic format
-        logging.debug("dldf: %s\n%s" % (str(dldf.shape),dldf))
+        logging.debug("dldf: %s\n%s" % (str(dldf.shape),dldf[:10]))
         cost = T.mean( dldf * classifier.negative_log_likelihood_piecewise(y) )
 
         # compute the gradient of cost with respect to theta = (W,b)
@@ -412,19 +277,33 @@ class Pronghorn(object):
         )
         foo = theano.function(
             inputs=[classifier.input_data],
-            outputs=[classifier.W,classifier.b],
+            outputs=[g_W,g_b,classifier.W,classifier.b,classifier.p_y_given_x,classifier.get_input(),classifier.y_pred],
+            givens={
+                y: train_set_y
+            },
             on_unused_input='ignore'
         )
 
         # update W,b
-        logging.debug( "train_set_x: %s" % str(train_set_x.shape) )
-        (fooW,foob) = foo(train_set_x)
-        logging.debug( "W,  pre: %s\n%s" % (str(fooW.shape),fooW[:10]))
-        logging.debug( "b,  pre: %s\n%s" % (str(foob.shape),foob[:10]))
+        firstSix = (0,1,2,3,4,5,6,300,301,302,303,304,305,306)
+        #logging.debug( "train_set_x: %s\n%s" % (str(train_set_x.shape),train_set_x[:3,firstSix]) )
+        (foogW,foogb,fooW,foob,foop,fooi,fooy) = foo(train_set_x)
+        logging.debug( "g_W, pre: %s\n%s" % (str(foogW.shape),foogW[:10]))
+        logging.debug( "g_b, pre: %s\n%s" % (str(foogb.shape),foogb[:10]))
+        logging.debug( "p,   pre: %s\n%s" % (str(foop.shape),foop[:10]))
+        logging.debug( "yp,  pre: %s\n%s" % (str(fooy.shape),fooy[:10]))
+        #logging.debug( "i,   pre: %s\n%s" % (str(fooi.shape),fooi[:3,:10]))
+        logging.debug( "err, pre: %s" % fooi)
+        logging.debug( "y,   pre: %s\n%s" % (str(train_set_y.shape),train_set_y[:10]))
+        #logging.debug( "gW,  pre: %s\n%s" % (str(foob.shape),foob[:10]))
+        #logging.debug( "inner input,  pre: %s\n%s" % (str(foob.shape),foob[:3,0:7]))
         avg_cost = train_model(train_set_x)
-        (fooW,foob) = foo(train_set_x)
+        (foogW,foogb,fooW,foob,foop,fooi,fooy) = foo(train_set_x)
         logging.debug( "W, post: %s\n%s" % (str(fooW.shape),fooW[:10]))
         logging.debug( "b, post: %s\n%s" % (str(foob.shape),foob[:10]))
+        logging.debug( "p, post: %s\n%s" % (str(foop.shape),foop[:10]))
+        logging.debug( "yp,post: %s\n%s" % (str(fooy.shape),fooy[:10]))
+        logging.debug( "err,post: %s" % fooi)
         # save this best model
         with open(theanoModel, 'w') as f:
             cPickle.dump(classifier, f)

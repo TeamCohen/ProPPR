@@ -201,7 +201,7 @@ def update():
                 (x,y) = featureToXY(feature)
                 trainX[i,:N] = vectors[vectorIndex[x],:]
                 trainX[i,N:] = vectors[vectorIndex[y],:]
-                trainY[i] = 0
+                trainY[i] = 1 #(0,1)[dldw[i]>0] # 0 for similar; 1 for dissimilar
                 i+=1
     print "Performing 1 update to theano model in %s..." % theanoModel
     p = pronghorn.Pronghorn(pronghorn.SimilarityRegression)
