@@ -632,7 +632,11 @@ public class Configuration {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("\n").append( this.getClass().getCanonicalName() );
+		
+		StringBuilder sb = new StringBuilder("\n");
+		String n = this.getClass().getCanonicalName();
+		if (n==null) sb.append("(custom configurator)");
+		else sb.append(n);
 		displayFile(sb, QUERIES_FILE_OPTION, queryFile);
 		displayFile(sb, TEST_FILE_OPTION, testFile);
 		displayFile(sb, GROUNDED_FILE_OPTION, groundedFile);
