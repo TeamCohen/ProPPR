@@ -76,6 +76,9 @@ public class CachingIdProofGraph extends ProofGraph implements InferenceGraph {
 	public State getState(int uid) { 
 		return nodeTab.getSymbol(uid); 
 	}
+	public boolean isCompleted(int uid) {
+		return getState(uid).isCompleted();
+	}
 	public int getRootId() { 
 		return 1; 
 	}
