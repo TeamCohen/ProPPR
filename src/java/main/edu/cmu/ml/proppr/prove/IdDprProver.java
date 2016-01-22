@@ -104,7 +104,8 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 			numIterations++;
 			if(log.isInfoEnabled()) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
 			if(iterEpsilon == apr.epsilon && pushCounter==0) break;
-			if(this.completedStates > apr.stopEarly) {
+			if(apr.stopEarly>=0 && this.completedStates > apr.stopEarly) {
+			    log.info("Stopping early...");
 				break;
 			}
 			numPushes += pushCounter;

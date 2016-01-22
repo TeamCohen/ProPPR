@@ -6,7 +6,7 @@ public class APROptions {
 	public static final int MAXDEPTH_DEFAULT=20;
 	public static final int TRACEDEPTH_DEFAULT = 0;
 	public static final int TRACEROOT_DEFAULT = 1;
-	public static final int STOPEARLY_DEFAULT = 0;
+	public static final int STOPEARLY_DEFAULT = -1;
 
 	private enum names {
 		eps,
