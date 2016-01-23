@@ -138,7 +138,7 @@ def doSLSubcommand(o,subcommand):
       src = getFile(src,o)
       dst = makeOutput(getArg(2,stem+'.examples'),o)
       if not dst.endswith(".examples"): dst = dst+".examples"
-      invokeHelper(o,'structured-gradient.py',[],'--com',subcommand,'--src',src,'--dst',dst)
+      invokeHelper(o,'structured-gradient.py',['--defaultNeg','--sample','--allowHopelessQueries'],'--com',subcommand,'--src',src,'--dst',dst)
    elif subcommand=="grad2ppr":
       stem,src = stemExt(getArg(1),'.cfacts')
       src = getFile(src,o)
@@ -185,13 +185,10 @@ def doSLSubcommand(o,subcommand):
       backgroundFile = getFile(backgroundFile,o)
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
       #optional arguments
-      optDict = getSomeArgvOptsAsDict(['--numIters'])
-      numIters = optDict.get('--numIters','5')
       invokeHelper(o,'structured-gradient.py',['--numIters'],
                    '--com','isg-train',
                    '--src',exampleFile,'--dst',learnedRuleFile,
-                   '--src2',backgroundFile,'--stem',exampleStem,
-                   '--numIters', str(numIters))
+                   '--src2',backgroundFile,'--stem',exampleStem)
       logging.info('Created rule file ' + learnedRuleFile)
    elif subcommand=="help":
       print 'ProPPR v2: The structured gradient subcommands are:'
@@ -269,7 +266,7 @@ def invokeMain(o,main,*mainProgArgs):
       optArgs.append(val)
    callProcess(o,['java','-cp',classPath] + getJavaArgs()  + [mainClass] + list(mainProgArgs) + optArgs)
 
-def invokeHelper(o,main,mainArgsConsumedBeforeHelperCalled,*mainProgArgs):
+def invokeHelper(o,main,helperOptions,*mainProgArgs):
    """Invoke a python program from scripts/proppr-helpers, supplying
    options from the settings file and/or the command-line options.
    """
@@ -278,17 +275,24 @@ def invokeHelper(o,main,mainArgsConsumedBeforeHelperCalled,*mainProgArgs):
    globalPropprOpts = []
    if o['out']: globalPropprOpts.append('--C'+o['out'])
    if o['dryRun']: globalPropprOpts.append('--n')
-   otherOpts = _unconsumedArgvOptions(mainArgsConsumedBeforeHelperCalled)
-   callProcess(o,['python',helperFile] + globalPropprOpts + list(mainProgArgs) + ['+'] + otherOpts)
+   helperArgs,otherArgs = _splitArgs(helperOptions)
+   callProcess(o,['python',helperFile] + globalPropprOpts + list(mainProgArgs) + helperArgs + ['+'] + otherArgs)
 
-def _unconsumedArgvOptions(consumedArgs):
+def _splitArgs(targetOpts):
    opts = getArgvOptions()
-   result = []
+   print 'splitting by',targetOpts,'opts',opts
+   targetArgs = []
+   otherArgs = []
    for i in range(0,len(opts),2):
-      if opts[i] not in consumedArgs:
-         result.append(opts[i])
-         result.append(opts[i+1])
-   return result
+      if opts[i] in targetOpts:
+         targetArgs.append(opts[i])
+         targetArgs.append(opts[i+1])
+      else:
+         otherArgs.append(opts[i])
+         otherArgs.append(opts[i+1])
+   print 'targetArgs',targetArgs
+   print 'otherArgs',otherArgs
+   return targetArgs,otherArgs
 
 def callProcess(o,args,**kw):
    """Call a process, tracing the actual call."""
@@ -359,14 +363,6 @@ def getArgvOptions():
       if sys.argv[i].startswith('--'):
          return sys.argv[i:]
    return []
-
-def getSomeArgvOptsAsDict(targetOpts):
-   opts = getArgvOptions()
-   result = {}
-   for i in range(0,len(opts),2):
-      if opts[i] in targetOpts:
-         result[opts[i]] = opts[i+1]
-   return result
 
 def setArgvOption(n,val):
    for i in range(len(sys.argv)):
