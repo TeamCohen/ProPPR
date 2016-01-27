@@ -30,6 +30,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	protected final double moveProbability;
 	protected LongDense.AbstractFloatVector params=null;
 	protected IdDprProver parent=null;
+	public int completedStates = 0;
 	
 	@Override
 	public String toString() { 
@@ -97,12 +98,17 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		int numPushes = 0;
 		int numIterations = 0;
 		double iterEpsilon = 1.0;
+		this.completedStates = 0;
 		for (int pushCounter = 0; ;) {
 			iterEpsilon = Math.max(iterEpsilon/10,apr.epsilon);
 			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon,params,status);
 			numIterations++;
 			if(log.isInfoEnabled() && status.due(1)) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
 			if(iterEpsilon == apr.epsilon && pushCounter==0) break;
+			if(apr.stopEarly>=0 && this.completedStates > apr.stopEarly) {
+			    log.info("Stopping early...");
+				break;
+			}
 			numPushes += pushCounter;
 		}
 		//if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
@@ -148,6 +154,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 							double wuv = cg.getIthWeightById(uid,i,params,this.weighter);
 							if (wuv==0) continue;
 							int vid = cg.getIthNeighborById(uid,i,this.weighter);
+							if (cg.isCompleted(vid)) this.completedStates++;
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 							if (Double.isNaN(r.get(vid))) log.debug("NaN in r at v="+vid+" wuv="+wuv+" z="+z+" ru="+ru);
 						}

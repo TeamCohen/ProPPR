@@ -6,6 +6,7 @@ public class APROptions {
 	public static final int MAXDEPTH_DEFAULT=20;
 	public static final int TRACEDEPTH_DEFAULT = 0;
 	public static final int TRACEROOT_DEFAULT = 1;
+	public static final int STOPEARLY_DEFAULT = -1;
 
 	private enum names {
 		eps,
@@ -13,6 +14,8 @@ public class APROptions {
 		alph,
 		alpha,
 		depth,
+		stop,
+		stopEarly,
 		traceDepth,
 		traceRoot
 	}
@@ -20,16 +23,18 @@ public class APROptions {
 	public double alpha;
 	public double epsilon;
 	public int traceDepth, traceRoot;
+	public int stopEarly;
 	
 	public APROptions() {
-		this(EPS_DEFAULT,MINALPH_DEFAULT,MAXDEPTH_DEFAULT,TRACEDEPTH_DEFAULT,TRACEROOT_DEFAULT);
+		this(EPS_DEFAULT,MINALPH_DEFAULT,MAXDEPTH_DEFAULT,TRACEDEPTH_DEFAULT,TRACEROOT_DEFAULT,STOPEARLY_DEFAULT);
 	}
-	public APROptions(double eps, double minalph,int depth,int traceDepth,int traceRoot) {
+	public APROptions(double eps, double minalph,int depth,int traceDepth,int traceRoot,int stopEarly) {
 		this.epsilon = eps;
 		this.alpha = minalph;
 		this.maxDepth = depth;
 		this.traceDepth = traceDepth;
 		this.traceRoot = traceRoot;		
+		this.stopEarly = stopEarly;
 	}
 	public APROptions(String...optionValues) {
 		this();
@@ -51,6 +56,9 @@ public class APROptions {
 			this.traceDepth = Integer.parseInt(setting[1]); return;
 		case traceRoot:
 			this.traceRoot = Integer.parseInt(setting[1]); return;
+		case stop:
+		case stopEarly:
+			this.stopEarly = Integer.parseInt(setting[1]); return;
 		default:
 			throw new IllegalArgumentException("No option to set '"+setting[0]+"'");
 		}
