@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.util.StatusLogger;
+
 public class Multithreading<In,Out> {
 	public static final int NO_THROTTLE=-1;
 	public static final int DEFAULT_THROTTLE=NO_THROTTLE;
@@ -27,12 +29,14 @@ public class Multithreading<In,Out> {
 	 */
 	public Logger log;
 	private boolean maintainOrder;
+	protected StatusLogger status;
 	
-	public Multithreading(Logger l) {
-		this(l, DEFAULT_ORDER);
+	public Multithreading(Logger l, StatusLogger s) {
+		this(l, s, DEFAULT_ORDER);
 	}
-	public Multithreading(Logger l, boolean ordered) {
+	public Multithreading(Logger l, StatusLogger s, boolean ordered) {
 		this.log = l;
+		this.status = s;
 		this.maintainOrder = ordered;
 	}
 
@@ -48,7 +52,7 @@ public class Multithreading<In,Out> {
 	@SuppressWarnings("unchecked")
 	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,String outputFile) throws IOException {
 		Writer w = new BufferedWriter(new FileWriter(outputFile));
-		executeJob(nThreads, streamer, transformer, (Cleanup<Out>) new WritingCleanup(w, this.log), DEFAULT_THROTTLE);
+		executeJob(nThreads, streamer, transformer, (Cleanup<Out>) new WritingCleanup(w, this.log, this.status), DEFAULT_THROTTLE);
 		w.close();
 	}
 	
@@ -69,7 +73,7 @@ public class Multithreading<In,Out> {
 	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,File outputFile, int throttle) throws IOException 
 	{
 		Writer w = new BufferedWriter(new FileWriter(outputFile));
-		executeJob(nThreads, streamer, transformer, (Cleanup<Out>) new WritingCleanup(w, this.log), throttle);
+		executeJob(nThreads, streamer, transformer, (Cleanup<Out>) new WritingCleanup(w, this.log, this.status), throttle);
 		w.close();
 	}
 	
@@ -83,7 +87,7 @@ public class Multithreading<In,Out> {
 	 */
 	public void executeJob(int nThreads,Iterable<In> streamer,Transformer<In,Out> transformer,Cleanup<Out> cleanup,int throttle) 
 	{
-		log.info("executeJob:"
+		log.info("Executing Multithreading job:"
 						 +" streamer: "+streamer.getClass().getCanonicalName()
 						 +" transformer: "+transformer.getClass().getCanonicalName()
 						 +" throttle: "+throttle);
@@ -143,6 +147,8 @@ public class Multithreading<In,Out> {
 		} catch (InterruptedException e) {
 			log.error("Interrupted?",e);
 		}
+		
+		log.info("Total items: "+id);
 	}
 	
 	private void tidyQueue(ArrayDeque queue) {

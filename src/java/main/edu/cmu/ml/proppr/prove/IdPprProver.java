@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.LongDense;
 import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
@@ -71,9 +72,9 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 	}
 
 	@Override
-	public Map<State, Double> prove(CachingIdProofGraph pg) 
+	public Map<State, Double> prove(CachingIdProofGraph pg, StatusLogger status) 
 	{
-		LongDense.FloatVector p = proveVec(pg);
+		LongDense.FloatVector p = proveVec(pg,status);
 		if (apr.traceDepth!=0) {
 			System.out.println("== proof graph: edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
 			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,p));
@@ -81,7 +82,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 		return pg.asMap(p);
 	}
 
-	protected LongDense.FloatVector proveVec(CachingIdProofGraph pg)
+	protected LongDense.FloatVector proveVec(CachingIdProofGraph pg, StatusLogger status)
 	{
 		LongDense.FloatVector startVec = new LongDense.FloatVector();
 		startVec.set( pg.getRootId(), SEED_WEIGHT );
@@ -102,6 +103,7 @@ public class IdPprProver extends Prover<CachingIdProofGraph> {
 			// now use the saved space as buffer next iteration
 			nextVec = tmp;
 			//System.out.println("ippr iter "+(i+1)+" size "+vec.size());
+			if (log.isInfoEnabled() && status.due(1)) log.info(Thread.currentThread()+" depth "+(i+1)+" size "+vec.size());
 		}
 
 		return vec;

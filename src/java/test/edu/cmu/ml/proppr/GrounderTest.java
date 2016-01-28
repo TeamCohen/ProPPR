@@ -34,6 +34,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 
 public class GrounderTest {
 	public static final String FACTS = "src/testcases/classifyPredict.cfacts";
@@ -109,7 +110,7 @@ public class GrounderTest {
 				new Query[] {});
 		ProofGraph pg = p.makeProofGraph(ix,apr,program,plugins);
 		State pos=null;
-		Map<State,Double> sols = p.prove(pg);
+		Map<State,Double> sols = p.prove(pg, new StatusLogger());
 		System.out.println(pg.serialize(ex));
 	}
 	

@@ -15,6 +15,7 @@ import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.LongDense;
 import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
@@ -44,10 +45,10 @@ public class PruningIdDprProver extends IdDprProver {
 	}
 
 	@Override
-	public Map<State, Double> prove(CachingIdProofGraph pg) {
+	public Map<State, Double> prove(CachingIdProofGraph pg, StatusLogger status) {
 		//System.out.println("calling Prunedpredicaterules.prove");
 		LongDense.FloatVector p = new LongDense.FloatVector();
-		prove(pg,p);
+		prove(pg,p,status);
 		if (apr.traceDepth!=0) {
 			System.out.println("== before pruning:  edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
 			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,p));
