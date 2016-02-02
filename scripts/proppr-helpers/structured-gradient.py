@@ -19,7 +19,8 @@ MAX_WEIGHT_RATIO = 0
 # parameter for iterativeStucturedGradient: number of epochs of SGD
 # to perform before computing gradient
 
-def NUM_EPOCHS_AT_ROUND_I(i): return i+1
+def NUM_EPOCHS_AT_ROUND_I(i): return i
+# first time (i=0) should get raw untrained gradient [kmm]
 
 def lift(src,dst,opts):
     """Convert arity-two facts P(X,Y) to second-order representation rel(P,X,Y)."""
@@ -179,7 +180,7 @@ def stucturedGradient(src,dst,opts):
 
     #store gradient in a temp file
     gradientFile = _makeOutput(opts,exampleStem+'.gradient')
-    invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','1')
+    invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(0)))
 
     #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
     gradientToRules(gradientFile, learnedRuleFile, {'--lhs':'interp','--rhs':'rel'})
@@ -262,12 +263,14 @@ def _catfile(fileName,msg):
     print msg
     print '+------------------------------'
     k = 0
-    for line in open(fileName):
-        print ' |',line,
-        k += 1
-        if k>MAX_FILE_LINES_TO_ECHO:
-            print ' | ...'
-            break
+    with open(fileName) as f:
+        for line in f:
+            if line.startswith("#"): continue # skip comments [kmm]
+            print ' |',line,
+            k += 1
+            if k>MAX_FILE_LINES_TO_ECHO:
+                print ' | ...'
+                break
     print '+------------------------------'
 
 def _makeOutput(opts,filename):

@@ -11,7 +11,7 @@ toy:
 	proppr compile textcat.ppr
 	proppr set --programFiles textcat.wam:toylabels.cfacts:toycorpus.graph
 	proppr ground toytrain
-	proppr train toytrain --epochs 4 --srw ppr:sched=local:eta=10
+	proppr train toytrain
 	proppr answer toytest --params toytrain.params 
 	proppr eval toytest --metric acc2
 	proppr answer toytrain --params toytrain.params 
