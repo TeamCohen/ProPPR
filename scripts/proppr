@@ -173,7 +173,8 @@ def doSLSubcommand(o,subcommand):
       backgroundFile = getFile(backgroundFile,o)
       #output and tmp files
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned1.ppr'),o)
-      invokeHelper(o,'structured-gradient.py',[],'--com','sg-train',
+      invokeHelper(o,'structured-gradient.py',[],
+                   '--com','sg-train',
                    '--src',exampleFile,'--dst',learnedRuleFile,
                    '--src2',backgroundFile,'--stem',exampleStem)
       logging.info('Created rule file ' + learnedRuleFile)
@@ -209,7 +210,10 @@ shortHelpMsgSL['sl-train'] = """ INPUT1.examples INPUT2.cfacts [OUTPUT.ppr] --nu
          Also creates a number of intermediate files for each iteration. This is the iterated structural gradient algorithm."""
 shortHelpMsgSL['sl-tune'] = ' INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.params]: do parameter-tuning on a ruleset learned by sl-train or sl-train1'
 shortHelpMsgSL['sl-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTPUT.solutions.txt]: given 2nd-order examples and background facts, test a learned rules file.
-         One expected training/test sequence is: proppr sl-train1 train.examples train.cfacts; proppr sl-answer1 train1 train.examples train.cfacts; proppr eval test
+         One expected training/test sequence is: 
+          $ proppr sl-train1 train.examples train.cfacts
+          $ proppr sl-answer train.examples train.cfacts train-learned1.ppr
+          $ proppr eval train
          where train.examples, train.cfacts are 2nd-order examples and facts"""
 
 def doHelp(o):

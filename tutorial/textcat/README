@@ -19,8 +19,7 @@ If you haven't already,
 & then if you're using a new shell,
     
     $ cd ProPPR
-    $ export PROPPR=`pwd`
-    $ export PATH=$PATH:$PROPPR/scripts
+    $ . init.sh
     
 We'll be working out of the `tutorials/textcat` directory.
 
@@ -54,14 +53,14 @@ And the following categories:
     neg
     pos
 
-We're going to list each category as a *1-ary* relation. '1-ary' means the relation has 1 argument, or variable, other than the relation name.
+We're going to list each category as a *1-ary* relation called `isLabel`. '1-ary' means the relation has 1 argument, or variable, other than the relation name.
 
     isLabel neg
     isLabel pos
 
-We've stored this data in a tab-delimited file and called it `toylabels.cfacts`. The *.cfacts format is the most flexible, because it can handle relations with any number of arguments, but that means it's also the least efficient memory-wise.
+We've stored this data in a tab-delimited file and called it `toylabels.cfacts`. The *.cfacts format is the most flexible, because it can handle relations with any number of arguments. That means it's also the least efficient memory-wise, but for this application, we don't care about that.
 
-For the documents, we're going to associate the document name with each of the words it contains using a *2-ary* or *binary* relation (so, 2 arguments):
+For the documents, we're going to associate the document name with each of the words it contains using a *2-ary* or *binary* relation (so, 2 arguments) called `hasWord`:
 
     hasWord train00001	a
     hasWord train00001	pricy
@@ -78,7 +77,7 @@ Binary relations are very common and very useful, because you can think of them 
 
 But! While storing the bag of words for each document gets us a lot, it doesn't quite capture all the information we know about our corpus. For example, the word 'a' is very common, and doesn't tell us much about a document, while the word 'pricy' tells us much more. To help express this intuition, we're going to move from an unweighted directed graph to a weighted directed graph, and make the weight of each edge the TF/IDF of the word:
 
-    hasWord train00001	a       0.0589
+    hasWord	train00001	a       0.0589
     hasWord	train00001	house	0.5005
     hasWord	train00001	pricy	0.5005
     hasWord	train00001	doll	0.7040
@@ -89,7 +88,7 @@ But! While storing the bag of words for each document gets us a lot, it doesn't 
     hasWord	train00002	red     0.2572
     ...
 
-Since *.graph files always contain binary facts, ProPPR knows that the third field of each line represents an edge weight. ProPPR supports adding weights to nonbinary relations too, but that's another tutorial.
+Since *.graph files always contain binary facts, ProPPR knows that the third field of each line represents an edge weight. ProPPR supports adding weights to nonbinary relations too, but that's a topic for another tutorial.
 
 Now we have two database files: `toylabels.cfacts` and `toycorpus.graph`.
 
@@ -97,7 +96,7 @@ Now we have two database files: `toylabels.cfacts` and `toycorpus.graph`.
 
 A ProPPR program is a logic program that outlines how queries should be answered using facts in the database. We use an annotated Prolog syntax that allows us to attach features to each rule. When the program is run on a query, the resulting *proof graph* is made up of logical states, with each edge representing a rule application or database lookup, starting with the query state and ending with solution states. For now, let's look at a program for doing text classification of a document. 
 
-We want to answer queries that take the form `predict(Document,Label)`. Just like the facts in the database, each query is a relation consisting of a name and a set of arguments. Unlike the facts in the database, at query time some of the arguments ('Label' in this case) will be *ungrounded* -- that is, they won't have a value attached. This type of relation is called a *goal*. In ProPPR, just like in Prolog, an argument starting with an uppercase letter is considered a variable, while arguments starting with a lowercase letter are constants. You'll notice that in our database, all the arguments start with lowercase letters -- that's on purpose; only facts -- completely grounded goals -- can be in the database. In our program, most of the arguments will start with uppercase letters, with each variable taking on appropriate values based on the query being executed.
+We want to answer queries that take the form `predict(Document,Label)`. Just like the facts in the database, each query is a relation consisting of a name and a set of arguments. Unlike the facts in the database, at query time some of the arguments ('Label' in this case) will be *ungrounded* -- that is, they won't have a value attached. This type of relation is called a *goal*. In ProPPR, just like in Prolog, an argument starting with an uppercase letter is considered a variable, while arguments starting with a lowercase letter are constants. You'll notice that in our database, all the arguments start with lowercase letters -- that's on purpose; only facts -- completely grounded goals -- can be in the database. In our program, most of the arguments will start with uppercase letters, with each variable taking on appropriate values during the execution of the query.
 
 Let's take a look at the program in `textcat.ppr`:
 
@@ -195,11 +194,13 @@ Now if we look back at the program, hopefully it will make a bit more sense:
     predict(Document,Label) :- isLabel(Label),ab_classify(Document,Label).
     ab_classify(Document,Label) :- { f#(Word,Label,Weight) : hasWord#(Document,Word,Weight) }.
 
-All it does is generate a feature for every word-label pairing relevant to a document, and uses the graph structure to make the solution state for a particular labeling dependent on the relevant features. ProPPR uses Personalized PageRank(random-walk-with-reset) to score each solution, starting with a unit weight on the query node and filtering through the features on each edge of the graph until it reaches the solutions. With an untrained model, this gives the weights just as you see them above. The solution scores are then normalized to show a relative ranking of just the solution nodes. 
+All it does is generate a feature for every word-label pairing relevant to a document, and uses the graph structure to make the solution state for a particular labeling dependent on the relevant features. ProPPR uses Personalized PageRank(random-walk-with-reset) to score each solution, starting with a unit weight on the query node and filtering through the features on each edge of the graph until it reaches the solutions. The solution scores are then normalized to show a relative ranking of just the solution nodes.
+
+There's a subtlety to "filtering through the features on each edge" that will be important later. For an untrained model, the *feature weights* default to 1.0. Feature weights are multiplied by the *label weights* on each edge, which are the @ numbers shown above, the combined in a perceptron/sigmoid fashion to form the actual edge weights used in the graph walk. A trained model will have non-unit feature weights, which is what lets ProPPR adjust the relative scores of the solution nodes based on the training data. We'll come back to this later when we talk about training.
 
 ### Answering queries with ProPPR
 
-First, we have to compile the program. Prolog is nice and human-readable but it's not very efficient. Thankfully, David H. D. Warren designed the Warren Abstract Machine back in the 80s. It's far more machine-friendly, and runs on a sortof Prolog bytecode. ProPPR has its own compiler, which allows us to include our special feature annotation syntax.
+First, we have to compile the program. Prolog is nice and human-readable but it's not very efficient. Thankfully, David H. D. Warren designed the Warren Abstract Machine back in the 80s. It's far more machine-friendly, and runs on a sortof Prolog bytecode. ProPPR has its own WAM compiler, which allows us to include our special feature annotation syntax.
 
     $ proppr compile textcat.ppr
     INFO:root:ProPPR v2
@@ -218,7 +219,7 @@ This setting gets saved to a file in the current directory, so you only have to 
 Next, the query file. For now, we're going to piggyback on to the list of training queries, but you really only need the first field:
 
     $ cat toytrain.examples
-    predict(train00004,Y)    -predict(train00004,neg)	+predict(train00004,pos)
+    predict(train00004,Y)	-predict(train00004,neg)	+predict(train00004,pos)
     predict(train00009,Y)	+predict(train00009,neg)	-predict(train00009,pos)
     predict(train00003,Y)	-predict(train00003,neg)	+predict(train00003,pos)
     predict(train00006,Y)	-predict(train00006,neg)	+predict(train00006,pos)
@@ -270,7 +271,7 @@ Most of the figures in the config block can be adjusted; see `proppr answer toyt
 Anyhow, what we're really concerned with is the output.
 
     $ cat toytrain.solutions.txt
-    # proved 1    predict(train00004,X1)  #v:[?].	21 msec
+    # proved 1	predict(train00004,X1)  #v:[?].	21 msec
     1	0.5	predict(train00004,neg).
     1	0.5	predict(train00004,pos).
     # proved 2	predict(train00009,X1)  #v:[?].	7 msec
@@ -281,7 +282,7 @@ Anyhow, what we're really concerned with is the output.
     1	0.5	predict(train00003,pos).
     ...
 
-Each query has a header line which is prefixed with the '#' character. This is followed by a ranked list of solutions with format rank TAB score TAB solution. Some programs generate interesting untrained output, but text categorization is not one of them. Since we're depending on trained weights to adjust the rankings of the solutions, it's not surprising that the untrained model ranks all possible solutions equally.
+Each query has a header line which is prefixed with the '#' character. This is followed by a ranked list of solutions with format rank TAB score TAB solution. Some programs generate interesting untrained output, but text categorization is not one of them. Since we're depending on trained feature weights to adjust the rankings of the solutions, it's not surprising that the untrained model ranks all possible solutions equally.
 
 ## Step 4: Training
 
@@ -295,7 +296,7 @@ Now we're going to use the other fields in the examples file. Again, that file l
 
 The first field is the query. The remaining fields are the *labels*, each prefixed with `+` (for desirable solutions) or `-` (for undesirable solutions). Here we have an unfortunate collision between directed-graphs vocabulary (where labels are on edges) and machine-learning vocabulary (where labels show ground truth, more-or-less). In the context of training, we're using the latter meaning. 
 
-ProPPR uses SGD to push the probabiliy of positive-labeled solutions to 1.0, and negative-labeled solutions to 0.0. It's important to note that ProPPR training really only adjusts the **ranking** of solutions, and not whether or not a particular solution is retrieved at all. If you're having trouble with recall, you need to adjust your program, not your training.
+The default ProPPR training machinery uses SGD to push the probability of positive-labeled solutions to 1.0, and negative-labeled solutions to 0.0. It's important to note that ProPPR training really only adjusts the **ranking** of solutions, and not whether or not a particular solution is retrieved at all. If you're having trouble with recall, you need to adjust your program, not your training.
 
 The first step of training is *grounding*. This just means converting each labeled query to a similarly labeled proof graph:
 
@@ -323,13 +324,14 @@ The first step of training is *grounding*. This just means converting each label
              APR Depth: 20
     
      INFO [Grounder] Resetting grounding statistics...
-     INFO [Grounder] executeJob: threads 1 streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
-     INFO [Grounder] Grounded 1 examples...
-     INFO [Grounder] Grounded all 11 examples
+     INFO [Grounder] Executing Multithreading job: streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
+     INFO [Grounder] Total items: 11
+     INFO [Grounder] Grounded: 11
+     INFO [Grounder] Skipped: 0 = 0 with no labeled solutions; 0 with empty graphs
      INFO [Grounder] totalPos: 11 totalNeg: 11 coveredPos: 11 coveredNeg: 11
      INFO [Grounder] For positive examples 11/11 proveable [100.0%]
      INFO [Grounder] For negative examples 11/11 proveable [100.0%]
-    Grounding time: 96
+    Grounding time: 102
     Done.
     INFO:root:grounded to toytrain.grounded
 
@@ -355,8 +357,10 @@ Next, we'll train the model:
            params file: toytrain.params
                threads: -1
                Trainer: edu.cmu.ml.proppr.CachingTrainer
-                Walker: edu.cmu.ml.proppr.learn.L2SRW
-    Squashing function: edu.cmu.ml.proppr.learn.tools.ReLU
+                Walker: edu.cmu.ml.proppr.learn.SRW
+           Regularizer: edu.cmu.ml.proppr.learn.RegularizationSchedule, edu.cmu.ml.proppr.learn.RegularizeL2
+         Loss Function: edu.cmu.ml.proppr.learn.PosNegLoss
+    Squashing function: edu.cmu.ml.proppr.learn.tools.ClippedExp
              APR Alpha: 0.1
            APR Epsilon: 1.0E-4
              APR Depth: 20
@@ -364,16 +368,25 @@ Next, we'll train the model:
      INFO [Trainer] Reading feature index from toytrain.grounded.features...
      INFO [Trainer] Training model parameters on toytrain.grounded...
      INFO [CachingTrainer] epoch 1 ...
+    avg training loss 1.7736892078474622 on 22 examples =*:reg 1.7723361398808768 : 0.001353067966585321
      INFO [CachingTrainer] Dataset size stats: 66 total nodes / max 6 / avg 5
      INFO [CachingTrainer] epoch 2 ...
+    avg training loss 1.4883297049949373 on 22 examples =*:reg 1.4847499851514903 : 0.0035797198434470174 improved by 0.2853595028525248 (*:reg 0.28758615472938653:-0.0022266518768616966)
+    pct reduction in training loss 19.173137638443862
      INFO [CachingTrainer] epoch 3 ...
+    avg training loss 1.4525252276049065 on 22 examples =*:reg 1.4483061564157926 : 0.0042190711891139055 improved by 0.03580447739003074 (*:reg 0.036443828735697625:-6.393513456668882E-4)
+    pct reduction in training loss 2.4649814481411347
      INFO [CachingTrainer] epoch 4 ...
+    avg training loss 1.4377846624507475 on 22 examples =*:reg 1.4332594473654234 : 0.004525215085324123 improved by 0.014740565154158983 (*:reg 0.0150467090503692:-3.061438962102172E-4)
+    pct reduction in training loss 1.0252275976454805
      INFO [CachingTrainer] epoch 5 ...
-     INFO [CachingTrainer] Reading: 5 Parsing: 14 Training: 76
-    Training time: 115
+    avg training loss 1.429735819875681 on 22 examples =*:reg 1.4250281203716453 : 0.004707699504035762 improved by 0.008048842575066516 (*:reg 0.008231326993778154:-1.8248441871163926E-4)
+    pct reduction in training loss 0.5629601261417918
+     INFO [CachingTrainer] Reading: 5 Parsing: 13 Training: 81
+    Training time: 108
      INFO [Trainer] Saving parameters to toytrain.params...
 
-All those messages are basically what they say they are -- the default number of training epochs is 5, but you can set it to whatever you want using `--epochs`, or turn on adaptive convergence detection using `--traceLosses`.
+All those messages are basically what they say they are -- the default maximum number of training epochs is 5, but you can set it to whatever you want using `--epochs`. We use an adaptive trainer by default, which will stop training when it notices the reduction in loss has leveled out, so it's okay to be generous with the number of epochs.
 
 Let's get a feel for the results:
 
@@ -389,7 +402,7 @@ Let's get a feel for the results:
     f(truck,pos)	1.11114
     f(sports,pos)	1.11113
 
-Features with a high trained weight are considered the most useful for a positively labeled solution, so this looks pretty good -- lots of fairly meaningful words there.
+Features with a high trained weight are considered the most useful for a "+" labeled solution, so this looks pretty good -- lots of fairly meaningful words there.
 
 
 *: ...not on purpose, anyway. Because of the pagerank approximation we're using, we sometimes see changes in recall after training, because something in the way the weights changed altered the convergence criteria during the walk. Unfortunately, when this happens it's almost never helpful.
@@ -507,10 +520,12 @@ So training definitely helped on the training set. But did we overfit? To tell, 
     . micro: 1.0
     . macro: 1.0
 
-Nope -- no, we did not. Looks great!
+Nope, we did not overfit. Looks great!
 
 
 ## Vocabulary Review
+
+In order of appearance:
 
  - **fact** - a special kind of goal where all arguments refer to specific values.
  - **1-ary, 2-ary, n-ary** - the number of arguments for a relation
@@ -534,11 +549,11 @@ Nope -- no, we did not. Looks great!
  - **.examples file** - a tab-delimited file with first field the query and remaining fields +/- labeled solutions
  - **label (re:example), positive label, negative label** - a +/- labeled solution to a query
  - `proppr ground` - the command to take in a list of labeled queries and output the set of proof graphs
- - **grounded query, ground file** - a query is ground if all its variables have been bound to values according to the program. The proof graph encodes all the details of such a binding. The ground file contains all the proof graphs for a set of labeled queries, plus metadata about which nodes are labeled +/-.
- - **label coverage** - the degree to which the labeled in an examples file are actually generated by the ProPPR program
+ - **grounded query, ground file** - a query is ground if all its variables have been bound to values according to the program. The proof graph encodes the details of how such a binding was accomplished. The ground file contains all the proof graphs for a set of labeled queries, plus metadata about which nodes are labeled +/-.
+ - **label coverage** - the degree to which the labeled solutions in an examples file are actually generated by the ProPPR program
  - `proppr train` - the command to take in a ground file, perform SGD to minimize the loss of each labeled solution, and output the learned feature values.
  - **feature weight** - this weight is used everywhere the feature appears
- - **label weight** - this weight is used only on that particular edge
+ - **label weight** - this weight is used only on that particular edge, and is combined with the feature weight at inference time
  - `proppr answer --params` - the command to answer queries using a trained model
  - `proppr eval` - the command to take in a set of labeled examples and ranked solutions and compute one or more evaluation metrics
 
