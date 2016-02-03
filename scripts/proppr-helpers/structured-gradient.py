@@ -208,7 +208,7 @@ def iterativeStucturedGradient(src,dst,opts):
         if numAddedThisRound==0:
             logging.info('no new rules learned in previous iteration - stopping')
             break
-        _catfile(interpFile,'Interpreter used at round %d' % i)
+        logging.info(_catfile(interpFile,'Interpreter used at round %d' % i))
 
         #compile the interpreter
         invokeProppr(opts,'compile',interpFile)
@@ -226,7 +226,7 @@ def iterativeStucturedGradient(src,dst,opts):
         nextLearnedRuleFile = _makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
         gradientToRules(gradientFile,nextLearnedRuleFile,{'--rhs_i':'learnedPred','--rhs_e':'rel'})
         logging.info('Created rule file ' + nextLearnedRuleFile)
-        _catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
+        logging.info(_catfile(nextLearnedRuleFile,'Rules learned in round %d' % i))
 
         #add this to the list of learned rules
         learnedRuleFiles.append(nextLearnedRuleFile)
@@ -237,6 +237,10 @@ def iterativeStucturedGradient(src,dst,opts):
 
 def _getResourceFile(opts,filename):
     if '--n' not in opts: #not dry run
+        if not os.access(filename,os.W_OK):
+            if os.access(filename,os.R_OK):
+                logging.warn("Can't update %s, running with existing copy" % filename)
+                return filename
         src = os.path.join( '%s/scripts/proppr-helpers/%s' % (os.environ['PROPPR'], filename))
         dst = filename
         fp = open(dst,'w')
@@ -261,17 +265,18 @@ def _appendUniqLines(inputs,output):
 def _catfile(fileName,msg):
     """Print out a created file - for  debugging"""
     print msg
-    print '+------------------------------'
+    ret '+------------------------------\n'
     k = 0
     with open(fileName) as f:
         for line in f:
             if line.startswith("#"): continue # skip comments [kmm]
-            print ' |',line,
+            ret += ' |',line,
             k += 1
             if k>MAX_FILE_LINES_TO_ECHO:
-                print ' | ...'
+                ret += ' | ...\n'
                 break
-    print '+------------------------------'
+    ret += '+------------------------------'
+    return ret
 
 def _makeOutput(opts,filename):
    """Create an output filename with the requested filename, in the -C directory if requested."""
@@ -281,15 +286,15 @@ def _makeOutput(opts,filename):
    elif filename.startswith(outdir): 
        return filename
    else:
-       os.path.join(outdir,filename)
+       return os.path.join(outdir,filename)
 
 def invokeProppr(opts,*args):
     procArgs = ['%s/scripts/proppr' % os.environ['PROPPR']]
     #deal with proppr's global options
     if '--C' in opts:
-        procArgs.extend(['--C', optdict['--C']])
+        procArgs.extend(['-C'+optdict['--C']])
     if '--n' in optdict:
-        procArgs.extend(['--n'])
+        procArgs.extend(['-n'])
     procArgs.extend(args)
     procArgs.extend(opts['PROPPR_ARGS'])
     if '--n' not in opts: #not dry run
