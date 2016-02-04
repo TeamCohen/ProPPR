@@ -248,7 +248,7 @@ def stemExt(fileName,expectedExtension):
       return (fileName,fileName+expectedExtension)
 
 def invokeMyself(o,*args):
-   print 'invokeMyself',o,args
+   logging.debug( 'invokeMyself %s %s' % (str(o),str(args)) )
    procArgs = ['%s/scripts/proppr' % getRoot()]
    if 'out' in o and o['out']:
       procArgs.append('-C'+o['out'])
@@ -277,14 +277,14 @@ def invokeHelper(o,main,helperOptions,*mainProgArgs):
    root = getRoot()
    helperFile = '%s/scripts/proppr-helpers/%s' % (root,main)
    globalPropprOpts = []
-   if o['out']: globalPropprOpts.append('--C'+o['out'])
+   if o['out']: globalPropprOpts.extend(['--C',o['out']])
    if o['dryRun']: globalPropprOpts.append('--n')
    helperArgs,otherArgs = _splitArgs(helperOptions)
    callProcess(o,['python',helperFile] + globalPropprOpts + list(mainProgArgs) + helperArgs + ['+'] + otherArgs)
 
 def _splitArgs(targetOpts):
    opts = getArgvOptions()
-   print 'splitting by',targetOpts,'opts',opts
+   logging.debug( 'splitting by %s opts %s' % (str(targetOpts),str(opts)) )
    targetArgs = []
    otherArgs = []
    for i in range(0,len(opts),2):
@@ -294,8 +294,8 @@ def _splitArgs(targetOpts):
       else:
          otherArgs.append(opts[i])
          otherArgs.append(opts[i+1])
-   print 'targetArgs',targetArgs
-   print 'otherArgs',otherArgs
+   logging.debug( 'targetArgs %s' % str(targetArgs))
+   logging.debug( 'otherArgs %s' % str(otherArgs))
    return targetArgs,otherArgs
 
 def callProcess(o,args,**kw):
