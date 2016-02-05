@@ -3,6 +3,15 @@ include Makefile.in
 TRAIN=toytrain
 VECTORS=toycorpus
 
+default:
+	@echo To run, do:
+	@echo make clean
+	@echo make init
+	@echo make proppr
+	@echo make theano
+	@echo make proppr
+	@echo ...
+
 proppr.settings:
 	proppr set --programFiles textcat.wam:toylabels.cfacts --fixedWeights theano_p* --relaxFW 1
 
@@ -20,6 +29,13 @@ proppr: ${TRAIN}.params
 	ETA=`echo "scale=4;${ETA}*0.8"|bc`; \
 	echo "ETA=$$ETA" > Makefile.in
 
+eval: pre.${TRAIN}.solutions.txt post.${TRAIN}.solutions.txt
+	rm -f $@
+	for f in $^; do\
+		echo $$f >> $@;\
+		proppr eval ${TRAIN}.examples $$f | tee -a $@;\
+	done
+
 ${VECTORS}.pkl: ${VECTORS}.graph
 	python ../graph2theano.py $^ $@
 
@@ -28,6 +44,12 @@ ${VECTORS}.pkl: ${VECTORS}.graph
 
 %.gradient: %.grounded
 	proppr gradient $< $@ --epochs 0
+
+pre.%.solutions.txt:
+	proppr answer $*.examples $@
+
+post.%.solutions.txt: ${TRAIN}.params
+	proppr answer $*.examples $@ --params $<
 
 reset:
 	mv ${TRAIN}.grounded.bak ${TRAIN}.grounded

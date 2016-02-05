@@ -142,26 +142,7 @@ def updateGroundFile(groundFile,itf,tfindex,scores):
             ntotalmod += nmod
         print "\n%d total modifications" % ntotalmod
 
-
-def train():
-    groundFile = getArg(1)
-    featureFile = groundFile+".features"
-    theanoVectors = getArg(2)
-    theanoModel = getArg(3)
-    print "Loading..."
-    (vectorIndex,vectors,targets) = (0,0,0)
-    with open(theanoVectors,'r') as f:
-        vectorIndex = cPickle.load(f)
-        vectors = cPickle.load(f)
-        targetIndex = cPickle.load(f)
-        targets = cPickle.load(f)
-    print "Training..."
-    p = pronghorn.Pronghorn(pronghorn.LogisticRegression)
-    classifier = p.train(theanoModel,vectors,T.cast(targets,'int32'))
-shortHelpMsg['train'] = ": dataset.grounded[i] theanoVectors.pkl[i] theanoModel.pkl[o]"
-action['train'] = train
-
-def update():
+def getTrainingInputs():
     groundFile = getArg(1)
     gradientFile = getArg(2)
     theanoVectors = getArg(3)
@@ -204,6 +185,18 @@ def update():
                 if y not in yindex: yindex[y] = len(yindex)
                 trainY[i] = yindex[y]
                 i+=1
+    return (theanoModel,paramsFile,dldw,trainX,trainY,tfindex,yindex)
+
+def train():
+    (theanoModel,paramsFile,dldw,trainX,trainY,tfindex,yindex) = getTrainingInputs()
+    print "Training..."
+    p = pronghorn.Pronghorn(pronghorn.LogisticRegression)
+    classifier = p.train(theanoModel,dldw,trainX,trainY)
+shortHelpMsg['train'] = ": dataset.grounded[i] theanoVectors.pkl[i] theanoModel.pkl[o]"
+action['train'] = train
+
+def update():
+    (theanoModel,paramsFile,dldw,trainX,trainY,tfindex,yindex) = getTrainingInputs()
     print "Performing 1 update to theano model in %s..." % theanoModel
     p = pronghorn.Pronghorn(pronghorn.LogisticRegression)
     classifier = p.update(theanoModel,dldw,trainX,trainY)

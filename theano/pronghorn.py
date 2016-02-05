@@ -52,7 +52,7 @@ class Model(object):
         pass
     def negative_log_likelihood_piecewise(self, y):
         pass
-    def errors(self, y):
+    def errors(self, y, dldf):
         pass
 
 
@@ -162,7 +162,7 @@ class LogisticRegression(Model):
     def negative_log_likelihood_piecewise(self, y):
         return -T.log(self.p_y_given_x)[T.arange(y.shape[0]), y]
 
-    def errors(self, y):
+    def errors(self, y, dldf):
         """Return a float representing the number of errors in the minibatch
         over the total number of examples of the minibatch ; zero one
         loss over the size of the minibatch
@@ -224,10 +224,7 @@ class SimilarityRegression(Model):
 class Pronghorn(object):
     def __init__(self,model):
         self.model = model
-    def update(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
-        """
-        adapted from logicstic_sgd.py:sgd_optimization_mnist()
-        """
+    def _setup(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
         print '... building the model'
 
         # generate symbolic variables for input (x and y represent a
@@ -252,7 +249,7 @@ class Pronghorn(object):
         # in computing the negative log likelihood of
         # the model in symbolic format
         logging.debug("dldf: %s\n%s" % (str(dldf.shape),dldf[:10]))
-        cost = T.mean( dldf * classifier.negative_log_likelihood_piecewise(y) )
+        cost = T.mean( -dldf * classifier.negative_log_likelihood_piecewise(y) )
 
         # compute the gradient of cost with respect to theta = (W,b)
         g_W = T.grad(cost=cost, wrt=classifier.W)
@@ -275,9 +272,19 @@ class Pronghorn(object):
                 y: train_set_y
             }
         )
+        return (classifier,g_W,g_b,x,y,train_model)
+    def update(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
+        """
+        adapted from logicstic_sgd.py:sgd_optimization_mnist()
+        """
+        (classifier,g_W,g_b,x,y,train_model) = self._setup(theanoModel,dldf,train_set_x,train_set_y,learning_rate)
+
+        def adjusted_errors(classifier,y,dldf):
+            return T.dot(-dldf,T.neq(classifier.y_pred,y)) + T.dot(dldf,T.eq(classifier.y_pred,y))
+        
         foo = theano.function(
             inputs=[classifier.input_data],
-            outputs=[g_W,g_b,classifier.W,classifier.b,classifier.p_y_given_x,classifier.get_input(),classifier.y_pred],
+            outputs=[g_W,g_b,classifier.W,classifier.b,classifier.p_y_given_x,classifier.get_input(),classifier.y_pred,adjusted_errors(classifier,y,dldf)],
             givens={
                 y: train_set_y
             },
@@ -287,33 +294,118 @@ class Pronghorn(object):
         # update W,b
         firstSix = (0,1,2,3,4,5,6,300,301,302,303,304,305,306)
         #logging.debug( "train_set_x: %s\n%s" % (str(train_set_x.shape),train_set_x[:3,firstSix]) )
-        (foogW,foogb,fooW,foob,foop,fooi,fooy) = foo(train_set_x)
-        logging.debug( "g_W, pre: %s\n%s" % (str(foogW.shape),foogW[:10]))
-        logging.debug( "g_b, pre: %s\n%s" % (str(foogb.shape),foogb[:10]))
+        (foogW,foogb,fooW,foob,foop,fooi,fooy,fooerr) = foo(train_set_x)
+        #logging.debug( "g_W, pre: %s\n%s" % (str(foogW.shape),foogW[:10]))
+        #logging.debug( "g_b, pre: %s\n%s" % (str(foogb.shape),foogb[:10]))
+        #logging.debug( "W,   pre: %s\n%s" % (str(fooW.shape),fooW[:10]))
         logging.debug( "p,   pre: %s\n%s" % (str(foop.shape),foop[:10]))
+        """
+What we want here is for the yp to match y where dldf is <0, and
+yp to neq y where dldf >0. This drops the overall loss (cueing off dldf)
+"""
+
         logging.debug( "yp,  pre: %s\n%s" % (str(fooy.shape),fooy[:10]))
         #logging.debug( "i,   pre: %s\n%s" % (str(fooi.shape),fooi[:3,:10]))
-        logging.debug( "err, pre: %s" % fooi)
+        #logging.debug( "input, pre: %s" % fooi)
         logging.debug( "y,   pre: %s\n%s" % (str(train_set_y.shape),train_set_y[:10]))
+        logging.debug( "loss pre: %s" % (fooerr))
         #logging.debug( "gW,  pre: %s\n%s" % (str(foob.shape),foob[:10]))
         #logging.debug( "inner input,  pre: %s\n%s" % (str(foob.shape),foob[:3,0:7]))
         avg_cost = train_model(train_set_x)
-        (foogW,foogb,fooW,foob,foop,fooi,fooy) = foo(train_set_x)
-        logging.debug( "W, post: %s\n%s" % (str(fooW.shape),fooW[:10]))
-        logging.debug( "b, post: %s\n%s" % (str(foob.shape),foob[:10]))
+        (foogW,foogb,fooW,foob,foop,fooi,fooy,fooerr) = foo(train_set_x)
+        #logging.debug( "W, post: %s\n%s" % (str(fooW.shape),fooW[:10]))
+        #logging.debug( "b, post: %s\n%s" % (str(foob.shape),foob[:10]))
         logging.debug( "p, post: %s\n%s" % (str(foop.shape),foop[:10]))
         logging.debug( "yp,post: %s\n%s" % (str(fooy.shape),fooy[:10]))
-        logging.debug( "err,post: %s" % fooi)
+        logging.debug( "loss,post: %s" % fooerr)
         # save this best model
         with open(theanoModel, 'w') as f:
             cPickle.dump(classifier, f)
+        return classifier
+    def train(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
+        validate_model = theano.function(
+            inputs=[classifier.input_data],
+            outputs=classifier.errors(y),
+            givens={
+                y: train_set_y
+            }
+        )
+        (classifier,g_W,g_b,x,y,train_model) = self._setup(theanoModel,dldf,train_set_x,train_set_y,learning_rate)
+        print '... training the model'
+        # early-stopping parameters
+        patience = 5  # look as this many examples regardless
+        patience_increase = 2  # wait this much longer when a new best is
+                                      # found
+        improvement_threshold = 0.995  # a relative improvement of this much is
+                                      # considered significant
+        validation_frequency = 1 #patience / 2
+        # go through this many
+        # minibatche before checking the network
+        # on the validation set
+        # -- validate every epoch
+
+        best_validation_loss = numpy.inf
+        test_score = 0.
+        start_time = timeit.default_timer()
+
+        done_looping = False
+        epoch = 0
+        while (epoch < n_epochs) and (not done_looping):
+            epoch = epoch + 1
+
+            # update W,b
+            avg_cost = train_model()
+            # iteration number
+            iter = (epoch - 1)
+
+            if (iter + 1) % validation_frequency == 0:
+                # compute zero-one loss on validation set
+                this_validation_loss = validate_model()
+
+                print(
+                    'epoch %i, validation error %f %%' %
+                    (
+                        epoch,
+                        this_validation_loss * 100.
+                        )
+                    )
+
+                # if we got the best validation score until now
+                if this_validation_loss < best_validation_loss:
+                    #improve patience if loss improvement is good enough
+                    if this_validation_loss < best_validation_loss *  \
+                            improvement_threshold:
+                        patience = max(patience, iter * patience_increase)
+
+                        best_validation_loss = this_validation_loss
+
+                        # save the best model
+                        with open(theanoModel, 'w') as f:
+                            cPickle.dump(classifier, f)
+
+            if patience <= iter:
+                done_looping = True
+                break
+
+        end_time = timeit.default_timer()
+        print(
+            (
+                'Optimization complete with best validation score of %f %%,'
+            )
+            % (best_validation_loss * 100.)
+        )
+        print 'The code run for %d epochs, with %f epochs/sec' % (
+            epoch, 1. * epoch / (end_time - start_time))
+        print >> sys.stderr, ('The code for file ' +
+                              os.path.split(__file__)[1] +
+                              ' ran for %.1fs' % ((end_time - start_time)))
         return classifier
 
     def score(self, xs, ys, classifier):
         y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
         score_model = theano.function(
             inputs=[y,classifier.input_data],
-            outputs=classifier.negative_log_likelihood_piecewise(y)
+            outputs=classifier.p_y_given_x[T.arange(y.shape[0]),y]
         )
         return score_model(ys,xs)
 
