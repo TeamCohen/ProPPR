@@ -17,6 +17,7 @@ import edu.cmu.ml.proppr.graph.LearningGraphBuilder;
 import edu.cmu.ml.proppr.learn.ExampleFactory.DprExampleFactory;
 import edu.cmu.ml.proppr.learn.ExampleFactory.PprExampleFactory;
 import edu.cmu.ml.proppr.learn.tools.Exp;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.MuParamVector;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
@@ -40,12 +41,12 @@ public class FiniteDifferenceTest extends RedBlueGraph {
 	}
 	public double makeLoss(SRW srw, ParamVector<String,?> paramVec, TIntDoubleMap query, int[] pos, int[] neg, ExampleFactory f) {
 		srw.clearLoss();
-		srw.accumulateGradient(paramVec, f.makeExample("gradient", brGraph, query, pos, neg), new SimpleParamVector<String>());
+		srw.accumulateGradient(paramVec, f.makeExample("gradient", brGraph, query, pos, neg), new SimpleParamVector<String>(), new StatusLogger());
 		return srw.cumulativeLoss().total();
 	}
 	public ParamVector<String,?> makeGradient(SRW srw, ParamVector<String,?> paramVec, TIntDoubleMap query, int[] pos, int[] neg, ExampleFactory f) {
 		ParamVector<String,?> grad = new SimpleParamVector<String>();
-		srw.accumulateGradient(paramVec, f.makeExample("gradient", brGraph, query, pos,neg), grad);
+		srw.accumulateGradient(paramVec, f.makeExample("gradient", brGraph, query, pos,neg), grad, new StatusLogger());
 		return grad;
 	}
 	public void test(SRW srw, ParamVector<String,?> w, ExampleFactory f) {

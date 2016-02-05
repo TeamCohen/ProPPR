@@ -19,6 +19,7 @@ import edu.cmu.ml.proppr.learn.tools.Exp;
 import edu.cmu.ml.proppr.learn.tools.ReLU;
 import edu.cmu.ml.proppr.learn.tools.SquashingFunction;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.map.TIntDoubleMap;
@@ -151,7 +152,7 @@ public class SRWTest extends RedBlueGraph {
 	
 	public ParamVector<String,?> makeGradient(SRW srw, ParamVector<String,?> paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		ParamVector<String,?> grad = new SimpleParamVector<String>();
-		srw.accumulateGradient(paramVec, factory.makeExample("gradient",brGraph, query, pos,neg), grad);
+		srw.accumulateGradient(paramVec, factory.makeExample("gradient",brGraph, query, pos,neg), grad, new StatusLogger());
 		return grad;
 	}
 	
@@ -177,12 +178,12 @@ public class SRWTest extends RedBlueGraph {
 	
 	public double makeLoss(SRW srw, ParamVector<String,?> paramVec, TIntDoubleMap query, int[] pos, int[] neg) {
 		srw.clearLoss();
-		srw.accumulateGradient(paramVec, factory.makeExample("loss",brGraph, query, pos,neg), new SimpleParamVector<String>());
+		srw.accumulateGradient(paramVec, factory.makeExample("loss",brGraph, query, pos,neg), new SimpleParamVector<String>(), new StatusLogger());
 		return srw.cumulativeLoss().total();
 	}
 	public double makeLoss(ParamVector<String,?> paramVec, PosNegRWExample example) {
 		srw.clearLoss();
-		srw.accumulateGradient(paramVec, example, new SimpleParamVector<String>());
+		srw.accumulateGradient(paramVec, example, new SimpleParamVector<String>(), new StatusLogger());
 		return srw.cumulativeLoss().total();
 	}
 	
@@ -257,7 +258,7 @@ public class SRWTest extends RedBlueGraph {
 		ParamVector<String,?> trainedParams = uniformParams.copy();
 		double preLoss = makeLoss(trainedParams, example);
 		srw.clearLoss();
-		srw.trainOnExample(trainedParams,example);
+		srw.trainOnExample(trainedParams,example, new StatusLogger());
 		double postLoss = makeLoss(trainedParams, example);
 		assertTrue(String.format("preloss %f >=? postloss %f",preLoss,postLoss), 
 				preLoss == 0 || preLoss > postLoss);

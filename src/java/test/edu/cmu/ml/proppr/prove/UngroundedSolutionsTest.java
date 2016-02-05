@@ -24,6 +24,7 @@ import edu.cmu.ml.proppr.prove.wam.plugins.LightweightGraphPlugin;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 
 
 public class UngroundedSolutionsTest {
@@ -41,7 +42,7 @@ public class UngroundedSolutionsTest {
 		StateProofGraph pg = new StateProofGraph(q,apr,program,facts);
 		Prover p = new DfsProver(apr);
 		
-		Map<State,Double> ans = p.prove(pg);
+		Map<State,Double> ans = p.prove(pg, new StatusLogger());
 
 //		Map<LogicProgramState,Double> ans = p.proveState(program, new ProPPRLogicProgramState(Goal.decompile("grandparent,-1,-2")));
 		

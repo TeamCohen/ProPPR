@@ -19,7 +19,8 @@ MAX_WEIGHT_RATIO = 0
 # parameter for iterativeStucturedGradient: number of epochs of SGD
 # to perform before computing gradient
 
-def NUM_EPOCHS_AT_ROUND_I(i): return i+1
+def NUM_EPOCHS_AT_ROUND_I(i): return i
+# first time (i=0) should get raw untrained gradient [kmm]
 
 def lift(src,dst,opts):
     """Convert arity-two facts P(X,Y) to second-order representation rel(P,X,Y)."""
@@ -179,7 +180,7 @@ def stucturedGradient(src,dst,opts):
 
     #store gradient in a temp file
     gradientFile = _makeOutput(opts,exampleStem+'.gradient')
-    invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','1')
+    invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(0)))
 
     #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
     gradientToRules(gradientFile, learnedRuleFile, {'--lhs':'interp','--rhs':'rel'})
@@ -207,7 +208,7 @@ def iterativeStucturedGradient(src,dst,opts):
         if numAddedThisRound==0:
             logging.info('no new rules learned in previous iteration - stopping')
             break
-        _catfile(interpFile,'Interpreter used at round %d' % i)
+        logging.info(_catfile(interpFile,'Interpreter used at round %d' % i))
 
         #compile the interpreter
         invokeProppr(opts,'compile',interpFile)
@@ -225,7 +226,7 @@ def iterativeStucturedGradient(src,dst,opts):
         nextLearnedRuleFile = _makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
         gradientToRules(gradientFile,nextLearnedRuleFile,{'--rhs_i':'learnedPred','--rhs_e':'rel'})
         logging.info('Created rule file ' + nextLearnedRuleFile)
-        _catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
+        logging.info(_catfile(nextLearnedRuleFile,'Rules learned in round %d' % i))
 
         #add this to the list of learned rules
         learnedRuleFiles.append(nextLearnedRuleFile)
@@ -236,6 +237,10 @@ def iterativeStucturedGradient(src,dst,opts):
 
 def _getResourceFile(opts,filename):
     if '--n' not in opts: #not dry run
+        if not os.access(filename,os.W_OK):
+            if os.access(filename,os.R_OK):
+                logging.warn("Can't update %s, running with existing copy" % filename)
+                return filename
         src = os.path.join( '%s/scripts/proppr-helpers/%s' % (os.environ['PROPPR'], filename))
         dst = filename
         fp = open(dst,'w')
@@ -260,15 +265,18 @@ def _appendUniqLines(inputs,output):
 def _catfile(fileName,msg):
     """Print out a created file - for  debugging"""
     print msg
-    print '+------------------------------'
+    ret '+------------------------------\n'
     k = 0
-    for line in open(fileName):
-        print ' |',line,
-        k += 1
-        if k>MAX_FILE_LINES_TO_ECHO:
-            print ' | ...'
-            break
-    print '+------------------------------'
+    with open(fileName) as f:
+        for line in f:
+            if line.startswith("#"): continue # skip comments [kmm]
+            ret += ' |',line,
+            k += 1
+            if k>MAX_FILE_LINES_TO_ECHO:
+                ret += ' | ...\n'
+                break
+    ret += '+------------------------------'
+    return ret
 
 def _makeOutput(opts,filename):
    """Create an output filename with the requested filename, in the -C directory if requested."""
@@ -278,15 +286,15 @@ def _makeOutput(opts,filename):
    elif filename.startswith(outdir): 
        return filename
    else:
-       os.path.join(outdir,filename)
+       return os.path.join(outdir,filename)
 
 def invokeProppr(opts,*args):
     procArgs = ['%s/scripts/proppr' % os.environ['PROPPR']]
     #deal with proppr's global options
     if '--C' in opts:
-        procArgs.extend(['--C', optdict['--C']])
+        procArgs.extend(['-C'+optdict['--C']])
     if '--n' in optdict:
-        procArgs.extend(['--n'])
+        procArgs.extend(['-n'])
     procArgs.extend(args)
     procArgs.extend(opts['PROPPR_ARGS'])
     if '--n' not in opts: #not dry run

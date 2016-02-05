@@ -1,24 +1,21 @@
-default: k_spouse.src k_spouse.eval
+default: k_spouse.src k_spouse.sg.eval
 
-%.gradient:
-	proppr compile sl.ppr
-	proppr set --programFiles sl.wam:$*.cfacts
-	proppr ground $*.examples
-	proppr gradient $*.grounded --epochs 0
+# single-iteration structure learning
+%.sg.eval:
+	proppr sl-train1 $*-train.examples $*-train.cfacts
+	proppr sl-answer $*-train.examples $*-train.cfacts $*-train-learned1.ppr
+	proppr eval $*-train | tee $@
 
-%.ppr:%-train.gradient
-	python structureLearning.py $^ > $@
-
-%.eval:%.ppr
-	proppr compile $^
-	proppr set --programFiles $*.wam:$*-train.cfacts
-	proppr answer $*-train.examples
+# iterated structure learning
+%.isg.eval:
+	proppr sl-train $*-train.examples $*-train.cfacts $*-train-isg.ppr --numIters 5
+	proppr sl-answer $*-train.examples $*-train.cfacts $*-train-isg.ppr
 	proppr eval $*-train | tee $@
 
 .SECONDARY:
 
 clean:
-	rm *.wam *.grounded* *.gradient k_*.ppr *.solutions.txt *.eval
+	rm -f *.wam *.grounded* *.gradient k_*.ppr sg-interp_*.ppr *.solutions.txt *.eval
 
 k_spouse.src:
 	grep -v -e "husband" -e "wife" kinship-train.cfacts > k_spouse-train.cfacts

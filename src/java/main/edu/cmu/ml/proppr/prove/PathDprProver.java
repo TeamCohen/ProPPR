@@ -22,6 +22,7 @@ import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.CustomConfiguration;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import gnu.trove.iterator.TObjectDoubleIterator;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.custom_hash.TObjectDoubleCustomHashMap;
@@ -159,8 +160,8 @@ public class PathDprProver extends DprProver {
 	}
 
 	@Override
-	public Map<State, Double> prove(StateProofGraph pg) {
-		Map<State,Double> ret = super.prove(pg);
+	public Map<State, Double> prove(StateProofGraph pg, StatusLogger status) {
+		Map<State,Double> ret = super.prove(pg, status);
 		
 		//after proving, print top paths for each solution
 		System.out.println("Q "+pg.getExample().getQuery().toString());
@@ -209,6 +210,6 @@ public class PathDprProver extends DprProver {
 
 		Query query = Query.parse((String) c.getCustomSetting(null));
 		StateProofGraph pg = new StateProofGraph(query,c.apr,c.program,c.plugins);
-		p.prove(pg);
+		p.prove(pg, new StatusLogger());
 	}
 }

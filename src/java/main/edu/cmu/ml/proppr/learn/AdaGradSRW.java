@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
@@ -54,7 +55,7 @@ public class AdaGradSRW extends SRW {
 	 * @param params
 	 * @param example
 	 */
-	public void trainOnExample(ParamVector<String,?> params, ParamVector<String,?> t, PosNegRWExample example) {
+	public void trainOnExample(ParamVector<String,?> params, ParamVector<String,?> t, PosNegRWExample example, StatusLogger status) {
 		log.info("Training on "+example);
 
 		if (totSqGrad == null) totSqGrad = t; 
@@ -62,7 +63,7 @@ public class AdaGradSRW extends SRW {
 		initializeFeatures(params, example.getGraph());
 		regularizer.prepareForExample(params, example.getGraph(), params);
 		load(params, example);
-		inference(params, example);
+		inference(params, example, status);
 		agd(params, example);
 	}
 

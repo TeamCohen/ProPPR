@@ -20,6 +20,7 @@ import edu.cmu.ml.proppr.learn.tools.RWExampleParser;
 import edu.cmu.ml.proppr.util.Configuration;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 import edu.cmu.ml.proppr.util.multithreading.Cleanup;
@@ -39,6 +40,7 @@ public class Diagnostic {
 	private static final Logger log = Logger.getLogger(Diagnostic.class);
 
 	public static void main(String[] args) {
+		StatusLogger status = new StatusLogger();
 		try {
 			int inputFiles = Configuration.USE_TRAIN;
 			int outputFiles = 0;
@@ -99,7 +101,7 @@ public class Diagnostic {
 							try {
 								PosNegRWExample ex = in.get();
 								log.debug("Training start "+id);
-								srw.trainOnExample(params,ex);
+								srw.trainOnExample(params,ex,status);
 								log.debug("Training done "+id);
 							} catch (InterruptedException e) {
 								e.printStackTrace(); 

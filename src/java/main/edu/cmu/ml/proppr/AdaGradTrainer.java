@@ -19,6 +19,7 @@ import edu.cmu.ml.proppr.learn.AdaGradSRW;
 import edu.cmu.ml.proppr.learn.SRW;
 import edu.cmu.ml.proppr.learn.tools.LossData;
 import edu.cmu.ml.proppr.learn.tools.StoppingCriterion;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
@@ -46,7 +47,7 @@ public class AdaGradTrainer extends Trainer {
 	}
 
 	@Override
-	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs, boolean traceLosses) {
+	public ParamVector<String,?> train(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> initialParamVec, int numEpochs) {
 		ParamVector<String,?> paramVec = this.masterLearner.setupParams(initialParamVec);
 
 		//@rck AG
@@ -63,6 +64,8 @@ public class AdaGradTrainer extends Trainer {
 		TrainingStatistics total = new TrainingStatistics();
 		StoppingCriterion stopper = new StoppingCriterion(numEpochs, this.stoppingPercent, this.stoppingEpoch);
 		boolean graphSizesStatusLog=true;
+		StatusLogger stattime = new StatusLogger();
+		status.start();
 		
 		// repeat until ready to stop
 		while (!stopper.satisified()) {
@@ -84,11 +87,11 @@ public class AdaGradTrainer extends Trainer {
 
 			// run examples
 			int id=1;
-			long start = System.currentTimeMillis();
+			stattime.start();
 			int countdown=-1; AdaGradTrainer notify = null;
 			for (String s : examples) {
 				if (log.isDebugEnabled()) log.debug("Queue size "+(workingPool.getTaskCount()-workingPool.getCompletedTaskCount()));
-				statistics.updateReadingStatistics(System.currentTimeMillis()-start);
+				statistics.updateReadingStatistics(stattime.sinceLast());
 				if (countdown>0) {
 					if (log.isDebugEnabled()) log.debug("Countdown "+countdown);
 					countdown--;
@@ -116,10 +119,12 @@ public class AdaGradTrainer extends Trainer {
 				Future<ExampleStats> trained = workingPool.submit(new AdaGradTrain(parsed, paramVec, totSqGrad, id, notify));
 				cleanPool.submit(new TraceLosses(trained, id));
 				id++;
-				start = System.currentTimeMillis();
+				stattime.tick();
+				if (log.isInfoEnabled() && status.due())
+					log.info("parsed: "+id+" trained: "+statistics.exampleSetSize);
 			}
 
-			cleanEpoch(workingPool, cleanPool, paramVec, traceLosses, stopper, id, total);
+			cleanEpoch(workingPool, cleanPool, paramVec, stopper, id, total);
 			if(graphSizesStatusLog) {
 				log.info("Dataset size stats: "+statistics.totalGraphSize+" total nodes / max "+statistics.maxGraphSize+" / avg "+(statistics.totalGraphSize / id));
 				graphSizesStatusLog = false;
@@ -131,7 +136,7 @@ public class AdaGradTrainer extends Trainer {
 		return paramVec;
 	}
 
-	public ParamVector<String,?> findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector paramVec, SimpleParamVector<String> totSqGrad) {
+	public ParamVector<String,?> findGradient(SymbolTable<String> masterFeatures, Iterable<String> examples, LearningGraphBuilder builder, ParamVector<String,?> paramVec, SimpleParamVector<String> totSqGrad) {
 		log.info("Computing gradient on cooked examples...");
 		ParamVector<String,?> sumGradient = new SimpleParamVector<String>();
 		if (paramVec==null) {
@@ -164,6 +169,7 @@ public class AdaGradTrainer extends Trainer {
 		
 		// run examples
 		int id=1;
+		status.start();
 		int countdown=-1; AdaGradTrainer notify = null;
 		for (String s : examples) {
 			long queueSize = (((ThreadPoolExecutor) gradPool).getTaskCount()-((ThreadPoolExecutor) gradPool).getCompletedTaskCount());
@@ -248,7 +254,7 @@ public class AdaGradTrainer extends Trainer {
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Training start "+this.id);
 			long start = System.currentTimeMillis();
-			((AdaGradSRW)learner).trainOnExample(paramVec, totSqGrad, ex);
+			((AdaGradSRW)learner).trainOnExample(paramVec, totSqGrad, ex, status);
 			statistics.updateTrainingStatistics(System.currentTimeMillis()-start);
 			if (log.isDebugEnabled()) log.debug("Training done "+this.id);
 
@@ -290,7 +296,7 @@ public class AdaGradTrainer extends Trainer {
 			SRW learner = learners.get(Thread.currentThread().getName());
 			if (notify != null) synchronized(notify) { notify.notify(); }
 			if (log.isDebugEnabled()) log.debug("Gradient start "+this.id);
-			((AdaGradSRW)learner).accumulateGradient(paramVec, ex, sumGradient);
+			((AdaGradSRW)learner).accumulateGradient(paramVec, ex, sumGradient, status);
 			if (log.isDebugEnabled()) log.debug("Gradient done "+this.id);
 			return new ExampleStats(1,-1); 
 			// ^^^^ this is the equivalent of k++ from before;
