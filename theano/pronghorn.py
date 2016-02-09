@@ -1,36 +1,6 @@
 """
-This tutorial introduces logistic regression using Theano and stochastic
-gradient descent.
-
-Logistic regression is a probabilistic, linear classifier. It is parametrized
-by a weight matrix :math:`W` and a bias vector :math:`b`. Classification is
-done by projecting data points onto a set of hyperplanes, the distance to
-which is used to determine a class membership probability.
-
-Mathematically, this can be written as:
-
-.. math::
-  P(Y=i|x, W,b) &= softmax_i(W x + b) \\
-                &= \frac {e^{W_i x + b_i}} {\sum_j e^{W_j x + b_j}}
-
-
-The output of the model or prediction is then done by taking the argmax of
-the vector whose i'th element is P(Y=i|x).
-
-.. math::
-
-  y_{pred} = argmax_i P(Y=i|x,W,b)
-
-
-This tutorial presents a stochastic gradient descent optimization method
-suitable for large datasets.
-
-
-References:
-
-    - textbooks: "Pattern Recognition and Machine Learning" -
-                 Christopher M. Bishop, section 4.3.2
-
+Many portions adapted from the theano MNIST logistic regression tutorial:
+    http://deeplearning.net/tutorial/logreg.html
 """
 __docformat__ = 'restructedtext en'
 
@@ -45,15 +15,91 @@ import theano.tensor as T
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
+THEANO_PREFIX = "theano_p("
+N_THEANO_PREFIX = len(THEANO_PREFIX)
+def getTheanoFeatures(featureFile):
+    ret = {}
+    iret = {}
+    with open(featureFile,'r') as f:
+        i=0
+        for line in f:
+            i+=1
+            line = line.strip()
+            x = line.find("\t")
+            if x>0: line = line[:x]
+            if line.startswith(THEANO_PREFIX):
+                ret[line] = i
+                iret[i] = line
+    return (ret,iret)
+
+def featureToArgs(f) :
+    return f[N_THEANO_PREFIX:f.index(")")].split(",")
+
+
+class InstanceData(object):
+    def __init(self,filename):
+        print "Loading vectors from %s..." % filename
+        with open(filename,'r') as f:
+            self.index = cPickle.load(f)
+            self.vectors = cPickle.load(f)
+
 class Model(object):
-    def __init__(self, **kwargs):
-        pass
-    def negative_log_likelihood(self, y):
-        pass
-    def negative_log_likelihood_piecewise(self, y):
-        pass
-    def errors(self, y, dldf):
-        pass
+    def __init__(self,filename=False):
+        self.has_trainingData = False
+        self.paramsFile=filename
+        self.dldf = T.matrix('dldf')
+    def ready(self):
+        if not self.has_trainingData: assert "load training data first"
+        if self.paramsFile:
+            self.load(self.paramsFile)
+        else:
+            self.init()
+    def load_trainingData(self,dbfile,featurefile,gradfile):
+        print "Loading features from %s..." % featurefile
+        (tf,itf) = getTheanoFeatures(featurefile)
+        self.tf = tf
+        self.M = len(tf)
+        self.db = InstanceData(dbfile)
+        self._init_trainingData()
+        self.tfindex = {}
+        i=0
+        print "Loading gradient from %s..." % gradientFile
+        with open(gradientFile,'r') as f:
+            ln = 1
+            for line in f:
+                line=line.strip()
+                if line[0] == "#": continue
+                (feature,wt) = line.split("\t")
+                if feature in self.tf:
+                    tfindex[feature] = i
+                    self.data_dldf.itemset(i,float(wt))
+                    self._build_trainingData(i,featureToArgs(feature))
+                    i+=1
+        self.has_trainingData = True
+    def _init_trainingData(self):
+        self.data_dldf = numpy.zeros(self.M,dtype=theano.config.floatX)
+    def trainingFunction(self,index):
+        return theano.function(
+            inputs=[index],
+            outputs=self._outputs(),
+            updates=self._updates(),
+            givens=self._givens(index)
+            )
+    def _load(self,filename):
+        # this may go poorly
+        raise NotImplementedError()
+    def _init(self):
+        raise NotImplementedError()
+    def save(self,filename):
+        raise NotImplementedError()
+    def _build_trainingData(self,i,args):
+        raise NotImplementedError()
+    def _outputs(self):
+        raise NotImplementedError()
+    def _updates(self):
+        raise NotImplementedError()
+    def _givens(self,index):
+        raise NotImplementedError()
 
 
 class LogisticRegression(Model):
@@ -67,28 +113,21 @@ class LogisticRegression(Model):
     Adapted from the theano MNIST logistic regression tutorial:
     http://deeplearning.net/tutorial/logreg.html
     """
-
-    def __init__(self, input_data, n_in, n_out, **kwargs):
-        """ Initialize the parameters of the logistic regression
-
-        :type input_data: theano.tensor.TensorType
-        :param input_data: symbolic variable that describes the input of the
-                      architecture (one minibatch)
-
-        :type n_in: int
-        :param n_in: number of input units, the dimension of the space in
-                     which the datapoints lie
-
-        :type n_out: int
-        :param n_out: number of output units, the dimension of the space in
-                      which the labels lie
-
-        """
-        # start-snippet-1
-        # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
+    
+    def __init__(self,**kwargs):
+        super(LogisticRegression,self).__init__(**kwargs)
+        self.x = T.matrix('x')
+        self.y = T.ivector('y')
+    def _load(self,filename):
+        with open(filename,'r') as f:
+            self.W = cPickle.load(f)
+            self.b = cPickle.load(f)
+        self._setup()
+    def _init(self):
+        # initialize with 0 the weights W as a matrix of shape (vectorsize, #labels)
         self.W = theano.shared(
             value=numpy.zeros(
-                (n_in, n_out),
+                (self.N, len(self.yindex)),
                 dtype=theano.config.floatX
             ),
             name='W',
@@ -97,13 +136,14 @@ class LogisticRegression(Model):
         # initialize the biases b as a vector of n_out 0s
         self.b = theano.shared(
             value=numpy.zeros(
-                (n_out,),
+                (len(self.yindex),),
                 dtype=theano.config.floatX
             ),
             name='b',
             borrow=True
         )
-
+        self._setup()
+    def _setup(self):
         # symbolic expression for computing the matrix of class-membership
         # probabilities
         # Where:
@@ -112,24 +152,56 @@ class LogisticRegression(Model):
         # x is a matrix where row-j  represents input training sample-j
         # b is a vector where element-k represent the free parameter of
         # hyperplane-k
-        self.p_y_given_x = T.nnet.softmax(T.dot(input_data, self.W) + self.b)
+        self.p_y_given_x = T.nnet.softmax(T.dot(self.x, self.W) + self.b)
 
         # symbolic description of how to compute prediction as class whose
         # probability is maximal
         self.y_pred = T.argmax(self.p_y_given_x, axis=1)
-        # end-snippet-1
 
         # parameters of the model
         self.params = [self.W, self.b]
+        
+        self.cost = T.mean( -self.dldf * self.negative_log_likelihood() )
+        g_W = T.grad(cost=cost, wrt=self.W)
+        g_b = T.grad(cost=cost, wrt=self.b)
 
-        # keep track of model input
-        self.input_data = input_data
-
-    def get_input(self):
-        return self.input_data
-    def negative_log_likelihood(self, y):
-        """Return the mean of the negative log-likelihood of the prediction
-        of this model under a given target distribution.
+        # specify how to update the parameters of the model as a list of
+        # (variable, update expression) pairs.
+        self.updates = [(self.W, self.W - learning_rate * g_W),
+                   (self.b, self.b - learning_rate * g_b)]
+    def save(self,filename):
+        with open(filename,'w') as f:
+            cPickle.save(self.W,f)
+            cPickle.save(self.b,f)
+    def _init_trainingData(self):
+        super(LogisticRegression,self)._init_trainingData()
+        self.N=self.db.vectors.shape[1]
+        self.data_trainX = numpy.zeros( (self.M,N),dtype=theano.config.floatX )
+        self.data_trainY = numpy.zeros( self.M,dtype='int32' )
+        self.yindex = {}
+    def _build_trainingData(self,i,args):
+        (x,y) = args
+        self.data_trainX[i,:] = self.db.vectors[self.db.vectorIndex[x],:]
+        if y not in self.yindex: self.yindex[y] = len(self.yindex)
+        self.data_trainY[i] = self.yindex[y]
+    def _outputs(self):
+        return [
+            -(
+                T.dot(-self.dldf, T.neq(self.y_pred,self.y)) + 
+                T.dot( self.dldf, T.eq( self.y_pred,self.y))
+                )
+             ]
+    def _updates(self):
+        return self.updates
+    def _givens(self,index):
+        return {
+            'y':self.data_trainY,
+            'x':self.data_trainX
+            }
+    ######################
+    def negative_log_likelihood(self):
+        """Return the negative log-likelihood of the prediction
+        of this model under the target distribution.
 
         .. math::
 
@@ -138,14 +210,7 @@ class LogisticRegression(Model):
                 \log(P(Y=y^{(i)}|x^{(i)}, W,b)) \\
             \ell (\theta=\{W,b\}, \mathcal{D})
 
-        :type y: theano.tensor.TensorType
-        :param y: corresponds to a vector that gives for each example the
-                  correct label
-
-        Note: we use the mean instead of the sum so that
-              the learning rate is less dependent on the batch size
         """
-        # start-snippet-2
         # y.shape[0] is (symbolically) the number of rows in y, i.e.,
         # number of examples (call it n) in the minibatch
         # T.arange(y.shape[0]) is a symbolic vector which will contain
@@ -156,42 +221,15 @@ class LogisticRegression(Model):
         # LP[n-1,y[n-1]]] and T.mean(LP[T.arange(y.shape[0]),y]) is
         # the mean (across minibatch examples) of the elements in v,
         # i.e., the mean log-likelihood across the minibatch.
-        return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
-        # end-snippet-2
-    
-    def negative_log_likelihood_piecewise(self, y):
-        return -T.log(self.p_y_given_x)[T.arange(y.shape[0]), y]
+        return -T.log(self.p_y_given_x)[T.arange(self.input_y.shape[0]), self.input_y]
 
-    def errors(self, y, dldf):
-        """Return a float representing the number of errors in the minibatch
-        over the total number of examples of the minibatch ; zero one
-        loss over the size of the minibatch
 
-        :type y: theano.tensor.TensorType
-        :param y: corresponds to a vector that gives for each example the
-                  correct label
-        """
-
-        # check if y has same dimension of y_pred
-        if y.ndim != self.y_pred.ndim:
-            raise TypeError(
-                'y should have the same shape as self.y_pred',
-                ('y', y.type, 'y_pred', self.y_pred.type)
-            )
-        # check if y is of the correct datatype
-        if y.dtype.startswith('int'):
-            # the T.neq operator returns a vector of 0s and 1s, where 1
-            # represents a mistake in prediction
-            return T.mean(T.neq(self.y_pred, y))
-        else:
-            raise NotImplementedError()
-
-class SimilarityRegression(Model):
-    def __init__(self,input_data,n_in,**kwargs):
+class SimilarityRegression(LogisticRegression):
+    def __init__(self, n_in,**kwargs):
         """ Initialize the parameters of the model
 
-        :type input: theano.tensor.TensorType
-        :param input: symbolic variable that describes the input of the
+        :type x_data: theano.tensor.TensorType
+        :param x_data: symbolic variable that describes the input of the
                       architecture (one minibatch)
 
         :type n_in: int
@@ -199,27 +237,45 @@ class SimilarityRegression(Model):
                      for the similarity of ei and ej should be composed
                      as ei_0, ei_1, ..., ei_ni, ej_0, ej_1, ..., ej_nj
         """
-        
-        self.input_data = input_data
-        self.inner_input = T.prod(
+        super(SimilarityRegression, self).__init__(n_in/2,2)
+        ox = T.matrix('ox')
+        self.outer_input_x = ox
+        self.inner_input_x = T.prod(
             T.reshape(
-                input_data,
-                (input_data.shape[0],2,n_in/2)
+                self.outer_input_x,
+                (self.outer_input_x.shape[0],2,n_in/2)
                 ),
             axis=1)
-        self.inner = LogisticRegression(self.inner_input,n_in/2,2)
-        self.W = self.inner.W
-        self.b = self.inner.b
-        self.p_y_given_x = self.inner.p_y_given_x
-        self.y_pred = self.inner.y_pred
-    def get_input(self):
-        return self.inner
-    def negative_log_likelihood(self, y):
-        return self.inner.negative_log_likelihood(y)
-    def negative_log_likelihood_piecewise(self, y):
-        return self.inner.negative_log_likelihood_piecewise(y)
-    def errors(self, y):
-        return self.inner.errors(y)
+        self.input_x = self.inner_input_x
+    def getInput(self):
+        ret = Model.getInput(self)
+        ret.append(self.outer_input_x)
+        return ret
+    # def getGivens(self):
+    #     ret = Model.getGivens(self)
+    #     ret[self.input_y] = numpy.zeros(self.outer_input_x.shape[0],dtype='int32')
+    #     return ret
+"""
+TODO: figure out how to use input vs given in theano.function.
+
+Then clarify how givens & inputs lists should be filled, and who should fill them.
+
+Re:
+http://stackoverflow.com/questions/26879157/purpose-of-given-variables-in
+"""
+    def dataTemplate(self,size,datastore):
+        """ Returns a tuple of empty input data vectors """
+        ret = super(SimilarityRegression,self).dataTemplate(size,datastore)
+        N=datastore.vectors.shape[1]
+        trainX = numpy.zeros( (size,N*2),dtype=theano.config.floatX )
+        return (trainX,)
+    def fillDataForFeature(self,i,data,datastore,feature):
+        """ Fills one row of model input data according to a ProPPR feature """
+        N=datastore.vectors.shape[1]
+        (x1,x2) = feature
+        (trainX,) = data
+        trainX[i,:N] = datastore.vectors[datastore.index[x1],:]
+        trainX[i,N:] = datastore.vectors[datastore.index[x2],:]
 
 class Pronghorn(object):
     def __init__(self,model):
@@ -229,9 +285,7 @@ class Pronghorn(object):
 
         # generate symbolic variables for input (x and y represent a
         # minibatch)
-        x = T.matrix('x')  # data, presented as word vectors
-        y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
-
+        
         # construct the logistic regression class
 
         classifier = []
@@ -241,7 +295,7 @@ class Pronghorn(object):
                 classifier = cPickle.load(f)
         else:
             nclasses = len(set(train_set_y))
-            classifier = self.model(**{'input_data':x, 'n_in':train_set_x.shape[1], 'n_out':nclasses})
+            classifier = self.model(**{'dldf':dldf, 'x_data':x, 'n_in':train_set_x.shape[1], 'n_out':nclasses})
 
         # the cost we minimize during training is 
         # dL/dz = dL/df * df/dz
@@ -255,7 +309,6 @@ class Pronghorn(object):
         g_W = T.grad(cost=cost, wrt=classifier.W)
         g_b = T.grad(cost=cost, wrt=classifier.b)
 
-        # start-snippet-3
         # specify how to update the parameters of the model as a list of
         # (variable, update expression) pairs.
         updates = [(classifier.W, classifier.W - learning_rate * g_W),
@@ -273,21 +326,19 @@ class Pronghorn(object):
             }
         )
         return (classifier,g_W,g_b,x,y,train_model)
-    def update(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
+    def update(self,theanoModel,dldf,train_set,learning_rate=0.13):
         """
         adapted from logicstic_sgd.py:sgd_optimization_mnist()
         """
-        (classifier,g_W,g_b,x,y,train_model) = self._setup(theanoModel,dldf,train_set_x,train_set_y,learning_rate)
+        (classifier,g_W,g_b,x,y,train_model) = self._setup(theanoModel,dldf,train_set,learning_rate)
 
         def adjusted_errors(classifier,y,dldf):
             return T.dot(-dldf,T.neq(classifier.y_pred,y)) + T.dot(dldf,T.eq(classifier.y_pred,y))
         
         foo = theano.function(
-            inputs=[classifier.input_data],
+            inputs=classifier.getInput(),
             outputs=[g_W,g_b,classifier.W,classifier.b,classifier.p_y_given_x,classifier.get_input(),classifier.y_pred,adjusted_errors(classifier,y,dldf)],
-            givens={
-                y: train_set_y
-            },
+            givens=classifier.getGivens(),
             on_unused_input='ignore'
         )
 
@@ -311,7 +362,7 @@ yp to neq y where dldf >0. This drops the overall loss (cueing off dldf)
         logging.debug( "loss pre: %s" % (fooerr))
         #logging.debug( "gW,  pre: %s\n%s" % (str(foob.shape),foob[:10]))
         #logging.debug( "inner input,  pre: %s\n%s" % (str(foob.shape),foob[:3,0:7]))
-        avg_cost = train_model(train_set_x)
+        avg_cost = train_model(train_set)
         (foogW,foogb,fooW,foob,foop,fooi,fooy,fooerr) = foo(train_set_x)
         #logging.debug( "W, post: %s\n%s" % (str(fooW.shape),fooW[:10]))
         #logging.debug( "b, post: %s\n%s" % (str(foob.shape),foob[:10]))
@@ -408,18 +459,5 @@ yp to neq y where dldf >0. This drops the overall loss (cueing off dldf)
             outputs=classifier.p_y_given_x[T.arange(y.shape[0]),y]
         )
         return score_model(ys,xs)
-
-    def xscore(self, xs, ys, classifier):
-        y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
-        score_model = theano.function(
-            inputs=[y,classifier.input_data],
-            outputs=classifier.negative_log_likelihood_piecewise(y)
-        )
-
-        scores = []
-        for el in ys:
-            scores.append(score_model(el*numpy.ones(vectors.shape[0],dtype='int32'),
-                                    xs))
-        return scores
 
 

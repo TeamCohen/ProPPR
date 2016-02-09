@@ -1,2 +1,2 @@
 predict(X,Y) :- isLabel(Y), ab_classify(X,Y).
-ab_classify(X,Y) :- {theano_p(Y,X)}.
+ab_classify(X,Y) :- {theano_p(X,Y)}.
