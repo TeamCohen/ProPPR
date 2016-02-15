@@ -17,6 +17,7 @@ import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 
 /** 
  * Bug: When multiple goals in a rule have the same signature, ProPPR doesn't resolve their variables properly.
@@ -33,7 +34,7 @@ public class DuplicateSignatureRuleTest {
 		ProofGraph pg = new StateProofGraph(Query.parse("canExit(steve,X)"),apr,program);
 		
 		Prover p = new TracingDfsProver(apr);
-		Map<Query,Double> result = p.solvedQueries(pg);
+		Map<Query,Double> result = p.solvedQueries(pg, new StatusLogger());
 		for (Map.Entry<Query, Double> e : result.entrySet()) {
 			System.out.println(e.getValue()+"\t"+e.getKey());
 			assertEquals("Steve not allowed to exit "+e.getKey()+"\n",

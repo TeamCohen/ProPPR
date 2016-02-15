@@ -1,0 +1,6 @@
+# 'adapter' which can be added to a bunch of mutuallly recursive
+# learnedPred rules
+
+interp(P,X,Y) :- learnedPred(P,X,Y) {fixedWeight}. 
+learnedPred(P,X,Y) :- rel(P,X,Y) {fixedWeight}.
+

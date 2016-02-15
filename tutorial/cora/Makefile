@@ -14,7 +14,7 @@ cora: cora.wam cora.graph train.examples test.examples
 	proppr eval test.examples pre.test.solutions.txt
 	proppr eval test.examples post.test.solutions.txt
 
-clean:default.clean
+clean:
 	rm -f *.wam *.solutions.txt *.grounded* *.params *.examples *.graph proppr.settings
 
 ### DATASET BUILDING

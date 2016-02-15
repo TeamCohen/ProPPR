@@ -12,6 +12,7 @@ import edu.cmu.ml.proppr.prove.wam.ProofGraph;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.LongDense;
 import edu.cmu.ml.proppr.util.math.SmoothFunction;
 
@@ -29,6 +30,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	protected final double moveProbability;
 	protected LongDense.AbstractFloatVector params=null;
 	protected IdDprProver parent=null;
+	public int completedStates = 0;
 	
 	@Override
 	public String toString() { 
@@ -78,8 +80,17 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		return params;
 	}
 
-	public Map<State, Double> prove(CachingIdProofGraph pg) {
+	public Map<State, Double> prove(CachingIdProofGraph pg, StatusLogger status) {
 		LongDense.FloatVector p = new LongDense.FloatVector();
+		prove(pg,p,status);
+		if (apr.traceDepth!=0) {
+			System.out.println("== proof graph: edges/nodes "+pg.edgeSize()+"/"+pg.nodeSize());
+			System.out.println(pg.treeView(apr.traceDepth,apr.traceRoot,weighter,p));
+		}
+		return pg.asMap(p);
+	}
+		
+	protected void prove(CachingIdProofGraph pg,LongDense.FloatVector p, StatusLogger status) {
 		LongDense.FloatVector r = new LongDense.FloatVector();
 		LongDense.AbstractFloatVector params = getFrozenParams(pg);
 		int state0 = pg.getRootId();
@@ -87,28 +98,33 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 		int numPushes = 0;
 		int numIterations = 0;
 		double iterEpsilon = 1.0;
+		this.completedStates = 0;
 		for (int pushCounter = 0; ;) {
 			iterEpsilon = Math.max(iterEpsilon/10,apr.epsilon);
-			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon,params);
+			pushCounter = this.proveState(pg,p,r,state0,0,iterEpsilon,params,status);
 			numIterations++;
-			if(log.isInfoEnabled()) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
+			if(log.isInfoEnabled() && status.due(1)) log.info(Thread.currentThread()+" iteration: "+numIterations+" pushes: "+pushCounter+" r-states: "+r.size()+" p-states: "+p.size());
 			if(iterEpsilon == apr.epsilon && pushCounter==0) break;
+			if(apr.stopEarly>=0 && this.completedStates > apr.stopEarly) {
+			    log.info("Stopping early...");
+				break;
+			}
 			numPushes += pushCounter;
 		}
-		if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
-		return pg.asMap(p);
+		//if(log.isInfoEnabled()) log.info(Thread.currentThread()+" total iterations "+numIterations+" total pushes "+numPushes);
 	}
 	
-	
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
-													 int uid, int pushCounter, double iterEpsilon,LongDense.AbstractFloatVector params) 
+													 int uid, int pushCounter, double iterEpsilon,LongDense.AbstractFloatVector params,
+													 StatusLogger status) 
 	{
-		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, params);
+		return proveState(cg, p, r, uid, pushCounter, 1, iterEpsilon, params, status);
 	}
 
 	protected int proveState(CachingIdProofGraph cg, LongDense.FloatVector p, LongDense.FloatVector r,
 													 int uid, int pushCounter, int depth, double iterEpsilon,
-													 LongDense.AbstractFloatVector params)
+													 LongDense.AbstractFloatVector params,
+													 StatusLogger status)
 	{
 
 		try {
@@ -120,7 +136,10 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 					// push this state as far as you can
 					while( r.get(uid)/deg > iterEpsilon ) {
 						double ru = r.get(uid);
-						if (log.isDebugEnabled()) log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, uid));
+						if (log.isDebugEnabled()) 
+							log.debug(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, uid));
+						else if (log.isInfoEnabled() && status.due(2)) 
+							log.info(String.format("Pushing eps %f @depth %d ru %.6f deg %d state %s", iterEpsilon, depth, ru, deg, uid));
 						
 						// p[u] += alpha * ru
 						//addToP(p,u,ru);
@@ -135,6 +154,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 							double wuv = cg.getIthWeightById(uid,i,params,this.weighter);
 							if (wuv==0) continue;
 							int vid = cg.getIthNeighborById(uid,i,this.weighter);
+							if (cg.isCompleted(vid)) this.completedStates++;
 							r.inc(vid, (1.0-apr.alpha) * moveProbability * (wuv/z) * ru);
 							if (Double.isNaN(r.get(vid))) log.debug("NaN in r at v="+vid+" wuv="+wuv+" z="+z+" ru="+ru);
 						}
@@ -159,7 +179,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 						if (vid==cg.getRootId()) continue;
 						if (0 == cg.getIthWeightById(uid,i,params,this.weighter)) continue;
 						//pushCounter = this.proveState(pg,p,r,o.child,pushCounter,depth+1,iterEpsilon);
-						pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon,params);
+						pushCounter = proveState(cg,p,r,vid,pushCounter,depth+1,iterEpsilon,params,status);
 						
 					}
 				} catch (LogicProgramException e) {

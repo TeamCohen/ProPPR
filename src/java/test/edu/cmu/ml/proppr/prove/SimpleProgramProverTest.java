@@ -24,6 +24,7 @@ import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.WamPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 
 public class SimpleProgramProverTest {
 	public static final String PROGRAM = "src/testcases/wam/simpleProgram.wam";
@@ -36,7 +37,7 @@ public class SimpleProgramProverTest {
 		System.out.println("Query: "+q.toString());
 		ProofGraph p = new StateProofGraph(q,apr,program);
 		Prover prover = new DfsProver(apr);
-		Map<String,Double> sols = prover.solutions(p);
+		Map<String,Double> sols = prover.solutions(p, new StatusLogger());
 		assertEquals(2,sols.size());
 		
 		HashMap<String,Integer> expected = new HashMap<String,Integer>();
@@ -61,7 +62,7 @@ public class SimpleProgramProverTest {
 		System.out.println("Query: "+q.toString());
 		ProofGraph p = new StateProofGraph(q,apr,program);
 		Prover prover = new DfsProver(apr);
-		Map<State,Double> sols = prover.prove(p);
+		Map<State,Double> sols = prover.prove(p, new StatusLogger());
 //		assertEquals(2,sols.size());
 		
 		HashMap<String,Integer> expected = new HashMap<String,Integer>();

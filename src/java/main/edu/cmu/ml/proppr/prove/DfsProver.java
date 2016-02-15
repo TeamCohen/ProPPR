@@ -15,6 +15,7 @@ import edu.cmu.ml.proppr.prove.wam.StateProofGraph;
 import edu.cmu.ml.proppr.prove.wam.WamInterpreter;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 /**
  * A prover with scores based on simple depth-first-search
  * @author "William Cohen <wcohen@cs.cmu.edu>"
@@ -103,8 +104,9 @@ public class DfsProver extends Prover<StateProofGraph> {
 	 * @throws LogicProgramException 
 	 */
 	protected void beforeDfs(State s, ProofGraph pg, int depth) throws LogicProgramException {}
+	
 	@Override
-	public Map<State, Double> prove(StateProofGraph pg) {
+	public Map<State, Double> prove(StateProofGraph pg, StatusLogger status) {
 		Map<State,Double>vec = new HashMap<State,Double>();
 		int i=0;
 		backtrace.start();

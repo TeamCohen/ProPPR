@@ -20,8 +20,7 @@ If you haven't already,
 & then if you're using a new shell,
     
     $ cd ProPPR
-    $ export PROPPR=`pwd`
-    $ export PATH=$PATH:$PROPPR/scripts
+    $ . init.sh
     
 We'll be working out of the `tutorials/labelprop` directory.
 
@@ -30,12 +29,13 @@ We'll be working out of the `tutorials/labelprop` directory.
 We'll be building a ProPPR dataset to classify documents in a semi-supervised fashion using a method similar to Lin & Cohen's MultiRankWalk method, *Semi-Supervised Classification of Network Data Using Very Few Labels* in ASONAM-2010. We've selected a small number of labeled examples to use as seeds for each class, and we want to propagate those labels to neighboring documents in a bipartite document-word graph.
 
 This dataset will not require training; we're just using ProPPR to do the propagation.
+
 ## Step 2: Building the database
 
 We'll start with the same document set we used for the `textcat` tutorial:
 
-    train00001    a pricy doll house
-    train00002    a little red fire truck
+    train00001	a pricy doll house
+    train00002	a little red fire truck
     train00003	a red wagon
     train00004	a pricy red sports car
     train00005	punk queen barbie and ken
@@ -43,9 +43,9 @@ We'll start with the same document set we used for the `textcat` tutorial:
     
 Except this time we want to define a relation 'edge' which connects documents to their words in both directions:
 
-    edge    train00001	a
+    edge	train00001	a
     edge	a	train00001
-    edge    train00001	pricy
+    edge	train00001	pricy
     edge	pricy	train00001
     edge	train00001	doll
     edge	doll	train00001
@@ -55,9 +55,9 @@ Except this time we want to define a relation 'edge' which connects documents to
 
 Since the edge from a word to the documents that contain it will already have a fanout of the document frequency of that word, we don't need the full TF-IDF and can just use the term frequency as the edge weight:
 
-    edge    train00001	a	1
+    edge	train00001	a	1
     edge	a	train00001	1
-    edge    train00001	pricy	1
+    edge	train00001	pricy	1
     edge	pricy	train00001	1
     edge	train00001	doll	1
     edge	doll	train00001	1
@@ -69,7 +69,7 @@ We've stored that data in a file called `toyedges.graph`.
 
 We'll use our training examples as seeds, and store them as facts:
 
-    seed    pos	train00001
+    seed	pos	train00001
     seed	pos	train00002
     seed	pos	train00003
     seed	pos	train00004
@@ -103,7 +103,7 @@ This formulation is very intuitive, but has problems, which we'll see in a momen
 
 We'll use our testing examples as queries for this dataset, but since we flipped the variable order for `predict`, we end up with one example per class that just lists all the documents that should be there with a `+` and all the documents that shouldn't be there with a `-`:
 
-    predict(neg,X)    -predict(neg,test00004)	+predict(neg,test00007)	-predict(neg,test00001)	-predict(neg,test00003)	+predict(neg,test00005)	-predict(neg,test00002)	+predict(neg,test00006)
+    predict(neg,X)	-predict(neg,test00004)	+predict(neg,test00007)	-predict(neg,test00001)	-predict(neg,test00003)	+predict(neg,test00005)	-predict(neg,test00002)	+predict(neg,test00006)
     predict(pos,X)	+predict(pos,test00004)	-predict(pos,test00007)	+predict(pos,test00001)	+predict(pos,test00003)	-predict(pos,test00005)	+predict(pos,test00002)	-predict(pos,test00006)
 
 We've called that file `toytest.examples`.
@@ -133,15 +133,14 @@ And we can ground our examples. We're grounding instead of answering at this sta
              APR Depth: 20
     
      INFO [Grounder] Resetting grounding statistics...
-     INFO [Grounder] executeJob: streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
-     INFO [Grounder] 1 examples finished...
-     INFO [Grounder] Processed 2 examples
+     INFO [Grounder] Executing Multithreading job: streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
+     INFO [Grounder] Total items: 2
      INFO [Grounder] Grounded: 2
      INFO [Grounder] Skipped: 0 = 0 with no labeled solutions; 0 with empty graphs
      INFO [Grounder] totalPos: 7 totalNeg: 7 coveredPos: 7 coveredNeg: 7
      INFO [Grounder] For positive examples 7/7 proveable [100.0%]
      INFO [Grounder] For negative examples 7/7 proveable [100.0%]
-    Grounding time: 151
+    Grounding time: 165
     Done.
     INFO:root:grounded to toytest.grounded
 
@@ -328,15 +327,14 @@ Now we can generate the groundings for the new program:
              APR Depth: 20
     
      INFO [Grounder] Resetting grounding statistics...
-     INFO [Grounder] executeJob: streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
-     INFO [Grounder] 1 examples finished...
-     INFO [Grounder] Processed 2 examples
+     INFO [Grounder] Executing Multithreading job: streamer: edu.cmu.ml.proppr.examples.InferenceExampleStreamer.InferenceExampleIterator transformer: null throttle: -1
+     INFO [Grounder] Total items: 2
      INFO [Grounder] Grounded: 2
      INFO [Grounder] Skipped: 0 = 0 with no labeled solutions; 0 with empty graphs
      INFO [Grounder] totalPos: 7 totalNeg: 7 coveredPos: 7 coveredNeg: 3
      INFO [Grounder] For positive examples 7/7 proveable [100.0%]
      INFO [Grounder] For negative examples 3/7 proveable [42.857142857142854%]
-    Grounding time: 128
+    Grounding time: 138
     Done.
     INFO:root:grounded to toytest.grounded
 
@@ -440,9 +438,9 @@ Now that we like our program better, we can finally get around to running the sy
              APR Depth: 20
     
      INFO [QueryAnswerer] Running queries from toytest.examples; saving results to toytest.solutions.txt
-     INFO [QueryAnswerer] executeJob: streamer: edu.cmu.ml.proppr.QueryAnswerer.QueryStreamer transformer: null throttle: -1
-     INFO [QueryAnswerer] 1 examples finished...
-    Query-answering time: 119
+     INFO [QueryAnswerer] Executing Multithreading job: streamer: edu.cmu.ml.proppr.QueryAnswerer.QueryStreamer transformer: null throttle: -1
+     INFO [QueryAnswerer] Total items: 2
+    Query-answering time: 130
     INFO:root:answers in toytest.solutions.txt
 
 All looks well there.

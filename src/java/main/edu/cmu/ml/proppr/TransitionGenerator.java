@@ -31,6 +31,7 @@ import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
@@ -70,7 +71,7 @@ public class TransitionGenerator extends Trainer {
 		} catch (IOException e) {
 			throw new IllegalArgumentException("Trouble opening output file "+transitionFile.getAbsolutePath(),e);
 		}
-		WritingCleanup cleanupGenerator = new WritingCleanup(w,log);
+		WritingCleanup cleanupGenerator = new WritingCleanup(w,log,this.status);
 		
 		workingPool = new ThreadPoolExecutor(this.nthreads,Integer.MAX_VALUE,10,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),workingThreads);
 		cleanPool = Executors.newSingleThreadExecutor(cleaningThreads);

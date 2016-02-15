@@ -58,10 +58,14 @@ public class ConcurrentSymbolTable<T> implements SymbolTable<T>
 		this(HASHING_STRATEGIES.hashCode);
 	}
 	private void init(HashingStrategy<T> strategy) {
-
 		this.hashingStrategy = strategy==null? new DefaultHashingStrategy<T>() : strategy;
 	}
 	
+	public HashingStrategy<T> getHashingStrategy() 
+	{
+		return hashingStrategy;
+	}
+
 	private void putSymbol(Object h,int id) {
 //		symbol2Id.put(h,id);
 		if (!symbol2Id.containsKey(h)) {

@@ -1,25 +1,31 @@
 #!/usr/bin/perl
 
-my $cookedFile=shift;
+my $groundedFile=shift;
 my $keyFile=shift;
-defined($keyFile) or die "Usage:\n\ttrainOrTest.examples.cooked trainOrTest.examples.graphKey > query_feature_src_dst.txt\n";
+defined($keyFile) or die "Usage:\n\ttrainOrTest.examples.grounded trainOrTest.examples.graphKey > query_feature_src_dst.txt\n";
 
-open(my $cF,"<$cookedFile") or die "Couldn't open file $cookedFile for reading:\n$!\n";
+open(my $cF,"<$groundedFile") or die "Couldn't open file $groundedFile for reading:\n$!\n";
+open(my $fF,"<${groundedFile}.features") or die "Couldn't open file ${groundedFile}.features for reading:\n$!\n";
 open(my $kF,"<$keyFile") or die "Couldn't open key file $keyFile for reading:\n$!\n";
+
+my @features=(0);
+while(<$fF>) {
+	chomp;
+	push @features,$_;
+}
 
 my $c=0;
 my $k=0;
 my $kcache=<$kF> or die "End of key file reached before I could even get started\n";
 $kcache =~ s/-[0-9][0-9]*/_/;
-# for each line of the cooked file, gather all the edges by feature
+# for each line of the grounded file, gather all the edges by feature
 while(<$cF>) {
     chomp;
     $c++;
     my %edgedata; # feature -> ( [src,dst] )
     my $ne=0;
     $_=~s/-[0-9][0-9]*/_/;
-    my ($query,$foo2,$foo3,$foo4,$foo5,$foo6,$featurestr,@edges) = split("\t");
-    my @features = split(":",$featurestr);
+    my ($query,$foo2,$foo3,$foo4,$foo5,$foo6,$foo7,@edges) = split("\t");
     
     my $searchi = -1;
     foreach my $feature (@features) {
@@ -41,7 +47,7 @@ while(<$cF>) {
 	$k++;
 	chomp($key);
 	my ($kquery,$nodeid,$name) = split("\t",$key);
-	($kquery eq $query) or die "Mismatch between line $c of cooked file and line $k of key file:\n$query\n$kquery\n";
+	($kquery eq $query) or die "Mismatch between line $c of grounded file and line $k of key file:\n$query\n$kquery\n";
 	#print "$k: $nodeid -> $name\n";
 	$nodeNames[$nodeid] = $name;
 	$ne++;

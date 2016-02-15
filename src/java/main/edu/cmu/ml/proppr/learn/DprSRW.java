@@ -16,6 +16,7 @@ import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.SRWOptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.iterator.TIntIterator;
@@ -183,7 +184,7 @@ public class DprSRW extends SRW {
 	}
 	
 	@Override
-	protected void inference(ParamVector<String,?> params, PosNegRWExample example) {
+	protected void inference(ParamVector<String,?> params, PosNegRWExample example, StatusLogger status) {
 		DprExample ex = (DprExample) example;
 		
 		// startNode maps node->weight
@@ -237,7 +238,10 @@ public class DprSRW extends SRW {
 					if (log.isDebugEnabled()) log.debug("Counting "+u);
 				}
 			}
-			if (log.isDebugEnabled()) log.debug(completeCount +" of " + ex.getGraph().node_hi + " completed this pass");
+			if (log.isDebugEnabled()) 
+				log.debug(completeCount +" of " + ex.getGraph().node_hi + " completed this pass");
+			else if (log.isInfoEnabled() && status.due(3))
+				log.info(Thread.currentThread()+" inference: "+completeCount +" of " + ex.getGraph().node_hi + " completed this pass");
 		}
 		
 //		GradientComponents g = new GradientComponents();

@@ -20,6 +20,7 @@ import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 
 public class FactsPluginTest {
 	@Test
@@ -30,7 +31,7 @@ public class FactsPluginTest {
 		Query q = Query.parse("validClass(X)");
 		StateProofGraph pg = new StateProofGraph(q,apr,program,p);
 		Prover prover = new DprProver();
-		Map<String,Double> sols = prover.solutions(pg);
+		Map<String,Double> sols = prover.solutions(pg, new StatusLogger());
 		assertEquals(2,sols.size());
 	}
 

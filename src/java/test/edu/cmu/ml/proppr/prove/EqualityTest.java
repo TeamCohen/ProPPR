@@ -20,6 +20,7 @@ import edu.cmu.ml.proppr.prove.wam.Query;
 import edu.cmu.ml.proppr.prove.wam.State;
 import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.util.APROptions;
+import edu.cmu.ml.proppr.util.StatusLogger;
 
 public class EqualityTest {
 	private static final String EQUALITY_PROGRAM="src/testcases/equalityTest.wam";
@@ -29,7 +30,7 @@ public class EqualityTest {
 		WamProgram program = WamBaseProgram.load(new File(EQUALITY_PROGRAM));
 		Prover prover = new DprProver();
 		ProofGraph moral = new StateProofGraph(Query.parse("moral(X)"),new APROptions(), program);
-		Collection<Query> bobs = prover.solvedQueries(moral).keySet();
+		Collection<Query> bobs = prover.solvedQueries(moral, new StatusLogger()).keySet();
 //		Map<State,Double> ans = prover.prove(moral);
 //		ArrayList<Query> bobs = new ArrayList<Query>();
 //		for (Map.Entry<State,Double> e : ans.entrySet()) {

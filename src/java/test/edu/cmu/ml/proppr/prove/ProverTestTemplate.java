@@ -34,6 +34,7 @@ import edu.cmu.ml.proppr.prove.wam.WamBaseProgram;
 import edu.cmu.ml.proppr.prove.wam.plugins.FactsPlugin;
 import edu.cmu.ml.proppr.util.APROptions;
 import edu.cmu.ml.proppr.util.SimpleSymbolTable;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 
 public abstract class ProverTestTemplate {
@@ -69,7 +70,7 @@ public abstract class ProverTestTemplate {
 		prover.setWeighter(w);
 
 		ProofGraph pg = prover.makeProofGraph(new InferenceExample(Query.parse("isa(elsie,X)"),null,null), apr, featureTab, lpMilk, fMilk);
-		Map<State,Double> dist = prover.prove(pg);//("isa","elsie","X"));
+		Map<State,Double> dist = prover.prove(pg, new StatusLogger());//("isa","elsie","X"));
 
 		double query=0.0;
 		double platypus=0.0;

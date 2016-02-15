@@ -1,7 +1,25 @@
 status: 
- - ippr is working
- - but proofgraph seems to be generating way too many states on ssl/toy
+ - refactored scripts/proppr to support 'helpers'
+ - made 'show.py' a helper
+ - next helper: struct-gradient.py 
+ -- sg-lift, sg-lower
+ -- sg-facts2queries
+ -- sg-prep TRAIN.cfacts 
+    -- lift the cfacts: TRAIN-o2.cfacts
+    -- convert facts to queries: r(x,y) converted to r_i(x,y): TRAIN.examples TEST.examples
+     --- decide how to use negative data - complete or sampling?
+ -- sg-train1 TRAIN-o2.cfacts TRAIN.examples [--initRules foo.ppr] [--interpRules foo.ppr]
+   -- ground
+   -- gradient
+   -- gradient->rules
 
+ -- trainSG INPUT.examples INPUT.cfacts [OUTPUT.ppr]  [--initRules foo.ppr] [--maxNewRules 20] [--maxGradient 1e-6] [--interpRules foo.ppr] [--iterations 1]
+
+ -- sl.ppr should include directives:
+
+ ##! feature "if(P,R)" == rule "interp(%(P),X,Y) :- interp(%(R),X,Y)." 
+ ...
+ ... could use some magic filtering, maybe, to get rid of the chaff?
 
 git remote -v
 origin	https://github.com/TeamCohen/ProPPR.git (fetch)

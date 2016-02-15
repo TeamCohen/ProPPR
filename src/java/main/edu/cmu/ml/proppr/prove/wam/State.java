@@ -32,8 +32,8 @@ public abstract class State {
 	protected boolean completed;
 	protected boolean failed;
 	protected LinkedList<CallStackFrame> calls;
-	protected int canon;
-	protected String canonF;
+	protected int canon;      // canonical hash code - for duplicate checking
+	protected String canonF;  // canonical format - canon is hash of this
 	/** True iff there is a constant at heap position i. */
 	public boolean hasConstantAt(int i) { return heap[i]<0; }
 	/** True iff there is a variable at heap position i. */
@@ -105,6 +105,10 @@ public abstract class State {
 		return jumpTo;
 	}
 	
+	public List<CallStackFrame> getCalls() {
+		return calls;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("state<");

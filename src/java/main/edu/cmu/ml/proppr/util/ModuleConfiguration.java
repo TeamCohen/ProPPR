@@ -25,6 +25,7 @@ import edu.cmu.ml.proppr.prove.DfsProver;
 import edu.cmu.ml.proppr.prove.DprProver;
 import edu.cmu.ml.proppr.prove.IdDprProver;
 import edu.cmu.ml.proppr.prove.IdPprProver;
+import edu.cmu.ml.proppr.prove.PruningIdDprProver;
 import edu.cmu.ml.proppr.prove.PathDprProver;
 import edu.cmu.ml.proppr.prove.PprProver;
 import edu.cmu.ml.proppr.prove.PriorityQueueProver;
@@ -42,7 +43,7 @@ public class ModuleConfiguration extends Configuration {
 	private static final String OLD_SQUASHFUNCTION_MODULE_OPTION = "weightingScheme";
 	private static final String PROVER_MODULE_OPTION = "prover";
 
-	private enum PROVERS { ippr, ppr, qpr, idpr, dpr, pdpr, dfs, tr };
+	private enum PROVERS { ippr, ppr, qpr, idpr, p_idpr, dpr, pdpr, dfs, tr };
 	private enum SQUASHFUNCTIONS { linear, sigmoid, tanh, tanh1, ReLU, LReLU, exp, clipExp };
 	private enum TRAINERS { cached, caching, streaming, adagrad };
 	private enum SRWS { ppr, dpr, adagrad }
@@ -67,7 +68,7 @@ public class ModuleConfiguration extends Configuration {
 		//modules
 		flags = modules(allFlags);
 		if(isOn(flags, USE_SQUASHFUNCTION)) { 
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(SQUASHFUNCTION_MODULE_OPTION)
 					.withArgName("w")
@@ -82,10 +83,10 @@ public class ModuleConfiguration extends Configuration {
 //							+ "LReLU (leaky ReLU)\n"
 //							+ "exp\n"
 //							+ "clipExp (clipped to e*x @x=1)")
-							.create());
+							.create()));
 		}
 		if(isOn(flags, USE_PROVER))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(PROVER_MODULE_OPTION)
 					.withArgName("class[:arg:...:arg]")
@@ -101,9 +102,9 @@ public class ModuleConfiguration extends Configuration {
 //							+ "pdpr\n"
 //							+ "dfs\n"
 //							+ "tr")
-							.create());
+							.create()));
 		if (isOn(flags, USE_GROUNDER))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(GROUNDER_MODULE_OPTION)
 					.withArgName("class[:arg]")
@@ -112,9 +113,9 @@ public class ModuleConfiguration extends Configuration {
 					.withDescription("Default: g:3\n"
 							+ "Available options:\n"
 							+ "g[:threads[:throttle]] (default threads=3,throttle=-1)")
-							.create());
+							.create()));
 		if (isOn(flags, USE_TRAINER))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(TRAINER_MODULE_OPTION)
 					.withArgName("class")
@@ -128,9 +129,9 @@ public class ModuleConfiguration extends Configuration {
 							+ "Available parameters:\n"
 							+ "pct - stopping criterion max % improvement\n"
 							+ "stableEpochs - stopping criterion")
-							.create());
+							.create()));
 		if (isOn(flags, USE_SRW))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(SRW_MODULE_OPTION)
 					.withArgName("class")
@@ -146,15 +147,15 @@ public class ModuleConfiguration extends Configuration {
 							 + "mu,eta,delta,zeta,affinityFile\n"
 							+ "Default mu=.001\n"
 							+ "Default eta=1.0")
-							.create());
+							.create()));
 		if (isOn(flags, USE_SRW))
-			options.addOption(
+			options.addOption(checkOption(
 					OptionBuilder
 					.withLongOpt(SEED_CONST_OPTION)
 					.withArgName("s")
 					.hasArg()
 					.withDescription("Seed the SRW random number generator")
-					.create());
+					.create()));
 	}
 
 	private void seed(CommandLine line) {
@@ -177,6 +178,7 @@ public class ModuleConfiguration extends Configuration {
 				this.prover = new DprProver(apr);
 			} else {
 				String[] values = line.getOptionValue(PROVER_MODULE_OPTION).split(":");
+				boolean proverSupportsPruning = false;
 				switch (PROVERS.valueOf(values[0])) {
 				case ippr:
 					this.prover = new IdPprProver(apr);
@@ -189,6 +191,11 @@ public class ModuleConfiguration extends Configuration {
 					break;
 				case idpr:
 					this.prover = new IdDprProver(apr);
+					break;
+				case p_idpr:
+					if (prunedPredicateRules==null) log.warn("option --"+PRUNEDPREDICATE_CONST_OPTION+" not set");
+					this.prover = new PruningIdDprProver(apr,prunedPredicateRules);
+					proverSupportsPruning = true;
 					break;
 				case qpr:
 					this.prover = new PriorityQueueProver(apr);
@@ -207,6 +214,8 @@ public class ModuleConfiguration extends Configuration {
 				default:
 					usageOptions(options,allFlags,"No prover definition for '"+values[0]+"'");
 				}
+				if (prunedPredicateRules!=null && !proverSupportsPruning) 
+					log.warn("option --"+PRUNEDPREDICATE_CONST_OPTION+" is ignored by this prover");
 			}
 		}
 

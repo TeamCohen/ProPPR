@@ -56,7 +56,7 @@ public class TrainerTest extends RedBlueGraph {
 	
 	public ParamVector<String,?> train() {
 		File nullFile = null;
-		return this.trainer.train(new SimpleSymbolTable<String>(), examples, new ArrayLearningGraphBuilder(), nullFile, 5, true);
+		return this.trainer.train(new SimpleSymbolTable<String>(), examples, new ArrayLearningGraphBuilder(), nullFile, 5);
 	}
 
 	@Test

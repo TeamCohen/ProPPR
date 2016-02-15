@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import edu.cmu.ml.proppr.learn.tools.LossData.LOSS;
 import edu.cmu.ml.proppr.util.Dictionary;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
 
 /**
@@ -24,7 +25,7 @@ public class PairwiseL2LossSRWTest extends SRWTest {
 		int[] neg = new int[reds.size()];  { int i=0; for (String k : reds)  neg[i++] = nodes.getId(k); }
 
 		srw.clearLoss();
-		srw.accumulateGradient(uniformParams, factory.makeExample("loss",brGraph, startVec, pos,neg), new SimpleParamVector<String>());
+		srw.accumulateGradient(uniformParams, factory.makeExample("loss",brGraph, startVec, pos,neg), new SimpleParamVector<String>(), new StatusLogger());
 		System.out.println(Dictionary.buildString(srw.cumulativeLoss().loss, new StringBuilder(),"\n").toString());
 		assertTrue("loss must be nonzero",srw.cumulativeLoss().total() - srw.cumulativeLoss().loss.get(LOSS.REGULARIZATION) > 0);
 	}

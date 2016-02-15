@@ -34,6 +34,7 @@ import edu.cmu.ml.proppr.util.Dictionary;
 import edu.cmu.ml.proppr.util.ModuleConfiguration;
 import edu.cmu.ml.proppr.util.ParamsFile;
 import edu.cmu.ml.proppr.util.ParsedFile;
+import edu.cmu.ml.proppr.util.StatusLogger;
 import edu.cmu.ml.proppr.util.SymbolTable;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.math.SimpleParamVector;
@@ -66,7 +67,9 @@ public class QueryAnswerer<P extends ProofGraph> {
 	protected int nthreads;
 	protected int numSolutions;
 	protected SymbolTable<Feature> featureTable = new ConcurrentSymbolTable<Feature>();
-public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover<P> prover, boolean normalize, int threads, int topk) {
+	protected StatusLogger status=new StatusLogger();
+	
+	public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Prover<P> prover, boolean normalize, int threads, int topk) {
 		this.apr = apr;
 		this.program = program;
 		this.plugins = plugins;
@@ -115,7 +118,7 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 	}
 
 	public Map<State,Double> getSolutions(Prover<P> prover, P pg) throws LogicProgramException {
-		return prover.prove(pg);
+		return prover.prove(pg,status);
 	}
 	public void addParams(Prover<P> prover, ParamVector<String,?> params, SquashingFunction<Goal> f) {
 		InnerProductWeighter w = InnerProductWeighter.fromParamVec(params, f); 
@@ -166,7 +169,7 @@ public QueryAnswerer(APROptions apr, WamProgram program, WamPlugin[] plugins, Pr
 
 	public void findSolutions(File queryFile, File outputFile, boolean maintainOrder) throws IOException 
 	{
-		Multithreading<Query,String> m = new Multithreading<Query,String>(log, maintainOrder);
+		Multithreading<Query,String> m = new Multithreading<Query,String>(log, status, maintainOrder);
 		m.executeJob(
 				this.nthreads, 
 				new QueryStreamer(queryFile), 
