@@ -265,7 +265,7 @@ def _appendUniqLines(inputs,output):
 def _catfile(fileName,msg):
     """Print out a created file - for  debugging"""
     print msg
-    ret '+------------------------------\n'
+    ret += '+------------------------------\n'
     k = 0
     with open(fileName) as f:
         for line in f:
