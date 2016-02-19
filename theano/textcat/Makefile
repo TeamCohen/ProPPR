@@ -1,7 +1,9 @@
 include Makefile.in
 
 TRAIN=toytrain
+TEST=toytest
 VECTORS=toycorpus
+
 
 default:
 	@echo To run, do:
@@ -11,16 +13,17 @@ default:
 	@echo make theano
 	@echo make proppr
 	@echo ...
+	@echo make eval
 
 proppr.settings:
 	proppr set --programFiles textcat.wam:toylabels.cfacts --fixedWeights theano_p* --relaxFW 1
 
-init: proppr.settings ${VECTORS}.pkl ${TRAIN}.gradient ${TRAIN}.grounded
-	python run_pronghorn.py update ${TRAIN}.grounded ${TRAIN}.gradient ${VECTORS}.pkl model.pkl
+init: proppr.settings ${TRAIN}.gradient ${VECTORS}.pkl 
+	python ../pronghorn.py update ${TRAIN}.gradient ${TRAIN}.params ${VECTORS}.pkl model.pkl
 	echo "ETA=1.0" > Makefile.in
 
 theano: ${TRAIN}.params
-	python run_pronghorn.py update ${TRAIN}.params ${TRAIN}.gradient ${VECTORS}.pkl model.pkl
+	python ../pronghorn.py update ${TRAIN}.gradient ${TRAIN}.params ${VECTORS}.pkl model.pkl
 
 proppr: ${TRAIN}.params
 	BACKUP_NUMBER=`ls ${TRAIN}.params* | wc -l`; \
@@ -29,11 +32,13 @@ proppr: ${TRAIN}.params
 	ETA=`echo "scale=4;${ETA}*0.8"|bc`; \
 	echo "ETA=$$ETA" > Makefile.in
 
-eval: pre.${TRAIN}.solutions.txt post.${TRAIN}.solutions.txt
+eval: ${TRAIN}.eval
+
+%.eval: pre.%.solutions.txt post.%.solutions.txt
 	rm -f $@
 	for f in $^; do\
 		echo $$f >> $@;\
-		proppr eval ${TRAIN}.examples $$f | tee -a $@;\
+		proppr eval $*.examples $$f | tee -a $@;\
 	done
 
 ${VECTORS}.pkl: ${VECTORS}.graph
@@ -48,15 +53,17 @@ ${VECTORS}.pkl: ${VECTORS}.graph
 pre.%.solutions.txt:
 	proppr answer $*.examples $@
 
-post.%.solutions.txt: ${TRAIN}.params
+post.%.solutions.txt: %.params
 	proppr answer $*.examples $@ --params $<
 
-reset:
-	mv ${TRAIN}.grounded.bak ${TRAIN}.grounded
-	rm -f model.pkl
+${TEST}.params: ${TEST}.grounded ${TRAIN}.params
+	cp ${TRAIN}.params $@
+	python ../pronghorn.py query ${TEST}.grounded.features $@ ${VECTORS}.pkl model.pkl
 
 clean:
-	rm -f ${TRAIN}.grounded* ${TRAIN}.gradient *.pkl ${TRAIN}.params*
+	rm -f *.grounded* ${TRAIN}.gradient *.pkl *.params* *.solutions.txt
+
+.SECONDARY:
 
 # theano:
 # 	python ../go_theano.py update toytrain.grounded toytrain.gradient toycorpus.pkl toymodel.pkl

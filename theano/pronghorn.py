@@ -7,6 +7,7 @@ __docformat__ = 'restructedtext en'
 import cPickle
 import gzip
 import os
+import shutil
 import sys
 import timeit
 import numpy
@@ -17,84 +18,152 @@ logging.basicConfig(level=logging.DEBUG)
 
 THEANO_PREFIX = "theano_p("
 N_THEANO_PREFIX = len(THEANO_PREFIX)
-def getTheanoFeatures(featureFile):
-    ret = {}
-    iret = {}
-    with open(featureFile,'r') as f:
-        i=0
-        for line in f:
-            i+=1
-            line = line.strip()
-            x = line.find("\t")
-            if x>0: line = line[:x]
-            if line.startswith(THEANO_PREFIX):
-                ret[line] = i
-                iret[i] = line
-    return (ret,iret)
+# def getTheanoFeatures(featureFile):
+#     ret = {}
+#     iret = {}
+#     with open(featureFile,'r') as f:
+#         i=0
+#         for line in f:
+#             i+=1
+#             line = line.strip()
+#             x = line.find("\t")
+#             if x>0: line = line[:x]
+#             if line.startswith(THEANO_PREFIX):
+#                 ret[line] = i
+#                 iret[i] = line
+#     return (ret,iret)
+
+def handleProPPRFeature(feature,tf):
+    if feature.startswith(THEANO_PREFIX):
+        tf[feature] = len(tf)
+        return True
+    return False
 
 def featureToArgs(f) :
     return f[N_THEANO_PREFIX:f.index(")")].split(",")
 
 
 class InstanceData(object):
-    def __init(self,filename):
-        print "Loading vectors from %s..." % filename
+    def __init__(self,filename):
+        logging.info( "Loading vectors from %s..." % filename )
         with open(filename,'r') as f:
             self.index = cPickle.load(f)
             self.vectors = cPickle.load(f)
 
 class Model(object):
-    def __init__(self,filename=False):
+    """
+    This class encodes the theano model, along with model-specific
+    utilities for loading vectors from the theano db, converting ProPPR
+    features to their appropriate theano vector, &c.
+
+    Typical use:
+
+     1. m = Model(paramsFile) # Instantiate
+     2. m.load_data(theanodbfile, propprgradientfile)
+     3. m.ready() # creates/loads model parameters according to training data
+     4. fun = m.trainingFunction()
+     5. fun(minibatch_index) # train 1 epoch
+     6. m.save()
+     
+     Base class defines the following fields:
+     
+
+     paramsFile - filename for theano model parameters
+     tf - maps feature string -> matrix row #
+     db - holds theano InstanceData
+     M - total #examples
+     batch_size - minibatch #examples
+     dldf - symbolic variable for partial gradient
+     data_dldf - numeric data for partial gradient
+     has_queryData - true if M,tf,db are loaded
+     has_trainingData - true if data_dldf is loaded
+
+    """
+    def __init__(self,filename,batch_size=-1):
         self.has_trainingData = False
+        self.has_queryData = False
         self.paramsFile=filename
-        self.dldf = T.matrix('dldf')
+        self.dldf = T.dvector('dldf')
+        self.batch_size = batch_size
+        self._init()
     def ready(self):
-        if not self.has_trainingData: assert "load training data first"
-        if self.paramsFile:
-            self.load(self.paramsFile)
+        if not self.has_queryData: assert "load data first"
+        if os.path.isfile(self.paramsFile):
+            self._load(self.paramsFile)
         else:
-            self.init()
-    def load_trainingData(self,dbfile,featurefile,gradfile):
-        print "Loading features from %s..." % featurefile
-        (tf,itf) = getTheanoFeatures(featurefile)
-        self.tf = tf
-        self.M = len(tf)
-        self.db = InstanceData(dbfile)
-        self._init_trainingData()
-        self.tfindex = {}
-        i=0
-        print "Loading gradient from %s..." % gradientFile
-        with open(gradientFile,'r') as f:
+            self._fresh()
+        if self.batch_size<0: self.batch_size = self.M
+    def load_queryData(self,dbfile,featureFile):
+        self.tf = {}
+        logging.info("Loading features from %s..." % featureFile)
+        with open(featureFile,'r') as f:
             ln = 1
             for line in f:
                 line=line.strip()
                 if line[0] == "#": continue
+                x = line.find("\t")
+                if x>0: line = line[:x]
+                handleProPPRFeature(line,self.tf)
+        self.M = len(self.tf)
+        logging.debug("Features detected: %d" % len(self.tf))
+        self.db = InstanceData(dbfile)
+        self._init_queryData()
+        for feature,fid in self.tf.iteritems():
+            self._build_queryData(fid,featureToArgs(feature))
+        self.has_queryData = True
+    def load_trainingData(self,dbfile,gradientFile):
+        self.load_queryData(dbfile,gradientFile)
+        self._init_trainingData()
+        logging.info("Loading gradient from %s..." % gradientFile)
+        with open(gradientFile,'r') as f:
+            for line in f:
+                line=line.strip()
+                if line[0] == "#": continue
                 (feature,wt) = line.split("\t")
-                if feature in self.tf:
-                    tfindex[feature] = i
-                    self.data_dldf.itemset(i,float(wt))
-                    self._build_trainingData(i,featureToArgs(feature))
-                    i+=1
+                if feature not in self.tf: continue
+                self.data_dldf.itemset(self.tf[feature],float(wt))
         self.has_trainingData = True
+    def _init_queryData(self):
+        pass
     def _init_trainingData(self):
+        logging.debug("initialized Model data")
         self.data_dldf = numpy.zeros(self.M,dtype=theano.config.floatX)
     def trainingFunction(self,index):
+        if not self.has_trainingData: assert "load data first"
         return theano.function(
             inputs=[index],
             outputs=self._outputs(),
             updates=self._updates(),
-            givens=self._givens(index)
+            givens=self._givens(index),
+            on_unused_input='ignore'
             )
+    def scoringFunction(self,index):
+        if not self.has_queryData: assert "load data first"
+        return theano.function(
+            inputs=[index],
+            outputs=self._scores(),
+            givens=self._givens(index),
+            on_unused_input='ignore'
+            )
+    def featureIndex(self):
+        if not self.has_queryData: assert "load data first"
+        return self.tf
     def _load(self,filename):
-        # this may go poorly
+        # this may go poorly?
         raise NotImplementedError()
     def _init(self):
-        raise NotImplementedError()
+        pass
+    def _fresh(self):
+        pass
     def save(self,filename):
         raise NotImplementedError()
+    def _build_queryData(self,i,args):
+        pass
     def _build_trainingData(self,i,args):
-        raise NotImplementedError()
+        pass
     def _outputs(self):
+        raise NotImplementedError()
+    def _scores(self):
         raise NotImplementedError()
     def _updates(self):
         raise NotImplementedError()
@@ -113,17 +182,21 @@ class LogisticRegression(Model):
     Adapted from the theano MNIST logistic regression tutorial:
     http://deeplearning.net/tutorial/logreg.html
     """
-    
-    def __init__(self,**kwargs):
-        super(LogisticRegression,self).__init__(**kwargs)
+    def _name(self):
+        return "LogisticRegression"
+    def _init(self):
+        super(LogisticRegression,self)._init()
         self.x = T.matrix('x')
         self.y = T.ivector('y')
+        self.learning_rate = 0.13
     def _load(self,filename):
         with open(filename,'r') as f:
+            clazz = cPickle.load(f)
+            if clazz != self._name(): assert "Saved modelType %s incompatible with current modelType %s" % (clazz,self._name())
             self.W = cPickle.load(f)
             self.b = cPickle.load(f)
         self._setup()
-    def _init(self):
+    def _fresh(self):
         # initialize with 0 the weights W as a matrix of shape (vectorsize, #labels)
         self.W = theano.shared(
             value=numpy.zeros(
@@ -160,28 +233,40 @@ class LogisticRegression(Model):
 
         # parameters of the model
         self.params = [self.W, self.b]
-        
+
+        # the cost we minimize during training is 
+        # dL/dz = dL/df * df/dz
+        # dL/df comes from ProPPR; the f in question tells us which x and y to use
+        # in computing the negative log likelihood of
+        # the model in symbolic format        
         self.cost = T.mean( -self.dldf * self.negative_log_likelihood() )
-        g_W = T.grad(cost=cost, wrt=self.W)
-        g_b = T.grad(cost=cost, wrt=self.b)
+
+        g_W = T.grad(cost=self.cost, wrt=self.W)
+        g_b = T.grad(cost=self.cost, wrt=self.b)
 
         # specify how to update the parameters of the model as a list of
         # (variable, update expression) pairs.
-        self.updates = [(self.W, self.W - learning_rate * g_W),
-                   (self.b, self.b - learning_rate * g_b)]
-    def save(self,filename):
-        with open(filename,'w') as f:
-            cPickle.save(self.W,f)
-            cPickle.save(self.b,f)
-    def _init_trainingData(self):
-        super(LogisticRegression,self)._init_trainingData()
+        self.updates = [(self.W, self.W - self.learning_rate * g_W),
+                   (self.b, self.b - self.learning_rate * g_b)]
+    def save(self):
+        with open(self.paramsFile,'w') as f:
+            cPickle.dump(self._name(),f)
+            cPickle.dump(self.W,f)
+            cPickle.dump(self.b,f)
+    def _init_queryData(self):
+        super(LogisticRegression,self)._init_queryData()
+        logging.debug("initialized LogisticRegression training data")
         self.N=self.db.vectors.shape[1]
-        self.data_trainX = numpy.zeros( (self.M,N),dtype=theano.config.floatX )
-        self.data_trainY = numpy.zeros( self.M,dtype='int32' )
+        self.data_trainX = numpy.zeros( 
+            (self.M,self.N),
+            dtype=theano.config.floatX )
+        self.data_trainY = numpy.zeros( 
+            self.M,
+            dtype='int32' )
         self.yindex = {}
-    def _build_trainingData(self,i,args):
+    def _build_queryData(self,i,args):
         (x,y) = args
-        self.data_trainX[i,:] = self.db.vectors[self.db.vectorIndex[x],:]
+        self.data_trainX[i,:] = self.db.vectors[self.db.index[x],:]
         if y not in self.yindex: self.yindex[y] = len(self.yindex)
         self.data_trainY[i] = self.yindex[y]
     def _outputs(self):
@@ -191,13 +276,38 @@ class LogisticRegression(Model):
                 T.dot( self.dldf, T.eq( self.y_pred,self.y))
                 )
              ]
+    def _scores(self):
+        return [self.p_y_given_x[T.arange(self.y.shape[0]),self.y]]
     def _updates(self):
         return self.updates
     def _givens(self,index):
-        return {
-            'y':self.data_trainY,
-            'x':self.data_trainX
+        begin = index * self.batch_size
+        end = (index+1) * self.batch_size
+        yshared = T.cast(
+                theano.shared(
+                    numpy.asarray(
+                        self.data_trainY,
+                        dtype=theano.config.floatX),
+                    borrow=True),
+                'int32')[begin:end]
+        xshared = theano.shared(
+                numpy.asarray(
+                    self.data_trainX,
+                    dtype=theano.config.floatX),
+                borrow=True)[begin:end]
+        ret = {
+            self.y:yshared,
+            self.x:xshared,
             }
+        if self.has_trainingData:
+            dshared = theano.shared(
+                numpy.asarray(
+                    self.data_dldf,
+                    dtype=theano.config.floatX),
+                borrow=True)[begin:end]
+            ret[self.dldf] = dshared
+        return ret
+            
     ######################
     def negative_log_likelihood(self):
         """Return the negative log-likelihood of the prediction
@@ -221,243 +331,190 @@ class LogisticRegression(Model):
         # LP[n-1,y[n-1]]] and T.mean(LP[T.arange(y.shape[0]),y]) is
         # the mean (across minibatch examples) of the elements in v,
         # i.e., the mean log-likelihood across the minibatch.
-        return -T.log(self.p_y_given_x)[T.arange(self.input_y.shape[0]), self.input_y]
+        return -T.log(self.p_y_given_x)[T.arange(self.y.shape[0]), self.y]
 
 
 class SimilarityRegression(LogisticRegression):
-    def __init__(self, n_in,**kwargs):
-        """ Initialize the parameters of the model
-
-        :type x_data: theano.tensor.TensorType
-        :param x_data: symbolic variable that describes the input of the
-                      architecture (one minibatch)
-
-        :type n_in: int
-        :param n_in: the length of an instance vector. instance vectors
-                     for the similarity of ei and ej should be composed
-                     as ei_0, ei_1, ..., ei_ni, ej_0, ej_1, ..., ej_nj
-        """
-        super(SimilarityRegression, self).__init__(n_in/2,2)
+    def _name(self):
+        return "SimilarityRegression"
+    def _init(self):
+        super(SimilarityRegression, self)._init()
         ox = T.matrix('ox')
-        self.outer_input_x = ox
-        self.inner_input_x = T.prod(
+        self.ox = ox
+        self.x = T.prod(
             T.reshape(
-                self.outer_input_x,
-                (self.outer_input_x.shape[0],2,n_in/2)
+                ox,
+                (ox.shape[0],2,n_in/2)
                 ),
             axis=1)
-        self.input_x = self.inner_input_x
-    def getInput(self):
-        ret = Model.getInput(self)
-        ret.append(self.outer_input_x)
-        return ret
-    # def getGivens(self):
-    #     ret = Model.getGivens(self)
-    #     ret[self.input_y] = numpy.zeros(self.outer_input_x.shape[0],dtype='int32')
-    #     return ret
-"""
-TODO: figure out how to use input vs given in theano.function.
-
-Then clarify how givens & inputs lists should be filled, and who should fill them.
-
-Re:
-http://stackoverflow.com/questions/26879157/purpose-of-given-variables-in
-"""
-    def dataTemplate(self,size,datastore):
-        """ Returns a tuple of empty input data vectors """
-        ret = super(SimilarityRegression,self).dataTemplate(size,datastore)
-        N=datastore.vectors.shape[1]
-        trainX = numpy.zeros( (size,N*2),dtype=theano.config.floatX )
-        return (trainX,)
-    def fillDataForFeature(self,i,data,datastore,feature):
-        """ Fills one row of model input data according to a ProPPR feature """
-        N=datastore.vectors.shape[1]
-        (x1,x2) = feature
-        (trainX,) = data
-        trainX[i,:N] = datastore.vectors[datastore.index[x1],:]
-        trainX[i,N:] = datastore.vectors[datastore.index[x2],:]
+    def _init_queryData(self):
+        super(LogisticRegression,self)._init_queryData() # skip LogisticRegression inputs
+        logging.debug("initialized SimilarityRegression training data")
+        self.N=self.db.vectors.shape[1]
+        self.data_trainX = numpy.zeros( 
+            (self.M,self.N*2),
+            dtype=theano.config.floatX )
+        self.data_trainY = numpy.zeros( self.M,dtype='int32' )
+        self.yindex = {}
+    def _build_queryData(self,i,args):
+        (x1,x2) = args
+        self.data_trainX[i,:self.N] = self.db.vectors[self.db.index[x1],:]
+        self.data_trainX[i,self.N:] = self.db.vectors[self.db.index[x2],:]
+        self.data_trainY[i] = 0
+    # more about givens vs inputs in theano:
+    # http://stackoverflow.com/questions/26879157/purpose-of-given-variables-in
+    def _givens(self,index):
+        foo = LogisticRegression._givens(self,index)
+        foo[self.ox]=foo[self.x]
+        del foo[self.x]
+        return foo
 
 class Pronghorn(object):
-    def __init__(self,model):
-        self.model = model
-    def _setup(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
-        print '... building the model'
-
-        # generate symbolic variables for input (x and y represent a
-        # minibatch)
-        
-        # construct the logistic regression class
-
-        classifier = []
-        if os.path.isfile(theanoModel):
-            # ...this might go poorly
-            with open(theanoModel,'r') as f:
-                classifier = cPickle.load(f)
-        else:
-            nclasses = len(set(train_set_y))
-            classifier = self.model(**{'dldf':dldf, 'x_data':x, 'n_in':train_set_x.shape[1], 'n_out':nclasses})
-
-        # the cost we minimize during training is 
-        # dL/dz = dL/df * df/dz
-        # dL/df comes from ProPPR; the f in question tells us which x and y to use
-        # in computing the negative log likelihood of
-        # the model in symbolic format
-        logging.debug("dldf: %s\n%s" % (str(dldf.shape),dldf[:10]))
-        cost = T.mean( -dldf * classifier.negative_log_likelihood_piecewise(y) )
-
-        # compute the gradient of cost with respect to theta = (W,b)
-        g_W = T.grad(cost=cost, wrt=classifier.W)
-        g_b = T.grad(cost=cost, wrt=classifier.b)
-
-        # specify how to update the parameters of the model as a list of
-        # (variable, update expression) pairs.
-        updates = [(classifier.W, classifier.W - learning_rate * g_W),
-                   (classifier.b, classifier.b - learning_rate * g_b)]
-
-        # compiling a Theano function `train_model` that returns the cost, but in
-        # the same time updates the parameter of the model based on the rules
-        # defined in `updates`
-        train_model = theano.function(
-            inputs=[classifier.input_data],
-            outputs=cost,
-            updates=updates,
-            givens={
-                y: train_set_y
-            }
-        )
-        return (classifier,g_W,g_b,x,y,train_model)
-    def update(self,theanoModel,dldf,train_set,learning_rate=0.13):
+    def __init__(self,modelType):
+        self.modelType = modelType
+    def update(self,theanoModel,db_file,dldf_file):
         """
         adapted from logicstic_sgd.py:sgd_optimization_mnist()
         """
-        (classifier,g_W,g_b,x,y,train_model) = self._setup(theanoModel,dldf,train_set,learning_rate)
+        logging.info( 'Loading the model...')
+        # construct the logistic regression class
+        self.classifier = self.modelType(theanoModel)
+        self.classifier.load_trainingData(db_file,dldf_file)
+        self.classifier.ready()
 
-        def adjusted_errors(classifier,y,dldf):
-            return T.dot(-dldf,T.neq(classifier.y_pred,y)) + T.dot(dldf,T.eq(classifier.y_pred,y))
-        
-        foo = theano.function(
-            inputs=classifier.getInput(),
-            outputs=[g_W,g_b,classifier.W,classifier.b,classifier.p_y_given_x,classifier.get_input(),classifier.y_pred,adjusted_errors(classifier,y,dldf)],
-            givens=classifier.getGivens(),
-            on_unused_input='ignore'
-        )
+        # generate symbolic variables for input (minibatch number)
+        index = T.lscalar()
+        train_model = self.classifier.trainingFunction(index)
 
-        # update W,b
-        firstSix = (0,1,2,3,4,5,6,300,301,302,303,304,305,306)
-        #logging.debug( "train_set_x: %s\n%s" % (str(train_set_x.shape),train_set_x[:3,firstSix]) )
-        (foogW,foogb,fooW,foob,foop,fooi,fooy,fooerr) = foo(train_set_x)
-        #logging.debug( "g_W, pre: %s\n%s" % (str(foogW.shape),foogW[:10]))
-        #logging.debug( "g_b, pre: %s\n%s" % (str(foogb.shape),foogb[:10]))
-        #logging.debug( "W,   pre: %s\n%s" % (str(fooW.shape),fooW[:10]))
-        logging.debug( "p,   pre: %s\n%s" % (str(foop.shape),foop[:10]))
-        """
-What we want here is for the yp to match y where dldf is <0, and
-yp to neq y where dldf >0. This drops the overall loss (cueing off dldf)
-"""
-
-        logging.debug( "yp,  pre: %s\n%s" % (str(fooy.shape),fooy[:10]))
-        #logging.debug( "i,   pre: %s\n%s" % (str(fooi.shape),fooi[:3,:10]))
-        #logging.debug( "input, pre: %s" % fooi)
-        logging.debug( "y,   pre: %s\n%s" % (str(train_set_y.shape),train_set_y[:10]))
-        logging.debug( "loss pre: %s" % (fooerr))
-        #logging.debug( "gW,  pre: %s\n%s" % (str(foob.shape),foob[:10]))
-        #logging.debug( "inner input,  pre: %s\n%s" % (str(foob.shape),foob[:3,0:7]))
-        avg_cost = train_model(train_set)
-        (foogW,foogb,fooW,foob,foop,fooi,fooy,fooerr) = foo(train_set_x)
-        #logging.debug( "W, post: %s\n%s" % (str(fooW.shape),fooW[:10]))
-        #logging.debug( "b, post: %s\n%s" % (str(foob.shape),foob[:10]))
-        logging.debug( "p, post: %s\n%s" % (str(foop.shape),foop[:10]))
-        logging.debug( "yp,post: %s\n%s" % (str(fooy.shape),fooy[:10]))
-        logging.debug( "loss,post: %s" % fooerr)
+        logging.info( "Training..." )
+        fitness = train_model(0)
+        logging.debug( "model fitness: %s" % fitness)
         # save this best model
-        with open(theanoModel, 'w') as f:
-            cPickle.dump(classifier, f)
-        return classifier
-    def train(self,theanoModel,dldf,train_set_x,train_set_y,learning_rate=0.13):
-        validate_model = theano.function(
-            inputs=[classifier.input_data],
-            outputs=classifier.errors(y),
-            givens={
-                y: train_set_y
-            }
-        )
-        (classifier,g_W,g_b,x,y,train_model) = self._setup(theanoModel,dldf,train_set_x,train_set_y,learning_rate)
-        print '... training the model'
-        # early-stopping parameters
-        patience = 5  # look as this many examples regardless
-        patience_increase = 2  # wait this much longer when a new best is
-                                      # found
-        improvement_threshold = 0.995  # a relative improvement of this much is
-                                      # considered significant
-        validation_frequency = 1 #patience / 2
-        # go through this many
-        # minibatche before checking the network
-        # on the validation set
-        # -- validate every epoch
+        self.classifier.save()
+        return self.classifier
+    def updateAndScore(self,theanoModel,db_file,dldf_file):
+        self.update(theanoModel,db_file,dldf_file)
+        return (self.classifier,self._score())
+    def score(self,theanoModel,db_file,feat_file):
+        logging.info( 'Loading the model...')
+        # construct the logistic regression class
+        self.classifier = self.modelType(theanoModel)
+        self.classifier.load_queryData(db_file,feat_file)
+        self.classifier.ready()
+        
+        return (self.classifier,self._score())
+    def _score(self):
+        # generate symbolic variables for input (minibatch number)
+        index = T.lscalar()
+        score_model = self.classifier.scoringFunction(index)
+        logging.info("Scoring...")
+        return score_model(0)[0]
 
-        best_validation_loss = numpy.inf
-        test_score = 0.
-        start_time = timeit.default_timer()
+def makebackup(f):
+    bi=1
+    backup = "%s.%d" % (f,bi)
+    #backup_parent = "./"
+    #if f[0] == "/": backup_parent=""
+    #if f.rfind("/") > 0: backup_parent += f[:f.rfind("/")]
+    while os.path.isfile(backup):#backup in os.listdir(backup_parent):
+        bi+=1
+        backup = "%s.%d" % (f,bi)
+    return backup
 
-        done_looping = False
-        epoch = 0
-        while (epoch < n_epochs) and (not done_looping):
-            epoch = epoch + 1
+def updateParamsFile(paramsFile,tfindex,scores):
+    if os.path.isfile(paramsFile):
+        logging.info( "Updating feature weights in params file %s..." % paramsFile )
+        backup = makebackup(paramsFile)
+        shutil.copyfile(paramsFile,backup)
+        tfhit = {}
+        with open(backup,'rb') as r, open(paramsFile,'wb') as w:
+            ntotalmod=0
+            # for each parameter
+            for line in r:
+                line=line.strip()
+                if line[0]=="#": 
+                    w.write(line)
+                    w.write("\n")
+                    continue
+                (p,d,v)=line.partition("\t")
+                if p not in tfindex:
+                    w.write(line)
+                    w.write("\n")
+                    continue
+                tfhit[p] = 1
+                w.write(p)
+                w.write(d)
+                w.write("%g" % scores[tfindex[p]])
+                w.write("\n")
+                ntotalmod+=1
+            for p,i in tfindex.iteritems():
+                if p in tfhit: continue
+                w.write(p)
+                w.write("\t")
+                w.write("%g" % scores[i])
+                w.write("\n")
+                ntotalmod+=1
+            logging.debug( "\n%d total modifications" % ntotalmod )
+    else:
+        logging.info( "Writing feature weight to params file %s..." % paramsFile )
+        with open(paramsFile,'wb') as w:
+            for p,i in tfindex.iteritems():
+                w.write(p)
+                w.write("\t")
+                w.write("%g" % scores[i])
+                w.write("\n")
+            logging.debug( "\n%d total features" % len(tfindex) )
 
-            # update W,b
-            avg_cost = train_model()
-            # iteration number
-            iter = (epoch - 1)
+################### command-line interface: ################
 
-            if (iter + 1) % validation_frequency == 0:
-                # compute zero-one loss on validation set
-                this_validation_loss = validate_model()
+helpText = {}
+def doUpdate():
+    (grad,proppr,db,model) = sys.argv[2:6]
+    if len(sys.argv) > 6:
+        clazz=eval(sys.argv[6])
+    else:
+        clazz=LogisticRegression
+    p = Pronghorn(clazz)
+    (c,s) = p.updateAndScore(model,db,grad)
+    updateParamsFile(proppr,c.featureIndex(),s)
+helpText['update'] = ("dataset.gradient dataset.params dataset.pkl model.pkl [modelType]",
+                      "Run 1 epoch of gradient descent from ProPPR partial gradient and update relevant feature weights in a ProPPR params file.")
 
-                print(
-                    'epoch %i, validation error %f %%' %
-                    (
-                        epoch,
-                        this_validation_loss * 100.
-                        )
-                    )
+def doQuery():
+    (feat,proppr,db,model) = sys.argv[2:6]
+    if len(sys.argv) > 6:
+        clazz=eval(sys.argv[6])
+    else:
+        with open(model,'r') as f:
+            clazz = eval(cPickle.load(f))
+    p = Pronghorn(clazz)
+    (c,s) = p.score(model,db,feat)
+    updateParamsFile(proppr,c.featureIndex(),s)
+helpText['query'] = ("dataset.features dataset.params dataset.pkl model.pkl [modelType]",
+                     "Use a saved theano model to compute feature weights and save/update results in a ProPPR params file.")
 
-                # if we got the best validation score until now
-                if this_validation_loss < best_validation_loss:
-                    #improve patience if loss improvement is good enough
-                    if this_validation_loss < best_validation_loss *  \
-                            improvement_threshold:
-                        patience = max(patience, iter * patience_increase)
+def doHelp():
+    print "Usage:"
+    for cmd,(syntax,desc) in helpText.iteritems():
+        print "\n    $ python %s %s %s" % (sys.argv[0],cmd,syntax)
+        print "    %s" % desc
+    print "\nModel types:"
+    print "    LogisticRegression"
+    print "    SimilarityRegression"
 
-                        best_validation_loss = this_validation_loss
+helpText['help'] = ("","This message.")
 
-                        # save the best model
-                        with open(theanoModel, 'w') as f:
-                            cPickle.dump(classifier, f)
+cmds = {
+    "update":doUpdate,
+    "query":doQuery,
+    "help":doHelp
+}
 
-            if patience <= iter:
-                done_looping = True
-                break
-
-        end_time = timeit.default_timer()
-        print(
-            (
-                'Optimization complete with best validation score of %f %%,'
-            )
-            % (best_validation_loss * 100.)
-        )
-        print 'The code run for %d epochs, with %f epochs/sec' % (
-            epoch, 1. * epoch / (end_time - start_time))
-        print >> sys.stderr, ('The code for file ' +
-                              os.path.split(__file__)[1] +
-                              ' ran for %.1fs' % ((end_time - start_time)))
-        return classifier
-
-    def score(self, xs, ys, classifier):
-        y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
-        score_model = theano.function(
-            inputs=[y,classifier.input_data],
-            outputs=classifier.p_y_given_x[T.arange(y.shape[0]),y]
-        )
-        return score_model(ys,xs)
-
-
+if __name__=="__main__":
+    cmd="help"
+    if len(sys.argv) > 1:
+        cmd = sys.argv[1]
+    if cmd not in cmds:
+        print "Didn't recognized command '%s'." % cmd
+        cmd="help"
+    cmds[cmd]()
