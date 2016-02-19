@@ -15,7 +15,7 @@ default:
 	@echo make eval
 
 proppr.settings:
-	proppr set --programFiles wordsimilarity.wam --fixedWeights theano_p* --relaxFW 1
+	proppr set --programFiles wordsimilarity.wam --fixedWeights theano_p* --relaxFW 1 --unnormalized 1
 
 
 init: proppr.settings ${TRAIN}.gradient ${VECTORS}.pkl
