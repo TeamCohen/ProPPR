@@ -67,7 +67,7 @@ class Model(object):
      
      Base class defines the following fields:
      
-
+     learning_rate - eta, basically
      paramsFile - filename for theano model parameters
      tf - maps feature string -> matrix row #
      db - holds theano InstanceData
@@ -79,12 +79,13 @@ class Model(object):
      has_trainingData - true if data_dldf is loaded
 
     """
-    def __init__(self,filename,batch_size=-1):
+    def __init__(self,filename,batch_size=-1,learning_rate=0.13):
         self.has_trainingData = False
         self.has_queryData = False
         self.paramsFile=filename
         self.dldf = T.dvector('dldf')
         self.batch_size = batch_size
+        self.learning_rate = learning_rate
         self._init()
     def ready(self):
         if not self.has_queryData: assert "load data first"
@@ -188,7 +189,6 @@ class LogisticRegression(Model):
         super(LogisticRegression,self)._init()
         self.x = T.matrix('x')
         self.y = T.ivector('y')
-        self.learning_rate = 0.13
     def _load(self,filename):
         with open(filename,'r') as f:
             clazz = cPickle.load(f)
@@ -339,23 +339,30 @@ class SimilarityRegression(LogisticRegression):
         return "SimilarityRegression"
     def _init(self):
         super(SimilarityRegression, self)._init()
+        # ox: "outer x" is M x 2N:
+        # [x1_1, ... x1_N, x2_1, ... x2_N]
         ox = T.matrix('ox')
         self.ox = ox
+        # x: "inner x" is M x N:
+        # [x1_1 * x2_1, ..., x1_N * x2_N]
         self.x = T.prod(
             T.reshape(
                 ox,
-                (ox.shape[0],2,n_in/2)
+                (ox.shape[0],2,ox.shape[1]/2)
                 ),
             axis=1)
     def _init_queryData(self):
         super(LogisticRegression,self)._init_queryData() # skip LogisticRegression inputs
-        logging.debug("initialized SimilarityRegression training data")
+        logging.debug("initializing SimilarityRegression training data")
         self.N=self.db.vectors.shape[1]
+        logging.debug( "N=%d" % self.N )
         self.data_trainX = numpy.zeros( 
             (self.M,self.N*2),
             dtype=theano.config.floatX )
+        logging.debug("data_trainX is %s" % str(self.data_trainX.shape))
         self.data_trainY = numpy.zeros( self.M,dtype='int32' )
-        self.yindex = {}
+        logging.debug("data_trainY is %s" % str(self.data_trainY.shape))
+        self.yindex = {"true":0,"false":1}
     def _build_queryData(self,i,args):
         (x1,x2) = args
         self.data_trainX[i,:self.N] = self.db.vectors[self.db.index[x1],:]
@@ -370,15 +377,16 @@ class SimilarityRegression(LogisticRegression):
         return foo
 
 class Pronghorn(object):
-    def __init__(self,modelType):
+    def __init__(self,modelType,eta):
         self.modelType = modelType
+        self.eta = eta
     def update(self,theanoModel,db_file,dldf_file):
         """
         adapted from logicstic_sgd.py:sgd_optimization_mnist()
         """
         logging.info( 'Loading the model...')
         # construct the logistic regression class
-        self.classifier = self.modelType(theanoModel)
+        self.classifier = self.modelType(theanoModel,learning_rate=self.eta)
         self.classifier.load_trainingData(db_file,dldf_file)
         self.classifier.ready()
 
@@ -387,8 +395,18 @@ class Pronghorn(object):
         train_model = self.classifier.trainingFunction(index)
 
         logging.info( "Training..." )
+        foo = theano.function(
+            inputs=[index],
+            outputs=[self.classifier.p_y_given_x],
+            givens=self.classifier._givens(index),
+            on_unused_input="ignore"
+            )
+        pre = foo(0)[0]
         fitness = train_model(0)
+        post = foo(0)[0]
+        logging.debug( "pre py:\n%s" % pre[:10][:] )
         logging.debug( "model fitness: %s" % fitness)
+        logging.debug( "post py:\n%s" % post[:10][:] )
         # save this best model
         self.classifier.save()
         return self.classifier
@@ -398,7 +416,7 @@ class Pronghorn(object):
     def score(self,theanoModel,db_file,feat_file):
         logging.info( 'Loading the model...')
         # construct the logistic regression class
-        self.classifier = self.modelType(theanoModel)
+        self.classifier = self.modelType(theanoModel,learning_rate=self.eta)
         self.classifier.load_queryData(db_file,feat_file)
         self.classifier.ready()
         
@@ -470,14 +488,17 @@ def updateParamsFile(paramsFile,tfindex,scores):
 helpText = {}
 def doUpdate():
     (grad,proppr,db,model) = sys.argv[2:6]
+    eta = 0.13
     if len(sys.argv) > 6:
         clazz=eval(sys.argv[6])
+        if "--eta" in sys.argv:
+            eta = float(sys.argv[sys.argv.index("--eta")+1])
     else:
         clazz=LogisticRegression
-    p = Pronghorn(clazz)
+    p = Pronghorn(clazz,eta=eta)
     (c,s) = p.updateAndScore(model,db,grad)
     updateParamsFile(proppr,c.featureIndex(),s)
-helpText['update'] = ("dataset.gradient dataset.params dataset.pkl model.pkl [modelType]",
+helpText['update'] = ("dataset.gradient dataset.params dataset.pkl model.pkl [modelType] [--eta 0.13]",
                       "Run 1 epoch of gradient descent from ProPPR partial gradient and update relevant feature weights in a ProPPR params file.")
 
 def doQuery():

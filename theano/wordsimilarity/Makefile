@@ -2,6 +2,7 @@ include Makefile.in
 
 TRAIN=train
 VECTORS=lexical.embeddings
+THEANO_ETA=10
 
 default:
 	@echo To run, do:
@@ -18,11 +19,11 @@ proppr.settings:
 
 
 init: proppr.settings ${TRAIN}.gradient ${VECTORS}.pkl
-	python ../pronghorn.py update ${TRAIN}.gradient ${TRAIN}.params ${VECTORS}.pkl model.pkl
+	python ../pronghorn.py update ${TRAIN}.gradient ${TRAIN}.params ${VECTORS}.pkl model.pkl SimilarityRegression --eta ${THEANO_ETA}
 	echo "ETA=1.0" > Makefile.in
 
 theano: ${TRAIN}.params
-	python ../pronghorn.py update ${TRAIN}.gradient ${TRAIN}.params ${VECTORS}.pkl model.pkl
+	python ../pronghorn.py update ${TRAIN}.gradient ${TRAIN}.params ${VECTORS}.pkl model.pkl SimilarityRegression --eta ${THEANO_ETA}
 
 proppr: ${TRAIN}.params
 	BACKUP_NUMBER=`ls train.params* | wc -l`; \
