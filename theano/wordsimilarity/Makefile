@@ -1,6 +1,7 @@
 include Makefile.in
 
 TRAIN=train
+TEST=test
 VECTORS=lexical.embeddings
 THEANO_ETA=10
 

@@ -16,6 +16,7 @@ import theano.tensor as T
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
+DEFAULT_ETA=0.13
 THEANO_PREFIX = "theano_p("
 N_THEANO_PREFIX = len(THEANO_PREFIX)
 # def getTheanoFeatures(featureFile):
@@ -79,7 +80,7 @@ class Model(object):
      has_trainingData - true if data_dldf is loaded
 
     """
-    def __init__(self,filename,batch_size=-1,learning_rate=0.13):
+    def __init__(self,filename,batch_size=-1,learning_rate=DEFAULT_ETA):
         self.has_trainingData = False
         self.has_queryData = False
         self.paramsFile=filename
@@ -377,7 +378,7 @@ class SimilarityRegression(LogisticRegression):
         return foo
 
 class Pronghorn(object):
-    def __init__(self,modelType,eta):
+    def __init__(self,modelType,eta=DEFAULT_ETA):
         self.modelType = modelType
         self.eta = eta
     def update(self,theanoModel,db_file,dldf_file):
@@ -488,7 +489,7 @@ def updateParamsFile(paramsFile,tfindex,scores):
 helpText = {}
 def doUpdate():
     (grad,proppr,db,model) = sys.argv[2:6]
-    eta = 0.13
+    eta = DEFAULT_ETA
     if len(sys.argv) > 6:
         clazz=eval(sys.argv[6])
         if "--eta" in sys.argv:
