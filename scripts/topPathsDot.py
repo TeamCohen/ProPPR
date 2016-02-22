@@ -199,7 +199,7 @@ if __name__=='__main__':
 			v=False
 			for u in P:
 				if v:
-					edges[(u,v)] = em[uid][vid]#/total
+					edges[(u,v)] = em[u][v]
 				v = u
 	edgeList = sorted(edges.items(),key=lambda (k,v):-v)
 	requiredNodes = set(solutions + ['1'])
