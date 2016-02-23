@@ -270,7 +270,7 @@ def _catfile(fileName,msg):
     with open(fileName) as f:
         for line in f:
             if line.startswith("#"): continue # skip comments [kmm]
-            ret += ' |',line,
+            ret += ' | '+line
             k += 1
             if k>MAX_FILE_LINES_TO_ECHO:
                 ret += ' | ...\n'
