@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 """
 Many portions adapted from the theano MNIST logistic regression tutorial:
     http://deeplearning.net/tutorial/logreg.html
@@ -15,6 +17,8 @@ import theano
 import theano.tensor as T
 import logging
 logging.basicConfig(level=logging.DEBUG)
+
+DEFAULT_ETA=0.13
 
 THEANO_PREFIX = "theano_p("
 N_THEANO_PREFIX = len(THEANO_PREFIX)
@@ -79,7 +83,7 @@ class Model(object):
      has_trainingData - true if data_dldf is loaded
 
     """
-    def __init__(self,filename,batch_size=-1,learning_rate=0.13):
+    def __init__(self,filename,batch_size=-1,learning_rate=DEFAULT_ETA):
         self.has_trainingData = False
         self.has_queryData = False
         self.paramsFile=filename
@@ -377,7 +381,7 @@ class SimilarityRegression(LogisticRegression):
         return foo
 
 class Pronghorn(object):
-    def __init__(self,modelType,eta):
+    def __init__(self,modelType,eta=DEFAULT_ETA):
         self.modelType = modelType
         self.eta = eta
     def update(self,theanoModel,db_file,dldf_file):
@@ -439,13 +443,17 @@ def makebackup(f):
         backup = "%s.%d" % (f,bi)
     return backup
 
-def updateParamsFile(paramsFile,tfindex,scores):
+def updateParamsFile(paramsFile,tfindex,scores,saveFile=False):
     if os.path.isfile(paramsFile):
-        logging.info( "Updating feature weights in params file %s..." % paramsFile )
-        backup = makebackup(paramsFile)
-        shutil.copyfile(paramsFile,backup)
+        if not saveFile:
+            logging.info( "Updating feature weights in params file %s..." % paramsFile )
+            backup = makebackup(paramsFile)
+            shutil.copyfile(paramsFile,backup)
+            (paramsFile,saveFile) = (backup,paramsFile)
+        else:
+            logging.info( "Saving feature weights from %s to %s..." % (paramsFile,saveFile) )
         tfhit = {}
-        with open(backup,'rb') as r, open(paramsFile,'wb') as w:
+        with open(paramsFile,'rb') as r, open(saveFile,'wb') as w:
             ntotalmod=0
             # for each parameter
             for line in r:
@@ -474,6 +482,9 @@ def updateParamsFile(paramsFile,tfindex,scores):
                 ntotalmod+=1
             logging.debug( "\n%d total modifications" % ntotalmod )
     else:
+        if saveFile:
+            logging.warn( "No pre-existing params file at %s. Saving directly to %s." % (paramsFile,saveFile) )
+            paramsFile = saveFile
         logging.info( "Writing feature weight to params file %s..." % paramsFile )
         with open(paramsFile,'wb') as w:
             for p,i in tfindex.iteritems():
@@ -488,7 +499,7 @@ def updateParamsFile(paramsFile,tfindex,scores):
 helpText = {}
 def doUpdate():
     (grad,proppr,db,model) = sys.argv[2:6]
-    eta = 0.13
+    eta = DEFAULT_ETA
     if len(sys.argv) > 6:
         clazz=eval(sys.argv[6])
         if "--eta" in sys.argv:
@@ -498,20 +509,23 @@ def doUpdate():
     p = Pronghorn(clazz,eta=eta)
     (c,s) = p.updateAndScore(model,db,grad)
     updateParamsFile(proppr,c.featureIndex(),s)
-helpText['update'] = ("dataset.gradient dataset.params dataset.pkl model.pkl [modelType] [--eta 0.13]",
+helpText['update'] = ("dataset.gradient dataset.params dataset.pkl model.pkl [modelType] [--eta %g]" % DEFAULT_ETA,
                       "Run 1 epoch of gradient descent from ProPPR partial gradient and update relevant feature weights in a ProPPR params file.")
 
 def doQuery():
     (feat,proppr,db,model) = sys.argv[2:6]
-    if len(sys.argv) > 6:
+    if len(sys.argv) > 6 and not sys.argv[6].startswith("--"):
         clazz=eval(sys.argv[6])
     else:
         with open(model,'r') as f:
             clazz = eval(cPickle.load(f))
     p = Pronghorn(clazz)
     (c,s) = p.score(model,db,feat)
-    updateParamsFile(proppr,c.featureIndex(),s)
-helpText['query'] = ("dataset.features dataset.params dataset.pkl model.pkl [modelType]",
+    if "--save" in sys.argv:
+        updateParamsFile(proppr,c.featureIndex(),s,sys.argv[sys.argv.index("--save")+1])
+    else:
+        updateParamsFile(proppr,c.featureIndex(),s)
+helpText['query'] = ("dataset.features dataset.params dataset.pkl model.pkl [modelType] [--save new.params]",
                      "Use a saved theano model to compute feature weights and save/update results in a ProPPR params file.")
 
 def doHelp():
