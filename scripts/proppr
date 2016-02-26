@@ -239,7 +239,7 @@ def doPHSubcommand(o,subcommand):
       optDict = getSomeArgvOptsAsDict(['--model','--numIters'])
       numIters = optDict.get('--numIters','5')
       model = optDict.get('--model','LogisticRegression')
-      invokeHelper(o,'pronghorn-wrapper.py',['--numIters'],
+      invokeHelper(o,'pronghorn-wrapper.py',['--numIters','--model'],
                    '--src',exampleFile,'--src2',dbFile,
                    '--dst',learnedModelFile,'--dst2',learnedParamsFile,
                    '--stem',exampleStem,

@@ -33,6 +33,7 @@ if __name__=="__main__":
         print 'option error: ',str(err)
         sys.exit(-1)
     optdict = dict(optlist)
+        
     optdict['PROPPR_ARGS'] = args[1:]
 
     queries = optdict['--src']
@@ -42,18 +43,21 @@ if __name__=="__main__":
     stem = optdict['--stem']
     modelType = optdict['--model']
     numIters = int(optdict['--numIters'])
+    eta = 1.0
+    if "--eta" in args:
+        i=args.index("--eta")
+        eta = float(args[i+1])
+        optdict['PROPPR_ARGS'] = args[1:i]+args[i+2:]
     # make ground file
     groundFile = stem+".grounded"
     u.invokeProppr(optdict,'ground',queries,groundFile)
     # make gradient file
     gradFile = stem+".gradient"
     u.invokeProppr(optdict,'gradient',groundFile,gradFile,"--epochs","0")
-    # TODO: implement choosable eta
-    eta = 1.0
     for i in range(numIters):
         logging.info('training pass %i' % i)
         # update pronghorn model
-        u.invokeHelper(optdict,'pronghorn.py',"update",gradFile,paramsFile,dbFile,modelFile,modelType)
+        u.invokeHelper(optdict,'pronghorn.py',"update",gradFile,paramsFile,dbFile,modelFile,modelType,"--eta","%g"%eta)
         # backup paramsFile
         backup = makebackup(paramsFile)
         if "--n" not in optdict:

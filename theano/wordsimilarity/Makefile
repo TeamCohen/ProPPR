@@ -5,7 +5,7 @@ THEANO_ETA=10
 
 default: proppr.settings ${VECTORS}.pkl
 	proppr compile wordsimilarity.ppr
-	proppr ph-train ${TRAIN}.examples ${VECTORS}.pkl model.pkl --model SimilarityRegression --numIters 5
+	proppr ph-train ${TRAIN}.examples ${VECTORS}.pkl model.pkl --model SimilarityRegression --numIters 5 --eta ${THEANO_ETA}
 	proppr answer ${TRAIN}.examples pre.${TRAIN}.solutions.txt
 	proppr answer ${TRAIN}.examples post.${TRAIN}.solutions.txt --params ${TRAIN}.params
 	proppr answer ${TEST}.examples pre.${TEST}.solutions.txt
