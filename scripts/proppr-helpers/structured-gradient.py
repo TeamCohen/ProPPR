@@ -6,6 +6,7 @@ import random
 import logging
 import subprocess
 import collections
+import util as u
 
 MAX_FILE_LINES_TO_ECHO = 15
 
@@ -147,13 +148,13 @@ def stucturedGradient(src,dst,opts):
     exampleStem = optdict['--stem']
 
     #get the interpreter and compile it, then ground the examples
-    interpFile = _getResourceFile(opts, "sg-interp-train.ppr")
+    interpFile = u.getResourceFile(opts, "sg-interp-train.ppr")
     invokeProppr(opts,'compile',interpFile)
     programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
     invokeProppr(opts,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList,'--ternaryIndex','true')
 
     #store gradient in a temp file
-    gradientFile = _makeOutput(opts,exampleStem+'.gradient')
+    gradientFile = u.makeOutput(opts,exampleStem+'.gradient')
     invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','1')
 
     #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
@@ -169,7 +170,7 @@ def iterativeStucturedGradient(src,dst,opts):
     numIters = int(optdict['--numIters'])
 
     #copy the initial interpreter to this directory
-    baseInterpFile = _getResourceFile(opts, "sg-interp-train.ppr")
+    baseInterpFile = u.getResourceFile(opts, "sg-interp-train.ppr")
     learnedRuleFiles = []
 
     #iteratively learn
@@ -177,47 +178,38 @@ def iterativeStucturedGradient(src,dst,opts):
         logging.info('training pass %i' % i)
 
         #create the i-th interpreter, which contains the basic interpreter rules, plus all the learned rules
-        interpFile = _makeOutput(opts,'sg-interp_n%02d.ppr' % i)
+        interpFile = u.makeOutput(opts,'sg-interp_n%02d.ppr' % i)
         numAddedThisRound = _appendUniqLines([baseInterpFile]+learnedRuleFiles,interpFile)
         if numAddedThisRound==0:
             logging.info('no new rules learned in previous iteration - stopping')
             break
-        _catfile(interpFile,'Interpreter used at round %d' % i)
+        u.catfile(interpFile,'Interpreter used at round %d' % i)
 
         #compile the interpreter
         invokeProppr(opts,'compile',interpFile)
 
         #ground the examples using the interpreter + learned rules
         programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
-        groundedFile = _makeOutput(opts,exampleFile+".grounded")
+        groundedFile = u.makeOutput(opts,exampleFile+".grounded")
         invokeProppr(opts,'ground',exampleFile,groundedFile,'--programFiles',programFileList,'--ternaryIndex','true')
 
         #compute the gradient
-        gradientFile = _makeOutput(opts,exampleStem+'_n%02d.gradient' % i)
+        gradientFile = u.makeOutput(opts,exampleStem+'_n%02d.gradient' % i)
         invokeProppr(opts,'gradient',groundedFile,gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(i)))
 
         #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
-        nextLearnedRuleFile = _makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
+        nextLearnedRuleFile = u.makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
         gradientToRules(gradientFile,nextLearnedRuleFile,{'--rhs_i':'learnedPred','--rhs_e':'rel'})
         logging.info('Created rule file ' + nextLearnedRuleFile)
-        _catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
+        u.catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
 
         #add this to the list of learned rules
         learnedRuleFiles.append(nextLearnedRuleFile)
 
     #concatenate all the learned rules, replacing the interpreter with a new one
-    testInterpFile = _getResourceFile(opts, "sg-interp-test.ppr")
+    testInterpFile = u.getResourceFile(opts, "sg-interp-test.ppr")
     _appendUniqLines([testInterpFile] + learnedRuleFiles,learnedRuleFile)
 
-def _getResourceFile(opts,filename):
-    if '--n' not in opts: #not dry run
-        src = os.path.join( '%s/scripts/proppr-helpers/%s' % (os.environ['PROPPR'], filename))
-        dst = filename
-        fp = open(dst,'w')
-        for line in open(src):
-            fp.write(line)
-        logging.info('copied %s to current directory' % src)
-    return filename
 
 def _appendUniqLines(inputs,output):
    previousLines = set()
@@ -232,44 +224,6 @@ def _appendUniqLines(inputs,output):
    fp.close()
    return numAddedFromLastFile
 
-def _catfile(fileName,msg):
-    """Print out a created file - for  debugging"""
-    print msg
-    print '+------------------------------'
-    k = 0
-    for line in open(fileName):
-        print ' |',line,
-        k += 1
-        if k>MAX_FILE_LINES_TO_ECHO:
-            print ' | ...'
-            break
-    print '+------------------------------'
-
-def _makeOutput(opts,filename):
-   """Create an output filename with the requested filename, in the -C directory if requested."""
-   outdir = opts.get('--C','')
-   if not outdir: 
-       return filename
-   elif filename.startswith(outdir): 
-       return filename
-   else:
-       os.path.join(outdir,filename)
-
-def invokeProppr(opts,*args):
-    procArgs = ['%s/scripts/proppr' % os.environ['PROPPR']]
-    #deal with proppr's global options
-    if '--C' in opts:
-        procArgs.extend(['--C', optdict['--C']])
-    if '--n' in optdict:
-        procArgs.extend(['--n'])
-    procArgs.extend(args)
-    procArgs.extend(opts['PROPPR_ARGS'])
-    if '--n' not in opts: #not dry run
-        logging.info('calling: ' + ' '.join(procArgs))
-        stat = subprocess.call(procArgs)
-        if stat:
-            logging.info(('call failed (status %d): ' % stat) + ' '.join(procArgs))
-            sys.exit(stat) #propagate failure
 
 if __name__=="__main__":
     logging.basicConfig(level=logging.INFO)

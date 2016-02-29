@@ -8,6 +8,7 @@ import subprocess
 
 shortHelpMsg = {}    #for main commands
 shortHelpMsgSL = {}  #for sl-xxx subcommands
+shortHelpMsgPH = {}  #for ph-xxx subcommands
 logging.basicConfig(level=logging.INFO)
 
 # dispatch to subcommand
@@ -50,6 +51,8 @@ def doMain():
       doGradient(opts)
    elif com.startswith("sl-"):
       doSLSubcommand(opts,com[len("sl-"):])
+   elif com.startswith("ph-"):
+      doPHSubcommand(opts,com[len("ph-"):])
    else:
       logging.warn("illegal command - use 'proppr help' for help")
       
@@ -215,6 +218,66 @@ shortHelpMsgSL['sl-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTP
          One expected training/test sequence is: proppr sl-train1 train.examples train.cfacts; proppr sl-answer1 train1 train.examples train.cfacts; proppr eval test
          where train.examples, train.cfacts are 2nd-order examples and facts"""
 
+
+def doPHSubcommand(o,subcommand):
+    opts = loadOptionDict(o)
+    if subcommand =="db":
+        graphStem,graphFile = stemExt(getArg(1),'.graph')
+        graphFile = getFile(graphFile,o)
+        dbFile = makeOutput(getArg(2,graphStem+".pkl"),o)
+        invokeHelper(o,'graph2theano.py',[],graphFile,dbFile)
+        logging.info("Converted DB saved in "+dbFile)
+    elif subcommand=="train":
+      #work out input/output file names
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      dbStem,dbFile = stemExt(getArg(2),'.pkl')
+      dbFile = getFile(dbFile,o)
+      learnedModelFile = makeOutput(getArg(3),o)
+      learnedParamsFile = makeOutput(getArg(4,exampleStem+'.params'),o)
+      #optional arguments
+      optDict = getSomeArgvOptsAsDict(['--model','--numIters'])
+      numIters = optDict.get('--numIters','5')
+      model = optDict.get('--model','LogisticRegression')
+      invokeHelper(o,'pronghorn-wrapper.py',['--numIters','--model'],
+                   '--src',exampleFile,'--src2',dbFile,
+                   '--dst',learnedModelFile,'--dst2',learnedParamsFile,
+                   '--stem',exampleStem,
+                   '--numIters', str(numIters),
+                   '--model',str(model))
+      logging.info('Created model file ' + learnedModelFile)
+      logging.info('Created params file ' + learnedParamsFile)
+    elif subcommand=="answer":
+      #work out input/output file names
+      exampleStem,exampleFile = stemExt(getArg(1),'.examples')
+      exampleFile = getFile(exampleFile,o)
+      dbStem,dbFile = stemExt(getArg(2),'.pkl')
+      dbFile = getFile(dbFile,o)
+      modelStem,modelFile = stemExt(getArg(3),'.pkl')
+      modelFile = getFile(modelFile,o)
+      paramsStem,paramsFile = stemExt(getArg(4),'.params')
+      paramsFile = getFile(paramsFile,o)
+      solutionsFile = makeOutput(getArg(5,exampleStem+".solutions.txt"),o)
+      #step 1: get the features used
+      groundStem,groundFile = stemExt(makeOutput(exampleStem,o),".grounded")
+      invokeMyself(o,"ground",exampleFile,groundFile)
+      #step 2: obtain scores
+      featureFile = groundFile + ".features"
+      scoreFile = "%s.%s.params" % (paramsStem,exampleStem)
+      invokeHelper(o,'pronghorn.py',[],
+        "query",featureFile,paramsFile,dbFile,modelFile,"--save",scoreFile)
+      #step 3: run inference with computed scores
+      invokeMyself(o,"answer",exampleFile,solutionsFile,"--params",scoreFile)
+    elif subcommand=="help":
+        print 'ProPPR v2: The pronghorn subcommands are:'
+        for com in sorted(shortHelpMsgPH.keys()):
+            print '  proppr ' + com + shortHelpMsgPH[com]
+   	
+shortHelpMsg['ph-help']     = ' help on the pronghorn subcommands, which are of the form ph-xxx'
+shortHelpMsgPH['ph-db']     = ' INPUT.graph OUTPUT_DB.pkl: convert arity-two ProPPR facts to theano-compatible format'
+shortHelpMsgPH['ph-train']  = ' INPUT_Q.examples INPUT_DB.pkl OUTPUT_M.pkl [OUTPUT_P.params] [--model M] --numIters N: train a hybrid ProPPR-Theano model'
+shortHelpMsgPH['ph-answer'] = ' INPUT_Q.examples INPUT_DB.pkl INPUT_M.pkl INPUT_P.params [OUTPUT.solutions.txt]: run inference on a learned model.'
+
 def doHelp(o):
    print 'ProPPR v2: commands are:'
    for com in sorted(shortHelpMsg.keys()):
@@ -272,6 +335,8 @@ def invokeMain(o,main,*mainProgArgs):
 def invokeHelper(o,main,mainArgsConsumedBeforeHelperCalled,*mainProgArgs):
    """Invoke a python program from scripts/proppr-helpers, supplying
    options from the settings file and/or the command-line options.
+   
+   mainArgsConsumedBeforeHelperCalled: list of cli args *not* to pass on to helper.
    """
    root = getRoot()
    helperFile = '%s/scripts/proppr-helpers/%s' % (root,main)
