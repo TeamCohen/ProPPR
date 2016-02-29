@@ -10,6 +10,10 @@ MAX_FILE_LINES_TO_ECHO = 15
 
 def getResourceFile(opts,filename):
     if '--n' not in opts: #not dry run
+        if not os.access(filename,os.W_OK):
+            if os.access(filename,os.R_OK):
+                logging.warn("Can't update %s, running with existing copy" % filename)
+                return filename
         src = os.path.join( '%s/scripts/proppr-helpers/%s' % (os.environ['PROPPR'], filename))
         dst = filename
         fp = open(dst,'w')
@@ -21,15 +25,18 @@ def getResourceFile(opts,filename):
 def catfile(fileName,msg):
     """Print out a created file - for  debugging"""
     print msg
-    print '+------------------------------'
+    ret = '+------------------------------\n'
     k = 0
-    for line in open(fileName):
-        print ' |',line,
-        k += 1
-        if k>MAX_FILE_LINES_TO_ECHO:
-            print ' | ...'
-            break
-    print '+------------------------------'
+    with open(fileName) as f:
+        for line in f:
+            if line.startswith("#"): continue # skip comments [kmm]
+            ret += ' |',line,
+            k += 1
+            if k>MAX_FILE_LINES_TO_ECHO:
+                ret += ' | ...\n'
+                break
+    ret += '+------------------------------'
+    return ret
 
 def makeOutput(opts,filename):
    """Create an output filename with the requested filename, in the -C directory if requested."""
@@ -39,7 +46,7 @@ def makeOutput(opts,filename):
    elif filename.startswith(outdir): 
        return filename
    else:
-       os.path.join(outdir,filename)
+       return os.path.join(outdir,filename)
 
 def invokeProppr(opts,*args):
     procArgs = ['%s/scripts/proppr' % os.environ['PROPPR']]

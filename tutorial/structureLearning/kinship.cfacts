@@ -1,103 +1,103 @@
-rel	aunt	angela	alfonso
-rel	aunt	gina	alfonso
-rel	aunt	gina	sophia
-rel	aunt	jennifer	charlotte
-rel	aunt	jennifer	colin
-rel	aunt	margaret	charlotte
-rel	aunt	margaret	colin
-rel	brother	alfonso	sophia
-rel	brother	arthur	victoria
-rel	brother	colin	charlotte
-rel	brother	emilio	lucia
-rel	brother	james	jennifer
-rel	brother	marco	angela
-rel	daughter	angela	pierro
-rel	daughter	charlotte	james
-rel	daughter	charlotte	victoria
-rel	daughter	jennifer	andrew
-rel	daughter	jennifer	christine
-rel	daughter	lucia	maria
-rel	daughter	lucia	roberto
-rel	daughter	sophia	lucia
-rel	daughter	sophia	marco
-rel	daughter	victoria	christopher
-rel	daughter	victoria	penelope
-rel	father	andrew	james
-rel	father	andrew	jennifer
-rel	father	christopher	arthur
-rel	father	christopher	victoria
-rel	father	james	charlotte
-rel	father	james	colin
-rel	father	marco	alfonso
-rel	father	marco	sophia
-rel	father	pierro	angela
-rel	father	pierro	marco
-rel	father	roberto	emilio
-rel	father	roberto	lucia
-rel	husband	andrew	christine
-rel	husband	arthur	margaret
-rel	husband	charles	jennifer
-rel	husband	christopher	penelope
-rel	husband	emilio	gina
-rel	husband	james	victoria
-rel	husband	marco	lucia
-rel	husband	pierro	francesca
-rel	husband	roberto	maria
-rel	husband	tomaso	angela
-rel	mother	christine	jennifer
-rel	mother	francesca	angela
-rel	mother	francesca	marco
-rel	mother	lucia	sophia
-rel	mother	maria	emilio
-rel	mother	maria	lucia
-rel	mother	penelope	arthur
-rel	mother	penelope	victoria
-rel	mother	victoria	charlotte
-rel	mother	victoria	colin
-rel	nephew	alfonso	angela
-rel	nephew	alfonso	gina
-rel	nephew	alfonso	tomaso
-rel	nephew	colin	arthur
-rel	nephew	colin	charles
-rel	nephew	colin	jennifer
-rel	nephew	colin	margaret
-rel	niece	charlotte	arthur
-rel	niece	charlotte	charles
-rel	niece	charlotte	jennifer
-rel	niece	charlotte	margaret
-rel	niece	sophia	angela
-rel	niece	sophia	emilio
-rel	niece	sophia	gina
-rel	niece	sophia	tomaso
-rel	sister	angela	marco
-rel	sister	charlotte	colin
-rel	sister	lucia	emilio
-rel	sister	sophia	alfonso
-rel	sister	victoria	arthur
-rel	son	alfonso	lucia
-rel	son	alfonso	marco
-rel	son	arthur	christopher
-rel	son	arthur	penelope
-rel	son	colin	james
-rel	son	colin	victoria
-rel	son	emilio	roberto
-rel	son	james	andrew
-rel	son	james	christine
-rel	son	marco	francesca
-rel	son	marco	pierro
-rel	uncle	arthur	charlotte
-rel	uncle	charles	charlotte
-rel	uncle	charles	colin
-rel	uncle	emilio	alfonso
-rel	uncle	emilio	sophia
-rel	uncle	tomaso	alfonso
-rel	uncle	tomaso	sophia
-rel	wife	angela	tomaso
-rel	wife	christine	andrew
-rel	wife	francesca	pierro
-rel	wife	gina	emilio
-rel	wife	jennifer	charles
-rel	wife	lucia	marco
-rel	wife	maria	roberto
-rel	wife	penelope	christopher
-rel	wife	victoria	james
+aunt	jennifer	charlotte
+aunt	jennifer	colin
+aunt	margaret	charlotte
+aunt	margaret	colin
+brother	arthur	victoria
+brother	colin	charlotte
+brother	james	jennifer
+daughter	charlotte	james
+daughter	charlotte	victoria
+daughter	jennifer	andrew
+daughter	jennifer	christine
+daughter	victoria	christopher
+daughter	victoria	penelope
+father	andrew	james
+father	andrew	jennifer
+father	christopher	arthur
+father	christopher	victoria
+father	james	charlotte
+father	james	colin
+husband	andrew	christine
+husband	arthur	margaret
+husband	charles	jennifer
+husband	christopher	penelope
+husband	james	victoria
+mother	christine	jennifer
+mother	penelope	arthur
+mother	penelope	victoria
+mother	victoria	charlotte
+mother	victoria	colin
+nephew	colin	arthur
+nephew	colin	charles
+nephew	colin	jennifer
+nephew	colin	margaret
+niece	charlotte	arthur
+niece	charlotte	charles
+niece	charlotte	jennifer
+niece	charlotte	margaret
+sister	charlotte	colin
+sister	victoria	arthur
+son	arthur	christopher
+son	arthur	penelope
+son	colin	james
+son	colin	victoria
+son	james	andrew
+son	james	christine
+uncle	arthur	charlotte
+uncle	charles	charlotte
+uncle	charles	colin
+wife	christine	andrew
+wife	jennifer	charles
+wife	penelope	christopher
+wife	victoria	james
+aunt	angela	alfonso
+aunt	gina	alfonso
+aunt	gina	sophia
+brother	alfonso	sophia
+brother	emilio	lucia
+brother	marco	angela
+daughter	angela	pierro
+daughter	lucia	maria
+daughter	lucia	roberto
+daughter	sophia	lucia
+daughter	sophia	marco
+father	marco	alfonso
+father	marco	sophia
+father	pierro	angela
+father	pierro	marco
+father	roberto	emilio
+father	roberto	lucia
+husband	emilio	gina
+husband	marco	lucia
+husband	pierro	francesca
+husband	roberto	maria
+husband	tomaso	angela
+mother	francesca	angela
+mother	francesca	marco
+mother	lucia	sophia
+mother	maria	emilio
+mother	maria	lucia
+nephew	alfonso	angela
+nephew	alfonso	gina
+nephew	alfonso	tomaso
+niece	sophia	angela
+niece	sophia	emilio
+niece	sophia	gina
+niece	sophia	tomaso
+sister	angela	marco
+sister	lucia	emilio
+sister	sophia	alfonso
+son	alfonso	lucia
+son	alfonso	marco
+son	emilio	roberto
+son	marco	francesca
+son	marco	pierro
+uncle	emilio	alfonso
+uncle	emilio	sophia
+uncle	tomaso	alfonso
+uncle	tomaso	sophia
+wife	angela	tomaso
+wife	francesca	pierro
+wife	gina	emilio
+wife	lucia	marco
+wife	maria	roberto

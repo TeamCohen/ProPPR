@@ -1,18 +1,24 @@
 #!/usr/bin/perl
 
-my $cookedFile = shift;
+my $groundedFile = shift;
 
-defined($cookedFile) or die "Usage:\n\texamples.cooked > output\n";
+defined($groundedFile) or die "Usage:\n\texamples.grounded > output\n";
 
-open(my $cf,"<$cookedFile") or die "Couldn't open cooked input file $cookedFile:\n$!\n";
+open(my $cf,"<$groundedFile") or die "Couldn't open grounded input file $groundedFile:\n$!\n";
+open(my $fF,"<${groundedFile}.features") or die "Couldn't open file ${groundedFile}.features for reading:\n$!\n";
+
+my @features=(0);
+while(<$fF>) {
+	chomp;
+	push @features,$_;
+}
 
 my %all_labels = ();
 my $line=0;
 while(<$cf>) {
     chomp;
     $line++;
-    my ($query,$qid,$posid,$negid,$nodesize,$edgesize,$featurestr,@edges) = split("\t");
-    my @features = split(":",$featurestr);
+    my ($query,$qid,$posid,$negid,$nodesize,$edgesize,$labelDeps,@edges) = split("\t");
     my @pos = split(",",$posid);
     my @neg = split(",",$negid);
 

@@ -14,12 +14,13 @@ import util as u
 # converted to a rule, where W_prev is the previous rules's weight (in
 # weight-sorted order) and W is the feature's weight
 
-MAX_WEIGHT_RATIO = 20
+MAX_WEIGHT_RATIO = 0
 
 # parameter for iterativeStucturedGradient: number of epochs of SGD
 # to perform before computing gradient
 
-def NUM_EPOCHS_AT_ROUND_I(i): return i+1
+def NUM_EPOCHS_AT_ROUND_I(i): return i
+# first time (i=0) should get raw untrained gradient [kmm]
 
 def lift(src,dst,opts):
     """Convert arity-two facts P(X,Y) to second-order representation rel(P,X,Y)."""
@@ -52,25 +53,48 @@ def relationsToExamples(src,dst,opts):
     rnd = random.Random()
     trueYs = collections.defaultdict(set)
     pairedWith = collections.defaultdict(set)
-    triples = set()
     entities = set()
     rels = set()
+    kSample = int(opts.get('--sample',0))
     for line in open(src):
         (relkw,r,x,y) = line.strip().split("\t")
         trueYs[(r,x)].add(y)
         rels.add(r)
         entities.add(x)
         entities.add(y)
-        triples.add((r,x,y))
         pairedWith[x].add(y)
     result = []
-    for r in rels:
-        for x in entities:
-            query = 'interp(i_%s,%s,Y)' % (r,x)
-            posParts = map(lambda y: '+interp(i_%s,%s,%s)' % (r,x,y), trueYs[(r,x)])
-            #TODO randomly sample negatives?
-            negParts = map(lambda y: '-interp(i_%s,%s,%s)' % (r,x,y), [y for y in pairedWith[x] if y not in trueYs[(r,x)]])
-            result.append((query,posParts,negParts))
+
+    allowHopeless = '--allowHopelessQueries' in opts
+    if '--defaultNeg' in opts:
+        assert not allowHopeless,'--allowHopelessQueries not allowed with --defaultNeg'
+        #simple case: generate no negative examples at all
+        for (r,x),ys in trueYs.items():
+            query = 'interp(i_%s,%s,Y)' % (r,x)            
+            posParts = map(lambda y: '+interp(i_%s,%s,%s)' % (r,x,y), ys)
+            result.append((query,posParts,[]))
+    else:
+        #explicitly generate negative examples
+        for r in rels:
+            for x in entities:
+                query = 'interp(i_%s,%s,Y)' % (r,x)
+                posParts = map(lambda y: '+interp(i_%s,%s,%s)' % (r,x,y), trueYs[(r,x)])
+                # possible negatives are examples x,y where y is paired with x somewhere -- ie r1(x,y) holds for some r1 -- but
+                # y is not a positive answer to r(x,y)
+                allNegParts = map(lambda y: '-interp(i_%s,%s,%s)' % (r,x,y), [y for y in pairedWith[x] if y not in trueYs[(r,x)]])
+                #sample negatives 
+                if kSample==0: 
+                    #sample 0 -- use all negative examples
+                    negParts = allNegParts 
+                elif kSample<0: 
+                    #sample -1 -- use k negative examples, where k==number of positive examples
+                    negParts = rnd.shuffle(allNegParts)[0:len(posParts)]
+                else:
+                    #sample k>0 -- use k negative examples
+                    negParts = rnd.shuffle(allNegParts)[0:kSample]
+                if posParts or allowHopelessQueries:
+                    result.append((query,posParts,negParts))
+    
     rnd.shuffle(result)
     fp = open(dst,'w')
     for (query,posParts,negParts) in result:
@@ -109,12 +133,14 @@ def gradientToRules(src,dst,opts):
                     featureWeight[feature] = min(featureWeight[feature],weight)
     
     rules = []
-    totAccepted = 0
+    totAccepted= 0
+    totNegativeGradient= 0
     lastWeight = None
     if featureWeight:
         for (feature,weight) in sorted(featureWeight.items(), key=lambda(f,w):w):
             if weight>=0:
                 break
+            totNegativeGradient += 1
             if (MAX_WEIGHT_RATIO!=0 and lastWeight!=None and lastWeight/weight > MAX_WEIGHT_RATIO):
                 print 'stopped collected features after seeing a gap: %g to %g' % (lastWeight,weight)
                 break
@@ -135,7 +161,7 @@ def gradientToRules(src,dst,opts):
                 rhsr = rhs_i if intensional(r) else rhs_e
                 if chaintype=='chain':
                     rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y) {lr_%s}." % (lhs,p,rhsq,q,rhsr,r,feature))
-    logging.info('gradientToRules examines %d gradients %d for second-order rules and accepted %d' % (totFeatures,totRuleFeatures,totAccepted))
+    logging.info('gradientToRules examined %d gradients, %d for 2nd-order rules, %d negative, %d accepted' % (totFeatures,totRuleFeatures,totNegativeGradient,totAccepted))
     fp = open(dst,'w')
     fp.write("\n".join(rules) + "\n")
 
@@ -154,7 +180,7 @@ def stucturedGradient(src,dst,opts):
 
     #store gradient in a temp file
     gradientFile = u.makeOutput(opts,exampleStem+'.gradient')
-    u.invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','1')
+    u.invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(0)))
 
     #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
     gradientToRules(gradientFile, learnedRuleFile, {'--lhs':'interp','--rhs':'rel'})
@@ -182,7 +208,7 @@ def iterativeStucturedGradient(src,dst,opts):
         if numAddedThisRound==0:
             logging.info('no new rules learned in previous iteration - stopping')
             break
-        u.catfile(interpFile,'Interpreter used at round %d' % i)
+        logging.info(_catfile(interpFile,'Interpreter used at round %d' % i))
 
         #compile the interpreter
         u.invokeProppr(opts,'compile',interpFile)
@@ -200,7 +226,7 @@ def iterativeStucturedGradient(src,dst,opts):
         nextLearnedRuleFile = u.makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
         gradientToRules(gradientFile,nextLearnedRuleFile,{'--rhs_i':'learnedPred','--rhs_e':'rel'})
         logging.info('Created rule file ' + nextLearnedRuleFile)
-        u.catfile(nextLearnedRuleFile,'Rules learned in round %d' % i)
+        logging.info(_catfile(nextLearnedRuleFile,'Rules learned in round %d' % i))
 
         #add this to the list of learned rules
         learnedRuleFiles.append(nextLearnedRuleFile)
@@ -208,7 +234,6 @@ def iterativeStucturedGradient(src,dst,opts):
     #concatenate all the learned rules, replacing the interpreter with a new one
     testInterpFile = u.getResourceFile(opts, "sg-interp-test.ppr")
     _appendUniqLines([testInterpFile] + learnedRuleFiles,learnedRuleFile)
-
 
 def _appendUniqLines(inputs,output):
    previousLines = set()
@@ -223,15 +248,25 @@ def _appendUniqLines(inputs,output):
    fp.close()
    return numAddedFromLastFile
 
-
 if __name__=="__main__":
     logging.basicConfig(level=logging.INFO)
 
     #usage: the following arguments, followed by a "+" and a list 
     #of any remaining arguments to pass back to calls of the 'proppr'
     #script in invokeProppr
+    #
+    # Note: to be recieved properly, in the proppr.invokeHelper call,
+    # any arguments like --sample, --defaultNeg, ... need to be passed
+    # in as argument three (mainArgsConsumedBeforeHelperCalled) of the
+    # invokeProppr function
     argspec = ["com=","src=", "dst=", 
                "C=", "n", #global proppr opts
+               "sample=",                #for relationsToExamples, sample negative examples from set of all negatives
+                                         #sample 0 -- use all negative examples
+                                         #sample -1 -- use k negative examples, where k==number of positive examples
+                                         #sample k>0 -- use up to k negative examples
+               "defaultNeg=",            #for relationsToExamples, don't produce negative examples at all
+               "allowHopelessQueries=",  #for relationsToExamples, allow queries interp(rel,x,Y) where there are no positive Y's
                "lhs=", "rhs=", #for gradientToRules
                "src2=", "numIters=", "stem=", #for iterativeStucturedGradient, structuredGradient
     ]

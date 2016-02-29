@@ -273,6 +273,43 @@ class Recall(Metric):
         return r/n
         
         
+class PrecisionAt10(Metric):
+
+    def explanation(self):
+        return '(P10): Precision at rank 10'
+        
+    def computeFromList(self,answerList,solutionSet,posSet):
+        n = len(posSet)
+        if n==0: return 1.0
+        numPosRetrieved = 0.0
+        foo = adversariallyOrdered(answerList)
+        #print "Query:"
+        for a in foo[0:10]:
+            if a.isPos:
+                numPosRetrieved += 1.0
+                #print a,'+'
+            else:
+                #print a,'-'
+                pass
+        #print 'returning',numPosRetrieved,'/',10.0
+        return numPosRetrieved/10.0
+
+class PrecisionAt1(Metric):
+
+    def explanation(self):
+        return '(P1): Precision at rank 1'
+        
+    def computeFromList(self,answerList,solutionSet,posSet):
+        n = len(posSet)
+        if n==0: return 1.0
+        foo = adversariallyOrdered(answerList)
+        if len(foo)==0: return 0.0
+        a = foo[0]
+        if a.isPos:
+            return 1.0
+        else:
+            return 0.0
+
 class MeanAvgPrecision(Metric):
     
     def explanation(self):
@@ -392,8 +429,8 @@ class MeanRecipRank(Metric):
 
 if __name__ == "__main__":
 
-    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'map':MeanAvgPrecision(), 
-               'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
+    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'p10':PrecisionAt10(), 'p1':PrecisionAt1(), 
+               'map':MeanAvgPrecision(), 'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
 
     argspec = ["data=", "answers=", "metric=", "defaultNeg", "help", "debug", "echo", "details"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
