@@ -8,7 +8,6 @@ import subprocess
 import collections
 import util as u
 
-MAX_FILE_LINES_TO_ECHO = 15
 
 # parameters for iterativeStucturedGradient and structuredGradient via
 # gradientToRules: maximum ratio W_prev/W for a feature that will be
@@ -149,13 +148,13 @@ def stucturedGradient(src,dst,opts):
 
     #get the interpreter and compile it, then ground the examples
     interpFile = u.getResourceFile(opts, "sg-interp-train.ppr")
-    invokeProppr(opts,'compile',interpFile)
+    u.invokeProppr(opts,'compile',interpFile)
     programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
-    invokeProppr(opts,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList,'--ternaryIndex','true')
+    u.invokeProppr(opts,'ground',exampleFile,exampleFile+".grounded",'--programFiles',programFileList,'--ternaryIndex','true')
 
     #store gradient in a temp file
     gradientFile = u.makeOutput(opts,exampleStem+'.gradient')
-    invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','1')
+    u.invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs','1')
 
     #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
     gradientToRules(gradientFile, learnedRuleFile, {'--lhs':'interp','--rhs':'rel'})
@@ -186,16 +185,16 @@ def iterativeStucturedGradient(src,dst,opts):
         u.catfile(interpFile,'Interpreter used at round %d' % i)
 
         #compile the interpreter
-        invokeProppr(opts,'compile',interpFile)
+        u.invokeProppr(opts,'compile',interpFile)
 
         #ground the examples using the interpreter + learned rules
         programFileList =  interpFile[:-4]+'.wam:'+backgroundFile
         groundedFile = u.makeOutput(opts,exampleFile+".grounded")
-        invokeProppr(opts,'ground',exampleFile,groundedFile,'--programFiles',programFileList,'--ternaryIndex','true')
+        u.invokeProppr(opts,'ground',exampleFile,groundedFile,'--programFiles',programFileList,'--ternaryIndex','true')
 
         #compute the gradient
         gradientFile = u.makeOutput(opts,exampleStem+'_n%02d.gradient' % i)
-        invokeProppr(opts,'gradient',groundedFile,gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(i)))
+        u.invokeProppr(opts,'gradient',groundedFile,gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(i)))
 
         #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).
         nextLearnedRuleFile = u.makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))

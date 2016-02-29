@@ -6,6 +6,8 @@ import os
 import subprocess
 import logging
 
+MAX_FILE_LINES_TO_ECHO = 15
+
 def getResourceFile(opts,filename):
     if '--n' not in opts: #not dry run
         src = os.path.join( '%s/scripts/proppr-helpers/%s' % (os.environ['PROPPR'], filename))

@@ -173,7 +173,7 @@ def doSLSubcommand(o,subcommand):
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
       exampleFile = getFile(exampleFile,o)
       backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
-      backgroundFile = getFile(backgroundFile,o)
+      backgroundFile = resolveList(backgroundFile,o) #getFile(backgroundFile,o)
       #output and tmp files
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned1.ppr'),o)
       invokeHelper(o,'structured-gradient.py',[],'--com','sg-train',
@@ -185,7 +185,7 @@ def doSLSubcommand(o,subcommand):
       exampleStem,exampleFile = stemExt(getArg(1),'.examples')
       exampleFile = getFile(exampleFile,o)
       backgroundStem,backgroundFile = stemExt(getArg(2),'.cfacts')
-      backgroundFile = getFile(backgroundFile,o)
+      backgroundFile = resolveList(backgroundFile,o) #getFile(backgroundFile,o)
       learnedRuleFile = makeOutput(getArg(3,exampleStem+'-learned.ppr'),o)
       #optional arguments
       optDict = getSomeArgvOptsAsDict(['--numIters'])
@@ -202,6 +202,12 @@ def doSLSubcommand(o,subcommand):
          print '  proppr ' + com + shortHelpMsgSL[com]
    else:
       logging.warn("illegal command - use 'proppr sl-help' for help")
+
+def resolveList(filestr,o):
+   files = filestr.split(":")
+   for i in range(len(files)):
+      files[i] = getFile(files[i],o)
+   return ":".join(files)
 
 shortHelpMsg['sl-help'] = ' help on the structure learning subcommands, which are of the form sl-xxx'
 
