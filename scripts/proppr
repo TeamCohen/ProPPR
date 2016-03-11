@@ -88,9 +88,12 @@ shortHelpMsg['ground'] = ' INPUT.examples [OUTPUT.grounded]: answer queries from
 def doShow(o):
    stem,grounded = stemExt(getArg(1),'.grounded')
    eid = getArg(2,'1')
-   v = getArgvOptions() or ['--maxDepth','-1']
-   invokeHelper(o,'show.py',[],grounded,eid,v[0],v[1])
+   v = getArgvOptions()
+   if '--maxDepth' in v: v=[]
+   else: v = ['--maxDepth','-1']
+   invokeHelper(o,'show.py',['--maxDepth'],grounded,eid,*v)
 shortHelpMsg['show'] = ' INPUT.grounded [example#] [--maxDepth d]: display an ASCII representation of a grounded example'
+
 def doEval(o):
    stem,examples = stemExt(getArg(1),'.examples')
    solutions = getFile(getArg(2, stem+'.solutions.txt'),o)
