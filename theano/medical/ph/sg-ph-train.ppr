@@ -1,0 +1,32 @@
+# Intended calling scheme: 
+#
+# At learning time, learnedPred rules are appended to the program before 
+# compilation and:
+#   interp calls learnedPred via the three templates ONLY
+#   learnedPred calls rel (as a base case) and itself (in learned rules)
+#
+# At test time, the learnedPred rules are appended to sg-adapter and:
+#   interp calls learnedPred ONLY as a basecase
+#   learnedPred calls rel (as a base case) and itself (in learned rules)
+
+learnedPred(P,X,Y) :- rel(P,X,Y) {fixedWeight(default)}.
+
+interp(P,X,Y) :- learnedPred(R,X,Y), abduce_if(P,R) {fixedWeight(if)}.
+interp(P,X,Y) :- learnedPred(R,Y,X), abduce_ifInv(P,R) {fixedWeight(ifInv)}.
+#chains v1: fully recursive version
+#interp(P,X,Y) :- learnedPred(R1,X,Z), learnedPred(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight}.
+#chains v2: tail-recursive version
+interp(P,X,Y) :- rel(R1,X,Z), learnedPred(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight(ch1)}.
+interp(P,X,Y) :- learnedPred(R1,X,Z), rel(R2,Z,Y), abduce_chain(P,R1,R2) {fixedWeight(ch2)}.
+
+abduce_if(P,R) :- { if(P,R) }.
+abduce_ifInv(P,R) :-  { ifInv(P,R) }.
+abduce_chain(P,R1,R2) :- { chain(P,R1,R2) }.
+
+#interp(R,X,Y) :- sentence(W,X,Y),related(R,W) #context.
+#related(R,W) :- #relatedFeature(R,W).
+
+query(P,X,Y) :- interp(P,X,Y),score(P,X,Y) {query}.
+score(P,X,Y) :- rel(P,X,Y),innerModel(P,X,Y) {pronghorn}.
+score(P,X,Y) :- {baseline}.
+innerModel(X1,X2,Y) :- {theano_p(X1,X2,Y)}.

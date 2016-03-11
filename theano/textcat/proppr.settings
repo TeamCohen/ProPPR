@@ -1,3 +1,4 @@
 --relaxFW	1
 --programFiles	textcat.wam:toylabels.cfacts
+--unnormalized	1
 --fixedWeights	theano_p*
