@@ -1,7 +1,10 @@
 package edu.cmu.ml.proppr.learn;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.log4j.Logger;
 
+import edu.cmu.ml.proppr.Trainer;
 import edu.cmu.ml.proppr.examples.PosNegRWExample;
 import edu.cmu.ml.proppr.util.math.ParamVector;
 import edu.cmu.ml.proppr.util.SRWOptions;
@@ -42,9 +45,17 @@ public class AdaGradSRW extends SRW {
 	}
 	public AdaGradSRW(SRWOptions params) {
 		super(params);
+		totSqGrad = new SimpleParamVector<String>(new ConcurrentHashMap<String,Double>());
 	}
     public void setTotSqGrad(ParamVector<String,?> t) {
-	this.totSqGrad = t;
+    	this.totSqGrad = t;
+    }
+    
+    @Override
+	public SRW copy() {
+    	SRW cop = super.copy();
+    	((AdaGradSRW) cop).setTotSqGrad(this.totSqGrad);
+    	return cop;
     }
 
 	/**
@@ -55,10 +66,12 @@ public class AdaGradSRW extends SRW {
 	 * @param params
 	 * @param example
 	 */
-	public void trainOnExample(ParamVector<String,?> params, ParamVector<String,?> t, PosNegRWExample example, StatusLogger status) {
-		log.info("Training on "+example);
-
-		if (totSqGrad == null) totSqGrad = t; 
+    @Override
+	public void trainOnExample(ParamVector<String,?> params, PosNegRWExample example, StatusLogger status) {
+		if (log.isDebugEnabled()) 
+			log.debug("Training on "+example);
+		else if (log.isInfoEnabled() && status.due(2))
+			log.info(Thread.currentThread()+" Training on "+example);
 		
 		initializeFeatures(params, example.getGraph());
 		regularizer.prepareForExample(params, example.getGraph(), params);
@@ -67,6 +80,7 @@ public class AdaGradSRW extends SRW {
 		agd(params, example);
 	}
 
+    @Override
 	protected double learningRate(String feature) {
 	    if (!totSqGrad.containsKey(feature)) return 0.0;
 		return c.eta / Math.sqrt(this.totSqGrad.get(feature));

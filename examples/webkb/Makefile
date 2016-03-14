@@ -29,17 +29,21 @@ results.txt: $(addsuffix .results.txt,${SUBSETS})
 	../scripts/makeResults.sh $(word 3,$^) $(word 1,$^) pre.$*   > $@
 	../scripts/makeResults.sh $(word 3,$^) $(word 2,$^) post.$* >> $@	
 
+proppr.settings:
+	proppr set $(TRAINER_OPTION) $(SRW_OPTION) --epochs $(EPOCHS) $(SQUASH_OPTION) --threads ${THREADS} --prover ${PROVER}
+	proppr set --programFiles ${PROGRAM}
+
 %.params: train_no_%.data.grounded
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Trainer $(TRAINER_OPTION) --train $< --params $@ --threads ${THREADS} $(SRW_OPTION) --epochs $(EPOCHS) $(SQUASH_OPTION) 
+	proppr train $< $@ 
 
 train_no_%.data.grounded: train_no_%.data
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.Grounder --programFiles ${PROGRAM} --queries $^ --grounded $@ --prover ${PROVER} --threads ${THREADS} $(SQUASH_OPTION)
+	proppr ground $^ $@
 
 pre.%.solutions.txt: train_no_%.data
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $^ --solutions $@ --prover ${PROVER} --threads ${THREADS} $(SQUASH_OPTION)
+	proppr answer $< $@ 
 
 post.%.solutions.txt: train_no_%.data %.params
-	java ${JOPTS} -cp ${CP} edu.cmu.ml.proppr.QueryAnswerer --programFiles ${PROGRAM} --queries $< --solutions $@ --prover ${PROVER} --threads ${THREADS} --params $(word 2,$^) $(SQUASH_OPTION)
+	proppr answer $< $@ --params $(word 2,$^) 
 
 .SECONDARY:
 #.PRECIOUS: train_no_%.data.cooked %.params
