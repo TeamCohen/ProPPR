@@ -118,6 +118,13 @@ public class Configuration {
 	public FixedWeightRules fixedWeightRules = null;
 	public FixedWeightRules prunedPredicateRules = null;
 
+	private static Configuration instance;
+	public static Configuration getInstance() { return instance; }
+	public static void setInstance(Configuration i) { 
+//		if (instance!=null) throw new IllegalStateException("Configuration is a singleton");
+		instance=i; 
+	}
+	
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
 	}	
@@ -129,9 +136,10 @@ public class Configuration {
 	protected int outputFiles(int[] flags) { return flags[1]; }
 	protected int constants(int[] flags) { return flags[2]; }
 	protected int modules(int[] flags) { return flags[3]; }
-
+	
 	private Configuration() {}
 	public Configuration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
+		setInstance(this);
 		boolean combine = DEFAULT_COMBINE;
 		int[] flags = {inputFiles, outputFiles, constants, modules};
 
