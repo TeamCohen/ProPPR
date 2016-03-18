@@ -96,7 +96,7 @@ public class Configuration {
 	private static final boolean DEFAULT_COMBINE = true;
 
 	private static final int USE_APR = USE_WAM | USE_PROVER | USE_SRW;
-	private static final int USE_SMART_COUNTFEATURES = USE_COUNTFEATURES | USE_PROVER;
+	private static final int USE_SMART_COUNTFEATURES = USE_COUNTFEATURES | USE_WAM;
 
 	public File queryFile = null;
 	public File testFile = null;
@@ -144,6 +144,7 @@ public class Configuration {
 	private Configuration() {}
 	public Configuration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
 		setInstance(this);
+		System.out.println("");
 		boolean combine = DEFAULT_COMBINE;
 		int[] flags = {inputFiles, outputFiles, constants, modules};
 
@@ -252,9 +253,11 @@ public class Configuration {
 		if (isOn(flags,USE_FIXEDWEIGHTS) && line.hasOption(FIXEDWEIGHTS_CONST_OPTION))  this.fixedWeightRules = new FixedWeightRules(line.getOptionValues(FIXEDWEIGHTS_CONST_OPTION));
 		if (anyOn(flags,USE_SMART_COUNTFEATURES)) {
 			if (line.hasOption(COUNTFEATURES_CONST_OPTION)) this.countFeatures = Boolean.parseBoolean(line.getOptionValue(COUNTFEATURES_CONST_OPTION));
-			else if (this.nthreads > 20) log.warn("Large numbers of threads (>20, so "+this.nthreads+" qualifies) can cause a bottleneck in FeatureDictWeighter. If you're "+
+			else if (this.nthreads > 20) {
+			    log.warn("Large numbers of threads (>20, so "+this.nthreads+" qualifies) can cause a bottleneck in FeatureDictWeighter. If you're "+
 			"seeing lower system loads than expected and you're sure your examples/query/param files are correct, you can reduce contention & increase speed performance by adding "+
 					"'--"+COUNTFEATURES_CONST_OPTION+" false' to your command line.");
+			}
 		}
 		
 		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
