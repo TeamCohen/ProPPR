@@ -225,14 +225,20 @@ shortHelpMsgSL['sl-answer'] = """ INPUT1.examples INPUT2.cfacts INPUT3.ppr [OUTP
           $ proppr eval train
          where train.examples, train.cfacts are 2nd-order examples and facts"""
 
+def getArgByName(name,dflt):
+   if name in sys.argv:
+      i = sys.argv.index(name)+1
+      if i<len(sys.argv): return sys.argv[i]
+      else: assert "Expected arg value after '%s'" % name
+   return dflt
 
 def doPHSubcommand(o,subcommand):
     opts = loadOptionDict(o)
     if subcommand =="db":
-        graphStem,graphFile = stemExt(getArg(1),'.graph')
-        graphFile = getFile(graphFile,o)
-        dbFile = makeOutput(getArg(2,graphStem+".pkl"),o)
-        invokeHelper(o,'graph2theano.py',[],graphFile,dbFile)
+        factsStem,factsFile = stemExt(getArg(1),'.cfacts')
+        factsFile = getFile(factsFile,o)
+        dbFile = makeOutput(getArg(2,factsStem+".pkl"),o)
+        invokeHelper(o,'cfacts2theano.py',[],factsFile,dbFile,*sys.argv[4:])
         logging.info("Converted DB saved in "+dbFile)
     elif subcommand=="train":
       #work out input/output file names
@@ -243,9 +249,8 @@ def doPHSubcommand(o,subcommand):
       learnedModelFile = makeOutput(getArg(3),o)
       learnedParamsFile = makeOutput(getArg(4,exampleStem+'.params'),o)
       #optional arguments
-      optDict = getSomeArgvOptsAsDict(['--model','--numIters'])
-      numIters = optDict.get('--numIters','5')
-      model = optDict.get('--model','LogisticRegression')
+      numIters = getArgByName("--numIters","5")
+      model = getArgByName("--model",'LogisticRegression')
       invokeHelper(o,'pronghorn-wrapper.py',['--numIters','--model'],
                    '--src',exampleFile,'--src2',dbFile,
                    '--dst',learnedModelFile,'--dst2',learnedParamsFile,
@@ -343,7 +348,7 @@ def invokeHelper(o,main,helperOptions,*mainProgArgs):
    """Invoke a python program from scripts/proppr-helpers, supplying
    options from the settings file and/or the command-line options.
    
-   mainArgsConsumedBeforeHelperCalled: list of cli args *not* to pass on to helper.
+   helperOptions: list of cli args *not* to pass on to helper.
    """
    root = getRoot()
    helperFile = '%s/scripts/proppr-helpers/%s' % (root,main)

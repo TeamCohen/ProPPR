@@ -110,13 +110,18 @@ class Model(object):
                 handleProPPRFeature(line,self.tf)
         self.M = len(self.tf)
         logging.debug("Features detected: %d" % len(self.tf))
+        if self.M == 0: 
+            logging.warn("No applicable features; skipping")
+            return False
         self.db = InstanceData(dbfile)
         self._init_queryData()
         for feature,fid in self.tf.iteritems():
             self._build_queryData(fid,featureToArgs(feature))
         self.has_queryData = True
+        return True
     def load_trainingData(self,dbfile,gradientFile):
-        self.load_queryData(dbfile,gradientFile)
+        if not self.load_queryData(dbfile,gradientFile):
+            return False
         self._init_trainingData()
         logging.info("Loading gradient from %s..." % gradientFile)
         with open(gradientFile,'r') as f:
@@ -127,6 +132,7 @@ class Model(object):
                 if feature not in self.tf: continue
                 self.data_dldf.itemset(self.tf[feature],float(wt))
         self.has_trainingData = True
+        return True
     def _init_queryData(self):
         pass
     def _init_trainingData(self):
@@ -178,6 +184,10 @@ class Model(object):
 class LogisticRegression(Model):
     """Multi-class Logistic Regression Class
 
+    Takes features of the form theano_p(X1,X2,...,XN,Y) where Y is a
+    label and Xk identify the instance vector. Reports a
+    classification score.
+
     The logistic regression is fully described by a weight matrix :math:`W`
     and bias vector :math:`b`. Classification is done by projecting data
     points onto a set of hyperplanes, the distance to which is used to
@@ -185,6 +195,8 @@ class LogisticRegression(Model):
     
     Adapted from the theano MNIST logistic regression tutorial:
     http://deeplearning.net/tutorial/logreg.html
+
+    
     """
     def _name(self):
         return "LogisticRegression"
@@ -268,7 +280,8 @@ class LogisticRegression(Model):
             dtype='int32' )
         self.yindex = {}
     def _build_queryData(self,i,args):
-        (x,y) = args
+        x = "\t".join(args[:-1])
+        y = args[-1]
         self.data_trainX[i,:] = self.db.vectors[self.db.index[x],:]
         if y not in self.yindex: self.yindex[y] = len(self.yindex)
         self.data_trainY[i] = self.yindex[y]
@@ -338,6 +351,9 @@ class LogisticRegression(Model):
 
 
 class SimilarityRegression(LogisticRegression):
+    """
+    Takes features of the form theano_p(X1,X2) and reports a similarity score.
+    """
     def _name(self):
         return "SimilarityRegression"
     def _init(self):
@@ -390,7 +406,8 @@ class Pronghorn(object):
         logging.info( 'Loading the model...')
         # construct the logistic regression class
         self.classifier = self.modelType(theanoModel,learning_rate=self.eta)
-        self.classifier.load_trainingData(db_file,dldf_file)
+        if not self.classifier.load_trainingData(db_file,dldf_file):
+            return False
         self.classifier.ready()
 
         # generate symbolic variables for input (minibatch number)
@@ -412,18 +429,22 @@ class Pronghorn(object):
         logging.debug( "post py:\n%s" % post[:10][:] )
         # save this best model
         self.classifier.save()
-        return self.classifier
+        return True
+        #self.classifier
     def updateAndScore(self,theanoModel,db_file,dldf_file):
-        self.update(theanoModel,db_file,dldf_file)
-        return (self.classifier,self._score())
+        if self.update(theanoModel,db_file,dldf_file):
+            return (self.classifier,self._score())
+        else:
+            return (self.classifier,None)
     def score(self,theanoModel,db_file,feat_file):
         logging.info( 'Loading the model...')
         # construct the logistic regression class
         self.classifier = self.modelType(theanoModel,learning_rate=self.eta)
-        self.classifier.load_queryData(db_file,feat_file)
-        self.classifier.ready()
-        
-        return (self.classifier,self._score())
+        if self.classifier.load_queryData(db_file,feat_file):
+            self.classifier.ready()
+            return (self.classifier,self._score())
+        else:
+            return (self.classifier,None)
     def _score(self):
         # generate symbolic variables for input (minibatch number)
         index = T.lscalar()
@@ -551,4 +572,5 @@ if __name__=="__main__":
     if cmd not in cmds:
         print "Didn't recognized command '%s'." % cmd
         cmd="help"
+    print cmd
     cmds[cmd]()

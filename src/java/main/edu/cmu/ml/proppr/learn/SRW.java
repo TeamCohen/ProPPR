@@ -231,17 +231,18 @@ public class SRW {
 			ex.p[it.key()] = it.value();
 		}
 		for (int i=0; i<c.apr.maxDepth; i++) {
-			inferenceUpdate(ex);
-			if (log.isInfoEnabled() && status.due(3)) log.info("Inference: iter "+(i+1)+" of "+(c.apr.maxDepth));
+			if (log.isInfoEnabled() && status.due(3)) log.info("APR: iter "+(i+1)+" of "+(c.apr.maxDepth));
+		    inferenceUpdate(ex,status);
 		}
 
 	}
-	protected void inferenceUpdate(PosNegRWExample example) {
+	protected void inferenceUpdate(PosNegRWExample example, StatusLogger status) {
 		PprExample ex = (PprExample) example;
 		double[] pNext = new double[ex.getGraph().node_hi];
 		TIntDoubleMap[] dNext = new TIntDoubleMap[ex.getGraph().node_hi];
 		// p: 2. for each node u
 		for (int uid = 0; uid < ex.getGraph().node_hi; uid++) {
+			if (log.isInfoEnabled() && status.due(4)) log.info("Inference: node "+(uid+1)+" of "+(ex.getGraph().node_hi));
 			// p: 2(a) p_u^{t+1} += alpha * s_u
 			pNext[uid] += c.apr.alpha * Dictionary.safeGet(ex.getQueryVec(), uid, 0.0);
 			// p: 2(b) for each neighbor v of u:

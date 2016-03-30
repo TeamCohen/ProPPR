@@ -30,7 +30,17 @@ def lift(src,dst,opts):
         if not line or line.startswith("#"):
             fp.write(line + '\n')
         else:
-            if len(line.split("\t"))!=3:
+            bad=False
+            parts=line.split("\t")
+            if len(parts)!=3:
+                # [kmm] we have to permit weighted arity-two facts:
+                if len(parts)==4:
+                    try:
+                        wt = float(parts[-1])
+                    except ValueError:
+                        bad=True
+                else: bad=True
+            if bad:        
                 logging.warn('bad line from %s ignored: %s' % (src,line.strip()))
             else:
                 fp.write('rel\t' + line + '\n')
@@ -147,7 +157,8 @@ def gradientToRules(src,dst,opts):
             #if lastWeight: print 'collecting',feature,weight,lastWeight,'ratio',lastWeight/weight
             lastWeight = weight
             totAccepted += 1
-            parts = filter(lambda x:x, re.split('\W+', feature))
+            # kmm: \W+ too permissive
+            parts = filter(lambda x:x, re.split('[(), ]+', feature))
             if len(parts)==3:
                 (iftype,p,q) = parts
                 rhs = rhs_i if intensional(q) else rhs_e
@@ -161,6 +172,10 @@ def gradientToRules(src,dst,opts):
                 rhsr = rhs_i if intensional(r) else rhs_e
                 if chaintype=='chain':
                     rules.append( "%s(%s,X,Y) :- %s(%s,X,Z), %s(%s,Z,Y) {lr_%s}." % (lhs,p,rhsq,q,rhsr,r,feature))
+            else:
+                print "malformed feature: expected 3 or 4 parts; got %d" % len(parts)
+                print feature
+                break
     logging.info('gradientToRules examined %d gradients, %d for 2nd-order rules, %d negative, %d accepted' % (totFeatures,totRuleFeatures,totNegativeGradient,totAccepted))
     fp = open(dst,'w')
     fp.write("\n".join(rules) + "\n")
@@ -183,7 +198,10 @@ def stucturedGradient(src,dst,opts):
     u.invokeProppr(opts,'gradient',exampleFile+".grounded",gradientFile,'--epochs',str(NUM_EPOCHS_AT_ROUND_I(0)))
 
     #convert the gradient features to rules interp(R,X,Y) :- BODY where BODY contains calls to rel(R,X,Y).l
-    gradientToRules(gradientFile, learnedRuleFile, {'--lhs':'interp','--rhs':'rel'})
+    if "--n" in opts:
+        logging.info("gradientToRules(%s,%s, {'--lhs':'interp','--rhs':'rel'})" % (gradientFile, learnedRuleFile))
+    else:
+        gradientToRules(gradientFile, learnedRuleFile, {'--lhs':'interp','--rhs':'rel'})
 
 
 def iterativeStucturedGradient(src,dst,opts):
@@ -208,7 +226,7 @@ def iterativeStucturedGradient(src,dst,opts):
         if numAddedThisRound==0:
             logging.info('no new rules learned in previous iteration - stopping')
             break
-        logging.info(_catfile(interpFile,'Interpreter used at round %d' % i))
+        logging.info(u.catfile(interpFile,'Interpreter used at round %d' % i))
 
         #compile the interpreter
         u.invokeProppr(opts,'compile',interpFile)
@@ -226,7 +244,7 @@ def iterativeStucturedGradient(src,dst,opts):
         nextLearnedRuleFile = u.makeOutput(opts,'%s-learned_n%02d.ppr' % (exampleStem,i))
         gradientToRules(gradientFile,nextLearnedRuleFile,{'--rhs_i':'learnedPred','--rhs_e':'rel'})
         logging.info('Created rule file ' + nextLearnedRuleFile)
-        logging.info(_catfile(nextLearnedRuleFile,'Rules learned in round %d' % i))
+        logging.info(u.catfile(nextLearnedRuleFile,'Rules learned in round %d' % i))
 
         #add this to the list of learned rules
         learnedRuleFiles.append(nextLearnedRuleFile)

@@ -117,7 +117,7 @@ class RuleCollection(object):
 
 from pyparsing import Word, CharsNotIn, alphas, alphanums, delimitedList, nestedExpr, Optional, Group, QuotedString
 
-atomNT = Word( alphanums+"_"+"#" ) |  QuotedString(quoteChar="'",escChar="\\")
+atomNT = Word( alphanums+"_"+"#"+"/"+"@" ) |  QuotedString(quoteChar="'",escChar="\\")
 goalNT = atomNT + Optional("(" + delimitedList(atomNT) + ")")
 goalListNT = Optional(delimitedList(Group(goalNT)))
 featureFindAllNT = Optional(":" + delimitedList(Group(goalNT)))
