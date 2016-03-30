@@ -271,7 +271,22 @@ class Recall(Metric):
             if a in solutionSet:
                 r += 1.0
         return r/n
-        
+
+class HitsAt10(Metric):
+    def explanation(self):
+        return '(Hits@10): The proportion of correct head- or tail-assignments with a rank no greater than 10 among all possible head- or tail-assignments. via TransE'
+    def computeFromList(self,answerList,solutionSet,posSet):
+        nP = len(posSet)
+        if nP==0: return 1.0
+        numPosRetrieved = 0.0
+        numOther = 0.0
+        # hits@10 ignores rank competition by other correct answers
+        # so we duplicate that effect here by counting until we see 10 incorrect
+        for a in adversariallyOrdered(answerList):
+            if a.isPos: numPosRetrieved += 1.0
+            else: numOther += 1.0
+            if numOther >= 10: break
+        return numPosRetrieved / nP
         
 class PrecisionAt10(Metric):
 
@@ -429,7 +444,7 @@ class MeanRecipRank(Metric):
 
 if __name__ == "__main__":
 
-    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'p10':PrecisionAt10(), 'p1':PrecisionAt1(), 
+    metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'p10':PrecisionAt10(), 'p1':PrecisionAt1(), 'h10':HitsAt10(), 
                'map':MeanAvgPrecision(), 'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
 
     argspec = ["data=", "answers=", "metric=", "defaultNeg", "help", "debug", "echo", "details"]
