@@ -52,7 +52,7 @@ def invokeProppr(opts,*args):
     procArgs = ['%s/scripts/proppr' % os.environ['PROPPR']]
     #deal with proppr's global options
     if '--C' in opts:
-        procArgs.extend(['-C', optdict['--C']])
+        procArgs.extend(['-C', opts['--C']])
     if '--n' in opts:
         procArgs.extend(['-n'])
     procArgs.extend(args)
