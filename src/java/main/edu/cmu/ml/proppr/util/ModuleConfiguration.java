@@ -7,7 +7,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
-import edu.cmu.ml.proppr.AdaGradTrainer;
 import edu.cmu.ml.proppr.CachingTrainer;
 import edu.cmu.ml.proppr.Grounder;
 import edu.cmu.ml.proppr.Trainer;
@@ -276,13 +275,12 @@ public class ModuleConfiguration extends Configuration {
 					this.trainer = new CachingTrainer(this.srw, this.nthreads, this.throttle, shuff); 
 					break;
 				case adagrad:
-					this.trainer = new AdaGradTrainer(this.srw, this.nthreads, this.throttle);
-					if (this.squashingFunction instanceof ReLU)
-						log.warn("AdaGrad performs quite poorly with --squashingFunction ReLU. For better results, switch to an exp variant.");
-					stableEpochs = 2; // override default
-					break;
+					this.usageOptions(options, allFlags, "Trainer 'adagrad' no longer necessary. Use '--srw adagrad' for adagrad descent method.");
 				default: this.usageOptions(options, allFlags, "Unrecognized trainer "+line.getOptionValue(TRAINER_MODULE_OPTION));
 				}
+				
+				if (this.srw instanceof AdaGradSRW)
+					stableEpochs = 2; // override default
 				
 				// now get stopping criteria from command line
 				if (line.hasOption(TRAINER_MODULE_OPTION)) {
@@ -367,6 +365,8 @@ public class ModuleConfiguration extends Configuration {
 				break;
 			case adagrad:
 				this.srw = new AdaGradSRW(sp);
+				if (this.squashingFunction instanceof ReLU)
+					log.warn("AdaGrad performs quite poorly with --squashingFunction ReLU. For better results, switch to an exp variant.");
 				break;
 			default: usageOptions(options,-1,-1,-1,flags,"No srw definition for '"+values[0]+"'");
 			}

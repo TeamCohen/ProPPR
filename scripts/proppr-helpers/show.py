@@ -14,7 +14,10 @@ if __name__=="__main__":
    features = [0]
    with open(featurefile,'r') as f:
       features.extend([line.strip() for line in f])
-   trueLoop = features.index("id(trueLoop)")
+   if "id(trueLoop)" in features:
+      trueLoop = features.index("id(trueLoop)")
+   else:
+      trueLoop = -1
    lineno=0
    query = ""
    edges = []

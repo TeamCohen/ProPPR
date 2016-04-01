@@ -67,6 +67,7 @@ public class Configuration {
 	public static final int USE_THROTTLE = 0x80;
 	public static final int USE_EMPTYGRAPHS = 0x100;
 	public static final int USE_FIXEDWEIGHTS = 0x200;
+	public static final int USE_COUNTFEATURES = 0x400;
 	private static final String PROGRAMFILES_CONST_OPTION = "programFiles";
 	private static final String TERNARYINDEX_CONST_OPTION = "ternaryIndex";
 	private static final String APR_CONST_OPTION = "apr";
@@ -78,6 +79,7 @@ public class Configuration {
 	private static final String THROTTLE_CONST_OPTION = "throttle";
 	private static final String EMPTYGRAPHS_CONST_OPTION = "includeEmptyGraphs";
 	private static final String FIXEDWEIGHTS_CONST_OPTION = "fixedWeights";
+	private static final String COUNTFEATURES_CONST_OPTION = "countFeatures";
 	// wwc: protected so that ModuleConfiguration can give warnings...
 	protected static final String PRUNEDPREDICATE_CONST_OPTION = "prunedPredicates";
 
@@ -94,6 +96,7 @@ public class Configuration {
 	private static final boolean DEFAULT_COMBINE = true;
 
 	private static final int USE_APR = USE_WAM | USE_PROVER | USE_SRW;
+	private static final int USE_SMART_COUNTFEATURES = USE_COUNTFEATURES | USE_WAM;
 
 	public File queryFile = null;
 	public File testFile = null;
@@ -117,7 +120,15 @@ public class Configuration {
 	public int throttle = Multithreading.DEFAULT_THROTTLE;
 	public FixedWeightRules fixedWeightRules = null;
 	public FixedWeightRules prunedPredicateRules = null;
+	public boolean countFeatures = true;
 
+	private static Configuration instance;
+	public static Configuration getInstance() { return instance; }
+	public static void setInstance(Configuration i) { 
+//		if (instance!=null) throw new IllegalStateException("Configuration is a singleton");
+		instance=i; 
+	}
+	
 	static boolean isOn(int flags, int flag) {
 		return (flags & flag) == flag;
 	}	
@@ -129,9 +140,11 @@ public class Configuration {
 	protected int outputFiles(int[] flags) { return flags[1]; }
 	protected int constants(int[] flags) { return flags[2]; }
 	protected int modules(int[] flags) { return flags[3]; }
-
+	
 	private Configuration() {}
 	public Configuration(String[] args, int inputFiles, int outputFiles, int constants, int modules) {
+		setInstance(this);
+		System.out.println("");
 		boolean combine = DEFAULT_COMBINE;
 		int[] flags = {inputFiles, outputFiles, constants, modules};
 
@@ -238,7 +251,15 @@ public class Configuration {
 		if (isOn(flags,USE_THROTTLE) && line.hasOption(THROTTLE_CONST_OPTION))          this.throttle = Integer.parseInt(line.getOptionValue(THROTTLE_CONST_OPTION));
 		if (isOn(flags,USE_EMPTYGRAPHS) && line.hasOption(EMPTYGRAPHS_CONST_OPTION))    this.includeEmptyGraphs = true;
 		if (isOn(flags,USE_FIXEDWEIGHTS) && line.hasOption(FIXEDWEIGHTS_CONST_OPTION))  this.fixedWeightRules = new FixedWeightRules(line.getOptionValues(FIXEDWEIGHTS_CONST_OPTION));
-
+		if (anyOn(flags,USE_SMART_COUNTFEATURES)) {
+			if (line.hasOption(COUNTFEATURES_CONST_OPTION)) this.countFeatures = Boolean.parseBoolean(line.getOptionValue(COUNTFEATURES_CONST_OPTION));
+			else if (this.nthreads > 20) {
+			    log.warn("Large numbers of threads (>20, so "+this.nthreads+" qualifies) can cause a bottleneck in FeatureDictWeighter. If you're "+
+			"seeing lower system loads than expected and you're sure your examples/query/param files are correct, you can reduce contention & increase speed performance by adding "+
+					"'--"+COUNTFEATURES_CONST_OPTION+" false' to your command line.");
+			}
+		}
+		
 		if (this.programFiles != null) this.loadProgramFiles(line,allFlags,options);
 	}
 
@@ -536,16 +557,14 @@ public class Configuration {
 					.valueSeparator(':')
 					.desc("Specify patterns of features to keep fixed at 1.0 or permit tuning. End in * for a prefix, otherwise uses exact match. Fixed by default; specify '=n' to permit tuning. First matching rule decides.")
 					.build()));
+		if (anyOn(flags, USE_SMART_COUNTFEATURES))
+			options.addOption(checkOption(
+					Option.builder(COUNTFEATURES_CONST_OPTION)
+					.hasArg()
+					.argName("true|false")
+					.desc("Default: true\nTrack feature usage and tell me when I've e.g. run queries with the wrong params file")
+					.build()));
 
-		//		if (isOn(flags, USE_COMPLEX_FEATURES)) {
-		//			options.addOption(
-		//					OptionBuilder
-		//					.withLongOpt("complexFeatures")
-		//					.withArgName("file")
-		//					.hasArg()
-		//					.withDescription("Properties file for complex features")
-		//					.create());
-		//		}
 	}
 
 	protected void constructUsageSyntax(StringBuilder syntax, int[] allFlags) {
@@ -584,6 +603,7 @@ public class Configuration {
 		if (isOn(flags, USE_THROTTLE)) syntax.append(" [--").append(THROTTLE_CONST_OPTION).append(" integer]");
 		if (isOn(flags, USE_EMPTYGRAPHS)) syntax.append(" [--").append(EMPTYGRAPHS_CONST_OPTION).append("]");
 		if (isOn(flags, USE_FIXEDWEIGHTS)) syntax.append(" [--").append(FIXEDWEIGHTS_CONST_OPTION).append(" featureA:featureB()]");
+		if (anyOn(flags, USE_SMART_COUNTFEATURES)) syntax.append(" [--").append(COUNTFEATURES_CONST_OPTION).append(" true|false]");
 	}
 
 	/**
