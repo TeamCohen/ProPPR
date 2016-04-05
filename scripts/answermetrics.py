@@ -120,7 +120,7 @@ class Answers(object):
     - answers.queryTime[q] is proof time in msec 
     - answers.answers[q] is a list of Answer objects, which contain
       the attributes rank, score, solution, isPos and isNeg.
-    - answers.solutions[q] is a set of all the solutions returned for
+    - answers.solutions[q] is a set of all the solution(string)s returned for
       q
 
     Any answers that are not either isPos or isNeg - ie, unknown truth
@@ -128,7 +128,7 @@ class Answers(object):
     solutions negative, run with --defaultNeg
 """
     
-    def __init__(self,answerFile,labels=None,defaultNeg=False):
+    def __init__(self,answerFile,labels=None,defaultNeg=False,adversarial=True):
         """Parse an answer file - if labels are not given, then
         the isPos/isNeg flags will be set to None."""
         #print "defaultNeg:",defaultNeg
@@ -174,8 +174,9 @@ class Answers(object):
                     #print line.strip(),a.isPos,a.isNeg
                 #else:
                 #    print line.strip()
-        for q in self.answers:
-            self.answers[q] = adversariallyOrdered(self.answers[q])
+        if adversarial:
+            for q in self.answers:
+                self.answers[q] = adversariallyOrdered(self.answers[q])
         print 'queries',totQueries,'answers',totAnswers,'labeled answers',totLabeledAnswers
 
 
@@ -219,6 +220,7 @@ class Metric(object):
 
     def macroAverage(self,answers,labels):
         """Compute over the full list of answers."""
+        #print "macro"
         fullAnswerList = reduce(lambda l1,l2:l1+l2, [answers.answers[q] for q in answers.answers.keys()],[])
         fullSolutionSet = reduce(lambda s1,s2:s1.union(s2), [answers.solutions[q] for q in answers.answers.keys()],set())
         fullPosSolutionSet = reduce(lambda s1,s2:s1.union(s2), [labels.pos[q] for q in labels.queries])
@@ -226,6 +228,7 @@ class Metric(object):
 
     def microAverage(self,answers,labels):
         """Compute over each query individually and average results."""
+        #print "micro"
         tot = n = 0.0
         for q in labels.queries:#answers.answers.keys():
             n += 1.0
@@ -279,13 +282,17 @@ class HitsAt10(Metric):
         nP = len(posSet)
         if nP==0: return 1.0
         numPosRetrieved = 0.0
-        numOther = 0.0
+        #numOther = 0
         # hits@10 ignores rank competition by other correct answers
         # so we duplicate that effect here by counting until we see 10 incorrect
-        for a in adversariallyOrdered(answerList):
-            if a.isPos: numPosRetrieved += 1.0
-            else: numOther += 1.0
-            if numOther >= 10: break
+        for a in answerList:
+            #if a.rank > 10: break
+            if a.isPos: 
+                if a.rank <= 10:
+                    numPosRetrieved += 1.0
+            #else: numOther += 1
+            #if numOther >= 10: break
+        #print "%d / %d" % (numPosRetrieved,nP)
         return numPosRetrieved / nP
         
 class PrecisionAt10(Metric):
@@ -447,7 +454,7 @@ if __name__ == "__main__":
     metrics = {'mrr':MeanRecipRank(), 'recall':Recall(), 'p10':PrecisionAt10(), 'p1':PrecisionAt1(), 'h10':HitsAt10(), 
                'map':MeanAvgPrecision(), 'acc1':AccuracyL1(), 'acc2':AccuracyL2(), 'auc':AreaUnderROC()}
 
-    argspec = ["data=", "answers=", "metric=", "defaultNeg", "help", "debug", "echo", "details"]
+    argspec = ["data=", "answers=", "metric=", "adversarial=", "defaultNeg", "help", "debug", "echo", "details"]
     optlist,remainingArgs = getopt.getopt(sys.argv[1:], "", argspec)
     option = dict(optlist)
     if ('--data' not in option) or ('--answers' not in option) or ('--help' in option):
@@ -458,10 +465,14 @@ if __name__ == "__main__":
         print '  --echo will print a representation of the raw information from which metrics are computed'
         sys.exit(-1)
         
+    adv = True
+    if '--adversarial' in option:
+        adv = option['--adversarial'] not in "off false False no".split()
     labels = Labels(option['--data'])
-    answers = Answers(option['--answers'],labels,'--defaultNeg' in option)
+    answers = Answers(option['--answers'],labels,'--defaultNeg' in option,adversarial=adv)
 
     if '--debug' in option:
+        print "debug:"
         for query in labels.queries:
             print "#",query
             labels.showQuery(query)
@@ -472,6 +483,7 @@ if __name__ == "__main__":
         #answers.show(summary=False)
 
     if ('--echo' in option):
+        print "echo:"
         print 'labeled answers: rank score solution isPos isNeg'
         answers.show(summary=False)
 
