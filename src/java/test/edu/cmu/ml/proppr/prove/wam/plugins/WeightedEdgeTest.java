@@ -28,13 +28,24 @@ public class WeightedEdgeTest {
 		public static final File DIR = new File("src/testcases/weighted");
 		public static final File RULES = new File(DIR,"dbWeights.wam");
 		public static final File FACTS = new File(DIR,"tinycorpus.cfacts");
+		public static final File GRAPH = new File(DIR,"tinycorpus.graph");
 
 		@Test
-		public void test() throws IOException, LogicProgramException {
+		public void testFacts() throws IOException, LogicProgramException {
 			APROptions apr = new APROptions();
+			testOne(apr, FactsPlugin.load(apr, FACTS, false));
+		}
+		
+		@Test
+		public void testGraph() throws IOException, LogicProgramException {
+			APROptions apr = new APROptions();
+			testOne(apr, LightweightGraphPlugin.load(apr, GRAPH, 1000));
+		}
+		
+		public void testOne(APROptions apr, WamPlugin plug)  throws IOException, LogicProgramException {
 			Prover p = new DprProver(apr);
 			WamProgram program = WamBaseProgram.load(RULES);
-			WamPlugin plugins[] = new WamPlugin[] {FactsPlugin.load(apr, FACTS, false)};
+			WamPlugin plugins[] = new WamPlugin[] {plug};
 			Grounder grounder = new Grounder(apr, p, program, plugins);
 			assertTrue("Missing weighted functor",plugins[0].claim("hasWord#/3"));
 
@@ -46,11 +57,11 @@ public class WeightedEdgeTest {
 //			Map<String,Double> m = p.solutions(pg);
 //			System.out.println(Dictionary.buildString(m, new StringBuilder(), "\n").toString());
 			GroundedExample ex = grounder.groundExample(p, pg);
-			ex.getGraph().serialize();
-			String serialized = grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n");
+			String serialized = ex.getGraph().serialize(true).replaceAll("\t", "\n");
+			//String serialized = grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n");
 			System.out.println( serialized );
-			assertTrue("Rule weights must appear in ground graph (0.9)",serialized.indexOf("0.9")>=0);
-			assertTrue("Rule weights must appear in ground graph (0.1)",serialized.indexOf("0.1")>=0);
+			assertTrue("Label weights must appear in ground graph (0.9)",serialized.indexOf("0.9")>=0);
+			assertTrue("Label weights must appear in ground graph (0.1)",serialized.indexOf("0.1")>=0);
 //			Map<String,Double> m = p.solvedQueries(pg);
 //			System.out.println(Dictionary.buildString(m, new StringBuilder(), "\n"));
 		}
