@@ -31,6 +31,7 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	protected LongDense.AbstractFloatVector params=null;
 	protected IdDprProver parent=null;
 	public int completedStates = 0;
+	private int maxTreeDepth;
 	
 	@Override
 	public String toString() { 
@@ -64,6 +65,12 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 	}
 	@Override
 	public Class<CachingIdProofGraph> getProofGraphClass() { return CachingIdProofGraph.class; }
+	
+	public void configure(String param) {
+		if (param.startsWith("maxTreeDepth=")) {
+			this.maxTreeDepth = Integer.parseInt(param.substring(param.indexOf('=')));
+		}
+	}
 	
 	protected void setFrozenParams(LongDense.AbstractFloatVector params) {
 		if (this.params == null) this.params = params;
@@ -126,7 +133,10 @@ public class IdDprProver extends Prover<CachingIdProofGraph> {
 													 LongDense.AbstractFloatVector params,
 													 StatusLogger status)
 	{
-
+		if (this.maxTreeDepth > 0 && depth > this.maxTreeDepth) {
+			if (log.isDebugEnabled()) log.debug(String.format("Rejecting eps %f @depth %d > %d ru %.6f deg %d state %s", iterEpsilon, depth, this.maxTreeDepth, r.get(uid), -1, uid));
+			return pushCounter;
+		}
 		try {
 			int deg = cg.getDegreeById(uid, this.weighter);
 			if (r.get(uid) / deg > iterEpsilon) {

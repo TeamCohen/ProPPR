@@ -31,6 +31,7 @@ public class DprProver extends Prover<StateProofGraph> {
 	private static final boolean TRUELOOP_ON = true;
 	protected final double stayProbability;
 	protected final double moveProbability;
+	private int maxTreeDepth=-1;
 	// for debug
 	protected Backtrace<State> backtrace = new Backtrace<State>(log);
 	protected ProofGraph current;
@@ -65,6 +66,13 @@ public class DprProver extends Prover<StateProofGraph> {
 	@Override
 	public Class<StateProofGraph> getProofGraphClass() { return StateProofGraph.class; }
 
+	public void configure(String param) {
+		if (param.startsWith("maxTreeDepth=")) {
+			this.maxTreeDepth = Integer.parseInt(param.substring(param.indexOf('=')));
+		}
+	}
+	
+	
 	// wwc: might look at using a PriorityQueue together with r to find
 	// just the top things. 
 
@@ -110,6 +118,10 @@ public class DprProver extends Prover<StateProofGraph> {
 	protected int proveState(StateProofGraph pg, Map<State,Double> p, Map<State, Double> r,
 			State u, int pushCounter, int depth, double iterEpsilon,
 			StatusLogger status) {
+		if (this.maxTreeDepth > 0 && depth > this.maxTreeDepth) {
+			if (log.isDebugEnabled()) log.debug(String.format("Rejecting eps %f @depth %d > %d ru %.6f deg %d state %s", iterEpsilon, depth, this.maxTreeDepth, r.get(u), -1, u));
+			return pushCounter;
+		}
 		try {
 			int deg = pg.pgDegree(u);
 			if (r.get(u) / deg > iterEpsilon) {

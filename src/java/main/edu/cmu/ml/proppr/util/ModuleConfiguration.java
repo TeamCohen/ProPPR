@@ -215,6 +215,11 @@ public class ModuleConfiguration extends Configuration {
 				}
 				if (prunedPredicateRules!=null && !proverSupportsPruning) 
 					log.warn("option --"+PRUNEDPREDICATE_CONST_OPTION+" is ignored by this prover");
+				if (values.length > 1) {
+					for (int i=1; i<values.length; i++) {
+						this.prover.configure(values[i]);
+					}
+				}
 			}
 		}
 

@@ -120,4 +120,6 @@ public abstract class Prover<P extends ProofGraph> {
 			throw new IllegalStateException("Bizarre exception:",e);
 		}
 	}
+	/** Use for arbitrary command line prover configuration in subclasses **/
+	public void configure(String param) {}
 }
