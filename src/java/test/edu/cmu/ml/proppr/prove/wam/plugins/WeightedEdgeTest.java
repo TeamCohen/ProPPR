@@ -64,6 +64,22 @@ public class WeightedEdgeTest {
 			assertTrue("Label weights must appear in ground graph (0.1)",serialized.indexOf("0.1")>=0);
 //			Map<String,Double> m = p.solvedQueries(pg);
 //			System.out.println(Dictionary.buildString(m, new StringBuilder(), "\n"));
+			
+			
+			
+			Query query2 = Query.parse("words2(p1,W)");
+			ProofGraph pg2 = new StateProofGraph(new InferenceExample(query2, 
+					new Query[] {Query.parse("words(p1,good)")}, 
+					new Query[] {Query.parse("words(p1,thing)")}),
+					apr,new SimpleSymbolTable<Feature>(),program, plugins);
+//			Map<String,Double> m = p.solutions(pg);
+//			System.out.println(Dictionary.buildString(m, new StringBuilder(), "\n").toString());
+			GroundedExample ex2 = grounder.groundExample(p, pg2);
+			String serialized2 = ex2.getGraph().serialize(true).replaceAll("\t", "\n");
+			//String serialized = grounder.serializeGroundedExample(pg, ex).replaceAll("\t", "\n");
+			System.out.println( serialized2 );
+			assertTrue("Label weights must appear in ground graph (0.9)",serialized2.indexOf("0.9")>=0);
+			assertTrue("Label weights must appear in ground graph (0.1)",serialized2.indexOf("0.1")>=0);
 		}
 
 

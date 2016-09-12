@@ -24,7 +24,7 @@ public abstract class SquashingFunction<F> {
 	public double edgeWeight(Map<F,Double> params, Map<F,Double> features) {
 		double ret = 0.0;
 		for (Map.Entry<F,Double> f : features.entrySet()) {
-			ret += Dictionary.safeGet(params, f.getKey(), this.defaultValue()) * f.getValue();
+			ret += Dictionary.safeGet(params, f.getKey(), this.defaultValue()) * f.getValue(); // this is wrong. f.getValue() is only used if f.key is not in the parameter map. wtf
 		}
 		ret = compute(ret);
 		if (Double.isInfinite(ret)) return Double.MAX_VALUE;
