@@ -68,7 +68,7 @@ public class DprProver extends Prover<StateProofGraph> {
 
 	public void configure(String param) {
 		if (param.startsWith("maxTreeDepth=")) {
-			this.maxTreeDepth = Integer.parseInt(param.substring(param.indexOf('=')));
+			this.maxTreeDepth = Integer.parseInt(param.substring(param.indexOf('=')+1));
 		}
 	}
 	
