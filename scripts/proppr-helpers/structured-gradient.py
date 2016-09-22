@@ -102,7 +102,7 @@ def relationsToExamples(src,dst,opts):
                 else:
                     #sample k>0 -- use k negative examples
                     negParts = rnd.shuffle(allNegParts)[0:kSample]
-                if posParts or allowHopelessQueries:
+                if posParts or allowHopeless:
                     result.append((query,posParts,negParts))
     
     rnd.shuffle(result)
