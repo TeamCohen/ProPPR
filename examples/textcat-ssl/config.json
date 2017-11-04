@@ -1,0 +1,49 @@
+{
+   "language" : "PYTHON",
+   "main-file" : "mySpearmint.py",
+   "experiment-name" : "citeseer_17302",
+   "variables" : {
+       "jumpyNear1" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 6
+       },
+       "jumpyNear2" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 6
+       },
+       "coFailure" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 11
+       },
+       "mutexFailure1" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 11
+       },
+       "mutexFailure2" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 11
+       },
+       "smoothFailure1" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 11
+       },
+       "smoothFailure2" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 11
+       }
+   }
+}

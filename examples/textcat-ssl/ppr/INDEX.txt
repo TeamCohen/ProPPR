@@ -1,0 +1,75 @@
+##! train: for X,Y in labeled, Z in labels: +/-predict(X,Z) ...
+##! test: for X,Y in test, Z in labels: +/-predict(X,Z) ...
+
+ppr/textcat.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict1(X,Z) ...
+##! train: for X,Y in labeled, Z in labels: +/-predict2(X,Z) ...
+##! train: for X in unlabeled: -mutexFailure(X)
+##! test: for X,Y in test, Z in labels: +/-predict1(X,Z) ...
+
+ppr/cotrain+mutex.ppr
+ppr/cotrain.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict1(X,Z) ...
+##! train: for X,Y in labeled, Z in labels: +/-predict2(X,Z) ...
+##! train: for X in unlabeled: -mutexFailure(X)
+##! train: for X in unlabeled: +propParent(X)
+##! test: for X,Y in test, Z in labels: +/-predict1(X,Z) ...
+
+ppr/cotrain+ontomutex.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict(X,Z) ...
+##! train: for X in unlabeled: -mutexFailure(X)
+##! test: for X,Y in test, Z in labels: +/-predict(X,Z) ...
+
+ppr/mutex.ppr
+ppr/smooth2.ppr
+ppr/smooth2+mutex.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict(X,Z) ...
+##! train: for X in unlabeled: -mutexFailure(X)
+##! train: for X in unlabeled: +propParent(X)
+##! test: for X,Y in test, Z in labels: +/-predict(X,Z) ...
+
+ppr/ontomutex.ppr
+ppr/ontomutex-sibless.ppr
+
+##! train: for X,Y in labeled: +predict(X,Y)
+##! train: for X in unlabeled: -mutexFailure(X)
+##! train: for X in unlabeled: +propParent(X)
+##! test: for X,Y in test: +predict(X,Y)
+
+ppr/ontomutex-wsd.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict(X,Z) ...
+##! train: for X,Y in labeled: -jumpyNear(X,Y)
+##! test: for X,Y in test, Z in labels: +/-predict(X,Z) ...
+
+ppr/prop2.ppr
+ppr/prop.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict(X,Z) ...
+##! train: for X,Y in labeled: -jumpyNear(X,Y)
+##! test: for X,Y in test, Z in labels: +/-predict(X,Z) ...
+##! train: for X in unlabeled: -mutexFailure(X)
+
+ppr/prop2+mutex.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict1(X,Z) ...
+##! train: for X,Y in labeled, Z in labels: +/-predict2(X,Z) ...
+##! test: for X,Y in test, Z in labels: +/-predict1(X,Z) ...
+##! train: for X,Y in labeled: -jumpyNear(X,Y)
+##! train: for X in unlabeled: -mutexFailure(X)
+
+ppr/prop2+cotrain+mutex.ppr
+ppr/prop2+cotrain.ppr
+
+##! train: for X,Y in labeled, Z in labels: +/-predict1(X,Z) ...
+##! train: for X,Y in labeled, Z in labels: +/-predict2(X,Z) ...
+##! train: for X,Y in labeled: -jumpyNear1(X,Y)
+##! train: for X,Y in labeled: -jumpyNear2(X,Y)
+##! train: for X in unlabeled: -mutexFailure(X)
+##! test: for X,Y in test, Z in labels: +/-predict1(X,Z) ...
+
+ppr/prop+cotrain+mutex.ppr

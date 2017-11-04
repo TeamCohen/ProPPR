@@ -1,0 +1,286 @@
+0		comment	jumpyNear1(-1,-2) :- sim1(-1,-3), mutex(-2,-4), predict1(-3,-4) {fixedWeight}  #v:['X', 'Y', 'Z', 'NotY'].
+1	jumpyNear1/2	allocate	4	['NotY', 'Z', 'Y', 'X']
+2		initfreevar	-1	-2
+3		initfreevar	-2	-1
+4		fclear
+5		fpushstart	fixedWeight	0
+6		freport
+7		pushboundvar	-1
+8		pushfreevar	-3
+9		callp	sim1/2
+10		pushboundvar	-2
+11		pushfreevar	-4
+12		callp	mutex/2
+13		pushboundvar	-3
+14		pushboundvar	-4
+15		callp	predict1/2
+16		returnp
+17		comment	jumpyNear1(-1,-2) :- sim1(-1,-3), mutex(-4,-2), predict1(-3,-4) {fixedWeight}  #v:['X', 'Y', 'Z', 'NotY'].
+18	jumpyNear1/2	allocate	4	['NotY', 'Z', 'Y', 'X']
+19		initfreevar	-1	-2
+20		initfreevar	-2	-1
+21		fclear
+22		fpushstart	fixedWeight	0
+23		freport
+24		pushboundvar	-1
+25		pushfreevar	-3
+26		callp	sim1/2
+27		pushfreevar	-4
+28		pushboundvar	-2
+29		callp	mutex/2
+30		pushboundvar	-3
+31		pushboundvar	-4
+32		callp	predict1/2
+33		returnp
+34		comment	classify2(-1,-2) :-  {g(-3,-2) : cites(-1,-3)}  #v:['X', 'Y', 'Cited'].
+35	classify2/2	allocate	3	['Cited', 'Y', 'X']
+36		initfreevar	-1	-2
+37		initfreevar	-2	-1
+38		fclear
+39		ffindall	43
+40		freport
+41		returnp
+42		comment	features g(-3,-2) : cites(-1,-3)
+43		pushboundvar	-1
+44		pushfreevar	-3
+45		callp	cites/2
+46		fpushstart	g	2
+47		fpushboundvar	-3
+48		fpushboundvar	-2
+49		returnp
+50		comment	smoothFailure2(-1) :- mutex(-2,-3), classify1(-1,-2), near(-1,-4), near(-4,-5), classify1(-5,-3) {fixedWeight}  #v:['X1', 'Y1', 'Y2', 'Z', 'X2'].
+51	smoothFailure2/1	allocate	5	['X2', 'Z', 'Y2', 'Y1', 'X1']
+52		initfreevar	-1	-1
+53		fclear
+54		fpushstart	fixedWeight	0
+55		freport
+56		pushfreevar	-2
+57		pushfreevar	-3
+58		callp	mutex/2
+59		pushboundvar	-1
+60		pushboundvar	-2
+61		callp	classify1/2
+62		pushboundvar	-1
+63		pushfreevar	-4
+64		callp	near/2
+65		pushboundvar	-4
+66		pushfreevar	-5
+67		callp	near/2
+68		pushboundvar	-5
+69		pushboundvar	-3
+70		callp	classify1/2
+71		returnp
+72		comment	predict1(-1,-2) :- isLabel(-2), classify1(-1,-2)  #v:['X', 'Y'].
+73	predict1/2	allocate	2	['Y', 'X']
+74		initfreevar	-1	-2
+75		initfreevar	-2	-1
+76		fclear
+77		fpushstart	id	3
+78		fpushconst	predict1
+79		fpushconst	2
+80		fpushconst	76
+81		freport
+82		pushboundvar	-2
+83		callp	isLabel/1
+84		pushboundvar	-1
+85		pushboundvar	-2
+86		callp	classify1/2
+87		returnp
+88		comment	mutexFailure2(-1) :- mutex(-2,-3), classify2(-1,-2), classify2(-1,-3) {fixedWeight}  #v:['X', 'Y1', 'Y2'].
+89	mutexFailure2/1	allocate	3	['Y2', 'Y1', 'X']
+90		initfreevar	-1	-1
+91		fclear
+92		fpushstart	fixedWeight	0
+93		freport
+94		pushfreevar	-2
+95		pushfreevar	-3
+96		callp	mutex/2
+97		pushboundvar	-1
+98		pushboundvar	-2
+99		callp	classify2/2
+100		pushboundvar	-1
+101		pushboundvar	-3
+102		callp	classify2/2
+103		returnp
+104		comment	predict2(-1,-2) :- isLabel(-2), classify2(-1,-2)  #v:['X', 'Y'].
+105	predict2/2	allocate	2	['Y', 'X']
+106		initfreevar	-1	-2
+107		initfreevar	-2	-1
+108		fclear
+109		fpushstart	id	3
+110		fpushconst	predict2
+111		fpushconst	2
+112		fpushconst	108
+113		freport
+114		pushboundvar	-2
+115		callp	isLabel/1
+116		pushboundvar	-1
+117		pushboundvar	-2
+118		callp	classify2/2
+119		returnp
+120		comment	smoothFailure1(-1) :- mutex(-2,-3), classify1(-1,-2), near(-1,-4), classify1(-4,-3) {fixedWeight}  #v:['X1', 'Y1', 'Y2', 'X2'].
+121	smoothFailure1/1	allocate	4	['X2', 'Y2', 'Y1', 'X1']
+122		initfreevar	-1	-1
+123		fclear
+124		fpushstart	fixedWeight	0
+125		freport
+126		pushfreevar	-2
+127		pushfreevar	-3
+128		callp	mutex/2
+129		pushboundvar	-1
+130		pushboundvar	-2
+131		callp	classify1/2
+132		pushboundvar	-1
+133		pushfreevar	-4
+134		callp	near/2
+135		pushboundvar	-4
+136		pushboundvar	-3
+137		callp	classify1/2
+138		returnp
+139		comment	sim1(-1,-1) :-  {fixedWeight}  #v:['X'].
+140	sim1/2	allocate	1	['X']
+141		initfreevar	-1	-2
+142		unifyboundvar	-1	-1
+143		fclear
+144		fpushstart	fixedWeight	0
+145		freport
+146		returnp
+147		comment	sim1(-1,-2) :- near(-1,-3), sim1(-3,-2) {fixedWeight}  #v:['X1', 'X2', 'Z'].
+148	sim1/2	allocate	3	['Z', 'X2', 'X1']
+149		initfreevar	-1	-2
+150		initfreevar	-2	-1
+151		fclear
+152		fpushstart	fixedWeight	0
+153		freport
+154		pushboundvar	-1
+155		pushfreevar	-3
+156		callp	near/2
+157		pushboundvar	-3
+158		pushboundvar	-2
+159		callp	sim1/2
+160		returnp
+161		comment	sim2(-1,-1) :-  {fixedWeight}  #v:['X'].
+162	sim2/2	allocate	1	['X']
+163		initfreevar	-1	-2
+164		unifyboundvar	-1	-1
+165		fclear
+166		fpushstart	fixedWeight	0
+167		freport
+168		returnp
+169		comment	sim2(-1,-2) :- near(-1,-3), near(-3,-4), sim2(-4,-2) {fixedWeight}  #v:['X1', 'X2', 'Z1', 'Z2'].
+170	sim2/2	allocate	4	['Z2', 'Z1', 'X2', 'X1']
+171		initfreevar	-1	-2
+172		initfreevar	-2	-1
+173		fclear
+174		fpushstart	fixedWeight	0
+175		freport
+176		pushboundvar	-1
+177		pushfreevar	-3
+178		callp	near/2
+179		pushboundvar	-3
+180		pushfreevar	-4
+181		callp	near/2
+182		pushboundvar	-4
+183		pushboundvar	-2
+184		callp	sim2/2
+185		returnp
+186		comment	mutexFailure1(-1) :- mutex(-2,-3), classify1(-1,-2), classify1(-1,-3) {fixedWeight}  #v:['X', 'Y1', 'Y2'].
+187	mutexFailure1/1	allocate	3	['Y2', 'Y1', 'X']
+188		initfreevar	-1	-1
+189		fclear
+190		fpushstart	fixedWeight	0
+191		freport
+192		pushfreevar	-2
+193		pushfreevar	-3
+194		callp	mutex/2
+195		pushboundvar	-1
+196		pushboundvar	-2
+197		callp	classify1/2
+198		pushboundvar	-1
+199		pushboundvar	-3
+200		callp	classify1/2
+201		returnp
+202		comment	coFailure(-1) :- mutex(-2,-3), classify1(-1,-2), classify2(-1,-3) {fixedWeight}  #v:['X', 'Y1', 'Y2'].
+203	coFailure/1	allocate	3	['Y2', 'Y1', 'X']
+204		initfreevar	-1	-1
+205		fclear
+206		fpushstart	fixedWeight	0
+207		freport
+208		pushfreevar	-2
+209		pushfreevar	-3
+210		callp	mutex/2
+211		pushboundvar	-1
+212		pushboundvar	-2
+213		callp	classify1/2
+214		pushboundvar	-1
+215		pushboundvar	-3
+216		callp	classify2/2
+217		returnp
+218		comment	coFailure(-1) :- mutex(-2,-3), classify2(-1,-2), classify1(-1,-3) {fixedWeight}  #v:['X', 'Y1', 'Y2'].
+219	coFailure/1	allocate	3	['Y2', 'Y1', 'X']
+220		initfreevar	-1	-1
+221		fclear
+222		fpushstart	fixedWeight	0
+223		freport
+224		pushfreevar	-2
+225		pushfreevar	-3
+226		callp	mutex/2
+227		pushboundvar	-1
+228		pushboundvar	-2
+229		callp	classify2/2
+230		pushboundvar	-1
+231		pushboundvar	-3
+232		callp	classify1/2
+233		returnp
+234		comment	classify1(-1,-2) :-  {f#(-3,-2,-4) : hasWord#(-1,-3,-4)}  #v:['X', 'Y', 'Word', 'Weight'].
+235	classify1/2	allocate	4	['Weight', 'Word', 'Y', 'X']
+236		initfreevar	-1	-2
+237		initfreevar	-2	-1
+238		fclear
+239		ffindall	243
+240		freport
+241		returnp
+242		comment	features f#(-3,-2,-4) : hasWord#(-1,-3,-4)
+243		pushboundvar	-1
+244		pushfreevar	-3
+245		pushfreevar	-4
+246		callp	hasWord#/3
+247		fpushstart	f#	3
+248		fpushweight
+249		fpushboundvar	-3
+250		fpushboundvar	-2
+251		returnp
+252		comment	jumpyNear2(-1,-2) :- sim2(-1,-3), mutex(-2,-4), predict1(-5,-4) {fixedWeight}  #v:['X', 'Y', 'Z1', 'NotY', 'Z2'].
+253	jumpyNear2/2	allocate	5	['Z2', 'NotY', 'Z1', 'Y', 'X']
+254		initfreevar	-1	-2
+255		initfreevar	-2	-1
+256		fclear
+257		fpushstart	fixedWeight	0
+258		freport
+259		pushboundvar	-1
+260		pushfreevar	-3
+261		callp	sim2/2
+262		pushboundvar	-2
+263		pushfreevar	-4
+264		callp	mutex/2
+265		pushfreevar	-5
+266		pushboundvar	-4
+267		callp	predict1/2
+268		returnp
+269		comment	jumpyNear2(-1,-2) :- sim2(-1,-3), mutex(-4,-2), predict1(-5,-4) {fixedWeight}  #v:['X', 'Y', 'Z1', 'NotY', 'Z2'].
+270	jumpyNear2/2	allocate	5	['Z2', 'NotY', 'Z1', 'Y', 'X']
+271		initfreevar	-1	-2
+272		initfreevar	-2	-1
+273		fclear
+274		fpushstart	fixedWeight	0
+275		freport
+276		pushboundvar	-1
+277		pushfreevar	-3
+278		callp	sim2/2
+279		pushfreevar	-4
+280		pushboundvar	-2
+281		callp	mutex/2
+282		pushfreevar	-5
+283		pushboundvar	-4
+284		callp	predict1/2
+285		returnp

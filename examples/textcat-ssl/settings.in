@@ -1,0 +1,8 @@
+coFailure:=0
+smoothFailure2:=0
+jumpyNear2:=80
+jumpyNear1:=0
+smoothFailure1:=0
+mutexFailure2:=0
+mutexFailure1:=0
+job_id:=0

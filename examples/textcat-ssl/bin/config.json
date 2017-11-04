@@ -1,0 +1,11 @@
+{
+   "language" : "PYTHON",
+   "main-file" : "mySpearmint.py",
+   "experiment-name" : "pubmed_20173",
+   "variables" : {
+       "steps" : {
+           "type" : "int",
+           "size" : 1,
+           "min" : 0,
+           "max" : 
+       },

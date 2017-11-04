@@ -1,0 +1,7 @@
+yTheory
+yReinforcement_Learning
+yGenetic_Algorithms
+yNeural_Networks
+yProbabilistic_Methods
+yCase_Based
+yRule_Learning
